@@ -1,42 +1,35 @@
-# Forge light — annotated follow-up
+# Forge light — continuous header artwork
 
-Date: 2026-10-07. Scope: global header, brand suffix, install button and metadata dates. Prior QA retained in `design-qa-forge-initial.md`.
+Date: 2026-10-07. Scope: correct the angled gold artwork at the global-header/package-masthead boundary. Prior reports remain in `design-qa-forge-polish.md` and `design-qa-forge-initial.md`.
 
-## Findings and fixes
+## Finding and correction
 
-- [P2, fixed] The first Forge pass used a flat green-charcoal global header instead of the reference's brown forged material and angled gold edge. Added an actual generated raster header texture and the reference's search icon. Global header navigation remains Catalog/Docs; the user clarified that top-bar styling was the requested change. Desktop package navigation remains on the left.
-- [P2, fixed] `.pub` was too large and optically misaligned with the official image wordmark. Reduced it from 25 to 18 px on desktop and from 22 to 16 px on small screens, removed the old top padding, and aligned its lower edge with the wordmark. This explicitly overrides the generated reference's larger suffix.
-- [P2, fixed] Install button lacked the plus icon, luminous brass surface and reference proportions. Added a standard Phosphor plus image, actual generated brass texture, brighter border and 47 px desktop height. Moved the desktop button left to clear the existing masthead's diagonal material seam. Native text/control behavior remains HTML.
-- [P2, fixed] Stacked labels/dates left unused metadata space. Dates now align to their label on the same row, with compact spacing. The original reference stacks them; the user's annotated request takes priority.
-- [P2, fixed during responsive QA] New angled header edge was too close to Docs/Search at intermediate widths. Reserved additional right-side clearance on tablet and narrow headers and recaptured both states. No control text intersects the gold edge in the final captures.
+[P2, fixed] The separately generated header strip had a different seam position and slope from the masthead. The user identified the visible discontinuity in the supplied `B95E78DA-7503-48F2-857D-6EB869B702BD/1-Pasted-Image-1.jpg`. The previous report understated this as a minor angle difference; it was a material join defect.
 
-## Evidence and comparison
+Both surfaces now use the existing `forge-masthead.webp` at the same width and 500 px scene height. The masthead starts at the negative global-header height, so the same source pixels continue across the boundary. Header height is 75 px on desktop and 104 px in the existing wrapped mobile layout. The ordinary horizontal UI divider remains. The independently generated `forge-header.webp` remains historical and is no longer referenced by CSS. The CSS query version advances to `forge-3` on the catalog and all six package documents.
 
-Source visual target: `assets/site/visual-directions/option-2.png` (1487 × 1058). User annotations: supplied `50E891ED-2346-4394-B870-C1F28D9B81A3/1-Pasted-Image-1.jpg`; inspected as feedback, not treated as a pixel-geometry target because it contains iPad browser chrome and annotations.
+## Visual evidence
 
-Final rendered implementation: `assets/site/forge-polish-preview.png` / ignored `qa/forge-polish-desktop-final.png`. Browser viewport 1487 × 1058 CSS px; captured image 1487 × 1058 px, density 1. The unframed source already has the same dimensions, so no scaling or density normalization was applied. State: regex latest manifest, light theme, initial scroll position, closed install dialog, loaded fonts.
+Source: `assets/site/visual-directions/option-2.png`, 1487 × 1058. Final render: `assets/site/forge-continuous-preview.png`, captured at 1487 × 1058 CSS px and density 1 with loaded fonts, initial scroll position, regex latest manifest and closed install dialog. No normalization was needed. The user screenshot contains browser chrome and annotations; it is feedback evidence, not an exact pixel target.
 
-The source and revised render were placed together in `qa/forge-polish-comparison.jpg`, opened and inspected. Focused same-image comparisons were also opened for the header (`qa/forge-polish-header-comparison.jpg`), button (`qa/forge-polish-cta-comparison.jpg`) and metadata (`qa/forge-polish-metadata-comparison.jpg`). These artifacts are local QA evidence, not new product UI.
+Opened and inspected `qa/seam-comparison.jpg`, placing the source, previous published render and corrected render in one image. Also inspected `qa/seam-join-comparison.jpg`, the corresponding right-side header/masthead crops. The new seam is continuous; the old independent diagonal visibly jumps at the boundary. QA images under `qa/` remain local and ignored.
 
-Iteration history: `qa/forge-polish-before-header.png` shows the smaller suffix and compact date rows before the header asset. The first button correction retained a flat gold fill; the final capture uses its brass image texture. Landscape QA exposed edge/control proximity; updated right clearance is shown in `qa/forge-polish-ipad-final.png`, `qa/forge-polish-portrait-final.png` and `qa/forge-polish-phone-final.png`. The final desktop full-view and focused comparisons were regenerated and inspected after the brass texture and button placement corrections.
+Reference deviations already requested by the user remain: smaller `.pub`, compact date rows, actual complete author README and exact quantitative charts. The source's clipped header-divider corner is not replicated as a second decorative seam; the shared raster supplies the continuous material line.
 
-## Required fidelity surfaces
+## Fidelity checks
 
-- Typography: Brawler/Exo 2 preserved. Smaller suffix is intentional user feedback; display/body/code families remain unchanged. Actual author README text and code remain intact.
-- Spacing/layout: header search starts at the reference's approximately 276 px desktop position; optical wordmark alignment improved; button has compact proportions and avoids the material seam; dates share their label row. Responsive right clearance prevents decoration competing with controls.
-- Colors/tokens: warm brown-charcoal header, antique gold edge, lit brass button and warm paper body. Original scoped syntax token colors remain intact.
-- Images: official supplied logo retained. Header and button are real generated raster textures, inspected before insertion. Standard plus/magnifying-glass images come from Phosphor Icons Core 2.1.1; MIT license is bundled. No CSS/handwritten SVG replacement for these assets.
-- Copy/content: only editable UI composition changes; exact package descriptions, author documentation, feature declarations, dates, chart data and absence states remain preserved. Source mockup's abbreviated README, illustrative features and smooth native-registry trend remain intentional data deviations documented in the earlier QA.
+- Typography: Brawler and Exo 2 retained; existing code fonts and syntax colors retained.
+- Layout/spacing: header dimensions match the scene offsets; existing brand, search, navigation, install button and three-column article retain their positions.
+- Colors/images: original charcoal/gold raster retained, with no new generated artwork or CSS imitation. The gold seam stays clear of global navigation at inspected widths.
+- Content: package records, README, metadata, chart assets and install text unchanged.
 
-## Verification and checklist
+## Verification
 
-- Local authored Incan renderer/Oven build passed; all 9 existing checks passed, including initial HTML/local assets, deterministic byte replay, chart/document digests, syntax highlighting and HTML-comment handling.
-- Browser sizes: 1487 × 1058, 1194 × 834, 768 × 1024 and 390 × 844. No page-wide overflow in inspected states. Responsive browser testing only; physical iPadOS/Safari was not available locally.
-- Search for memchr from the package header navigated to `/?q=memchr` and left exactly memchr visible in the catalog. Updated install button opens the correct modal; Escape closes it. Accessible name remains Add to project despite the decorative icon.
-- Browser console captured no errors. New textures were present in computed styles; icon images loaded.
-- Existing reduced-motion gating remains unchanged. No ambient animation added.
-- `git diff --check` passed.
+- Local Incan/Oven build passed. All 9 existing checks passed, including deterministic byte replay, frozen documentation/chart digests, syntax highlighting and HTML-comment handling.
+- Browser captures inspected at 1487 × 1058, 1280 × 860, 1194 × 834, 768 × 1024 and 390 × 844. Header/masthead offsets are 75/75 px or 104/104 px; no page-wide horizontal overflow in these states. This is responsive browser testing, not physical iPadOS/Safari testing.
+- Narrow install button opened the correct accessible dialog, and Close dismissed it. Dependencies anchor landed below the sticky 104 px header at approximately 142 px. Header search for memchr opened the catalog with exactly one visible package. Browser console captured no errors.
+- Existing reduced-motion behavior preserved; no new animation or script introduced.
 
-No unresolved P0/P1/P2 findings in this follow-up scope. P3: the generated header has a slightly broader corner angle than the reference; material placement and control clearance are correct.
+No unresolved P0/P1/P2 findings in this correction scope.
 
 final result: passed
