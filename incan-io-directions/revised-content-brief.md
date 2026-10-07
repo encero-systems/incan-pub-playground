@@ -1,5 +1,7 @@
 # Incan.io: selected workshop direction, revised for 0.6
 
+> The workshop presentation was subsequently rejected as too promotional. [Read the developer homepage brief](developer-content-brief.html) for the current direction and original brand assets.
+
 Option 2 was selected on 2026-10-07. This revision preserves its dark workshop hero, warm brass, editorial lower sections, official wordmark, Brawler headings and Exo 2 body type. It introduces Incan on its own terms, replaces the earlier generated-Rust story and retains Incus. This is a static visual proposal, not a production homepage or evidence that the 0.6 cutover has shipped.
 
 ## The story
