@@ -1,6 +1,6 @@
 # Deterministic static package pages
 
-The Incan renderer builds the catalog and six vertical, anchored package documents from the frozen `assets/site/packages.json` bundle. No language model, registry resolution, package compilation, live statistics calls or GitHub credentials are involved in rendering.
+The Incan renderer builds the homepage, catalog and six vertical, anchored package documents from the frozen `assets/site/packages.json` bundle. No language model, registry resolution, package compilation, live statistics calls or GitHub credentials are involved in rendering.
 
 From the repository root, with Incan **0.5.1**, Rust **1.98.0**, and Node/npm installed:
 
@@ -57,3 +57,11 @@ The annotated follow-up adds `forge-header.webp` (2974 × 150) and `forge-button
 The header seam correction supersedes the separate header strip: global header and package masthead now share `forge-masthead.webp` at one scene scale with contiguous vertical source coordinates. The wrapped header height and masthead offset use the same CSS variable. `forge-header.webp` is retained as a historical asset, not used by the current theme. See `design-qa.md` for the final comparisons and responsive checks.
 
 The install-button legibility follow-up retains the brass raster and gold outline, but multiplies the fill against a darker bronze and uses opaque white semibold lettering. This is a CSS treatment of the existing decorative asset; no new imagery or browser script is added.
+
+## Archive Hall homepage
+
+The selected landing direction 2 is served at `/`; the catalog is now at `/catalog/`. Homepage search submits a standard GET with `q` into the catalog, which retains its local filters. Global detail-page search and Catalog links target the new route; the wordmark returns home. Each starter is a whole-card scoped package link. The starter ticker rotates three records at a time: top upstream downloads, a random sample, and top Incan registry downloads. Rankings use frozen recorded counts, keeping the two sources separate. Every card contributes its exact recorded description, version, SPDX license and scoped identity. Descriptions are visually clamped on desktop, and shown in full on narrow screens. Controls allow previous/next and play/pause. Automatic changes pause on hover, focus or a hidden tab; narrow screens and reduced-motion preferences start paused. No model generates package facts. The initial top-upstream group is ranked deterministically by the Incan renderer, including smaller fixture snapshots. All six escaped records are bundled in an inert template for client rotation; random selection does not generate or rewrite package facts. An Incan-owned group requires actual indexed library records and is not fabricated in this six-package adopted snapshot.
+
+The heading is “Building blocks for Oven.” Loaves are introduced in supporting copy; the surface is not restricted to Incan-authored libraries. `home.html` supplies editorial copy, and the authored Incan renderer supplies the recorded starter facts. All homepage content and navigation work without JavaScript. The existing manual-only check workflow is unchanged and was not dispatched.
+
+`archive-hero.webp` (2087 × 753, 129,428 bytes) and `archive-detail.webp` (2748 × 450, 97,880 bytes) are generated, text-free decorative plates based on the selected Archive Hall reference. Live HTML provides all headings, links, search and metadata. The hero retains quiet ivory negative space and the charcoal/brass prism sculpture at right. The lower plate is a macro material detail, cropped from a 2054 × 766 generated source and resized for export. The official wordmark and Incan.io font families Brawler and Exo 2 are retained. Phosphor Icons Core 2.1.1 also supplies the bundled arrow-right icon, under the existing license. Responsive CSS stacks artwork and starter cards on narrow screens; reduced-motion preference disables the brief link-arrow transitions.

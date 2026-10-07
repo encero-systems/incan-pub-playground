@@ -453,7 +453,7 @@ def catalog_rows(packages: list[JsonValue]) -> Result[str, str]:
         rows.append(
             "<tr data-package data-origin=\"adopted\" data-name=\"" + esc(name) + "\" data-license=\"" + esc(
                 value(about, "license")?,
-            ) + "\" data-category=\"" + esc(value(package, "category")?) + "\"><th scope=\"row\"><a class=\"package-link\" href=\"packages/" + esc(
+            ) + "\" data-category=\"" + esc(value(package, "category")?) + "\"><th scope=\"row\"><a class=\"package-link\" href=\"../packages/" + esc(
                 id,
             ) + "/\">" + esc(name) + "</a><small>" + esc(id) + "</small></th><td>" + esc(value(about, "description")?) + "</td><td><code>" + esc(
                 value(package, "version")?,
@@ -462,6 +462,50 @@ def catalog_rows(packages: list[JsonValue]) -> Result[str, str]:
             ) + "</small></td></tr>",
         )
     return Ok(join_text(rows))
+
+
+def starter_card(package: JsonValue) -> Result[str, str]:
+    about = field(package, "about")?
+    id = value(package, "id")?
+    name = value(package, "name")?
+    context = field(package, "context")?
+    upstream = count(field(field(context, "popularity")?, "periodTotal")?)?
+    registry = count(field(field(context, "registry")?, "total")?)?
+    return Ok(
+        "<a class=\"starter-card\" data-upstream=\"" + str(upstream) + "\" data-registry=\"" + str(registry) +
+        "\" href=\"packages/" + esc(id) + "/\"><div class=\"starter-title\"><h3>" + esc(name) +
+        "</h3><span class=\"version\">" + esc(value(package, "version")?) + "</span></div><p class=\"starter-description\">" +
+        esc(value(about, "description")?) + "</p><dl><dt>Scope</dt><dd>" + esc(id) + "</dd><dt>License</dt><dd>" +
+        esc(value(about, "license")?) + "</dd></dl><p class=\"starter-origin\">Adopted from crates.io</p>" +
+        "<span class=\"starter-link\">View package<img src=\"assets/site/icons/arrow-right.svg\" alt=\"\" aria-hidden=\"true\"></span></a>",
+    )
+
+
+def starter_cards(packages: list[JsonValue]) -> Result[str, str]:
+    mut cards: list[str] = []
+    mut selected: list[str] = []
+    # Rank by recorded upstream downloads, with input order as the stable tie break.
+    for position in range(3):
+        mut best_index = -1
+        mut best_count = -1
+        for index in range(len(packages)):
+            package = packages[index]
+            if not selected.contains(value(package, "id")?):
+                downloads = count(field(field(field(package, "context")?, "popularity")?, "periodTotal")?)?
+                if downloads > best_count:
+                    best_index = index
+                    best_count = downloads
+        if best_index >= 0:
+            selected.append(value(packages[best_index], "id")?)
+            cards.append(starter_card(packages[best_index])?)
+    return Ok(join_text(cards))
+
+
+def starter_pool(packages: list[JsonValue]) -> Result[str, str]:
+    mut cards: list[str] = []
+    for package in packages:
+        cards.append(starter_card(package)?)
+    return Ok(join_text(cards))
 
 
 def build(input: str, output: str, templates: str) -> Result[None, str]:
@@ -489,7 +533,14 @@ def build(input: str, output: str, templates: str) -> Result[None, str]:
         write(directory + "/index.html", template_page(package, packages, package_template)?)?
         println("Rendered " + id)
     catalog = read(templates + "/catalog.html")?.replace("{{packages}}", catalog_rows(packages)?)
-    write(output + "/index.html", catalog)?
+    mkdir(output + "/catalog")?
+    write(output + "/catalog/index.html", catalog)?
+    # Split first so author metadata containing template-like text stays literal.
+    home_parts = read(templates + "/home.html")?.split("{{packages}}")
+    if len(home_parts) != 3:
+        return Err("homepage requires two package projection slots")
+    homepage = home_parts[0] + starter_cards(packages)? + home_parts[1] + starter_pool(packages)? + home_parts[2]
+    write(output + "/index.html", homepage)?
     return Ok(None)
 
 

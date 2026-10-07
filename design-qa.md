@@ -1,45 +1,46 @@
-# Forge light — continuous header artwork
-
-Date: 2026-10-07. Scope: correct the angled gold artwork at the global-header/package-masthead boundary. Prior reports remain in `design-qa-forge-polish.md` and `design-qa-forge-initial.md`.
-
-## Finding and correction
-
-[P2, fixed] The separately generated header strip had a different seam position and slope from the masthead. The user identified the visible discontinuity in the supplied `B95E78DA-7503-48F2-857D-6EB869B702BD/1-Pasted-Image-1.jpg`. The previous report understated this as a minor angle difference; it was a material join defect.
-
-Both surfaces now use the existing `forge-masthead.webp` at the same width and 500 px scene height. The masthead starts at the negative global-header height, so the same source pixels continue across the boundary. Header height is 75 px on desktop and 104 px in the existing wrapped mobile layout. The ordinary horizontal UI divider remains. The independently generated `forge-header.webp` remains historical and is no longer referenced by CSS. The CSS query version advances to `forge-3` on the catalog and all six package documents.
-
-## Visual evidence
-
-Source: `assets/site/visual-directions/option-2.png`, 1487 × 1058. Final render: `assets/site/forge-continuous-preview.png`, captured at 1487 × 1058 CSS px and density 1 with loaded fonts, initial scroll position, regex latest manifest and closed install dialog. No normalization was needed. The user screenshot contains browser chrome and annotations; it is feedback evidence, not an exact pixel target.
-
-Opened and inspected `qa/seam-comparison.jpg`, placing the source, previous published render and corrected render in one image. Also inspected `qa/seam-join-comparison.jpg`, the corresponding right-side header/masthead crops. The new seam is continuous; the old independent diagonal visibly jumps at the boundary. QA images under `qa/` remain local and ignored.
-
-Reference deviations already requested by the user remain: smaller `.pub`, compact date rows, actual complete author README and exact quantitative charts. The source's clipped header-divider corner is not replicated as a second decorative seam; the shared raster supplies the continuous material line.
-
-## Fidelity checks
-
-- Typography: Brawler and Exo 2 retained; existing code fonts and syntax colors retained.
-- Layout/spacing: header dimensions match the scene offsets; existing brand, search, navigation, install button and three-column article retain their positions.
-- Colors/images: original charcoal/gold raster retained, with no new generated artwork or CSS imitation. The gold seam stays clear of global navigation at inspected widths.
-- Content: package records, README, metadata, chart assets and install text unchanged.
-
-## Verification
-
-- Local Incan/Oven build passed. All 9 existing checks passed, including deterministic byte replay, frozen documentation/chart digests, syntax highlighting and HTML-comment handling.
-- Browser captures inspected at 1487 × 1058, 1280 × 860, 1194 × 834, 768 × 1024 and 390 × 844. Header/masthead offsets are 75/75 px or 104/104 px; no page-wide horizontal overflow in these states. This is responsive browser testing, not physical iPadOS/Safari testing.
-- Narrow install button opened the correct accessible dialog, and Close dismissed it. Dependencies anchor landed below the sticky 104 px header at approximately 142 px. Header search for memchr opened the catalog with exactly one visible package. Browser console captured no errors.
-- Existing reduced-motion behavior preserved; no new animation or script introduced.
-
-No unresolved P0/P1/P2 findings in this correction scope.
-
-## Button legibility follow-up
-
-[P2, fixed] User feedback identified the light label competing with the brightest areas of the brass install button. Source for this scoped correction is the approved current page in `assets/site/forge-continuous-preview.png`; its brighter button is intentionally overridden by this feedback.
-
-The existing raster is now multiplied against `#785923`, retaining its texture while reducing fill luminance. The label is opaque white, Exo 2 semibold (600 rather than 500); plus icon opacity is 1. Label, padding, radius, border, placement and action remain unchanged. White against even the maximum possible multiplied fill has a calculated contrast of 6.46:1 (sRGB relative luminance); this is a fill-color bound, not an antialiasing measurement or a claim about the decorative border.
-
-Post-fix render: `assets/site/forge-button-readable-preview.png`, 1487 × 1058 CSS/pixel dimensions, density 1, regex initial state, loaded fonts, closed dialog. Opened and inspected both source and revised render, then the same-image full-view `qa/button-readable-comparison.jpg` and focused `qa/button-readable-detail.jpg`. Earlier bright-fill finding is resolved; the gold frame and continuous masthead remain intact.
-
-Required surfaces: font family/size unchanged with stronger label weight; spacing and overall layout preserved (button widens slightly with semibold glyphs); colors now provide stronger text contrast; supplied raster/icon assets stay sharp; all copy and package content preserved. Settled browser captures at 1280 × 860 and 390 × 844 show readable labels and no page-wide overflow. Early captures during viewport resizing were replaced with settled captures. Narrow button opens the correct install dialog and Close dismisses it; browser console captured no errors. Responsive browser checks only, not physical iPadOS testing.
+# Archive Hall landing-page QA
 
 final result: passed
+
+## Source, state and normalization
+
+Selected visual truth: `assets/site/landing-directions/option-2.png`, The Archive Hall (1374 × 1145 pixels, unframed desktop page). The user subsequently changed the heading to “Building blocks for Oven.”, requested a rotating starter ticker, and changed the bottom link to “How loaves work.” Those are intentional changes to the source visual.
+
+Implementation: browser-rendered `http://127.0.0.1:8817/`, CSS viewport 1374 × 1145 at density 1, warm light theme, top of page, top-upstream ticker group, manually paused for stable comparison. Final viewport evidence: `qa/archive-ticker-desktop-viewport.png` (1374 × 1145). Full document: `qa/archive-ticker-desktop.png` (1374 × 1179); the additional 34 pixels accommodate the requested ticker caption and controls. An export is retained at `assets/site/landing-preview.webp`.
+
+Source and implementation were combined into the same image input, rather than judged from separate views: `qa/archive-comparison-final.jpg`. Focused comparisons: `qa/archive-focus-hero-final.jpg`, `qa/archive-focus-starters-final.jpg`, `qa/archive-focus-lower-final.jpg`. These inspect headline weight, live controls, attribution/licensing, the starter hierarchy and lower artwork. No density rescaling was needed. Full-page desktop screenshots were not substituted for viewport evidence.
+
+## Comparison history and fixes
+
+1. Pass 1 (`qa/archive-comparison-pass1.jpg`): [P2] the revised supporting text wrapped and increased hero height from the intended 496 to 521 pixels. Longer recorded starter descriptions also pushed the lower panel below the intended region. [P2] a diagonal stripe in the existing shared masthead texture crossed the top-right header, whereas the selected header was quiet. Fixed supporting copy, starter section spacing and background crop; shortened copy retains the Oven/loaf scope. No package description was rewritten.
+2. Pass 2 (`qa/archive-comparison-pass2.jpg` plus `archive-focus-*-pass2.jpg`): hero returned to exactly 496 pixels beneath a 68-pixel header; the lower region began at 927 rather than 920. This small difference came from the required recorded descriptions. Increased Brawler headline weight to 700 to match the source's strong display hierarchy, and adjusted the search-button fill while retaining opaque white lettering. User then explicitly requested a ticker; its controls and provenance caption intentionally add vertical room.
+3. Responsive pass: [P2] at 768 and 390 widths, the initial background sizing cropped the tall sculpture behind the content panel. [P2] at 768, a longer scoped package name wrapped its version and shifted the descriptions relative to its neighbors. Fixed compact artwork sizing to show the entire cluster in its own 280-pixel panel and reserved consistent title height for the three-column portrait layout. Rotation now starts paused on compact screens, and changing into a compact viewport also pauses it. Post-fix evidence: `qa/archive-portrait-final.png` and `qa/archive-mobile-final.png`.
+4. Final full and focused combined comparisons found no remaining actionable P0/P1/P2 mismatch. Strong Brawler display type, ivory reading surfaces, gold separators and the brass/charcoal architectural material are retained. Actual descriptions and deterministic rankings are intentional content changes, not invented mock data.
+
+## Required fidelity surfaces
+
+- Fonts/typography: browser-confirmed Brawler 700 display and Exo 2 body fonts loaded. These are the requested Incan.io font families. Hero remains two lines; metadata stays secondary. Recorded descriptions are visually clamped on desktop and shown in full on narrow screens. The generated source cannot guarantee precise font glyphs; real Brawler is the authoritative implementation.
+- Spacing/layout rhythm: header 68 pixels, hero 496, three desktop columns with fine vertical rules. Ticker caption/control space is intentional. Narrow screens separate artwork from live content and stack starter links. No horizontal document overflow at 1374, 1194, 768 or 390 widths.
+- Colors/tokens: warm ivory `#faf8f3`, charcoal ink and header, bronze/gold links and rules. Search text remains opaque white semibold against dark bronze. Small factual text stays on calm light surfaces; footer text remains legible on the dark lower artwork.
+- Image quality: original wordmark retained. The two text-free generated raster plates were opened and inspected before consumption. Natural stone, charcoal prisms, brass edges and fine engraved lines match the chosen material direction. Hero source exceeds desktop display width; no placeholder illustration or hand-drawn SVG/CSS substitutes are used. Existing Phosphor plus/search and the same-family arrow icon are standard licensed SVG assets.
+- Copy/content: “Building blocks for Oven.”; “Find a loaf…”; “How loaves work”. Versions, full scoped IDs, descriptions, licenses and ranking metrics come from frozen recorded inputs. Crates.io ranking uses 30-day upstream counts; Incan registry ranking uses all-time GitHub Packages counts. They are never combined. Random sampling selects existing records. No Incan-owned/native-library group is fabricated because this snapshot has none.
+
+## Runtime and interaction verification
+
+Browser-tested desktop, landscape iPad 1194 × 834, portrait 768 × 1024 and narrow 390 × 844. Captures: `qa/archive-ipad-1194.png`, `qa/archive-portrait-final.png`, `qa/archive-mobile-final.png`. The landscape capture shows the same composition with working ticker controls; portrait/narrow final captures follow the artwork correction.
+
+- Homepage search for regex navigated to `/catalog/?q=regex` and showed exactly one matching row.
+- Catalog package link opened the regex document; Add to project opened the existing TOML dialog and Close dismissed it.
+- Wordmark returned to the homepage. Package-page Catalog links use `/catalog/`.
+- Previous/next selected groups; random group contained three distinct records from the local pool; registry group correctly displayed memchr, tokio and regex. Pause/Play toggled state. Compact startup pause was verified. Hover, keyboard-focus, page-visibility and reduced-motion guards were checked in the implementation; no emulated reduced-motion browser run is claimed.
+- On the compact layout, a full starter-card link opened its scoped detail page. Catalog Unlicense filtering retained only memchr.
+- Final browser error log was empty.
+- `npm run build` passed through Incan/Oven. All 10 Node checks passed, including deterministic replay, correct new routes, top-upstream ordering, metadata escaping, existing documentation/asset digests and highlighting. `node --check assets/site/showcase.js` and `git diff --check` passed. The separate manual-only site-check workflow was not dispatched.
+
+## Remaining boundaries and implementation checklist
+
+- Complete: selected direction, live search/navigation, scoped starter links, ticker controls, factual rankings, compact artwork, official branding/fonts, unchanged package-detail functionality.
+- P3: a future production catalog should supply an admitted Incan-owned group and its actual metadata; the current renderer continues to reject unsupported direct-publishing records. Six-record search remains a preview, not a scalable production implementation.
+- Native iPad Safari was not driven directly; checks used the Codex in-app browser at iPad dimensions. Final publication verification is performed separately against GitHub Pages.
+
+Package-page QA from the preceding completed change is retained in `design-qa-package-pages.md`.

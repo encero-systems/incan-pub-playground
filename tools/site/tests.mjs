@@ -61,7 +61,38 @@ test('scoped identities coexist; duplicates and unsafe output paths are rejected
 });
 test('a second render is byte-for-byte identical',async()=>{
  const {output,run}=await renderFixture(input.packages);assert.equal(run.status,0,run.stdout);
- for(const path of ['index.html',...input.packages.map(p=>`packages/${p.id}/index.html`)]) assert.deepEqual(await readFile(path),await readFile(join(output,path)),path);
+ for(const path of ['index.html','catalog/index.html',...input.packages.map(p=>`packages/${p.id}/index.html`)]) assert.deepEqual(await readFile(path),await readFile(join(output,path)),path);
+});
+test('homepage and catalog routes preserve scoped links, recorded starter facts and search destinations',async()=>{
+ const home=await readFile('index.html','utf8');
+ assert.match(home,/<h1[^>]*>Building blocks<br>for Oven/);
+ assert.match(home,/<form[^>]*action="catalog\/"[^>]*method="get"/);
+ assert.match(home,/name="q"/);
+ assert.match(home,/How loaves work/);
+ const initial=home.split('id="showcase-grid"')[1].split('</div>\n')[0];
+ const expected=[...input.packages].sort((a,b)=>b.context.popularity.periodTotal-a.context.popularity.periodTotal).slice(0,3);
+ const initialIds=[...initial.matchAll(/href="packages\/([^"]+)\/"/g)].map(m=>m[1]);
+ assert.deepEqual(initialIds,expected.map(p=>p.id));
+ for(const name of ['serde','regex','tokio']){
+  const p=input.packages.find(p=>p.name===name);
+  const card=home.split(`href="packages/${p.id}/"`)[1]?.split('</a>')[0];
+  assert.ok(card,p.id); assert.ok(card.includes(p.version)); assert.ok(card.includes(p.about.license));
+ }
+ for(const route of ['index.html','catalog/index.html']){
+  const path=resolve(route); const html=await readFile(path,'utf8');
+  for(const [,url] of html.matchAll(/(?:href|src)="([^"]+)"/g)){
+   if(/^(?:#|https?:|mailto:|\/\/)/.test(url))continue;
+   const file=resolve(dirname(path),url.split(/[?#]/)[0]); await access(file.endsWith('/')?join(file,'index.html'):file);
+  }
+ }
+ const catalog=await readFile('catalog/index.html','utf8');
+ for(const p of input.packages)assert.ok(catalog.includes(`href="../packages/${p.id}/"`));
+ for(const p of input.packages){const html=await htmlFor(p.name);assert.match(html,/action="\.\.\/\.\.\/\.\.\/catalog\/"/);assert.match(html,/href="\.\.\/\.\.\/\.\.\/catalog\/">Catalog/);}
+ const p=structuredClone(input.packages.find(p=>p.name==='serde'));
+ p.about.description='<script>alert("x")</script> {{packages}}';
+ const fixture=await renderFixture([p]);assert.equal(fixture.run.status,0,fixture.run.stdout);
+ const escaped=await readFile(join(fixture.output,'index.html'),'utf8');
+ assert.match(escaped,/&lt;script&gt;alert\(&quot;x&quot;\)&lt;\/script&gt; \{\{packages\}\}/);assert.doesNotMatch(escaped,/<script>alert/);
 });
 test('bundled documentation and quantitative chart assets match their frozen digests and daily totals',async()=>{
  const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
