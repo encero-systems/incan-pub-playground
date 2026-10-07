@@ -4,11 +4,11 @@ Option 2 was selected on 2026-10-07. This revision preserves its dark workshop h
 
 ## The story
 
-**Clear code. Native by design.**
+**A programming language for the modern world.**
 
-Incan combines expressive syntax, static types, and compiler-planned ownership for native software.
+Incan is an expressive, statically typed language for building applications and libraries—with compiler-planned ownership and access to the Rust ecosystem.
 
-The headline and primary definition describe Incan itself. Language comparisons belong in deeper documentation. Rust ecosystem access and interop are supporting capabilities, explained alongside Oven and the 0.6 compiler direction rather than defining Incan by another language.
+The headline explicitly introduces Incan as a programming language with its own identity. Its supporting copy and actual source example make the broad promise concrete. Language comparisons belong in deeper documentation. Rust ecosystem access and interop are supporting capabilities, explained alongside Oven and the 0.6 compiler direction rather than defining Incan by another language. Native compilation is a capability, not the primary pitch.
 
 Show actual Incan source immediately. Offer **Try Incan** and **Read the language guide**, then three practical entry points: a first application, a typed data workflow and a reusable library.
 
