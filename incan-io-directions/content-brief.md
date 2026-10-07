@@ -1,5 +1,7 @@
 # Incan.io homepage content proposal
 
+> Superseded after selecting option 2: [read the revised 0.6 content brief](revised-content-brief.html). The generated-Rust narrative below is historical and must not be used for implementation. Incus is retained in the revised design.
+
 Source reviewed: https://incan.io/dev/ and the current repository's `workspaces/docs-site/docs/index.md`, on 2026-10-07. The root URL redirects to this development documentation homepage. The three static visual concepts use the selected Incan.pub material direction, the official Incan wordmark, Brawler display type and Exo 2 body type.
 
 ## Reader outcome
