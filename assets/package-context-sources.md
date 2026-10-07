@@ -1,0 +1,12 @@
+# Package context snapshot
+
+Captured October 7, 2026 for the six packages in this prototype. This is saved public data, not a live analytics integration or a scheduled collector. The production index was read at the commit each embedded package pins; it was not modified.
+
+- Author credits come from `package.authors` in each selected version's published Cargo.toml. Source archives were checked against the crates.io checksum and the pinned Incan.pub adoption checksum. Display strips email addresses. Declared authors, the person who uploaded an upstream release, and the Incan.pub adoption actor are separate fields. The current Incan.pub `about` projection does not preserve authors.
+- Upstream release dates and versions come from crates.io's package API. Adoption dates and actors come from the pinned index events. Recent history includes upstream-only versions; an availability label is derived from directories present in that pinned index.
+- Matching release-note links come from the recorded GitHub repository's Releases API. At most a short excerpt of the selected version is saved. An unavailable excerpt is an explicit preview state, not a claim that the package has no changelog.
+- Incan.pub download totals and 30-day counts come from each public GitHub Packages page. Daily values are the rendered chart's `data-date` / `data-merge-count` values. Their source URL and capture timestamp are stored with the data. Today's count is partial. These are GitHub's package counts across all versions and build tags, not unique users or successful Incan project installs. The documented package metadata endpoint did not include these counts; production needs a deliberate refresh/source strategy rather than treating this page structure as a supported API contract.
+- crates.io daily totals sum `version_downloads` and `meta.extra_downloads`, so older versions are included. The displayed window is the last 30 complete UTC days; today's partial counts are excluded. All-time package and selected-version counts are separate upstream metadata fields. They are never combined with GHCR counts.
+- Charts are raster plots generated from the saved numbers. Each has a text alternative and an inspectable daily-data table. Metadata is loaded from a separate JSON resource and chart images are lazy-loaded.
+
+Each record in `package-context.json` includes its source URLs and capture timestamps. Future refreshes should regenerate the metadata and charts together.
