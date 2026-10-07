@@ -1,6 +1,6 @@
 # Deterministic package pages
 
-Design/data contract for the playground, October 7, 2026. This document records what a website renderer should consume; it does not implement a renderer or enable a workflow. No LLM is required at collection, rendering or serving time.
+Design/data contract for the playground, October 7, 2026. This document records the website data contract. The playground now implements a frozen-input static renderer; see tools/site/README.md for its verified scope. No LLM is required at collection, rendering or serving time.
 
 ## Page content and its source
 
@@ -17,7 +17,7 @@ Design/data contract for the playground, October 7, 2026. This document records 
 | Dependents | Reverse edges over a pinned index | Distinguish declared/conditional relations from active relations in a recorded resolution. State checkpoint, version policy and coverage. |
 | Indexed builds and attestations | Bound facts and asset manifests | Show the exact target/toolchain/profile/feature binding and evidence status. Absence of an indexed Windows build does not imply upstream Windows incompatibility. |
 | Release/adoption chronology | Publication/adoption events; cached upstream version metadata for upstream dates | Keep upstream releases and Incan availability separate. Never imply every upstream version is adopted. |
-| Release notes | Shipped changelog or a cached, matching publisher release note | If absent, show a source link or unavailable state. Do not generate release prose from version differences. |
+| Release notes | Shipped changelog or a cached, matching publisher release note | Render a matching packaged changelog section when present (currently regex and tokio in the playground). If absent, show a source link or unavailable state. Do not generate release prose from version differences. |
 | Popularity graphs | Validated dated statistics snapshots and daily history | Render charts from real daily values. Label source, window, freshness and partial days. Keep upstream and Incan registry counts separate. |
 | Security | Recorded advisories/yanks plus any explicitly collected advisory snapshot | Report coverage and source. Zero registry advisories is not proof of zero upstream vulnerabilities. |
 | Report abuse | Deliberately configured registry reporting destination | Never invent an inbox. Keep confidential vulnerability reporting distinct. |
@@ -51,7 +51,7 @@ Separate collection from rendering. The collector can run on a laptop as request
 
 A website build consumes a pinned index checkpoint, versioned author documentation, a validated statistics snapshot and a renderer/template revision. It emits static searchable HTML, metadata JSON and plots. It makes no live requests and uses no LLM. Freeze timestamps and ordering so replaying the same inputs produces the same output bytes. A failed optional statistics refresh retains the last-good data with its original timestamp; it never rewrites failure as zero.
 
-This can run headlessly in GitHub Actions without package compilation or per-package network calls at render time. Registry tooling is authored in Incan, and its existing CI already builds/runs it on Linux and macOS using a pinned compiler. The new page renderer and its CI execution have not been implemented or tested. The existing statistics collector has been verified on macOS, not on a Linux runner. Scheduling collection in CI is not required for a CI-capable renderer.
+This can run headlessly in GitHub Actions without package compilation or per-package network calls at render time. Registry tooling is authored in Incan, and its existing CI already builds/runs it on Linux and macOS using a pinned compiler. The new page renderer is implemented and verified on macOS, including byte-for-byte replay tests. A manual-only GitHub Actions recipe is committed but has not been dispatched or verified on Linux. The existing statistics collector has been verified on macOS, not on a Linux runner. Scheduling collection in CI is not required for a CI-capable renderer.
 
 For the selected vertical design, render main sections into the initial HTML with stable fragment anchors. Overview, Features, Dependencies, Dependents, Builds, Releases, Popularity and Security remain searchable without selecting tabs. A small Add to project control exposes the exact install snippet on demand; there is no full-width installation band.
 

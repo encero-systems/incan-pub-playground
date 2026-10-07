@@ -1,25 +1,51 @@
-# Context reader QA
+# Vertical package document QA
 
 final result: passed
 
-Target: previously approved context reader (`preview.png` before this revision), with requested license filtering, a toggle attached to the catalog boundary, and TOML highlighting. The earlier source has a text toggle; the new edge control and expanded filter group are intentional changes.
+Source visual truth: `/Users/danny/.codex/generated_images/01a114f0-5381-7002-af6c-7808d5f046d9/exec-c47d05fb-57d1-4b7a-8465-9e35b30c3cfb.png` (right metadata concept, option 2; 946 × 1663 pixels). The user requested vertical anchored content, deterministic information and restored real popularity graphs after these concepts.
 
-Comparison evidence: `/private/tmp/reader-comparison.png` places the source and rendered revision together at 1280px width. Captures show the same memchr overview, light theme and expanded catalog. Full-page heights differ because the standalone toggle row was removed. Composition, wordmark, license, platform icons and feature hierarchy remain intact. The filter and dependency-code regions were also inspected at viewport scale. No P0/P1/P2 desktop differences remain beyond the requested changes.
+Implementation: `http://127.0.0.1:8817/packages/crates-io/regex/`. Main desktop CSS viewport measured 1280 × 720 at capture; the full document capture is 1280 pixels wide. Density is 1 image pixel per CSS pixel. The concept is a generated raster, not a CSS export. Both images are displayed at the same column width in the comparison board, preserving aspect ratio; the implementation column shows the corresponding top document region, with its additional real feature rows. No browser chrome or device frame is included.
 
-Mobile refinement: initial collapsed-state capture left the control detached above the package. Fixed by attaching it to the left panel edge and reserving heading space. Revised 390px capture (`preview-mobile.png`) shows the control alongside the heading without overlap. DOM check reports 390px document width at a 390px viewport. Expanded mobile filter controls were visually inspected too.
+Evidence directory: `/Users/danny/.codex/visualizations/2026/10/07/01a114f0-5381-7002-af6c-7808d5f046d9/incan-pub-built/qa/`.
 
-Functional checks: Apache-2.0 returns four dual-license packages; Unlicense returns memchr; reset restores all six. Collapse/show works. TOML source round-trips for all six embedded manifests and dependency snippets, including empty arrays, escaped HTML characters and array tables. Copy retains original plain source.
+- Full-view combined comparison: `comparison-final.png`, with the source and rendered document in the same input.
+- Focused combined metadata comparison: `comparison-focused.png`. Typography, authors, license and spacing are readable in this region. The additional charts follow below the source-matched metadata region.
+- Complete rendered document: `desktop-full.png`.
+- Browser-rendered preview: `preview.png` (also published at `assets/site/preview.png`).
+- Responsive captures: `tablet-final.png` (1024 × 768), `portrait.png` (768 × 1024), `mobile-final.png` (390 × 844), `mobile-install.png`, `mobile-dependencies-final.png`.
 
-Scale check: synthetic 10,000-record Node exercise verifies 50 rendered rows, next-page transitions and disabled next on the final page. Search suggestions are capped at eight. This is not an end-to-end mobile benchmark. Full manifests and assets are still embedded in the six-package prototype; production should fetch details on selection and build a compact metadata index from the Git-backed source. SPDX expressions should be parsed properly for production; the preview only token-matches its current simple license expressions.
+Responsive dimensions were verified using same-origin iframe CSS viewports, because the in-app browser retained its desktop root width when the viewport override was requested. Frame document widths and scroll widths matched at 1024, 768 and 390 pixels; tables scroll within their own regions. These are browser-rendered responsive tests, not physical iPad Safari testing.
 
-## Package context extension — October 7
+## Findings and comparison history
 
-final result: passed
+All actionable P0/P1/P2 findings have been fixed.
 
-Source: the previously approved reader capture at `/private/tmp/package-context-source.png`. The combined comparison `/private/tmp/package-context-comparison.png` opens the source and revised memchr overview together at 1280px width. Requested differences are author attribution and explicit upstream links near the heading, two new tabs, and a compact registry-download summary. Catalog layout, license placement, installation snippet, platform icons and feature hierarchy remain intact. Additional focused captures inspected the popularity metrics/graph and Tokio release history.
+1. **P2: Header/metadata alignment and repeated feature prose.** Initial combined comparison (`desktop-first.png` plus the source in `qa/compare.html`) showed metadata starting below the full-width package heading, wasting vertical room. Feature cells repeated long explanatory phrases. Moved the heading into the article column, aligned metadata with the title, and used declared feature notation with a deterministic legend and explicit optional activation. Removed repeated overview facts already available in metadata. Verified in `comparison-before-typography.png` and the final comparison.
+2. **P2: Quiet section hierarchy and small metadata.** The next combined comparison showed weak headings and small uppercase metadata labels compared with the concept. Restored serif metadata titles, increased main section titles, author/metadata value sizes and chart date labels. Final focused and full-view comparisons verify the correction.
+3. **P2: Small-text contrast.** The initial gold text/button color did not meet 4.5:1 for small text. Darkened the text/action gold to `#846124`, darkened secondary captions/table headers, and strengthened filter borders. Main text uses `#292b28`; muted text uses `#696d66` on `#faf8f3`. Keyboard focus is visible. Post-fix evidence is in `preview.png` and the responsive captures.
+4. **P2: Hidden table columns lacked a clear affordance on narrow screens.** `mobile-dependencies.png` showed activation outside the initial horizontal view. Added a scroll hint when a table actually overflows, kept table regions keyboard-focusable, and verified that keyboard scrolling reveals activation (`mobile-dependencies-final.png`, region scrollLeft 252, width 348, content width 600). Portrait tables that fit omit the hint.
 
-Initial narrow graph capture clipped the final x-axis date label (P2). Fix: align the first/last date labels toward the plot interior, and generate compact chart variants with fewer ticks and larger relative type for viewports at/below 1100px. Post-fix 390px capture is `preview-mobile.png`; it shows the complete final date. DOM verification reports document width 390px for a 390px viewport, and the compact chart is selected. Mobile tabs can scroll horizontally; ArrowRight reaches Popularity from Releases and End reaches Provenance. Release rows and notes fit the narrow panel.
+## Required fidelity surfaces
 
-Functional verification: both popularity sources switch; actual GHCR counts are independent of upstream crates.io counts; graph source, snapshot time and partial-day status remain visible. All six contexts have authors, matching selected-version crates.io links and the recorded GitHub source URL. Tokio shows a matching GitHub release note excerpt, upstream release date and separate adoption date. Missing note excerpts are explicit preview states. Totals were checked against saved daily data, which includes older crates.io version downloads; charts use those same records. Published source archives were checksum-verified before authors were read. Authorship, upstream uploader and adoption actor are kept separate in Provenance.
+- **Fonts/typography:** Georgia/Times-style serif display and section titles; system sans-serif for UI and prose; system monospace for declarations. The raster's exact font is unknown. Intentional compact type remains for exhaustive data tables; body documentation and metadata are readable at normal browser scale. Headings wrap and retain clear hierarchy.
+- **Spacing/layout:** Warm reading surface, broad article, narrow right metadata column, fine section dividers and a compact Add to project control. At portrait/phone widths metadata follows the main article and is reachable through a header shortcut. No page-level horizontal overflow.
+- **Colors/tokens:** Charcoal header and restrained gold with warm paper backgrounds follow the selected direction. Text/action colors were darkened for small-text contrast; the real quantitative chart color remains gold.
+- **Image/asset fidelity:** Official Incan wordmark plus a single `.pub`; existing sourced macOS/Linux/Windows icons. Gold chart assets are actual plots of frozen daily values, with checksummed files and source-separated labels. No invented artwork or image-generated chart curves. The concept's repository links are represented by clear service labels; the requested platform icons remain actual assets.
+- **Copy/content:** Author README excerpt and documentation replace the concept's invented overview prose. All declared features remain in initial HTML, so the document is longer than the concept's five-row illustration. Requirements, defaults, target conditions, upstream dates and Incan availability are distinguished. Real release notes are bundled for regex and tokio. Advisory coverage, report destinations and six-record dependent coverage have truthful unavailable/limited states. These are intentional data-contract changes.
 
-The data is a dated snapshot, not a scheduled or live analytics service. No Incan.pub registry/index data was changed. See `assets/package-context-sources.md` for sources and integration limits. Existing license filtering, TOML source-preservation and 50-row pagination checks still pass.
+## Interaction and data validation
+
+- License filter: Apache-2.0 → four records; Unlicense → memchr only.
+- Query regex → one record; direct-publication filter → truthful empty state; reset restores all six and clears query.
+- Package routes and assets checked for all six generated documents.
+- TOML dialog: syntax-highlighted exact snippet, successful copy feedback, accessible title, Escape dismissal and focus returned to Add to project.
+- Anchor navigation positions Dependencies below the sticky header; tables are contained and keyboard-scrollable.
+- Main sections are present in initial HTML. No tabs or package-content fetch are required.
+- Local Incan 0.5.1 build and seven Node test cases passed, including transitive defaults, weak forwarding, local cycles, target-specific dependencies, safe single-pass templates, scoped identities, frozen asset digests and byte-for-byte replay.
+- Standalone page console checked: no errors. The iframe automation harness emitted one MutationObserver message during frame navigation; that API is absent from the application scripts/templates. Standalone rendering and interactions were rechecked cleanly. This message was not ignored as application evidence.
+
+## Remaining scope and follow-up polish
+
+No remaining P0/P1/P2 visual findings. Physical iPad testing, Linux workflow execution, scalable catalog search, additional version documents, owner publishing, advisory ingestion and report submission are outside this six-package playground. The manual-only CI recipe has not been dispatched. No nightly collector is installed.
+
+Implementation checklist complete: layout, truthful data, sourced assets, compact install control, responsive containment, real plots, browser interactions, semantic checks, repeated render comparison and final screenshots.

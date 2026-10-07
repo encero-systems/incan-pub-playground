@@ -1,0 +1,45 @@
+"""Deterministic local feature expansion. Targets and resolved versions remain separate."""
+
+from std.json import JsonValue
+from values import entries, array, text
+
+
+pub def feature_paths(features: JsonValue) -> Result[Dict[str, str], str]:
+    table = entries(features)?
+    mut paths: Dict[str, str] = {}
+    mut pending: list[str] = []
+    if "default" in table:
+        paths["default"] = "default"
+        pending.append("default")
+    # Breadth-first paths, stable sorted edges. Cycles never re-enqueue a seen feature.
+    mut cursor = 0
+    while cursor < len(pending):
+        name = pending[cursor]
+        cursor += 1
+        mut edges: list[str] = []
+        for edge in array(table[name])?:
+            edges.append(text(edge)?)
+        for edge in sorted(edges):
+            if edge in table and not edge.contains("/") and not edge.startswith("dep:") and not (edge in paths):
+                paths[edge] = paths[name] + " → " + edge
+                pending.append(edge)
+    return Ok(paths)
+
+
+pub def activated_dependencies(features: JsonValue, paths: Dict[str, str]) -> Result[Dict[str, str], str]:
+    table = entries(features)?
+    mut active: Dict[str, str] = {}
+    mut names: list[str] = []
+    for name in paths.keys():
+        names.append(name)
+    for name in sorted(names):
+        for value in array(table[name])?:
+            edge = text(value)?
+            mut dependency = ""
+            if edge.startswith("dep:"):
+                dependency = edge[4:]
+            elif edge.contains("/") and not edge.contains("?/"):
+                dependency = edge.split("/")[0]
+            if len(dependency) > 0 and not (dependency in active):
+                active[dependency] = paths[name]
+    return Ok(active)

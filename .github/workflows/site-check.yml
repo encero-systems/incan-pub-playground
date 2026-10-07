@@ -1,0 +1,35 @@
+name: Check static package pages (manual)
+# Deliberately manual: collection stays on-machine and no new nightly budget is consumed.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    env:
+      RUSTUP_TOOLCHAIN: 1.98.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install the pinned Incan release
+        run: |
+          python3 -m venv "$RUNNER_TEMP/incan-venv"
+          curl --fail --location --silent --show-error \
+            https://github.com/encero-systems/incan/releases/download/v0.5.1/incan-0.5.1-py3-none-any.whl \
+            --output "$RUNNER_TEMP/incan-0.5.1-py3-none-any.whl"
+          printf '%s  %s\n' 2739a04cca1b9bc94e10175aeeddab7f9c4be5b28e7fcf980ea003d83d89ff86 \
+            "$RUNNER_TEMP/incan-0.5.1-py3-none-any.whl" | sha256sum --check
+          "$RUNNER_TEMP/incan-venv/bin/pip" install --no-deps "$RUNNER_TEMP/incan-0.5.1-py3-none-any.whl"
+          echo "$RUNNER_TEMP/incan-venv/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/incan-venv/bin/incan" --version
+          rustup toolchain install 1.98.0 --profile minimal
+      - name: Render and check the frozen snapshot
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+          npm run check
+          git diff --exit-code -- index.html packages/
