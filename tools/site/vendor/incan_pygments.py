@@ -55,5 +55,3 @@ class IncanLexer(PythonLexer):
                 yield index, Name.Class, value
                 continue
             yield index, token, value
-
-
