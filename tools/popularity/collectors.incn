@@ -1,0 +1,116 @@
+"""Independent collectors for structured crates.io data and GitHub's public HTML."""
+from std.json import JsonValue
+from std.datetime import Date
+from host import json
+from values import field, text, count, array, integer
+
+
+pub def days(counts: Dict[str, int], today: Date, include_today: bool) -> Result[list[JsonValue], str]:
+    mut out: list[JsonValue] = []
+    for offset in range(30):
+        mut relative = offset - 30
+        if include_today:
+            relative += 1
+        date = today.add_days(relative).isoformat()
+        if not (date in counts):
+            return Err(f"missing daily observation {date}")
+        out.append(JsonValue.object({"date": JsonValue.string(date), "downloads": JsonValue.int(counts[date])}))
+    return Ok(out)
+
+
+pub def period(daily: list[JsonValue]) -> Result[int, str]:
+    mut total = 0
+    for row in daily:
+        value = count(field(row, "downloads")?)?
+        if total > 9223372036854775807 - value:
+            return Err("daily sum overflow")
+        total += value
+    return Ok(total)
+
+
+pub def upstream(metadata: str, downloads: str, version: str, source: str, captured: str, today: Date) -> Result[JsonValue, str]:
+    package = json(metadata)?
+    mut selected: Option[int] = None
+    for release in array(field(package, "versions")?)?:
+        if text(field(release, "num")?)? == version:
+            selected = Some(count(field(release, "downloads")?)?)
+    mut version_count = 0
+    match selected:
+        Some(value) => version_count = value
+        None => return Err(f"selected upstream version {version} is missing")
+    payload = json(downloads)?
+    mut counts: Dict[str, int] = {}
+    # extra_downloads aggregates older versions omitted from version_downloads.
+    for key in ["version_downloads", "extra_downloads"]:
+        mut rows = field(payload, "version_downloads")?
+        if key == "extra_downloads":
+            rows = field(field(payload, "meta")?, key)?
+        for row in array(rows)?:
+            date = text(field(row, "date")?)?[0:10]
+            match Date.fromisoformat(date):
+                Err(error) => return Err(error.message())
+                Ok(_) => pass
+            value = count(field(row, "downloads")?)?
+            if (date in counts):
+                if counts[date] > 9223372036854775807 - value:
+                    return Err("daily aggregation overflow")
+                counts[date] += value
+            else:
+                counts[date] = value
+    daily = days(counts, today, false)?
+    return Ok(JsonValue.object({
+        "allTime": JsonValue.int(count(field(field(package, "crate")?, "downloads")?)?),
+        "selectedVersion": JsonValue.int(version_count),
+        "daily": JsonValue.array(daily),
+        "periodTotal": JsonValue.int(period(daily)?),
+        "completeDays": JsonValue.int(30),
+        "source": JsonValue.string(source),
+        "capturedAt": JsonValue.string(captured),
+    }))
+
+
+def between(value: str, start: str, end: str) -> Result[str, str]:
+    pieces = value.split(start)
+    if len(pieces) != 2:
+        return Err(f"expected exactly one {start}")
+    tail = pieces[1].split(end)
+    if len(tail) < 2:
+        return Err(f"missing {end}")
+    return Ok(tail[0])
+
+
+pub def registry(html: str, source: str, captured: str, today: Date) -> Result[JsonValue, str]:
+    totals = html.split("Total downloads</span>")
+    if len(totals) != 2:
+        return Err("GitHub total-downloads label changed or disappeared")
+    # Restrict extraction to the two adjacent summary elements.
+    summary = totals[1].split("</h3>")[0]
+    heading = summary.split("<h3 title=\"")
+    if len(heading) != 2:
+        return Err("GitHub total-downloads heading changed")
+    total = integer(heading[1].split("\"")[0])?
+    chart = between(html, "aria-label=\"Downloads for the last 30 days\">", "</svg>")?
+    mut counts: Dict[str, int] = {}
+    rectangles = chart.split("<rect")
+    if len(rectangles) != 31:
+        return Err("GitHub chart must contain exactly 30 daily bars")
+    for rectangle in rectangles[1:]:
+        tag = rectangle.split("></rect>")[0]
+        date = between(tag, "data-date=\"", "\"")?
+        match Date.fromisoformat(date):
+            Err(error) => return Err(error.message())
+            Ok(_) => pass
+        if (date in counts):
+            return Err(f"duplicate GitHub chart date {date}")
+        counts[date] = integer(between(tag, "data-merge-count=\"", "\"")?)?
+    daily = days(counts, today, true)?
+    recent = period(daily)?
+    if recent > total:
+        return Err("GitHub daily sum exceeds all-time total")
+    return Ok(JsonValue.object({
+        "total": JsonValue.int(total),
+        "daily": JsonValue.array(daily),
+        "periodTotal": JsonValue.int(recent),
+        "source": JsonValue.string(source),
+        "capturedAt": JsonValue.string(captured),
+    }))

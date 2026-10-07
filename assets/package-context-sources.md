@@ -1,6 +1,6 @@
 # Package context snapshot
 
-Captured October 7, 2026 for the six packages in this prototype. This is saved public data, not a live analytics integration or a scheduled collector. The production index was read at the commit each embedded package pins; it was not modified.
+Captured October 7, 2026 for the six packages in this prototype. This is saved public data. A one-shot Incan collector refreshed the popularity data at 10:29 UTC; no scheduled refresh has been enabled. See [the batch findings](../popularity-batch.html) and [collector documentation](../tools/popularity/README.md). The production index was read at the commit each embedded package pins; it was not modified.
 
 - Author credits come from `package.authors` in each selected version's published Cargo.toml. Source archives were checked against the crates.io checksum and the pinned Incan.pub adoption checksum. Display strips email addresses. Declared authors, the person who uploaded an upstream release, and the Incan.pub adoption actor are separate fields. The current Incan.pub `about` projection does not preserve authors.
 - Upstream release dates and versions come from crates.io's package API. Adoption dates and actors come from the pinned index events. Recent history includes upstream-only versions; an availability label is derived from directories present in that pinned index.

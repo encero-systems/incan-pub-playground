@@ -1,0 +1,160 @@
+"""One-shot popularity refresh. Usage: batch live|replay config seed output evidence."""
+from rust::std::env import args
+from rust::std::process import exit
+from std.fs import Path
+from std.json import JsonValue
+from std.datetime import Date, DateTime
+from host import run, read, json, write_json, mkdir
+from values import field, text, count, array, entries
+from collectors import upstream, registry
+
+const USER_AGENT: str = "incan-pub-popularity-batch/0.1 (https://github.com/encero-systems/incan-pub-playground)"
+
+
+def fetch(mode: str, evidence: str, name: str, kind: str, url: str) -> Result[str, str]:
+    base = f"{evidence}/{name}-{kind}"
+    if mode == "live":
+        # Deliberately one attempt per endpoint for this trial. No hidden curl retries.
+        # Wait before each crates.io request, including metadata and downloads.
+        if kind != "ghcr":
+            run("sleep", ["1"])?
+        stats = run("curl", [
+            "--silent", "--show-error", "--location", "--proto", "=https", "--proto-redir", "=https",
+            "--connect-timeout", "10", "--max-time", "30", "--max-filesize", "10000000",
+            "--user-agent", USER_AGENT, "--dump-header", base + ".headers",
+            "--output", base + ".body", "--write-out", "%{json}", url,
+        ])?
+        write_json(base + ".http.json", json(stats)?)?
+    stats = json(read(base + ".http.json")?)?
+    status = count(field(stats, "http_code")?)?
+    if status != 200:
+        return Err(f"HTTP {status}; snapshot retained (no retry in trial)")
+    return read(base + ".body")
+
+
+def collect_upstream(mode: str, evidence: str, name: str, version: str, captured: str, today: Date) -> Result[JsonValue, str]:
+    url = f"https://crates.io/api/v1/crates/{name}"
+    metadata = fetch(mode, evidence, name, "metadata", url)?
+    downloads = fetch(mode, evidence, name, "downloads", url + "/downloads")?
+    return upstream(metadata, downloads, version, url + "/downloads", captured, today)
+
+
+def collect_registry(mode: str, evidence: str, name: str, url: str, captured: str, today: Date) -> Result[JsonValue, str]:
+    html = fetch(mode, evidence, name, "ghcr", url)?
+    return registry(html, url, captured, today)
+
+
+def merge_history(previous: JsonValue, current: JsonValue) -> Result[JsonValue, str]:
+    mut indexed: Dict[str, JsonValue] = {}
+    for source in [previous, current]:
+        for row in array(field(source, "daily")?)?:
+            indexed[text(field(row, "date")?)?] = row
+    mut rows: list[JsonValue] = []
+    mut dates: list[str] = []
+    for date in indexed.keys():
+        dates.append(date)
+    for date in sorted(dates):
+        rows.append(indexed[date])
+    return Ok(JsonValue.object({"daily": JsonValue.array(rows)}))
+
+
+def stopped_upstream() -> Result[JsonValue, str]:
+    return Err("crates.io collection stopped after HTTP 429")
+
+
+def batch(mode: str, configuration: str, seed: str, output: str, evidence: str) -> Result[None, str]:
+    if mode != "live" and mode != "replay":
+        return Err("mode must be live or replay")
+    mkdir(output)?
+    mkdir(evidence)?
+    mut today = Date.utc_today()
+    mut captured = DateTime.utc_now().isoformat() + "Z"
+    if mode == "live":
+        write_json(evidence + "/batch.json", JsonValue.object({
+            "date": JsonValue.string(today.isoformat()), "startedAt": JsonValue.string(captured),
+        }))?
+    else:
+        timing = json(read(evidence + "/batch.json")?)?
+        captured = text(field(timing, "startedAt")?)?
+        match Date.fromisoformat(text(field(timing, "date")?)?):
+            Ok(date) => today = date
+            Err(error) => return Err(error.message())
+    config = array(json(read(configuration)?)?)?
+    mut contexts = entries(json(read(seed)?)?)?
+    mut histories: Dict[str, JsonValue] = {}
+    if Path(output + "/history.json").exists():
+        histories = entries(json(read(output + "/history.json")?)?)?
+    mut outcomes: list[JsonValue] = []
+    mut failures = 0
+    mut upstream_allowed = true
+    for package in config:
+        name = text(field(package, "name")?)?
+        version = text(field(package, "version")?)?
+        url = text(field(package, "registryUrl")?)?
+        if not (name in contexts):
+            return Err(f"seed is missing {name}")
+        mut context = entries(contexts[name])?
+        mut history: Dict[str, JsonValue] = {}
+        if (name in histories):
+            history = entries(histories[name])?
+        for source in ["crates.io", "ghcr"]:
+            mut key = "popularity"
+            if source == "ghcr":
+                key = "registry".to_string()
+            if not (key in context):
+                return Err(f"seed has no {source} statistics for {name}")
+            if not (source in history):
+                history[source] = JsonValue.object({"daily": field(context[key], "daily")?})
+            mut result: Result[JsonValue, str] = Ok(JsonValue.null())
+            if source == "crates.io":
+                if upstream_allowed:
+                    result = collect_upstream(mode, evidence, name, version, captured, today)
+                else:
+                    result = stopped_upstream()
+            else:
+                result = collect_registry(mode, evidence, name, url, captured, today)
+            mut outcome: Dict[str, JsonValue] = {
+                "package": JsonValue.string(name), "source": JsonValue.string(source),
+            }
+            match result:
+                Ok(value) =>
+                    history[source] = merge_history(history[source], value)?
+                    context[key] = value
+                    outcome["status"] = JsonValue.string("refreshed")
+                    outcome["periodTotal"] = field(value, "periodTotal")?
+                    println(f"{name} {source}: refreshed")
+                Err(error) =>
+                    failures += 1
+                    if source == "crates.io" and error.contains("HTTP 429"):
+                        upstream_allowed = false
+                    outcome["status"] = JsonValue.string("retained")
+                    outcome["error"] = JsonValue.string(error)
+                    println(f"{name} {source}: retained — {error}")
+            outcome["capturedAt"] = field(context[key], "capturedAt")?
+            outcomes.append(JsonValue.object(outcome))
+        contexts[name] = JsonValue.object(context)
+        histories[name] = JsonValue.object(history)
+    write_json(output + "/package-context.json", JsonValue.object(contexts))?
+    write_json(output + "/history.json", JsonValue.object(histories))?
+    write_json(output + "/report.json", JsonValue.object({
+        "mode": JsonValue.string(mode), "startedAt": JsonValue.string(captured),
+        "finishedAt": JsonValue.string(DateTime.utc_now().isoformat() + "Z"),
+        "date": JsonValue.string(today.isoformat()), "packages": JsonValue.int(len(config)),
+        "failures": JsonValue.int(failures), "outcomes": JsonValue.array(outcomes),
+    }))?
+    println(f"Finished: {len(config)} packages; {failures} sources retained")
+    return Ok(None)
+
+
+def main() -> None:
+    mut arguments: list[str] = []
+    for argument in args():
+        arguments.append(argument)
+    if len(arguments) != 6:
+        println("Usage: batch live|replay packages.json seed.json output-directory evidence-directory")
+        exit(2)
+    match batch(arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]):
+        Ok(_) => pass
+        Err(error) =>
+            println(f"Batch failed: {error}")
+            exit(1)

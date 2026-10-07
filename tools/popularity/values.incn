@@ -1,0 +1,53 @@
+"""Strict JSON extraction: malformed statistics never become zero."""
+from std.json import JsonValue
+
+
+pub def field(value: JsonValue, key: str) -> Result[JsonValue, str]:
+    match value.get(key):
+        Some(item) => return Ok(item)
+        None => return Err(f"missing {key}")
+
+
+pub def text(value: JsonValue) -> Result[str, str]:
+    match value.as_str():
+        Some(item) => return Ok(item)
+        None => return Err("expected string")
+
+
+pub def count(value: JsonValue) -> Result[int, str]:
+    match value.as_int():
+        Some(item) =>
+            if item < 0:
+                return Err("negative download count")
+            return Ok(item)
+        None => return Err("expected integer download count")
+
+
+pub def array(value: JsonValue) -> Result[list[JsonValue], str]:
+    match value.as_array():
+        Some(items) => return Ok(items)
+        None => return Err("expected array")
+
+
+pub def entries(value: JsonValue) -> Result[Dict[str, JsonValue], str]:
+    if not value.is_object():
+        return Err("expected object")
+    mut out: Dict[str, JsonValue] = {}
+    for key in value.keys():
+        out[key] = field(value, key)?
+    return Ok(out)
+
+
+pub def integer(value: str) -> Result[int, str]:
+    if len(value) == 0:
+        return Err("empty integer")
+    mut result = 0
+    for digit in value:
+        if not "0123456789".contains(digit):
+            return Err("invalid integer")
+        # Stay within Incan's signed integer representation before multiplying.
+        if result > 922337203685477580 or (result == 922337203685477580 and "89".contains(digit)):
+            return Err("integer overflow")
+        digits: Dict[str, int] = {"0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9}
+        result = result * 10 + digits[digit]
+    return Ok(result)
