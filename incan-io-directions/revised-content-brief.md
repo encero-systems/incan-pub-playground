@@ -1,18 +1,20 @@
 # Incan.io: selected workshop direction, revised for 0.6
 
-Option 2 was selected on 2026-10-07. This revision preserves its dark workshop hero, warm brass, editorial lower sections, official wordmark, Brawler headings and Exo 2 body type. It replaces the earlier generated-Rust story and restores Incus. This is a static visual proposal, not a production homepage or evidence that the 0.6 cutover has shipped.
+Option 2 was selected on 2026-10-07. This revision preserves its dark workshop hero, warm brass, editorial lower sections, official wordmark, Brawler headings and Exo 2 body type. It introduces Incan on its own terms, replaces the earlier generated-Rust story and retains Incus. This is a static visual proposal, not a production homepage or evidence that the 0.6 cutover has shipped.
 
 ## The story
 
-**Python-readable. Native by design.**
+**Clear code. Native by design.**
 
-A statically typed language for clear application code. Compiler-planned ownership, native programs, and the Rust ecosystem.
+Incan combines expressive syntax, static types, and compiler-planned ownership for native software.
+
+The headline and primary definition describe Incan itself. Language comparisons belong in deeper documentation. Rust ecosystem access and interop are supporting capabilities, explained alongside Oven and the 0.6 compiler direction rather than defining Incan by another language.
 
 Show actual Incan source immediately. Offer **Try Incan** and **Read the language guide**, then three practical entry points: a first application, a typed data workflow and a reusable library.
 
 The next section is explicitly labeled **0.6 · In development**:
 
-**Two languages. One native foundation.**
+**One coherent native toolchain.**
 
 Incan owns the meaning of your code. The 0.6 compiler will lower it directly through rustc, while Oven plans builds for Incan, Rust, and mixed projects.
 
