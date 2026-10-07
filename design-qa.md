@@ -1,11 +1,8 @@
-# Design QA
+# Catalogue design QA
 
 final result: passed
 
-Target: option 1, refined with approved larger typography, gold accents, license and progressive disclosure.
-Compared options/option-1.png with the implementation at 1488 x 1058 in a combined image.
-Retains warm light surface, dark header and full-width dependency snippet, with overview and build summary below.
-Intentional changes: correct loaf.toml instruction, no duplicated version or index pin, license beside version, tabs above the primary content, supplied icons instead of generated OS graphics.
-No unresolved P0/P1/P2 issues in this approved refinement. P3: further typography polish can follow user feedback.
-
-Browser verification: dependency copy produced success; Builds tab switched panels; selecting Linux changed the recorded unit and package location; license link expanded the registry disclosure. At 390 x 844 the page measured 390 px wide with no horizontal overflow. Desktop and mobile screenshots inspected.
+Six real packages share the accepted light package-page treatment: warm surface, official logo, compact install block, two-column overview/build summary, declared features and progressive disclosure.
+Desktop catalogue screenshot inspected. serde_json detail inspected at 390 x 844; scroll width equals viewport width. No unresolved P0/P1/P2 layout problems observed.
+Verified catalogue text filtering, category filtering, navigation into Tokio, dependency copy success, Builds tab bindings and return to browsing. Source data uses exact subject/version matches against adoption events and current indexed manifests/assets. Snapshot 65d45e9e40ab2f5a04a67788dc2282b349e3f8d8.
+This is a six-package static browsing prototype, not a live registry frontend.
