@@ -22,13 +22,13 @@ async function renderFixture(packages) {
 test('all six pages contain their main content in initial HTML, with valid local links and assets',async()=>{
  for(const p of input.packages){
   const path=resolve(`packages/${p.id}/index.html`); const html=await readFile(path,'utf8');
-  for(const id of ['overview','features','dependencies','dependents','builds','releases','popularity','readme','security','provenance']) assert.ok(section(html,id),`${p.id}: ${id}`);
-  assert.ok(section(html,'readme').length>500); assert.doesNotMatch(section(html,'overview'), /&lt;img|TokioConf/); assert.doesNotMatch(html,/role="tabpanel"|\{\{(?:name|features|dependencies)\}\}/);
+  for(const id of ['features','dependencies','dependents','builds','releases','popularity','readme','security','provenance']) assert.ok(section(html,id),`${p.id}: ${id}`);
+  assert.ok(section(html,'readme').length>500); assert.ok(html.indexOf('<section id="readme">') < html.indexOf('<section id="features">')); assert.doesNotMatch(html, /id="overview"/); assert.equal([...html.matchAll(/<h1\b/g)].length, 1); assert.doesNotMatch(html,/role="tabpanel"|\{\{(?:name|features|dependencies)\}\}/);
   const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));
   for(const [,url] of html.matchAll(/(?:href|src)="([^"]+)"/g)){
    if(url.startsWith('#')){assert.ok(ids.has(url.slice(1)),`${p.id}: missing ${url}`);continue;}
    if(/^(?:https?:|mailto:|\/\/)/.test(url))continue;
-   const file=resolve(dirname(path),url.split('#')[0]); await access(file.endsWith('/')?join(file,'index.html'):file);
+   const file=resolve(dirname(path),url.split(/[?#]/)[0]); await access(file.endsWith('/')?join(file,'index.html'):file);
   }
   assert.doesNotMatch(section(html,'readme'),/<img\b/); // No mutable badges or remote image requests.
  }

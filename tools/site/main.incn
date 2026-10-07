@@ -118,7 +118,11 @@ def clean_prose(html: str) -> str:
 
 
 def prepare_readme(html: str, repository: str, commit: str, path: str) -> str:
-    clean = clean_documentation_html(html)
+    mut clean = clean_documentation_html(html)
+    # Embedded author headings follow the enclosing section without adding H1s.
+    for level in [6, 5, 4, 3, 2, 1]:
+        nested = min([level + 2, 6])
+        clean = clean.replace("<h" + str(level), "<h" + str(nested)).replace("</h" + str(level) + ">", "</h" + str(nested) + ">")
     links = clean.split("<a href=\"")
     mut result = links[0]
     parts = path.split("/")
@@ -135,23 +139,6 @@ def prepare_readme(html: str, repository: str, commit: str, path: str) -> str:
             url = prefix + url
         result = result + "<a href=\"" + url + "\"" + "\"".join(pieces[1:])
     return result
-
-
-def first_paragraph(html: str) -> str:
-    headings = html.split("</h1>")
-    mut content = html
-    if len(headings) > 1:
-        content = "</h1>".join(headings[1:])
-    paragraphs = content.split("<p>")
-    for paragraph in paragraphs[1:]:
-        body = paragraph.split("</p>")[0]
-        chunks = body.split("<")
-        mut plain = chunks[0]
-        for chunk in chunks[1:]:
-            plain = plain + ">".join(chunk.split(">")[1:])
-        if len(plain) > 50 and not body.contains("&lt;img"):
-            return "<p>" + body + "</p>"
-    return "<p>See the author-provided README below.</p>"
 
 
 def feature_rows(package: JsonValue) -> Result[str, str]:
@@ -424,7 +411,7 @@ def template_page(package: JsonValue, packages: list[JsonValue], template: str) 
         packages,
     )?, "dependents": dependents(package, packages)?, "builds": build_rows(package)?, "platforms": platform_rows(package)?, "releases": release_rows(
         context,
-    )?, "releaseNotes": notes, "readme": readme, "overview": first_paragraph(readme), "snapshot": esc(snapshot[0:10]), "upstreamWindow": date_range(
+    )?, "releaseNotes": notes, "readme": readme, "snapshot": esc(snapshot[0:10]), "upstreamWindow": date_range(
         popularity,
     )?, "registryWindow": date_range(registry)?, "upstreamDays": str(count(field(popularity, "completeDays")?)?), "upstreamFirst": first_date(
         popularity,
@@ -527,5 +514,4 @@ def main() -> None:
             println("Site build failed: " + error)
             exit(1)
     # Resolve relative source links at the exact commit recorded inside the crate.
-    # Start after the first title: pre-title announcements are not the package overview.
     # Expand each template token once; source text can contain literal {{tokens}}.

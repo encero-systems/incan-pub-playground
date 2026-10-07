@@ -57,6 +57,7 @@ if (anchors.length && 'IntersectionObserver' in window) {
       if (entry.isIntersecting) visible.add(entry.target.id); else visible.delete(entry.target.id);
     }
     const current = sections.find(section => visible.has(section.id));
+    if (!current) return;
     for (const anchor of anchors) {
       const active = current && anchor.hash === '#' + current.id;
       anchor.classList.toggle('active', Boolean(active));
