@@ -1,8 +1,7 @@
-# Catalog design QA
+# Context reader QA
 
 final result: passed
 
-Six real packages share the accepted light package-page treatment: warm surface, official logo, compact install block, two-column overview/build summary, declared features and progressive disclosure.
-Desktop catalog screenshot inspected. serde_json detail inspected at 390 x 844; scroll width equals viewport width. No unresolved P0/P1/P2 layout problems observed.
-Verified catalog text filtering, category filtering, navigation into Tokio, dependency copy success, Builds tab bindings and return to browsing. Source data uses exact subject/version matches against adoption events and current indexed manifests/assets. Snapshot 65d45e9e40ab2f5a04a67788dc2282b349e3f8d8.
-This is a six-package static browsing prototype, not a live registry frontend.
+Selected target: catalog option 4, with user-approved collapsible catalog and compact mobile list. Official Incan wordmark followed by .pub. Six real adopted packages retain indexed licenses, features, dependencies and build bindings.
+Browser checked expanded/collapsed catalog states and mobile selection into serde_json. At 390px viewport, document width is 390px. Selected package remains in the same context reader. No separate full package link. Filters retained in session state.
+Desktop screenshot: preview.png. Intentional refinement: collapsible catalog instead of separate full package navigation; tabbed deep build/provenance inspection retained.
