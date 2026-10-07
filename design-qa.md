@@ -32,4 +32,14 @@ Reference deviations already requested by the user remain: smaller `.pub`, compa
 
 No unresolved P0/P1/P2 findings in this correction scope.
 
+## Button legibility follow-up
+
+[P2, fixed] User feedback identified the light label competing with the brightest areas of the brass install button. Source for this scoped correction is the approved current page in `assets/site/forge-continuous-preview.png`; its brighter button is intentionally overridden by this feedback.
+
+The existing raster is now multiplied against `#785923`, retaining its texture while reducing fill luminance. The label is opaque white, Exo 2 semibold (600 rather than 500); plus icon opacity is 1. Label, padding, radius, border, placement and action remain unchanged. White against even the maximum possible multiplied fill has a calculated contrast of 6.46:1 (sRGB relative luminance); this is a fill-color bound, not an antialiasing measurement or a claim about the decorative border.
+
+Post-fix render: `assets/site/forge-button-readable-preview.png`, 1487 × 1058 CSS/pixel dimensions, density 1, regex initial state, loaded fonts, closed dialog. Opened and inspected both source and revised render, then the same-image full-view `qa/button-readable-comparison.jpg` and focused `qa/button-readable-detail.jpg`. Earlier bright-fill finding is resolved; the gold frame and continuous masthead remain intact.
+
+Required surfaces: font family/size unchanged with stronger label weight; spacing and overall layout preserved (button widens slightly with semibold glyphs); colors now provide stronger text contrast; supplied raster/icon assets stay sharp; all copy and package content preserved. Settled browser captures at 1280 × 860 and 390 × 844 show readable labels and no page-wide overflow. Early captures during viewport resizing were replaced with settled captures. Narrow button opens the correct install dialog and Close dismisses it; browser console captured no errors. Responsive browser checks only, not physical iPadOS testing.
+
 final result: passed
