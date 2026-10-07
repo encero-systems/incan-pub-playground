@@ -5,6 +5,9 @@ The Incan renderer builds the catalog and six vertical, anchored package documen
 From the repository root, with Incan **0.5.1**, Rust **1.98.0**, and Node/npm installed:
 
 ```sh
+python3 -m venv tools/site/target/highlight-venv
+source tools/site/target/highlight-venv/bin/activate
+python3 -m pip install -r tools/site/requirements.txt
 npm ci --ignore-scripts --no-audit --no-fund
 npm run build
 npm run check
@@ -36,3 +39,9 @@ The separate on-machine collector remains in `tools/popularity/`. No nightly col
 The catalog and dependents cover six records, not the entire index. All six latest versions have a detail document; older history rows link to upstream entries rather than reuse the current version's build data. Matching changelog sections are bundled for regex and tokio, extracted deterministically from their verified crate archives; other packages show a truthful unavailable state. Security advisory feeds are not bundled. Abuse and vulnerability dialogs clearly state that no registry reporting destination is configured; they send nothing.
 
 For thousands of packages, retain one document per scoped identity/version and fetch only the requested page. Replace this six-row client filter with a compact search index and pagination; do not embed the entire registry's manifests and asset records into the catalog. Production snapshot admission, scalable search, additional version documents, owner publishing and trusted edition relationships are outside this playground.
+
+## Code highlighting
+
+Rust (`rust`, `rs`, and rustdoc flags such as `rust,no_run`), Incan (`incan`, `incn`) and TOML fences are highlighted at build time by Pygments 2.19.2. The complete recorded manifest is also highlighted; the compact install snippet retains its existing TOML colors and exact copy text. Incan uses the pinned documentation lexer and registry token snapshot in `vendor/`; no language autodetection is performed, and unsupported/unlabelled blocks remain plain text. Only the trusted bundled lexer is executable; package language labels never become paths or commands. Token colors are scoped to code blocks. Code bytes and HTML escaping are checked in fixtures, and no browser highlighter, extra script or live highlighting service is required.
+
+Documentation preprocessing hides HTML comments in prose, including multiline comments. Literal HTML/comment text inside inline or fenced code remains visible; raw author HTML is still disabled. This also keeps literal `<img>` and `<br>` examples intact while removing live badges outside code.

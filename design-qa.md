@@ -53,3 +53,9 @@ Implementation checklist complete: layout, truthful data, sourced assets, compac
 ## Incan.io font alignment
 
 User-requested follow-up: adopted the live [Incan.io font pack](https://incan.io/shared/incapunk/incapunk.css) (Brawler 400/700, Exo 2 300–800) and its monospace fallback stack. Both templates load the same Google Fonts families with swap and preconnects. The official wordmark remains an image. Font loading, layout containment and a new browser preview were checked after the change.
+
+## Syntax highlighting and documentation comments
+
+Rust, Incan and TOML now render with token spans in initial HTML, using pinned Pygments 2.19.2 and a frozen copy of Incan's documentation lexer/token registry. The full recorded loaf.toml is highlighted alongside fenced Rust/TOML examples. Existing install-snippet highlighting/copy behavior is retained. Colors are scoped to code and fit the charcoal/gold palette; screenshots are published at `assets/site/syntax-rust-preview.png` and `assets/site/syntax-toml-preview.png`.
+
+Nine local checks pass, including exact preservation of code text, Rust raw strings/lifetimes and rustdoc flags, Incan keywords/decorators/operators and aliases, TOML, safe markup escaping and unknown-language fallback. HTML comments in prose are suppressed without enabling raw HTML. Literal markup/comments inside inline and fenced code are preserved. Serde's leaked editorial comment is absent in the rendered document. Rust examples and the expanded recorded TOML were inspected in the browser. The manual workflow installs the pinned highlighter but has not been dispatched.

@@ -7,6 +7,7 @@ from std.json import JsonValue
 from host import read, json, mkdir, run
 from values import field, text, array, entries, count
 from features import feature_paths, activated_dependencies
+from highlighting import highlight_blocks
 
 
 def value(item: JsonValue, key: str) -> Result[str, str]:
@@ -73,9 +74,31 @@ def effect(edge: str) -> str:
     return "<a href=\"#feature-" + esc(edge) + "\"><code>" + esc(edge) + "</code></a>"
 
 
-def prepare_readme(html: str, repository: str, commit: str, path: str) -> str:
+def remove_prose_comments(html: str) -> str:
+    chunks = html.split("&lt;!--")
+    mut result = chunks[0]
+    for chunk in chunks[1:]:
+        parts = chunk.split("--&gt;")
+        if len(parts) > 1:
+            result = result + "--&gt;".join(parts[1:])
+        else:
+            result = result + "&lt;!--" + chunk
+    return result
+
+
+def clean_documentation_html(html: str) -> str:
+    # Preserve literal markup in fenced and inline code examples.
+    chunks = html.split("<code")
+    mut result = clean_prose(chunks[0])
+    for chunk in chunks[1:]:
+        parts = chunk.split("</code>")
+        result = result + "<code" + parts[0] + "</code>" + clean_prose("</code>".join(parts[1:]))
+    return result
+
+
+def clean_prose(html: str) -> str:
     # Suppress live badge/image requests; keep the author-provided alternate text.
-    images = html.split("<img ")
+    images = remove_prose_comments(html).split("<img ")
     mut clean = images[0]
     for image in images[1:]:
         parts = image.split(">")
@@ -91,7 +114,11 @@ def prepare_readme(html: str, repository: str, commit: str, path: str) -> str:
         if len(alt) > 1:
             clean = clean + alt[1].split("&quot;")[0]
         clean = clean + "&gt;".join(parts[1:])
-    clean = clean.replace("&lt;br&gt;", "<br>")
+    return clean.replace("&lt;br&gt;", "<br>")
+
+
+def prepare_readme(html: str, repository: str, commit: str, path: str) -> str:
+    clean = clean_documentation_html(html)
     links = clean.split("<a href=\"")
     mut result = links[0]
     parts = path.split("/")
@@ -427,7 +454,7 @@ def template_page(package: JsonValue, packages: list[JsonValue], template: str) 
             return Err("unknown package template token")
         page = page + replacements[pieces[0]] + "}}".join(pieces[1:])
 
-    return Ok(page)
+    return highlight_blocks(page)
 
 
 def catalog_rows(packages: list[JsonValue]) -> Result[str, str]:
@@ -480,6 +507,14 @@ def build(input: str, output: str, templates: str) -> Result[None, str]:
 
 
 def main() -> None:
+    match run("python3", ["-m", "pygments", "-V"]):
+        Ok(version) =>
+            if not version.startswith("Pygments version 2.19.2,"):
+                println("Site build requires Pygments 2.19.2; install tools/site/requirements.txt")
+                exit(1)
+        Err(error) =>
+            println("Site build requires Pygments 2.19.2: " + error)
+            exit(1)
     mut arguments: list[str] = []
     for argument in args():
         arguments.append(argument)

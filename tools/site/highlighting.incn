@@ -1,0 +1,62 @@
+"""Build-time highlighting with pinned lexers; preserve unknown languages as plain text."""
+
+from rust::std::env import temp_dir
+from rust::std::process import id as process_id
+from std.fs import Path
+from host import run
+
+
+def decode_code(text: str) -> str:
+    # Markdown-it escapes these five entities in code. Decode ampersands last.
+    return text
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&amp;", "&")
+
+
+def highlight_code(encoded: str, language: str) -> Result[str, str]:
+    mut arguments = ["-m", "pygments"]
+    if language == "incan":
+        arguments.extend(["-x", "-l", "tools/site/vendor/incan_pygments.py:IncanLexer"])
+    else:
+        arguments.extend(["-l", language])
+    arguments.extend(["-f", "html", "-O", "nowrap=True,stripnl=False,ensurenl=False,encoding=utf-8"])
+    temporary = temp_dir().join(f"incan-pub-highlight-{process_id()}.txt").to_string_lossy().to_string()
+    match Path(temporary).write_text(decode_code(encoded), "utf-8", "strict", None):
+        Err(error) => return Err(error.message())
+        Ok(_) => pass
+    arguments.append(temporary)
+    highlighted = run("python3", arguments)
+    match Path(temporary).unlink():
+        Err(error) => return Err(error.message())
+        Ok(_) => pass
+    return highlighted
+
+
+def language_for(label: str) -> str:
+    language = label.split(",")[0]
+    if language == "rs":
+        return "rust"
+    if language == "incn":
+        return "incan"
+    return language
+
+
+pub def highlight_blocks(html: str) -> Result[str, str]:
+    blocks = html.split("<code class=\"language-")
+    mut result = blocks[0]
+    for block in blocks[1:]:
+        header = block.split("\">")
+        label = header[0]
+        body = "\">".join(header[1:])
+        parts = body.split("</code>")
+        language = language_for(label)
+        if language == "rust" or language == "incan" or language == "toml":
+            code = highlight_code(parts[0], language)?
+            result = result + "<code class=\"syntax-highlight language-" + label + "\">" + code
+        else:
+            result = result + "<code class=\"language-" + label + "\">" + parts[0]
+        result = result + "</code>" + "</code>".join(parts[1:])
+    return Ok(result)

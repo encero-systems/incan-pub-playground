@@ -74,3 +74,61 @@ test('bundled documentation and quantitative chart assets match their frozen dig
   assert.equal(p.context.registry.daily.reduce((n,r)=>n+r.downloads,0),p.context.registry.periodTotal);
  }
 });
+
+function codeText(html) {
+ return html.replace(/<span\b[^>]*>/g,'').replace(/<\/span>/g,'')
+  .replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replaceAll('&#39;',"'").replaceAll('&amp;','&');
+}
+test('Rust, Incan and TOML are highlighted without changing code or interpreting markup',async()=>{
+ const fixtures=[
+  ['rust,no_run',String.raw`// A lifetime and raw regex string.
+fn borrow<'a>(text: &'a str) -> &'a str {
+    let pattern = r#"(?P<name>\w+)"#;
+    text
+}
+`],
+  ['incan',`@derive(Serialize)
+pub async def example() -> Result[str, str]:
+    mut text = "Hello <script> &lt; & world"
+    match Ok(text):
+        Ok(value) => return Ok(value)?
+        Err(error) => return Err(error)
+`],
+  ['incn','model Greeting:\n    message: str\n'],
+  ['rs','let answer: u32 = 42;\n'],
+  ['toml','# Exact version\n[dependencies]\nregex = { loaf = "crates-io/regex", version = "=1.13.1" }\n'],
+  ['not-a-lexer','<img src=x onerror=alert(1)> &lt;\n'],
+  ['text','cargo add regex\n']
+ ];
+ const dir=await mkdtemp(join(tmpdir(),'incan-code-fixture-'));const source=join(dir,'README.md');
+ await writeFile(source,'# Fixture\n\n'+fixtures.map(([lang,code])=>'```'+lang+'\n'+code+'```\n').join('\n'));
+ const p=structuredClone(input.packages.find(p=>p.name==='regex'));p.readmePath=source;
+ const {output,run}=await renderFixture([p]);assert.equal(run.status,0,run.stdout+run.stderr);
+ const html=await readFile(join(output,`packages/${p.id}/index.html`),'utf8');const readme=section(html,'readme');
+ const blocks=[...readme.matchAll(/<pre[^>]*><code class="([^"]+)">([\s\S]*?)<\/code><\/pre>/g)];
+ assert.equal(blocks.length,fixtures.length);
+ for(let i=0;i<fixtures.length;i++){
+  assert.equal(codeText(blocks[i][2]),fixtures[i][1],fixtures[i][0]);
+  if(i<5)assert.match(blocks[i][2],/<span class="[a-z0-9]+">/);
+  else assert.doesNotMatch(blocks[i][2],/<span/);
+ }
+ assert.match(blocks[1][2],/<span class="k">pub<\/span>/);assert.match(blocks[1][2],/<span class="k">mut<\/span>/);
+ assert.match(blocks[2][2],/<span class="k">model<\/span>/);assert.match(blocks[1][2],/<span class="o">\?<\/span>/);
+ assert.doesNotMatch(readme,/<script>|<img\b/);
+ const manifest=section(html,'provenance').match(/<pre class="manifest"><code class="syntax-highlight language-toml">([\s\S]*?)<\/code><\/pre>/);
+ assert.ok(manifest);assert.equal(codeText(manifest[1]),p.manifest);
+ for(const name of ['regex','tokio','serde_json'])assert.match(section(await htmlFor(name),'readme'),/syntax-highlight language-rust/);
+});
+
+test('HTML comments stay hidden in prose but remain literal in fenced and inline code',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'incan-comment-fixture-'));const source=join(dir,'README.md');
+ await writeFile(source,'# Fixture\n\n<!-- private editorial comment -->\n\nVisible before <!-- inline editorial comment --> and after.\n\n<!-- multiline\neditorial comment -->\n\n`<!-- literal inline example -->`\n\n```rust\nlet html = "<!-- literal fenced example -->";\n```\n');
+ const p=structuredClone(input.packages[0]);p.readmePath=source;
+ const {output,run}=await renderFixture([p]);assert.equal(run.status,0,run.stdout+run.stderr);
+ const html=await readFile(join(output,`packages/${p.id}/index.html`),'utf8');const readme=section(html,'readme');
+ assert.doesNotMatch(readme,/editorial comment|private editorial/);
+ assert.match(readme,/Visible before  and after/);
+ assert.match(readme,/<code>&lt;!-- literal inline example --&gt;<\/code>/);
+ assert.match(codeText(readme),/<!-- literal fenced example -->/);
+ assert.doesNotMatch(section(await htmlFor('serde'),'readme'),/Serde readme rendered on crates.io/);
+});
