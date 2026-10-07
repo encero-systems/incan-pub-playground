@@ -59,3 +59,9 @@ User-requested follow-up: adopted the live [Incan.io font pack](https://incan.io
 Rust, Incan and TOML now render with token spans in initial HTML, using pinned Pygments 2.19.2 and a frozen copy of Incan's documentation lexer/token registry. The full recorded loaf.toml is highlighted alongside fenced Rust/TOML examples. Existing install-snippet highlighting/copy behavior is retained. Colors are scoped to code and fit the charcoal/gold palette; screenshots are published at `assets/site/syntax-rust-preview.png` and `assets/site/syntax-toml-preview.png`.
 
 Nine local checks pass, including exact preservation of code text, Rust raw strings/lifetimes and rustdoc flags, Incan keywords/decorators/operators and aliases, TOML, safe markup escaping and unknown-language fallback. HTML comments in prose are suppressed without enabling raw HTML. Literal markup/comments inside inline and fenced code are preserved. Serde's leaked editorial comment is absent in the rendered document. Rust examples and the expanded recorded TOML were inspected in the browser. The manual workflow installs the pinned highlighter but has not been dispatched.
+
+## Catalog row interaction
+
+The existing native package link now covers its entire table row, including description, version, license and whitespace, through a positioned CSS pseudo-element. Table semantics and one link per package are retained. Keyboard focus highlights and outlines the complete row; Enter follows the package link. No additional JavaScript is required.
+
+Browser checks passed for description and license clicks, keyboard activation, tablet-width description clicks, and phone-width filtered description clicks. Responsive harnesses used 768px and 390px iframe widths, with no page-level horizontal overflow. These checks used the desktop browser; physical iPad testing remains pending. All nine local checks passed. The full-row keyboard-focus preview is published at `assets/site/catalog-row-preview.png`.
