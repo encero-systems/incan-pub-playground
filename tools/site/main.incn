@@ -508,10 +508,17 @@ def starter_pool(packages: list[JsonValue]) -> Result[str, str]:
     return Ok(join_text(cards))
 
 
+def render_header(template: str, root: str, in_catalog: bool) -> str:
+    if in_catalog:
+        return template.replace("{{root}}", root).replace("{{current}}", " aria-current=\"page\"")
+    return template.replace("{{root}}", root).replace("{{current}}", "")
+
+
 def build(input: str, output: str, templates: str) -> Result[None, str]:
     root = json(read(input)?)?
     packages = array(field(root, "packages")?)?
-    package_template = read(templates + "/package.html")?
+    header_template = read(templates + "/header.html")?
+    package_template = read(templates + "/package.html")?.replace("{{header}}", render_header(header_template, "../../../", false))
     mut names: list[str] = []
     for package in packages:
         id = value(package, "id")?
@@ -532,11 +539,13 @@ def build(input: str, output: str, templates: str) -> Result[None, str]:
         mkdir(directory)?
         write(directory + "/index.html", template_page(package, packages, package_template)?)?
         println("Rendered " + id)
-    catalog = read(templates + "/catalog.html")?.replace("{{packages}}", catalog_rows(packages)?)
+    catalog_template = read(templates + "/catalog.html")?.replace("{{header}}", render_header(header_template, "../", true))
+    catalog = catalog_template.replace("{{packages}}", catalog_rows(packages)?)
     mkdir(output + "/catalog")?
     write(output + "/catalog/index.html", catalog)?
     # Split first so author metadata containing template-like text stays literal.
-    home_parts = read(templates + "/home.html")?.split("{{packages}}")
+    home_template = read(templates + "/home.html")?.replace("{{header}}", render_header(header_template, "./", false))
+    home_parts = home_template.split("{{packages}}")
     if len(home_parts) != 3:
         return Err("homepage requires two package projection slots")
     homepage = home_parts[0] + starter_cards(packages)? + home_parts[1] + starter_pool(packages)? + home_parts[2]

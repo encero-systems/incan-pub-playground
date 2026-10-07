@@ -75,3 +75,13 @@ function updateTableHints() {
 updateTableHints();
 window.addEventListener('resize', updateTableHints);
 window.addEventListener('load', updateTableHints);
+
+// The shared search disclosure overlays content, keeping header geometry fixed.
+const headerSearch = document.querySelector('.header-search');
+if (headerSearch) {
+  headerSearch.addEventListener('toggle', () => {if (headerSearch.open) headerSearch.querySelector('input').focus();});
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && headerSearch.open) {headerSearch.open = false; headerSearch.querySelector('summary').focus();}
+  });
+  document.addEventListener('click', event => {if (!headerSearch.contains(event.target)) headerSearch.open = false;});
+}
