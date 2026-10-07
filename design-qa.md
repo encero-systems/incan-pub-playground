@@ -27,7 +27,7 @@ All actionable P0/P1/P2 findings have been fixed.
 
 ## Required fidelity surfaces
 
-- **Fonts/typography:** Georgia/Times-style serif display and section titles; system sans-serif for UI and prose; system monospace for declarations. The raster's exact font is unknown. Intentional compact type remains for exhaustive data tables; body documentation and metadata are readable at normal browser scale. Headings wrap and retain clear hierarchy.
+- **Fonts/typography:** Brawler display and section titles; Exo 2 for UI and prose; the same monospace fallback stack as Incan.io for declarations. These match the live Incan.io theme verified on October 7, 2026; the raster's exact font is unknown. Intentional compact type remains for exhaustive data tables; body documentation and metadata are readable at normal browser scale. Headings wrap and retain clear hierarchy.
 - **Spacing/layout:** Warm reading surface, broad article, narrow right metadata column, fine section dividers and a compact Add to project control. At portrait/phone widths metadata follows the main article and is reachable through a header shortcut. No page-level horizontal overflow.
 - **Colors/tokens:** Charcoal header and restrained gold with warm paper backgrounds follow the selected direction. Text/action colors were darkened for small-text contrast; the real quantitative chart color remains gold.
 - **Image/asset fidelity:** Official Incan wordmark plus a single `.pub`; existing sourced macOS/Linux/Windows icons. Gold chart assets are actual plots of frozen daily values, with checksummed files and source-separated labels. No invented artwork or image-generated chart curves. The concept's repository links are represented by clear service labels; the requested platform icons remain actual assets.
@@ -49,3 +49,7 @@ All actionable P0/P1/P2 findings have been fixed.
 No remaining P0/P1/P2 visual findings. Physical iPad testing, Linux workflow execution, scalable catalog search, additional version documents, owner publishing, advisory ingestion and report submission are outside this six-package playground. The manual-only CI recipe has not been dispatched. No nightly collector is installed.
 
 Implementation checklist complete: layout, truthful data, sourced assets, compact install control, responsive containment, real plots, browser interactions, semantic checks, repeated render comparison and final screenshots.
+
+## Incan.io font alignment
+
+User-requested follow-up: adopted the live [Incan.io font pack](https://incan.io/shared/incapunk/incapunk.css) (Brawler 400/700, Exo 2 300–800) and its monospace fallback stack. Both templates load the same Google Fonts families with swap and preconnects. The official wordmark remains an image. Font loading, layout containment and a new browser preview were checked after the change.
