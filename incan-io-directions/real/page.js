@@ -50,3 +50,48 @@ document.querySelectorAll('[data-copy]').forEach((button) => {
     }
   });
 });
+
+// Keep the callout paths attached to the actual source and note positions.
+// LeaderLine owns rendering; no rasterized text or fixed screenshot coordinates.
+const annotationPairs = [
+  ['data-anchor', 'data-note'],
+  ['function-anchor', 'function-note'],
+  ['structure-anchor', 'structure-note'],
+];
+const annotationViewport = window.matchMedia('(min-width: 741px)');
+let annotationLines = [];
+let annotationFrame;
+
+function drawAnnotations() {
+  annotationLines.forEach((line) => line.remove());
+  annotationLines = [];
+  if (!annotationViewport.matches || !window.LeaderLine) return;
+
+  annotationPairs.forEach(([sourceId, noteId]) => {
+    const source = document.getElementById(sourceId);
+    const note = document.getElementById(noteId);
+    const sourceRect = source.getBoundingClientRect();
+    const noteRect = note.getBoundingClientRect();
+    const bendY = sourceRect.top + sourceRect.height / 2 - noteRect.top;
+    const start = LeaderLine.pointAnchor(source, { x: sourceRect.width + 8, y: '50%' });
+    const bend = LeaderLine.pointAnchor(note, { x: -36, y: bendY });
+    const end = LeaderLine.pointAnchor(note, { x: -14, y: noteRect.height / 2 });
+    const options = { color: '#ffd36a', size: 1.2, path: 'straight', hide: false };
+    annotationLines.push(
+      new LeaderLine(start, bend, { ...options, startPlug: 'disc', endPlug: 'behind', startPlugSize: 1.2 }),
+      new LeaderLine(bend, end, { ...options, startPlug: 'behind', endPlug: 'disc', endPlugSize: 1.2 }),
+    );
+  });
+  document.querySelectorAll('.leader-line, #leader-line-defs').forEach((element) => {
+    element.setAttribute('aria-hidden', 'true');
+  });
+}
+
+function scheduleAnnotations() {
+  cancelAnimationFrame(annotationFrame);
+  annotationFrame = requestAnimationFrame(drawAnnotations);
+}
+
+document.fonts.ready.then(scheduleAnnotations);
+window.addEventListener('resize', scheduleAnnotations);
+new ResizeObserver(scheduleAnnotations).observe(document.querySelector('.example-body'));
