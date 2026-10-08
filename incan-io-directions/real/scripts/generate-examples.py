@@ -37,12 +37,31 @@ EXAMPLES = [
         (8, "Handle both paths.", "Match success or error at the call site."),
     ]},
 ]
+EXAMPLES.extend([
+    {"file": "combinators.incn", "label": "Combinators", "caption": "Iterator composition · complete example", "notes": [
+        (9, "Keep the useful values.", "Filter the input with a typed callback."),
+        (10, "Compose transformations.", "Map each score without a separate loop."),
+        (12, "Choose when to collect.", "Take two values, then materialize the result."),
+    ]},
+    {"file": "capabilities.incn", "label": "Capabilities", "caption": "Capability declaration excerpt · 0.6 / 0.7 preview", "notes": [
+        (3, "Name the authority.", "Declare a domain capability in source."),
+        (6, "Give it a scope.", "A grant can constrain the tenant dimension."),
+        (9, "Connect the operation.", "Declare the capability required by this provider operation."),
+    ]},
+    {"file": "architect.sh", "label": "Architect", "caption": "Architect command sketch · 0.7 preview", "language": "shell", "notes": [
+        (2, "Review the project.", "Ask Architect for evidence-backed findings."),
+        (6, "Choose your focus.", "Narrow the review to architectural boundaries."),
+        (10, "Feed your tools.", "Request structured findings for an editor or agent."),
+    ]},
+])
 TOKENS = re.compile(r'f?"[^"\\]*(?:\\.[^"\\]*)*"|\b[A-Za-z_]\w*\b|\b\d+\b')
-KEYWORDS = {"model", "def", "return", "for", "in", "if", "match", "case", "enum"}
-TYPES = {"str", "int", "None", "List", "Option", "Result", "Message", "Some", "Ok", "Err"}
-FUNCTIONS = {"greet_user", "main", "evens", "describe", "println", "greet", "checked"}
+KEYWORDS = {"model", "def", "return", "for", "in", "if", "match", "case", "enum", "from", "import", "capability", "scope", "pub"}
+TYPES = {"str", "int", "bool", "None", "List", "Option", "Result", "Message", "Some", "Ok", "Err"}
+FUNCTIONS = {"greet_user", "main", "evens", "describe", "println", "greet", "checked", "positive", "double", "iter", "filter", "map", "take", "collect", "provider_operation", "issue_refund", "architect"}
 
 def highlight(line):
+    if line.lstrip().startswith('#'):
+        return '<span class="comment">' + html.escape(line) + '</span>'
     parts, end = [], 0
     for token in TOKENS.finditer(line):
         parts.append(html.escape(line[end:token.start()]))
@@ -77,7 +96,9 @@ for index, example in enumerate(EXAMPLES):
     block = '\n'.join(rows)
     blocks.append(block)
     definitions.append({"template": f'example-{name}', "filename": example['file'],
-                        "label": example['label'], "notes": notes, "lineCount": len(rows)})
+                        "label": example['label'], "notes": notes, "lineCount": len(rows),
+                        "caption": example.get("caption", "Complete Incan example"),
+                        "language": example.get("language", "incan")})
 
 page = ROOT / 'index.html'
 s = page.read_text()
@@ -88,7 +109,7 @@ if '<!-- BEGIN EXAMPLE TEMPLATES -->' not in s:
     s = s.replace('</body>', '<!-- BEGIN EXAMPLE TEMPLATES -->\n<!-- END EXAMPLE TEMPLATES -->\n</body>')
 s = re.sub(r'<!-- BEGIN EXAMPLE TEMPLATES -->.*?<!-- END EXAMPLE TEMPLATES -->',
            lambda _: '<!-- BEGIN EXAMPLE TEMPLATES -->\n' + templates + '\n<!-- END EXAMPLE TEMPLATES -->', s, flags=re.S)
-selectors = '\n'.join(f'<button type="button" data-example="{i}" aria-pressed="{str(i == 0).lower()}">{html.escape(d["label"])}</button>' for i, d in enumerate(definitions))
+selectors = '\n'.join(f'<button type="button" data-example="{i}" aria-pressed="{str(i == 0).lower()}">{html.escape(d["label"])}</button>' for i, d in enumerate(definitions) if i in (0, 6, 7, 8))
 options = '\n'.join(f'<option value="{i}">{html.escape(d["label"])}</option>' for i, d in enumerate(definitions))
 s = re.sub(r'<div class="example-tabs">.*?<div class="example-controls">',
            lambda _: '<div class="example-tabs">\n' + selectors + '\n</div>\n'

@@ -24,7 +24,9 @@ const homepageExamples = [
         "description": "A simple, familiar program structure."
       }
     ],
-    "lineCount": 9
+    "lineCount": 9,
+    "caption": "Complete Incan example",
+    "language": "incan"
   },
   {
     "template": "example-collections",
@@ -50,7 +52,9 @@ const homepageExamples = [
         "description": "Call the function with ordinary data."
       }
     ],
-    "lineCount": 9
+    "lineCount": 9,
+    "caption": "Complete Incan example",
+    "language": "incan"
   },
   {
     "template": "example-matching",
@@ -76,7 +80,9 @@ const homepageExamples = [
         "description": "The wildcard handles the remaining values."
       }
     ],
-    "lineCount": 9
+    "lineCount": 9,
+    "caption": "Complete Incan example",
+    "language": "incan"
   },
   {
     "template": "example-enums",
@@ -102,7 +108,9 @@ const homepageExamples = [
         "description": "Match the variant to access its text."
       }
     ],
-    "lineCount": 11
+    "lineCount": 11,
+    "caption": "Complete Incan example",
+    "language": "incan"
   },
   {
     "template": "example-optional",
@@ -128,7 +136,9 @@ const homepageExamples = [
         "description": "None has its own path and greeting."
       }
     ],
-    "lineCount": 9
+    "lineCount": 9,
+    "caption": "Complete Incan example",
+    "language": "incan"
   },
   {
     "template": "example-results",
@@ -154,6 +164,92 @@ const homepageExamples = [
         "description": "Match success or error at the call site."
       }
     ],
-    "lineCount": 11
+    "lineCount": 11,
+    "caption": "Complete Incan example",
+    "language": "incan"
+  },
+  {
+    "template": "example-combinators",
+    "filename": "combinators.incn",
+    "label": "Combinators",
+    "notes": [
+      {
+        "lineId": "line-combinators-9",
+        "anchorId": "anchor-combinators-0",
+        "title": "Keep the useful values.",
+        "description": "Filter the input with a typed callback."
+      },
+      {
+        "lineId": "line-combinators-10",
+        "anchorId": "anchor-combinators-1",
+        "title": "Compose transformations.",
+        "description": "Map each score without a separate loop."
+      },
+      {
+        "lineId": "line-combinators-12",
+        "anchorId": "anchor-combinators-2",
+        "title": "Choose when to collect.",
+        "description": "Take two values, then materialize the result."
+      }
+    ],
+    "lineCount": 13,
+    "caption": "Iterator composition \u00b7 complete example",
+    "language": "incan"
+  },
+  {
+    "template": "example-capabilities",
+    "filename": "capabilities.incn",
+    "label": "Capabilities",
+    "notes": [
+      {
+        "lineId": "line-capabilities-3",
+        "anchorId": "anchor-capabilities-0",
+        "title": "Name the authority.",
+        "description": "Declare a domain capability in source."
+      },
+      {
+        "lineId": "line-capabilities-6",
+        "anchorId": "anchor-capabilities-1",
+        "title": "Give it a scope.",
+        "description": "A grant can constrain the tenant dimension."
+      },
+      {
+        "lineId": "line-capabilities-9",
+        "anchorId": "anchor-capabilities-2",
+        "title": "Connect the operation.",
+        "description": "Declare the capability required by this provider operation."
+      }
+    ],
+    "lineCount": 11,
+    "caption": "Capability declaration excerpt \u00b7 0.6 / 0.7 preview",
+    "language": "incan"
+  },
+  {
+    "template": "example-architect",
+    "filename": "architect.sh",
+    "label": "Architect",
+    "notes": [
+      {
+        "lineId": "line-architect-2",
+        "anchorId": "anchor-architect-0",
+        "title": "Review the project.",
+        "description": "Ask Architect for evidence-backed findings."
+      },
+      {
+        "lineId": "line-architect-6",
+        "anchorId": "anchor-architect-1",
+        "title": "Choose your focus.",
+        "description": "Narrow the review to architectural boundaries."
+      },
+      {
+        "lineId": "line-architect-10",
+        "anchorId": "anchor-architect-2",
+        "title": "Feed your tools.",
+        "description": "Request structured findings for an editor or agent."
+      }
+    ],
+    "lineCount": 10,
+    "caption": "Architect command sketch \u00b7 0.7 preview",
+    "language": "shell"
   }
 ];

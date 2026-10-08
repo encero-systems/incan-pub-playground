@@ -33,7 +33,7 @@ document.querySelectorAll('[data-copy]').forEach((button) => {
       await navigator.clipboard.writeText(text);
       label.textContent = 'Copied';
       icon.classList.replace('copy', 'check');
-      status.textContent = `${button.dataset.copy === 'incan-example' ? 'Incan example' : 'Project commands'} copied to clipboard.`;
+      status.textContent = `${button.dataset.copy === 'incan-example' ? 'Example' : 'Project commands'} copied to clipboard.`;
       clearTimeout(button.resetTimer);
       button.resetTimer = setTimeout(() => {
         label.textContent = 'Copy';
@@ -130,6 +130,8 @@ function renderExample(index, manual = false) {
   const template = document.getElementById(example.template);
   document.getElementById('incan-example').replaceChildren(template.content.cloneNode(true));
   document.querySelector('.example-filename').textContent = example.filename;
+  document.querySelector('.example-caption').textContent = example.caption;
+  document.querySelector('.source-code').setAttribute('aria-label', example.language === 'shell' ? 'Architect commands' : 'Incan source code');
   const copyButton = document.querySelector('[data-copy="incan-example"]');
   clearTimeout(copyButton.resetTimer);
   copyButton.querySelector('.copy-label').textContent = 'Copy';
