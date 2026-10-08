@@ -1,66 +1,66 @@
-# Incan homepage design QA — external annotations and guided tour
+# Incan homepage QA — rotating examples
 
 final result: passed
 
 ## Findings and corrections
 
-- [P2, fixed] Incus extended left of the community section. The earlier negative image margin placed the image 18px outside its section on desktop and 10px outside on phone. Removed negative margins and capped the image at its column width. Browser measurements at 1358px now put both left edges at 79px; the image also stays inside at 390px.
-- [P2, fixed] Annotations were inside the code panel. Moved the code panel and explanatory aside into sibling grid columns. The code border ends before the notes; gold connectors cross the gap. On phones the notes sit below and outside the panel.
-- [Requested interaction, implemented] The user suggested animating the code or using a ticker. A guided tour cycles three source/annotation highlights while all source text remains visible and copyable. Pause/Play and direct annotation selection work. Focus, hover, visibility, and offscreen state suspend automatic progression; reduced motion starts paused.
-- [P2, fixed during this revision] Initial inactive-note opacity was .58, unnecessarily reducing readability. Raised it to .8. Separate hover and focus flags keep mouse departure from restarting rotation while keyboard focus remains inside.
+- [Requested interaction, implemented] Replace the single example's guided highlighting loop with three distinct complete programs: Typed data, Collections, Pattern matching. Each has its own filename, syntax colors, source callouts and explanations.
+- [P2, fixed during this revision] Consecutive source anchors made the original short connector ends nearly vertical. Connector bend widths now adapt to the vertical distance and available space, preserving readable angled lines across all three examples.
+- [P2, fixed during this revision] The collection comprehension initially required horizontal scrolling at 390px. Reflowed it as a multiline comprehension while keeping the example at nine lines. It now fits the 352px source viewport. Its final version again passes type checking and code emission.
+- Existing portrait containment, outside-panel notes, subdued hero, canonical Incapunk header and compact terminal are preserved.
 
-No actionable P0/P1/P2 findings remain in the final captures.
+No actionable P0/P1/P2 website findings remain. Native execution of the example programs remains unverified, as recorded separately below.
 
 ## Source and comparison evidence
 
-Source visual truth: `https://encero-systems.github.io/incan-pub-playground/assets/site/incan-io-directions/welcome-combined-community.webp`, corresponding local selected PNG `exec-e57e08c6-5434-4106-a860-583069553df2.png` (886 × 1775). The latest browser annotations on revision `95fcdac` explicitly supersede the mockup's enclosing annotation panel and protruding portrait. Smaller type, darker landscape, and canonical Incapunk header remain intentional changes requested in the preceding review.
+Primary visual baseline: the user-reviewed `7167612` homepage, captured in `qa/incan-io-tour/desktop-final.png` (1358 × 1721). Public baseline: `https://encero-systems.github.io/incan-pub-playground/incan-io-directions/real/?v=7167612`. Original selected artwork remains `welcome-combined-community.webp` at 886 × 1775, but the user's later feedback explicitly requests the changed header, scale, contained portrait, outside-panel annotations and now multiple examples.
 
-Evidence under task checkout `qa/incan-io-tour/` (ignored, not deployed):
+Evidence under `qa/incan-io-examples/` (ignored, not deployed):
 
-- Full comparison: `comparison.png` (1772 × 1781), selected visual left and revised HTML right, both at 886px width. Source raster 886 × 1775; implementation `reference-width.png` 886 × 1781, CSS viewport 886 × 1775, devicePixelRatio 1. Tour paused at Named data. Both opened together before assessment.
-- Focused comparisons: `comparison-code.png` (1772 × 460) and `comparison-community.png` (1772 × 310). Each contains source and revised region at equal density without scaling. Crops use their respective section locations because the accepted smaller typography shifts vertical positions. Both opened and reviewed.
-- Desktop: `desktop-final.png` (1358 × 1721), viewport 1358 × 915, density 1; `preview.png` viewport capture 1358 × 915.
-- Tablet: `tablet.png` (768 × 1876), viewport 768 × 1024, density 1.
-- Phone: `mobile.png` (390 × 2565), viewport 390 × 844, density 1. Opened and inspected; notes outside the code border and Incus contained.
+- Full paired comparison: `comparison.png` (2716 × 1769), baseline left and revised HTML right. Both captures use CSS viewport 1358 × 915, density 1, top of page, Typed data selected, paused, Copy feedback cleared. The new selector/control row adds 48px to the full-page height: revised `desktop-final.png` is 1358 × 1769. Both full and focused paired comparisons were opened before passing QA.
+- Focused comparison: `comparison-code.png` (2460 × 420), respective example regions from the same two captures, equal density without rescaling. This verifies that typography and code geometry are preserved while selectors and rotation controls are added.
+- All three desktop states: `example-1.png`, `example-2.png`, `example-3.png`, each 1358 × 915 viewport capture, density 1. Opened and inspected, including the final multiline collections source and matching callouts.
+- Tablet captures: `768-1.png`, `768-2.png`, `768-3.png`, 768 × 1924 full-page captures, CSS viewport 768 × 1024, density 1. All three source blocks fit their 463px viewport without scrolling in the measured test. The reflowed collection source is shorter than the already-fitting original at this width.
+- Phone captures: `390-1.png`, `390-2.png`, `390-3.png`, 390 × 2701 full-page captures, CSS viewport 390 × 844, density 1. Final collections phone capture opened and inspected. Controls wrap cleanly and all three programs fit at 390px. At 320px the page and controls still fit; the source may scroll within its own preformatted block.
 
-The mockup has no tour interaction, so its static Named data state is compared against the same paused state in the HTML. Browser comments are the authority for the changed panel boundary and portrait containment.
+The comparison uses the same default example and pause state. The new selector row is an intentional addition, rather than a mismatch. Other page regions retain their geometry and styling apart from the additional row's vertical displacement.
 
 ## Comparison history
 
-1. Prior revision `95fcdac`: smaller type, canonical header, background, gold paths and compact terminal had passed the earlier source comparison. The user identified two further geometry issues and suggested motion; those became the current blocking findings.
-2. First revised capture `desktop.png`: external notes and contained portrait were correct. Readability review found inactive annotations too dim; hover/focus state review found one shared flag could incorrectly resume rotation. Both were corrected before final captures.
-3. Final captures and combined source comparisons: no actionable P0/P1/P2 mismatch remains within the latest requested scope. The page preserves the approved welcome/code/start/tools/community hierarchy.
+1. Revision `7167612` passed the earlier comparison after containing Incus and moving notes outside the panel. The user requested more examples.
+2. Initial carousel captures showed overly steep connector endings for the new anchor positions and a small collection-code overflow at 390px. The bend algorithm and source formatting were corrected.
+3. Final paired comparisons and all three desktop states show stable source-panel height, correct callouts and unchanged brand/layout. Phone collection source fits after reflow. No actionable P0/P1/P2 website finding remains.
 
 ## Required fidelity surfaces
 
-- **Typography:** Brawler and Exo 2 unchanged; code 16px desktop, 14px tablet, 12.5px phone. Annotation typography retains hierarchy and wraps without truncation. Inactive notes remain readable at .8 opacity.
-- **Spacing/layout:** Code panel and annotations are distinct sibling columns, with 64px desktop gap and narrower tablet gaps. Notes move below on phones. Source code fits without horizontal scrolling at 768px; page body has no overflow at 390px or 1358px. Incus aligns with the section edge and stays within it.
-- **Colors/tokens:** Existing Incapunk header, gold/cyan/teal palette and darkened hero retained. Tour uses a subtle source-row background, brighter active connector, and subdued inactive connectors. No flashing, moving text, or layout shift.
-- **Images/assets:** Official logo and wordmark, generated landscape, transparent portrait and mist unchanged. Correct aspect ratios and sharpness preserved. Removing negative margins changes placement only. Paths remain library-rendered DOM connectors, not image substitutes.
-- **Copy/content:** Source code and documented commands unchanged. Only “A closer look” and Pause/Play control labels added. No new language claims, sample packages or endorsement content.
+- **Typography:** Existing Brawler, Exo 2 and monospace sizes retained. Syntax highlighter derives markup from source files; numbers use the established warm palette. Controls remain secondary to the code. No truncation of filenames, controls or notes in inspected states.
+- **Spacing/layout:** A compact selector row sits above the code. All three example bodies measure 322.6875px desktop, 292.171875px tablet, and 556.25px phone in the tested states. Nine source rows per program and a minimum mobile note height avoid content jumps during rotation. Notes remain outside the bordered code panel; Incus remains contained.
+- **Colors/tokens:** Gold, cyan, teal and canonical Incapunk header unchanged. Selected-example buttons have a subdued cyan surface/border; focus outlines remain visible. Fade is 280ms and disabled for reduced-motion users; no typing animation or flashing.
+- **Images/assets:** Official branding, landscape, portrait, mist and existing Tabler icons retained. Previous navigation uses the existing arrow icon reversed. Callout paths remain library-rendered and attached to actual source/note spans.
+- **Copy/content:** Three self-contained, nine-line Incan programs replace one repetitive guided loop. Filenames and explanations update together. Source files are authoritative, templates/metadata are generated, and browser text and clipboard contents were compared with those sources. No new ecosystem availability or release claims added.
 
-## Browser verification
+## Browser and source verification
 
-- Automatic progression observed from Named data to Typed functions after the 4.8-second interval.
-- Pause switches to Play; direct Clear structure selection sets the current step, pauses, and navigates to its source anchor.
-- Copy Incan example reports Copied; existing source text remains intact.
-- Play followed by Project navigation stops progression while the source section is offscreen: current step remains Named data beyond a full interval.
-- Desktop annotations are not descendants of `.code-panel`; phone notes are geometrically below the panel.
-- Responsive connector rendering: six segments on desktop/tablet and zero on phone.
-- Incus containment measured on desktop and phone; no page overflow.
-- Browser console errors and warnings: none.
-- JavaScript syntax, local HTML references/anchors, and Git whitespace checks passed before publication.
-
-Reduced-motion behavior was checked in source and stylesheet; this browser does not expose motion-preference emulation, so it was not simulated. Compiler execution, production Incan.io integration and CI validation remain outside this static playground iteration.
+- Direct selectors, previous/next, last-to-first wrap, and arrow-key navigation checked.
+- Automatic advancement observed from hello.incn to a later program while the section was visible and focus was elsewhere. Manual selection and note links pause rotation; Pause/Play updates its accessible label.
+- Existing focus, pointer, hidden-document and viewport guards retained. Reduced-motion starts paused and suppresses the fade in code; the browser does not expose motion-preference emulation, so this preference was not simulated.
+- All three source texts match their canonical `.incn` files; clipboard readback matches all three after waiting for successful copy completion. Switching examples resets stale Copy feedback.
+- Six connector segments remain on desktop/tablet; no connector segments on phone. Annotation links point to the active example's source rows.
+- Tested all three states at 1358px, 768px, 390px and 320px. No page-body or persistent-control overflow.
+- Browser console errors/warnings: none.
+- JavaScript syntax, generation idempotence, local references, and Git whitespace checked before publication.
+- All final source files pass `incan --no-banner check` and `incan --no-banner --emit-rust` with installed Incan 0.5.1.
+- Native run attempted in a separate temporary directory. It failed before executing the example with `manifest identity does not match its immutable content` in the existing Oven store. That store was not repaired or cleared by this task. Native outputs and the separate project-command sequence are not claimed verified. Production Incan.io and compiler sources are unchanged; this task adds no authored Rust.
 
 ## Implementation checklist
 
-- [x] Contain portrait and preserve its full aspect ratio.
-- [x] Place notes outside the code panel and reconnect source paths.
-- [x] Add controllable, stationary-code guided highlighting.
-- [x] Review matching-width source/prototype comparisons and responsive states.
-- [x] Validate core tour and clipboard interactions without console errors.
+- [x] Generate three highlighted examples and matching annotations from canonical source files.
+- [x] Add controllable rotation, direct selection, wraparound and keyboard navigation.
+- [x] Pause for reading/interaction and honor reduced motion.
+- [x] Keep layout stable and copy the active source exactly.
+- [x] Inspect paired visual comparisons and responsive states.
+- [x] Record the native-execution limitation independently of website QA.
 
 ## Follow-up polish
 
-A real multi-example carousel could be added later using compiler-validated examples. The current tour deliberately works with the existing single example; no unverified snippets were introduced.
+No further visual change is required for this iteration. Additional examples can use the same source/generator contract after focused compiler checks. Native execution can be rechecked when the Oven store integrity issue is resolved.

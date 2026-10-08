@@ -1,0 +1,78 @@
+"""Generate the static homepage examples from their copyable Incan source files."""
+from pathlib import Path
+import html
+import json
+import re
+
+ROOT = Path(__file__).resolve().parent.parent
+EXAMPLES = [
+    {"file": "hello.incn", "label": "Typed data", "notes": [
+        (2, "Named data.", "Define data with clear types."),
+        (5, "Typed functions.", "Functions declare their input and output types."),
+        (8, "Clear structure.", "A simple, familiar program structure."),
+    ]},
+    {"file": "collections.incn", "label": "Collections", "notes": [
+        (1, "Typed collections.", "A list of integers goes in and comes out."),
+        (3, "Filter and transform.", "Keep even numbers and square each one."),
+        (7, "Reusable functions.", "Call the function with ordinary data."),
+    ]},
+    {"file": "matching.incn", "label": "Pattern matching", "notes": [
+        (2, "Pattern matching.", "Choose a branch from the value."),
+        (3, "Specific cases.", "Handle a known value explicitly."),
+        (6, "A fallback.", "The wildcard handles the remaining values."),
+    ]},
+]
+TOKENS = re.compile(r'f?"[^"\\]*(?:\\.[^"\\]*)*"|\b[A-Za-z_]\w*\b|\b\d+\b')
+KEYWORDS = {"model", "def", "return", "for", "in", "if", "match", "case"}
+TYPES = {"str", "int", "None", "List"}
+FUNCTIONS = {"greet_user", "main", "evens", "describe", "println"}
+
+def highlight(line):
+    parts, end = [], 0
+    for token in TOKENS.finditer(line):
+        parts.append(html.escape(line[end:token.start()]))
+        value = token.group()
+        kind = ("string" if '"' in value else "keyword" if value in KEYWORDS
+                else "type" if value in TYPES else "function" if value in FUNCTIONS
+                else "number" if value.isdigit() else None)
+        escaped = html.escape(value)
+        parts.append(f'<span class="{kind}">{escaped}</span>' if kind else escaped)
+        end = token.end()
+    parts.append(html.escape(line[end:]))
+    return ''.join(parts)
+
+blocks, definitions = [], []
+for index, example in enumerate(EXAMPLES):
+    name = Path(example['file']).stem
+    notes = []
+    for step, (line, title, description) in enumerate(example['notes']):
+        notes.append({"lineId": f"line-{name}-{line}", "anchorId": f"anchor-{name}-{step}",
+                      "title": title, "description": description})
+    rows = []
+    for n, line in enumerate((ROOT / 'examples' / example['file']).read_text().splitlines(), 1):
+        content = highlight(line) or ' '
+        for note in notes:
+            if note['lineId'] == f'line-{name}-{n}':
+                content = f'<span id="{note["anchorId"]}">{content}</span>'
+        # Keep the original example's section anchors usable.
+        row_id = {1: 'named-data', 4: 'typed-functions', 7: 'clear-structure'}.get(n) if index == 0 else None
+        if row_id:
+            content = f'<span id="{row_id}">{content}</span>'
+        rows.append(f'<span class="line" id="line-{name}-{n}">{content}</span>')
+    block = '\n'.join(rows)
+    blocks.append(block)
+    definitions.append({"template": f'example-{name}', "filename": example['file'],
+                        "label": example['label'], "notes": notes})
+
+page = ROOT / 'index.html'
+s = page.read_text()
+s = re.sub(r'(<code id="incan-example">).*?(</code>)', lambda m: m[1] + blocks[0] + m[2], s, count=1, flags=re.S)
+templates = '\n'.join(f'<template id="{definition["template"]}">{block}</template>'
+                       for definition, block in zip(definitions, blocks))
+if '<!-- BEGIN EXAMPLE TEMPLATES -->' not in s:
+    s = s.replace('</body>', '<!-- BEGIN EXAMPLE TEMPLATES -->\n<!-- END EXAMPLE TEMPLATES -->\n</body>')
+s = re.sub(r'<!-- BEGIN EXAMPLE TEMPLATES -->.*?<!-- END EXAMPLE TEMPLATES -->',
+           lambda _: '<!-- BEGIN EXAMPLE TEMPLATES -->\n' + templates + '\n<!-- END EXAMPLE TEMPLATES -->', s, flags=re.S)
+page.write_text(s)
+(ROOT / 'examples.js').write_text('// Derived from examples/*.incn by scripts/generate-examples.py.\n'
+                                 + 'const homepageExamples = ' + json.dumps(definitions, indent=2) + ';\n')

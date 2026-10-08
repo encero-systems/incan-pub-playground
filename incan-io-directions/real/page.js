@@ -53,11 +53,7 @@ document.querySelectorAll('[data-copy]').forEach((button) => {
 
 // Keep the callout paths attached to the actual source and note positions.
 // LeaderLine owns rendering; no rasterized text or fixed screenshot coordinates.
-const annotationPairs = [
-  ['data-anchor', 'data-note'],
-  ['function-anchor', 'function-note'],
-  ['structure-anchor', 'structure-note'],
-];
+let annotationPairs = homepageExamples[0].notes.map((note, index) => [note.anchorId, ['data-note', 'function-note', 'structure-note'][index]]);
 const annotationViewport = window.matchMedia('(min-width: 741px)');
 let annotationLines = [];
 let annotationFrame;
@@ -74,7 +70,10 @@ function drawAnnotations() {
     const noteRect = note.getBoundingClientRect();
     const bendY = sourceRect.top + sourceRect.height / 2 - noteRect.top;
     const start = LeaderLine.pointAnchor(source, { x: sourceRect.width + 8, y: '50%' });
-    const bend = LeaderLine.pointAnchor(note, { x: -36, y: bendY });
+    const verticalDistance = Math.abs(noteRect.top + noteRect.height / 2 - sourceRect.top - sourceRect.height / 2);
+    const availableDistance = noteRect.left - sourceRect.right - 34;
+    const diagonalWidth = Math.max(22, Math.min(verticalDistance, availableDistance));
+    const bend = LeaderLine.pointAnchor(note, { x: -14 - diagonalWidth, y: bendY });
     const end = LeaderLine.pointAnchor(note, { x: -14, y: noteRect.height / 2 });
     const options = { color: '#ffd36a', size: 1.2, path: 'straight', hide: false };
     annotationLines.push(
@@ -97,16 +96,13 @@ document.fonts.ready.then(scheduleAnnotations);
 window.addEventListener('resize', scheduleAnnotations);
 new ResizeObserver(scheduleAnnotations).observe(document.querySelector('.example-body'));
 
-// Readable, stationary source with an optional three-step guided tour.
+// Rotate complete examples; reading and manual exploration take precedence.
 const tourSection = document.querySelector('.example-section');
 const tourToggle = document.querySelector('.tour-toggle');
-const tourNotes = document.querySelector('.annotations');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const tourGroups = [
-  ['named-data', 'data-anchor', 'data-note'],
-  ['typed-functions', 'function-anchor', 'function-note'],
-  ['clear-structure', 'structure-anchor', 'structure-note'],
-];
+const noteIds = ['data-note', 'function-note', 'structure-note'];
+const exampleNavigation = document.querySelector('.example-navigation');
+let currentExample = 0;
 let tourStep = 0;
 let tourPaused = reducedMotion.matches;
 let tourVisible = false;
@@ -116,27 +112,73 @@ let tourTimer;
 
 function showTourStep(index) {
   tourStep = index;
-  tourNotes.classList.add('is-guided');
-  tourGroups.forEach(([lineId, anchorId, noteId], step) => {
-    document.getElementById(lineId).classList.toggle('tour-active', step === index);
-    document.getElementById(anchorId).closest('.line').classList.toggle('tour-active', step === index);
-    const note = document.getElementById(noteId);
-    note.parentElement.classList.toggle('tour-active', step === index);
-    if (step === index) note.setAttribute('aria-current', 'step');
-    else note.removeAttribute('aria-current');
-    annotationLines.slice(step * 2, step * 2 + 2).forEach(line => line.setOptions({ color: step === index ? '#fff0b7' : '#9a7e45' }));
+  homepageExamples[currentExample].notes.forEach((note, step) => {
+    document.getElementById(note.lineId).classList.toggle('tour-active', step === index);
+    const link = document.getElementById(noteIds[step]);
+    link.parentElement.classList.toggle('tour-active', step === index);
+    if (step === index) link.setAttribute('aria-current', 'step');
+    else link.removeAttribute('aria-current');
+    annotationLines.slice(step * 2, step * 2 + 2).forEach(line => line.setOptions({ color: step === index ? '#fff0b7' : '#b69a60' }));
   });
 }
+
+function renderExample(index, manual = false) {
+  annotationLines.forEach(line => line.remove());
+  annotationLines = [];
+  currentExample = (index + homepageExamples.length) % homepageExamples.length;
+  const example = homepageExamples[currentExample];
+  const template = document.getElementById(example.template);
+  document.getElementById('incan-example').replaceChildren(template.content.cloneNode(true));
+  document.querySelector('.example-filename').textContent = example.filename;
+  const copyButton = document.querySelector('[data-copy="incan-example"]');
+  clearTimeout(copyButton.resetTimer);
+  copyButton.querySelector('.copy-label').textContent = 'Copy';
+  copyButton.querySelector('.icon').classList.replace('check', 'copy');
+  example.notes.forEach((note, step) => {
+    const link = document.getElementById(noteIds[step]);
+    link.textContent = note.title;
+    link.setAttribute('href', `#${note.lineId}`);
+    link.nextElementSibling.textContent = note.description;
+  });
+  annotationPairs = example.notes.map((note, step) => [note.anchorId, noteIds[step]]);
+  document.querySelectorAll('[data-example]').forEach(button => {
+    button.setAttribute('aria-pressed', String(Number(button.dataset.example) === currentExample));
+  });
+  document.querySelector('.example-count').textContent = `${String(currentExample + 1).padStart(2, '0')} / ${String(homepageExamples.length).padStart(2, '0')}`;
+  const body = document.querySelector('.example-body');
+  body.getAnimations().forEach(animation => animation.cancel());
+  if (!reducedMotion.matches) body.animate([{ opacity: .45 }, { opacity: 1 }], { duration: 280, easing: 'ease-out' });
+  showTourStep(0);
+  scheduleAnnotations();
+  if (manual) {
+    tourPaused = true;
+    document.querySelector('#example-status').textContent = `Example ${currentExample + 1} of ${homepageExamples.length}: ${example.label}. Rotation paused.`;
+  }
+  updateTour();
+}
+
 function updateTour() {
   clearInterval(tourTimer);
   tourToggle.textContent = tourPaused ? 'Play' : 'Pause';
-  tourToggle.setAttribute('aria-label', `${tourPaused ? 'Play' : 'Pause'} guided code tour`);
+  tourToggle.setAttribute('aria-label', `${tourPaused ? 'Play' : 'Pause'} example rotation`);
   if (!tourPaused && tourVisible && !tourHovered && !tourFocused && !document.hidden) {
-    tourTimer = setInterval(() => showTourStep((tourStep + 1) % tourGroups.length), 4800);
+    tourTimer = setInterval(() => renderExample(currentExample + 1), 12000);
   }
 }
+
 tourToggle.addEventListener('click', () => { tourPaused = !tourPaused; updateTour(); });
-tourGroups.forEach(([, , noteId], index) => {
+document.querySelectorAll('[data-example]').forEach(button => {
+  button.addEventListener('click', () => renderExample(Number(button.dataset.example), true));
+});
+document.querySelector('.example-previous').addEventListener('click', () => renderExample(currentExample - 1, true));
+document.querySelector('.example-next').addEventListener('click', () => renderExample(currentExample + 1, true));
+exampleNavigation.addEventListener('keydown', event => {
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault();
+    renderExample(currentExample + (event.key === 'ArrowLeft' ? -1 : 1), true);
+  }
+});
+noteIds.forEach((noteId, index) => {
   document.getElementById(noteId).addEventListener('click', () => {
     tourPaused = true;
     showTourStep(index);
@@ -158,5 +200,5 @@ reducedMotion.addEventListener('change', () => {
   if (reducedMotion.matches) tourPaused = true;
   updateTour();
 });
-document.fonts.ready.then(() => showTourStep(0));
-updateTour();
+exampleNavigation.hidden = false;
+renderExample(0);
