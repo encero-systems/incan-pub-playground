@@ -16,6 +16,8 @@ The page uses semantic HTML, a readable CSS file, and a small JavaScript file fo
 
 - Brawler and Exo 2 match the existing Incan.io font families. Font licenses are included under `assets/fonts/`.
 - The symbol and wordmark are official Incan assets, rendered at their original aspect ratios. The landscape and transparent Incus portrait reconstruct the selected artwork as separate raster assets. The community backdrop reconstructs the mockup’s teal mist. The landscape is dimmed on its own CSS layer, leaving the foreground logo bright.
+- The code explanations live outside the code panel. An optional guided tour highlights each source group and its annotation every 4.8 seconds without changing the code. Pause/Play and direct selection are available; hover, keyboard focus, offscreen state, and a hidden document suspend the timer. Reduced-motion users start paused.
+- Incus is contained within the community section at every breakpoint; no negative image margins extend past the page edge.
 - The sticky header surface, colored rail, logo glow, and display type treatment come from the existing Incapunk stylesheet. Only the relevant component styles are adapted; the MkDocs layout is not imported.
 - Icons are from the pinned Tabler revision recorded in `assets/credits.json`; the MIT license is included.
 - Source annotation lines use a locally vendored, pinned LeaderLine build, with its MIT license under `assets/vendor/`. Source and label positions are measured after fonts load and on resize. The long horizontal segment and angled end track real text rather than fixed screenshot coordinates. Paths hide below 741px, while explanatory links remain usable. The upstream library is archived; its scope here is static DOM connectors with no network or data handling.

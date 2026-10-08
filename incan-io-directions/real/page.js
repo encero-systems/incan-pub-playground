@@ -82,6 +82,7 @@ function drawAnnotations() {
       new LeaderLine(bend, end, { ...options, startPlug: 'behind', endPlug: 'disc', endPlugSize: 1.2 }),
     );
   });
+  showTourStep(tourStep);
   document.querySelectorAll('.leader-line, #leader-line-defs').forEach((element) => {
     element.setAttribute('aria-hidden', 'true');
   });
@@ -95,3 +96,67 @@ function scheduleAnnotations() {
 document.fonts.ready.then(scheduleAnnotations);
 window.addEventListener('resize', scheduleAnnotations);
 new ResizeObserver(scheduleAnnotations).observe(document.querySelector('.example-body'));
+
+// Readable, stationary source with an optional three-step guided tour.
+const tourSection = document.querySelector('.example-section');
+const tourToggle = document.querySelector('.tour-toggle');
+const tourNotes = document.querySelector('.annotations');
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const tourGroups = [
+  ['named-data', 'data-anchor', 'data-note'],
+  ['typed-functions', 'function-anchor', 'function-note'],
+  ['clear-structure', 'structure-anchor', 'structure-note'],
+];
+let tourStep = 0;
+let tourPaused = reducedMotion.matches;
+let tourVisible = false;
+let tourHovered = false;
+let tourFocused = false;
+let tourTimer;
+
+function showTourStep(index) {
+  tourStep = index;
+  tourNotes.classList.add('is-guided');
+  tourGroups.forEach(([lineId, anchorId, noteId], step) => {
+    document.getElementById(lineId).classList.toggle('tour-active', step === index);
+    document.getElementById(anchorId).closest('.line').classList.toggle('tour-active', step === index);
+    const note = document.getElementById(noteId);
+    note.parentElement.classList.toggle('tour-active', step === index);
+    if (step === index) note.setAttribute('aria-current', 'step');
+    else note.removeAttribute('aria-current');
+    annotationLines.slice(step * 2, step * 2 + 2).forEach(line => line.setOptions({ color: step === index ? '#fff0b7' : '#9a7e45' }));
+  });
+}
+function updateTour() {
+  clearInterval(tourTimer);
+  tourToggle.textContent = tourPaused ? 'Play' : 'Pause';
+  tourToggle.setAttribute('aria-label', `${tourPaused ? 'Play' : 'Pause'} guided code tour`);
+  if (!tourPaused && tourVisible && !tourHovered && !tourFocused && !document.hidden) {
+    tourTimer = setInterval(() => showTourStep((tourStep + 1) % tourGroups.length), 4800);
+  }
+}
+tourToggle.addEventListener('click', () => { tourPaused = !tourPaused; updateTour(); });
+tourGroups.forEach(([, , noteId], index) => {
+  document.getElementById(noteId).addEventListener('click', () => {
+    tourPaused = true;
+    showTourStep(index);
+    updateTour();
+  });
+});
+tourSection.addEventListener('pointerenter', () => { tourHovered = true; updateTour(); });
+tourSection.addEventListener('pointerleave', () => { tourHovered = false; updateTour(); });
+tourSection.addEventListener('focusin', () => { tourFocused = true; updateTour(); });
+tourSection.addEventListener('focusout', event => {
+  if (!tourSection.contains(event.relatedTarget)) { tourFocused = false; updateTour(); }
+});
+new IntersectionObserver(entries => {
+  tourVisible = entries[0].isIntersecting;
+  updateTour();
+}, { threshold: .5 }).observe(tourSection);
+document.addEventListener('visibilitychange', updateTour);
+reducedMotion.addEventListener('change', () => {
+  if (reducedMotion.matches) tourPaused = true;
+  updateTour();
+});
+document.fonts.ready.then(() => showTourStep(0));
+updateTour();
