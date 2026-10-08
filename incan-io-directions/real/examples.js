@@ -23,7 +23,8 @@ const homepageExamples = [
         "title": "Clear structure.",
         "description": "A simple, familiar program structure."
       }
-    ]
+    ],
+    "lineCount": 9
   },
   {
     "template": "example-collections",
@@ -48,7 +49,8 @@ const homepageExamples = [
         "title": "Reusable functions.",
         "description": "Call the function with ordinary data."
       }
-    ]
+    ],
+    "lineCount": 9
   },
   {
     "template": "example-matching",
@@ -73,6 +75,85 @@ const homepageExamples = [
         "title": "A fallback.",
         "description": "The wildcard handles the remaining values."
       }
-    ]
+    ],
+    "lineCount": 9
+  },
+  {
+    "template": "example-enums",
+    "filename": "enums.incn",
+    "label": "Enums",
+    "notes": [
+      {
+        "lineId": "line-enums-2",
+        "anchorId": "anchor-enums-0",
+        "title": "Data-bearing variants.",
+        "description": "A variant can carry a value with it."
+      },
+      {
+        "lineId": "line-enums-6",
+        "anchorId": "anchor-enums-1",
+        "title": "Construct a value.",
+        "description": "Choose a variant and supply its data."
+      },
+      {
+        "lineId": "line-enums-8",
+        "anchorId": "anchor-enums-2",
+        "title": "Unpack the variant.",
+        "description": "Match the variant to access its text."
+      }
+    ],
+    "lineCount": 11
+  },
+  {
+    "template": "example-optional",
+    "filename": "optional.incn",
+    "label": "Optional values",
+    "notes": [
+      {
+        "lineId": "line-optional-1",
+        "anchorId": "anchor-optional-0",
+        "title": "Explicit absence.",
+        "description": "Option describes a value that may be missing."
+      },
+      {
+        "lineId": "line-optional-3",
+        "anchorId": "anchor-optional-1",
+        "title": "A present value.",
+        "description": "Some carries the name into this branch."
+      },
+      {
+        "lineId": "line-optional-5",
+        "anchorId": "anchor-optional-2",
+        "title": "Handle absence.",
+        "description": "None has its own path and greeting."
+      }
+    ],
+    "lineCount": 9
+  },
+  {
+    "template": "example-results",
+    "filename": "results.incn",
+    "label": "Error handling",
+    "notes": [
+      {
+        "lineId": "line-results-1",
+        "anchorId": "anchor-results-0",
+        "title": "Explicit outcomes.",
+        "description": "Result declares success and error types."
+      },
+      {
+        "lineId": "line-results-3",
+        "anchorId": "anchor-results-1",
+        "title": "Return an error.",
+        "description": "Invalid input gets a meaningful error value."
+      },
+      {
+        "lineId": "line-results-8",
+        "anchorId": "anchor-results-2",
+        "title": "Handle both paths.",
+        "description": "Match success or error at the call site."
+      }
+    ],
+    "lineCount": 11
   }
 ];

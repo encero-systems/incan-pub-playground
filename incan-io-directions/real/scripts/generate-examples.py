@@ -21,11 +21,26 @@ EXAMPLES = [
         (3, "Specific cases.", "Handle a known value explicitly."),
         (6, "A fallback.", "The wildcard handles the remaining values."),
     ]},
+    {"file": "enums.incn", "label": "Enums", "notes": [
+        (2, "Data-bearing variants.", "A variant can carry a value with it."),
+        (6, "Construct a value.", "Choose a variant and supply its data."),
+        (8, "Unpack the variant.", "Match the variant to access its text."),
+    ]},
+    {"file": "optional.incn", "label": "Optional values", "notes": [
+        (1, "Explicit absence.", "Option describes a value that may be missing."),
+        (3, "A present value.", "Some carries the name into this branch."),
+        (5, "Handle absence.", "None has its own path and greeting."),
+    ]},
+    {"file": "results.incn", "label": "Error handling", "notes": [
+        (1, "Explicit outcomes.", "Result declares success and error types."),
+        (3, "Return an error.", "Invalid input gets a meaningful error value."),
+        (8, "Handle both paths.", "Match success or error at the call site."),
+    ]},
 ]
 TOKENS = re.compile(r'f?"[^"\\]*(?:\\.[^"\\]*)*"|\b[A-Za-z_]\w*\b|\b\d+\b')
-KEYWORDS = {"model", "def", "return", "for", "in", "if", "match", "case"}
-TYPES = {"str", "int", "None", "List"}
-FUNCTIONS = {"greet_user", "main", "evens", "describe", "println"}
+KEYWORDS = {"model", "def", "return", "for", "in", "if", "match", "case", "enum"}
+TYPES = {"str", "int", "None", "List", "Option", "Result", "Message", "Some", "Ok", "Err"}
+FUNCTIONS = {"greet_user", "main", "evens", "describe", "println", "greet", "checked"}
 
 def highlight(line):
     parts, end = [], 0
@@ -62,7 +77,7 @@ for index, example in enumerate(EXAMPLES):
     block = '\n'.join(rows)
     blocks.append(block)
     definitions.append({"template": f'example-{name}', "filename": example['file'],
-                        "label": example['label'], "notes": notes})
+                        "label": example['label'], "notes": notes, "lineCount": len(rows)})
 
 page = ROOT / 'index.html'
 s = page.read_text()
@@ -73,6 +88,14 @@ if '<!-- BEGIN EXAMPLE TEMPLATES -->' not in s:
     s = s.replace('</body>', '<!-- BEGIN EXAMPLE TEMPLATES -->\n<!-- END EXAMPLE TEMPLATES -->\n</body>')
 s = re.sub(r'<!-- BEGIN EXAMPLE TEMPLATES -->.*?<!-- END EXAMPLE TEMPLATES -->',
            lambda _: '<!-- BEGIN EXAMPLE TEMPLATES -->\n' + templates + '\n<!-- END EXAMPLE TEMPLATES -->', s, flags=re.S)
+selectors = '\n'.join(f'<button type="button" data-example="{i}" aria-pressed="{str(i == 0).lower()}">{html.escape(d["label"])}</button>' for i, d in enumerate(definitions))
+options = '\n'.join(f'<option value="{i}">{html.escape(d["label"])}</option>' for i, d in enumerate(definitions))
+s = re.sub(r'<div class="example-tabs">.*?<div class="example-controls">',
+           lambda _: '<div class="example-tabs">\n' + selectors + '\n</div>\n'
+           + '<label class="example-picker"><span class="sr-only">Choose example</span><select id="example-select">\n'
+           + options + '\n</select></label>\n<div class="example-controls">', s, count=1, flags=re.S)
+s = re.sub(r'(<span class="example-count" aria-hidden="true">).*?(</span>)',
+           lambda m: m[1] + f'01 / {len(definitions):02d}' + m[2], s, count=1)
 page.write_text(s)
 (ROOT / 'examples.js').write_text('// Derived from examples/*.incn by scripts/generate-examples.py.\n'
                                  + 'const homepageExamples = ' + json.dumps(definitions, indent=2) + ';\n')

@@ -144,6 +144,7 @@ function renderExample(index, manual = false) {
   document.querySelectorAll('[data-example]').forEach(button => {
     button.setAttribute('aria-pressed', String(Number(button.dataset.example) === currentExample));
   });
+  document.querySelector('#example-select').value = String(currentExample);
   document.querySelector('.example-count').textContent = `${String(currentExample + 1).padStart(2, '0')} / ${String(homepageExamples.length).padStart(2, '0')}`;
   const body = document.querySelector('.example-body');
   body.getAnimations().forEach(animation => animation.cancel());
@@ -172,7 +173,9 @@ document.querySelectorAll('[data-example]').forEach(button => {
 });
 document.querySelector('.example-previous').addEventListener('click', () => renderExample(currentExample - 1, true));
 document.querySelector('.example-next').addEventListener('click', () => renderExample(currentExample + 1, true));
+document.querySelector('#example-select').addEventListener('change', event => renderExample(Number(event.target.value), true));
 exampleNavigation.addEventListener('keydown', event => {
+  if (event.target.matches('select')) return;
   if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
     event.preventDefault();
     renderExample(currentExample + (event.key === 'ArrowLeft' ? -1 : 1), true);
@@ -200,5 +203,6 @@ reducedMotion.addEventListener('change', () => {
   if (reducedMotion.matches) tourPaused = true;
   updateTour();
 });
+document.querySelector('.source-code').style.setProperty('--example-lines', Math.max(...homepageExamples.map(example => example.lineCount)));
 exampleNavigation.hidden = false;
 renderExample(0);
