@@ -2,6 +2,8 @@
 
 The Incan renderer builds the homepage, catalog and six vertical, anchored package documents from the frozen `assets/site/packages.json` bundle. No language model, registry resolution, package compilation, live statistics calls or GitHub credentials are involved in rendering.
 
+`templates/header.html` and `templates/footer.html` are shared partials, expanded by the Incan renderer with each route's relative root. Edit those sources and rerender instead of changing generated documents. `assets/site/footer.css` owns the shared footer layout, ecosystem links and Encero Systems copyright notice. The reporting control only explains the preview's reporting limitations; it does not submit a report.
+
 From the repository root, with Incan **0.5.1**, Rust **1.98.0**, and Node/npm installed:
 
 ```sh

@@ -1,37 +1,31 @@
-# Shared masthead QA
+# Shared footer QA
 
 final result: passed
 
 ## Source and comparison
 
-The accepted homepage header is the visual truth for this scoped correction: `qa/header/home-before.png`, captured from the published Archive Hall page at desktop 1374 × 800, density 1. The original Archive Hall reference remains `assets/site/landing-directions/option-2.png`. The baseline package document is `qa/header/package-before.png` at identical viewport, theme and scroll state. Prior homepage QA is preserved in `design-qa-archive-hall.md`.
+This scoped addition follows the approved Forge light / Archive Hall site. The current rendered catalog and homepage are the source visual truth: `qa/footer/catalog-before.png` and `qa/footer/home-before.png`. The catalog source is 1280 × 1053 pixels and the implementation `qa/footer/catalog-after.png` is 1280 × 1245 pixels; both use a 1280 × 720 CSS viewport at density 1. The added footer intentionally increases document height. `qa/footer/catalog-comparison.jpg` places both full-page captures together, aligned at the top. `qa/footer/footer-comparison.jpg` compares their bottom regions at equal scale. Both combined comparisons were opened and inspected.
 
-The before/after pages were inspected in one combined image input (`qa/header/full-before-after.jpg`). Focused comparisons show the initial mismatch (`qa/header/before-comparison.jpg`) and final home/catalog/package headers (`qa/header/after-comparison.jpg`). Header screenshots retain the first part of each page to show the boundary and surrounding context. `assets/site/header-consistency-preview.webp` exports the final comparison. Supplemental tablet comparisons: `qa/header/responsive-comparison.jpg`; phone search state: `qa/header/search-phone.png`.
+The original masthead QA is preserved in `design-qa-shared-masthead.md`. This change does not redesign the header or the parked Incan.io preview.
 
-## Findings and repair
+## Findings and fidelity
 
-[P2, fixed] Independent homepage markup/styles caused header height, wordmark placement, navigation and texture crop to differ on package documents. The desktop baseline was 68 pixels on home and 75 on package; compact layouts also diverged. A single authored HTML partial (`tools/site/templates/header.html`) and final shared stylesheet (`assets/site/header.css`) now supply all eight documents. Homepage-specific header overrides were removed.
+No actionable P0/P1/P2 mismatch remains. The new footer is an intentional addition, not a pixel-for-pixel replacement of the old one-line preview note. A pre-handoff refinement reduced and bottom-aligned the .pub suffix beside the official wordmark.
 
-The shared header preserves the accepted homepage geometry and quiet brass/charcoal crop. Search is a compact disclosure on every page, intentionally adding one consistently placed control. Its popover overlays content without changing header height. Catalog has the sole active-navigation color; state does not change geometry. Homepage and package heroes remain different page content by design.
+- Typography: existing Exo 2 body and Brawler suffix retained. Quiet 13px links and 10px group headings preserve the catalog hierarchy; copyright and preview information remain secondary.
+- Spacing: one shared four-column desktop component outside main content, with the same route-independent max width and gutters. Compact layouts use two columns and larger link targets. No main-content density or above-the-fold geometry change was observed in the paired catalog captures.
+- Colors: warm neutral surface, existing text/gold palette and a fine brass divider. No additional decorative background competes with the landing artwork.
+- Assets: official existing wordmark retained at its intrinsic aspect ratio. Existing artwork and charts are unchanged.
+- Copy: About Incan.pub, registry documentation, publishing model, Incan.io, Oven, GitHub, community and Encero Systems copyright are present. The preview label and data contract remain visible. Reporting explicitly explains that no registry reporting destination is configured and sends nothing.
 
-## Required surfaces
+## Responsive and interaction checks
 
-- Typography: Brawler wordmark suffix and Exo 2 navigation; identical computed font sizes/line heights across all three page types. Official wordmark retained; `.pub` baseline, margin and size match.
-- Spacing and layout: identical header, brand, suffix, search and navigation bounds on home/catalog/package at each tested viewport. Header is 68 pixels on desktop/tablet and 60 at compact widths. Desktop exact measurements are in `qa/header/measurements-desktop.json`; responsive measurements in `qa/header/measurements-responsive.json`.
-- Colors: identical texture URL, crop, background color and border across routes. Intentional catalog active color is the only navigation state difference. Search uses legible opaque text against a dark surface.
-- Assets: same existing wordmark and decorative masthead texture. No new generated imagery or package data.
-- Copy: same Search, Catalog, Docs and GitHub labels and destinations. Shared summary has an explicit accessible label when its text is hidden on narrow screens. Package body, metadata, charts and install flow were preserved.
+Desktop home, catalog and regex package footers were inspected in the in-app browser at 1280 × 720. The homepage footer was checked at 390 × 844 (`qa/footer/home-phone-footer.png`), and the catalog at 320 × 800 (`qa/footer/catalog-320-footer.png`); neither had horizontal document overflow. `qa/footer/package-footer.png` records the desktop package boundary and shared footer. Mobile and desktop reporting controls opened a native dialog with initial focus on Close; Close dismissed it. Footer routes and named navigation landmarks were inspected. Browser warning/error logs were empty during the final local checks.
 
-## Responsive and interaction evidence
+The authored Incan renderer built successfully. All ten existing Node checks passed, including deterministic replay, scoped links and local asset references. Diff whitespace checks passed. The manual CI check workflow was not dispatched.
 
-Browser checked 1374 × 800, 1194 × 834, 768 × 1024, 390 × 844 and 320 × 800. All three page types matched at 320, 768 and 1194 widths; no horizontal document overflow. Compact search target is 44 × 44 pixels. Screenshots reviewed at desktop, landscape/portrait tablet and phone.
+## Implementation checklist
 
-- Shared search opened with input focus, submitted from home/package into the catalog, and returned exactly one matching package.
-- Escape closed the disclosure and restored focus to the summary. Clicking outside closed it.
-- Catalog search filtered locally; license filtering produced the empty state, reset restored six rows, and another query produced one row.
-- Popover stayed inside the compact viewport and did not resize the header. Browser console reported no errors during the final route checks.
-- Authored Incan renderer compiled locally; all ten existing checks passed, including safe projection, escaping, highlighting, fixture replay and local route/assets checks. JavaScript syntax and diff whitespace checks passed.
-
-A minimal string reassignment hit an already recorded Incan 0.5.1 emission defect (issue 1668); direct branch returns avoid it in authored Incan. No Rust workaround or new compiler issue was added. Triage evidence is retained in `qa/header/compiler-triage.md`.
-
-No actionable P0/P1/P2 visual mismatch remains in this scoped masthead correction. The manual build-check CI workflow was not dispatched; publication uses the existing GitHub Pages mechanism.
+- Shared authored footer partial and stylesheet are used on all eight generated Incan.pub documents.
+- Regenerate through the Incan renderer after editing the partial.
+- Configure real reporting destinations before replacing the preview reporting explanation with a submission flow.
