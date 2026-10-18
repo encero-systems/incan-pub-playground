@@ -1,0 +1,1393 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ttf-parser 0.25.1 · Incan.pub</title><meta name="description" content="A high-level, safe, zero-allocation font parser for TrueType, OpenType, and AAT."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/ttf-parser</p><div class="title-row"><h1>ttf-parser</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/ttf-parser/versions/0.25.1/" selected>0.25.1</option><option value="../../../packages/crates-io/ttf-parser/versions/0.20.0/">0.20.0</option></select></label></div><p class="description">A high-level, safe, zero-allocation font parser for TrueType, OpenType, and AAT.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h4>ttf-parser</h4>
+<p>Build Status
+<a href="https://crates.io/crates/ttf-parser">Crates.io</a>
+<a href="https://docs.rs/ttf-parser">Documentation</a>
+<a href="https://www.rust-lang.org">Rust 1.59+</a>
+</p>
+<p>A high-level, safe, zero-allocation font parser for
+<a href="https://docs.microsoft.com/en-us/typography/truetype/">TrueType</a>,
+<a href="https://docs.microsoft.com/en-us/typography/opentype/spec/">OpenType</a>, and
+<a href="https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6AATIntro.html">AAT</a>.</p>
+<p>Can be used as a Rust or C library.</p>
+<h5>Features</h5>
+<ul>
+<li>A high-level API for most common properties, hiding all parsing and data resolving logic.</li>
+<li>A low-level, but safe API to access TrueType tables data.</li>
+<li>Highly configurable. You can disable most of the features, reducing binary size.
+You can also parse TrueType tables separately, without loading the whole font/face.</li>
+<li>Zero heap allocations.</li>
+<li>Zero unsafe.</li>
+<li>Zero dependencies.</li>
+<li><code>no_std</code>/WASM compatible.</li>
+<li>A basic <a href="https://github.com/harfbuzz/ttf-parser/blob/56c33b910b03ca152f78363ec471c5dfd97c3069/./c-api">C API</a>.</li>
+<li>Fast.</li>
+<li>Stateless. All parsing methods are immutable.</li>
+<li>Simple and maintainable code (no magic numbers).</li>
+</ul>
+<h5>Safety</h5>
+<ul>
+<li>The library must not panic. Any panic considered as a critical bug and should be reported.</li>
+<li>The library forbids unsafe code.</li>
+<li>No heap allocations, so crash due to OOM is not possible.</li>
+<li>All recursive methods have a depth limit.</li>
+<li>Technically, should use less than 64KiB of stack in the worst case scenario.</li>
+<li>Most of arithmetic operations are checked.</li>
+<li>Most of numeric casts are checked.</li>
+</ul>
+<h5>Alternatives</h5>
+<p>It's very hard to compare different libraries, so we are using table-based comparison.
+There are roughly three types of TrueType tables:</p>
+<ul>
+<li>A table with a list of properties (like <code>head</code>, <code>OS/2</code>, etc.).&lt;br/&gt;
+If a library tries to parse it at all then we mark it as supported.</li>
+<li>A table that contains a single type of data (<code>glyf</code>, <code>CFF</code> (kinda), <code>hmtx</code>, etc.).&lt;br/&gt;
+Can only be supported or not.</li>
+<li>A table that contains multiple subtables (<code>cmap</code>, <code>kern</code>, <code>GPOS</code>, etc.).&lt;br/&gt;
+Can be partially supported and we note which subtables are actually supported.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Feature/Library</th>
+<th style="text-align:center">ttf-parser</th>
+<th style="text-align:center">FreeType</th>
+<th style="text-align:center">stb_truetype</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Memory safe</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Thread safe</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">~ (mostly reentrant)</td>
+</tr>
+<tr>
+<td>Zero allocation</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Variable fonts</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Rendering</td>
+<td style="text-align:center">-&lt;sup&gt;1&lt;/sup&gt;</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">~ (very primitive)</td>
+</tr>
+<tr>
+<td><code>ankr</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>avar</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>bdat</code> table</td>
+<td style="text-align:center">~ (no 4)</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>bloc</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>CBDT</code> table</td>
+<td style="text-align:center">~ (no 8, 9)</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>CBLC</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>COLR</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>CPAL</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>CFF </code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">~ (no <code>seac</code> support)</td>
+</tr>
+<tr>
+<td><code>CFF2</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>cmap</code> table</td>
+<td style="text-align:center">~ (no 8)</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">~ (no 2,8,10,14; Unicode-only)</td>
+</tr>
+<tr>
+<td><code>EBDT</code> table</td>
+<td style="text-align:center">~ (no 8, 9)</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>EBLC</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>feat</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>fvar</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>gasp</code> table</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>GDEF</code> table</td>
+<td style="text-align:center">~</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>glyf</code> table</td>
+<td style="text-align:center">~&lt;sup&gt;2&lt;/sup&gt;</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">~&lt;sup&gt;2&lt;/sup&gt;</td>
+</tr>
+<tr>
+<td><code>GPOS</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">~ (only 2)</td>
+</tr>
+<tr>
+<td><code>GSUB</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>gvar</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>head</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+</tr>
+<tr>
+<td><code>hhea</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+</tr>
+<tr>
+<td><code>hmtx</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+</tr>
+<tr>
+<td><code>HVAR</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>kern</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">~ (only 0)</td>
+<td style="text-align:center">~ (only 0)</td>
+</tr>
+<tr>
+<td><code>kerx</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>MATH</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>maxp</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+</tr>
+<tr>
+<td><code>morx</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>MVAR</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>name</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>OS/2</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>post</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>sbix</code> table</td>
+<td style="text-align:center">~ (PNG only)</td>
+<td style="text-align:center">~ (PNG only)</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>STAT</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>SVG </code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+</tr>
+<tr>
+<td><code>trak</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>vhea</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>vmtx</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>VORG</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>VVAR</code> table</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>Language</td>
+<td style="text-align:center">Rust + C API</td>
+<td style="text-align:center">C</td>
+<td style="text-align:center">C</td>
+</tr>
+<tr>
+<td>Tested version</td>
+<td style="text-align:center">0.17.0</td>
+<td style="text-align:center">2.12.0</td>
+<td style="text-align:center">1.24</td>
+</tr>
+<tr>
+<td>License</td>
+<td style="text-align:center">MIT / Apache-2.0</td>
+<td style="text-align:center">FTL / GPLv2</td>
+<td style="text-align:center">public domain</td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li>✓ - supported</li>
+<li>~ - partial</li>
+<li><em>nothing</em> - not supported</li>
+</ul>
+<p>Notes:</p>
+<ol>
+<li>While <code>ttf-parser</code> doesn't support rendering by itself,
+there are multiple rendering libraries on top of it:
+<a href="https://gitlab.redox-os.org/redox-os/rusttype">rusttype</a>,
+<a href="https://github.com/alexheretic/ab-glyph">ab-glyph</a>
+and <a href="https://github.com/mooman219/fontdue">fontdue</a>.</li>
+<li>Matching points are not supported.</li>
+</ol>
+<h5>Performance</h5>
+<p>TrueType fonts designed for fast querying, so most of the methods are very fast.
+The main exception is glyph outlining. Glyphs can be stored using two different methods:
+using <a href="https://docs.microsoft.com/en-us/typography/opentype/spec/glyf">Glyph Data Format</a>
+and <a href="http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf">Compact Font Format</a> (pdf).
+The first one is fairly simple which makes it faster to process.
+The second one is basically a tiny language with a stack-based VM, which makes it way harder to process.</p>
+<p>The <a href="https://github.com/harfbuzz/ttf-parser/blob/56c33b910b03ca152f78363ec471c5dfd97c3069/./benches/outline/">benchmark</a> tests how long it takes to outline all glyphs in a font.</p>
+<p>x86 (AMD 3700X)</p>
+<table>
+<thead>
+<tr>
+<th>Table/Library</th>
+<th style="text-align:right">ttf-parser</th>
+<th style="text-align:right">FreeType</th>
+<th style="text-align:right">stb_truetype</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>glyf</code></td>
+<td style="text-align:right"><code>0.901 ms</code></td>
+<td style="text-align:right"><code>1.171 ms</code></td>
+<td style="text-align:right"><strong><code>0.675 ms</code></strong></td>
+</tr>
+<tr>
+<td><code>gvar</code></td>
+<td style="text-align:right"><strong><code>2.972 ms</code></strong></td>
+<td style="text-align:right"><code>4.132 ms</code></td>
+<td style="text-align:right">-</td>
+</tr>
+<tr>
+<td><code>CFF</code></td>
+<td style="text-align:right"><strong><code>1.197 ms</code></strong></td>
+<td style="text-align:right"><code>5.647 ms</code></td>
+<td style="text-align:right"><code>2.813 ms</code></td>
+</tr>
+<tr>
+<td><code>CFF2</code></td>
+<td style="text-align:right"><strong><code>1.968 ms</code></strong></td>
+<td style="text-align:right"><code>6.392 ms</code></td>
+<td style="text-align:right">-</td>
+</tr>
+</tbody>
+</table>
+<p>ARM (Apple M1)</p>
+<table>
+<thead>
+<tr>
+<th>Table/Library</th>
+<th style="text-align:right">ttf-parser</th>
+<th style="text-align:right">FreeType</th>
+<th style="text-align:right">stb_truetype</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>glyf</code></td>
+<td style="text-align:right"><strong><code>0.550 ms</code></strong></td>
+<td style="text-align:right"><code>0.854 ms</code></td>
+<td style="text-align:right"><code>0.703 ms</code></td>
+</tr>
+<tr>
+<td><code>gvar</code></td>
+<td style="text-align:right"><strong><code>2.270 ms</code></strong></td>
+<td style="text-align:right"><code>4.594 ms</code></td>
+<td style="text-align:right">-</td>
+</tr>
+<tr>
+<td><code>CFF</code></td>
+<td style="text-align:right"><strong><code>1.054 ms</code></strong></td>
+<td style="text-align:right"><code>5.223 ms</code></td>
+<td style="text-align:right"><code>3.262 ms</code></td>
+</tr>
+<tr>
+<td><code>CFF2</code></td>
+<td style="text-align:right"><strong><code>1.765 ms</code></strong></td>
+<td style="text-align:right"><code>5.995 ms</code></td>
+<td style="text-align:right">-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> FreeType is surprisingly slow, so I'm worried that I've messed something up.</p>
+<p>And here are some methods benchmarks:</p>
+<pre><code>test outline_glyph_276_from_cff2 ... bench:         867 ns/iter (+/- 15)
+test from_data_otf_cff           ... bench:         968 ns/iter (+/- 13)
+test from_data_otf_cff2          ... bench:         887 ns/iter (+/- 25)
+test outline_glyph_276_from_cff  ... bench:         678 ns/iter (+/- 41)
+test outline_glyph_276_from_glyf ... bench:         649 ns/iter (+/- 11)
+test outline_glyph_8_from_cff2   ... bench:         534 ns/iter (+/- 14)
+test from_data_ttf               ... bench:         467 ns/iter (+/- 11)
+test glyph_name_post_276         ... bench:         223 ns/iter (+/- 5)
+test outline_glyph_8_from_cff    ... bench:         315 ns/iter (+/- 13)
+test outline_glyph_8_from_glyf   ... bench:         291 ns/iter (+/- 5)
+test family_name                 ... bench:         183 ns/iter (+/- 102)
+test glyph_name_cff_276          ... bench:          62 ns/iter (+/- 1)
+test glyph_index_u41             ... bench:          16 ns/iter (+/- 0)
+test glyph_name_cff_8            ... bench:           5 ns/iter (+/- 0)
+test glyph_name_post_8           ... bench:           2 ns/iter (+/- 0)
+test subscript_metrics           ... bench:           2 ns/iter (+/- 0)
+test glyph_hor_advance           ... bench:           2 ns/iter (+/- 0)
+test glyph_hor_side_bearing      ... bench:           2 ns/iter (+/- 0)
+test glyph_name_8                ... bench:           1 ns/iter (+/- 0)
+test ascender                    ... bench:           1 ns/iter (+/- 0)
+test underline_metrics           ... bench:           1 ns/iter (+/- 0)
+test strikeout_metrics           ... bench:           1 ns/iter (+/- 0)
+test x_height                    ... bench:           1 ns/iter (+/- 0)
+test units_per_em                ... bench:         0.5 ns/iter (+/- 0)
+test width                       ... bench:         0.2 ns/iter (+/- 0)
+</code></pre>
+<h5>License</h5>
+<p>Licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0
+(<a href="https://github.com/harfbuzz/ttf-parser/blob/56c33b910b03ca152f78363ec471c5dfd97c3069/LICENSE-APACHE">LICENSE-APACHE</a> or http://www.apache.org/licenses/LICENSE-2.0)</li>
+<li>MIT license
+(<a href="https://github.com/harfbuzz/ttf-parser/blob/56c33b910b03ca152f78363ec471c5dfd97c3069/LICENSE-MIT">LICENSE-MIT</a> or http://opensource.org/licenses/MIT)</li>
+</ul>
+<p>at your option.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>apple-layout</code></th><td>Yes<small>default → apple-layout</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>core_maths</code></th><td>No</td><td><ul class="effects"><li><code>dep:core_maths</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>opentype-layout</code></li><li><code>apple-layout</code></li><li><code>variable-fonts</code></li><li><code>glyph-names</code></li></ul></td></tr><tr><th scope="row"><code>glyph-names</code></th><td>Yes<small>default → glyph-names</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>gvar-alloc</code></th><td>No</td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>no-std-float</code></th><td>No</td><td><ul class="effects"><li><code>core_maths</code></li></ul></td></tr><tr><th scope="row"><code>opentype-layout</code></th><td>Yes<small>default → opentype-layout</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>variable-fonts</code></th><td>Yes<small>default → variable-fonts</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/core_maths/"><code>crates-io/core_maths</code></a><small>Alias: core_maths</small></th><td><code>^0.1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/plotters/versions/0.3.7/">crates-io/plotters 0.3.7</a><span>Requires ^0.20.0 · alias ttf-parser · cfg(not(all(target_arch = &quot;wasm32&quot;, not(target_os = &quot;wasi&quot;))))</span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>apple-layout, default, glyph-names, opentype-layout, std, variable-fonts</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:427080bd614cc080039e86dcb7eb19b77b5cef325e04535bed3a0b17edaa8f86</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636611">Attestation reference</a><small>Archive: sha256:be64e120cbb44309d180707a02ac3c631b8a59506220b92e000c4fe10255ae78</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>apple-layout, default, glyph-names, opentype-layout, std, variable-fonts</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:edb0e5703ff26e5fdbdfcd82a84b45403a67ab4d013dc556407fbc85c371f689</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:39534d93866f8fb99cfd1b45a7b6f740d4325236849d7f90788ed8a9f71aee13</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>apple-layout, default, glyph-names, opentype-layout, std, variable-fonts</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:dc33f86778ad4207650ded12087df7d3beb79b9b47a5013e2b1e7a8317d35666</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:f0e2f622f9c1b648241500e297cdc3a56d41622a6a7d132d3ea901e951e4373b</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>apple-layout, default, glyph-names, opentype-layout, std, variable-fonts</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:47afb15bb6633a26bcd6a65fafa17f15b0e7f3bd80299d934c489c08ac2787ce</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:25f799b61840cda7ec4356a4f75cfe61ba0daf24814fcf77bfeda11338260e26</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/ttf-parser/versions/0.25.1/">0.25.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/ttf-parser/0.25.1">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/ttf-parser/versions/0.20.0/">0.20.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/ttf-parser/0.20.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Change Log</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="http://keepachangelog.com/">Keep a Changelog</a>
+and this project adheres to <a href="http://semver.org/">Semantic Versioning</a>.</p>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.25.1...HEAD">Unreleased</a></h4>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.25.0...v0.25.1">0.25.1</a> - 2024-11-29</h4>
+<h5>Changed</h5>
+<ul>
+<li>Fix some typos and documentation related lints</li>
+<li>Set MSRV in manifest to actual current value (1.63.0)</li>
+<li>Update forge URL for ttf-parser and rustybuzz to harfbuzz org</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.24.1...v0.25.0">0.25.0</a> - 2024-10-04</h4>
+<h5>Added</h5>
+<ul>
+<li><code>STAT</code> table parsing. Thanks to <a href="https://github.com/inferiorhumanorgans">inferiorhumanorgans</a>.</li>
+<li><code>UnicodeRanges</code> internal field is public now.</li>
+<li><code>cargo-c</code> metadata to C API. Thanks to <a href="https://github.com/lu-zero">lu-zero</a>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>Face::is_italic</code> checks for italic angle as well.</li>
+<li><code>Face::italic_angle</code> returns just a <code>f32</code> and not <code>Option&lt;f32&gt;</code> now.</li>
+<li>Bump MSRV to 1.59</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Only apply <code>avar</code> table to the variation axis being set.
+Thanks to <a href="https://github.com/maxmelander">maxmelander</a>.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.24.0...v0.24.1">0.24.1</a> - 2024-08-05</h4>
+<h5>Added</h5>
+<ul>
+<li>(<code>glyf</code>) <code>glyf::Table::bbox</code>. Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>(<code>kerx</code>) <code>kerx::SubtablesIter</code> wasn't updating the current subtable index.</li>
+<li>(<code>GPOS</code>) <code>gpos::AnchorMatrix</code> allows nullable/optional matrices now.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.23.0...v0.24.0">0.24.0</a> - 2024-07-02</h4>
+<h5>Changed</h5>
+<ul>
+<li>Make <code>core_maths</code> dependency optional.
+When building for <code>no_std</code> one must enable <code>no-std-float</code> build feature now.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.22.0...v0.23.0">0.23.0</a> - 2024-07-02</h4>
+<h5>Changed</h5>
+<ul>
+<li>Use <code>core_maths</code> instead of <code>libm</code>. Should simplify the build process.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>no-std-float</code> build flag. Should be handled automatically now.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.21.1...v0.22.0">0.22.0</a> - 2024-06-29</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Face::glyph_phantom_points</code></li>
+<li><code>hvar::Table::right_side_bearing_offset</code>. Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li><code>vvar::Table::advance_offset</code>. Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li><code>vvar::Table::top_side_bearing_offset</code>. Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li><code>vvar::Table::bottom_side_bearing_offset</code>. Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li><code>vvar::Table::vertical_origin_offset</code>. Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li><code>colr::Table::clip_box</code>. Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>no_std</code> build of <code>ttf-parser</code> requires <code>--features=no-std-float</code> now.
+This is because we need trigonometry functions to flatten transforms in <code>COLR</code>.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li><code>colr::Painter</code> no longer has <code>push_translate</code>, <code>push_scale</code>, <code>push_rotate</code> and <code>push_skew</code>.
+Only <code>push_transform</code> left.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li>Split <code>hvar::Table</code> into <code>hvar::Table</code> and <code>vvar::Table</code>.
+Previously, we treated both <code>HVAR</code> and <code>VVAR</code> tables as identical,
+but <code>VVAR</code> actually has additional fields.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li>Rename <code>hvar::Table::side_bearing_offset</code> into <code>hvar::Table::left_side_bearing_offset</code>.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>Face::glyph_hor_advance</code> and <code>Face::glyph_ver_advance</code> include <code>gvar</code>'s phantom points
+when <code>HVAR</code>/<code>VVAR</code> tables are missing. Affects only variable fonts.</li>
+<li>(<code>CFF</code>) Allow MoveTo with width commands in nested subroutines.</li>
+<li><code>opentype_layout::LookupFlags::mark_attachment_type</code> parsing.</li>
+<li>(<code>CFF</code>) Allow empty charsets in <code>cff::parse_charset</code>.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li>(<code>gvar</code>) Empty sub-glyphs/components is no longer an error.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li>(<code>GSUB</code>/<code>GPOS</code>) Allow <code>NULL</code> offsets in <code>ChainedContextLookup</code> Format2 subtables.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li><code>Face::glyph_y_origin</code> properly handles variable fonts now.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+<li>(<code>kerx</code>) Fix <code>AnchorPoints</code> parsing.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>push_translate</code>, <code>push_scale</code>, <code>push_rotate</code> and <code>push_skew</code> from <code>colr::Painter</code>.
+Use <code>colr::Painter::push_transform</code> instead.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.21.0...v0.21.1">0.21.1</a> - 2024-05-11</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Delta set length calculation in variable fonts.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.&lt;br&gt;
+Got broken in the previous version.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.20.0...v0.21.0">0.21.0</a> - 2024-05-10</h4>
+<h5>Added</h5>
+<ul>
+<li><code>COLR</code> / <code>CPAL</code> v1 support.
+Thanks to <a href="https://github.com/LaurenzV">LaurenzV</a>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Replace <code>Face::is_bitmap_embedding_allowed</code> with <code>Face::is_outline_embedding_allowed</code>.
+The old one had a bool flag flipped.
+Thanks to <a href="https://github.com/Fuzzyzilla">Fuzzyzilla</a>.</li>
+<li>Increase lenience of embed permissions for older OS/2 versions.
+Thanks to <a href="https://github.com/Fuzzyzilla">Fuzzyzilla</a>.</li>
+<li>Bump MSRV to 1.51</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.19.2...v0.20.0">0.20.0</a> - 2023-10-15</h4>
+<h5>Added</h5>
+<ul>
+<li><code>COLR</code> / <code>CPAL</code> v0 support.
+Thanks to <a href="https://github.com/laurmaedje">laurmaedje</a>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>svg::SvgDocumentsList</code> returns <code>svg::SvgDocument</code> and not just <code>&amp;[u8]</code> now.
+Thanks to <a href="https://github.com/wjian23">wjian23</a>.</li>
+<li><code>Face::set_variation</code> allows duplicated axes now.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.19.1...v0.19.2">0.19.2</a> - 2023-09-13</h4>
+<h5>Added</h5>
+<ul>
+<li><code>cff::Table::glyph_cid</code></li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.19.0...v0.19.1">0.19.1</a> - 2023-06-20</h4>
+<h5>Fixed</h5>
+<ul>
+<li><code>cff::Table::glyph_width</code> returns a correct width when subroutines are present.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.18.1...v0.19.0">0.19.0</a> - 2023-04-17</h4>
+<h5>Added</h5>
+<ul>
+<li><code>bdat</code>, <code>bloc</code>, <code>EBDT</code> and <code>EBLC</code> tables support.
+Thanks to <a href="https://github.com/dzamkov">dzamkov</a>.</li>
+<li><code>BitmapMono</code>, <code>BitmapMonoPacked</code>, <code>BitmapGray2</code>, <code>BitmapGray2Packed</code>, <code>BitmapGray4</code>,
+<code>BitmapGray4Packed</code>, <code>BitmapGray8</code> and <code>BitmapPremulBgra32</code> variants to <code>RasterImageFormat</code>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>CBLC</code> table parsing.
+Thanks to <a href="https://github.com/dzamkov">dzamkov</a>.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.18.0...v0.18.1">0.18.1</a> - 2023-01-10</h4>
+<h5>Fixed</h5>
+<ul>
+<li>(<code>MATH</code>) Handle NULL offsets.
+Thanks to <a href="https://github.com/laurmaedje">laurmaedje</a>.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.17.0...v0.18.0">0.18.0</a> - 2022-12-25</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Face::permissions</code></li>
+<li><code>Face::is_subsetting_allowed</code></li>
+<li><code>Face::is_bitmap_embedding_allowed</code></li>
+<li><code>Face::unicode_ranges</code></li>
+<li><code>os2::Table::permissions</code></li>
+<li><code>os2::Table::is_subsetting_allowed</code></li>
+<li><code>os2::Table::is_bitmap_embedding_allowed</code></li>
+<li><code>os2::Table::unicode_ranges</code></li>
+<li><code>name::Name::language</code></li>
+<li><code>Language</code> enum with all Windows languages.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Using a non-zero index in <code>Face::parse</code> for a regular font will return
+<code>FaceParsingError::FaceIndexOutOfBounds</code> now. Thanks to <a href="https://github.com/Pietrek14">Pietrek14</a>.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.16.0...v0.17.0">0.17.0</a> - 2022-09-28</h4>
+<h5>Added</h5>
+<ul>
+<li><code>MATH</code> table support. Thanks to <a href="https://github.com/ruifengx">ruifengx</a>
+and <a href="https://github.com/laurmaedje">laurmaedje</a>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>(CFF) Fix large tables parsing.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.15.2...v0.16.0">0.16.0</a> - 2022-09-18</h4>
+<h5>Added</h5>
+<ul>
+<li>CFF Encoding support.</li>
+<li><code>cff::Table::glyph_index</code></li>
+<li><code>cff::Table::glyph_index_by_name</code></li>
+<li><code>cff::Table::glyph_width</code></li>
+<li><code>cff::Table::number_of_glyphs</code></li>
+<li><code>cff::Table::matrix</code></li>
+<li><code>post::Table::glyph_name</code></li>
+<li><code>post::Table::glyph_index_by_name</code></li>
+<li><code>post::Table::names</code></li>
+<li><code>Face::glyph_index_by_name</code></li>
+<li><code>RawFace</code> fields and <code>TableRecord</code> struct are public now.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>Face::from_slice</code> was replaced by <code>Face::parse</code>.</li>
+<li><code>RawFace::from_slice</code> was replaced by <code>RawFace::parse</code>.</li>
+<li><code>post::Table::names</code> is a method and not a field now.</li>
+<li>Use <code>post::Table::glyph_name</code> instead of <code>post::Table::names.get()</code>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>(hmtx/vmtx) Allow missing additional side bearings.</li>
+<li>(loca) Allow incomplete table.</li>
+<li>Reduce strictness of some table length checks.</li>
+<li>(post) <code>post::Names::len</code> was returning a wrong value. Now this method is gone completely.
+You can use <code>post::Table::names().count()</code> instead.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.15.1...v0.15.2">0.15.2</a> - 2022-06-17</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Missing advance and side bearing offsets in <code>HVAR</code>/<code>VVAR</code> is not an error. Simply ignore them.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.15.0...v0.15.1">0.15.1</a> - 2022-06-04</h4>
+<h5>Fixed</h5>
+<ul>
+<li>(cmap) <code>cmap::Subtable4::glyph_index</code> correctly handles malformed glyph offsets now.</li>
+<li>(cmap) <code>cmap::Subtable4::codepoints</code> no longer includes <code>0xFFFF</code> codepoint.</li>
+<li>(SVG) Fixed table parsing. Thanks to <a href="https://github.com/Shubhamj280">Shubhamj280</a></li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.14.0...v0.15.0">0.15.0</a> - 2022-02-20</h4>
+<h5>Added</h5>
+<ul>
+<li><code>apple-layout</code> build feature.</li>
+<li><code>ankr</code>, <code>feat</code>, <code>kerx</code>, <code>morx</code> and <code>trak</code> tables.</li>
+<li><code>kern</code> AAT subtable format 1.</li>
+<li><code>RawFace</code></li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>The <code>parser</code> module is private now again.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.13.4...v0.14.0">0.14.0</a> - 2021-12-28</h4>
+<h5>Changed</h5>
+<ul>
+<li>(cmap) <code>cmap::Subtable::glyph_index</code> and <code>cmap::Subtable::glyph_variation_index</code> accept
+<code>u32</code> instead of <code>char</code> now.</li>
+<li>(glyf) ~7% faster outline parsing.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.13.3...v0.13.4">0.13.4</a> - 2021-11-23</h4>
+<h5>Fixed</h5>
+<ul>
+<li>(CFF) Panic during <code>seac</code> resolving.</li>
+<li>(CFF) Stack overflow during <code>seac</code> resolving.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.13.2...v0.13.3">0.13.3</a> - 2021-11-19</h4>
+<h5>Fixed</h5>
+<ul>
+<li>(glyf) Endless loop during malformed file parsing.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.13.1...v0.13.2">0.13.2</a> - 2021-10-28</h4>
+<h5>Added</h5>
+<ul>
+<li><code>gvar-alloc</code> build feature that unlocks <code>gvar</code> table limits by using heap.
+Thanks to <a href="https://github.com/OrionNebula">OrionNebula</a></li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.13.0...v0.13.1">0.13.1</a> - 2021-10-27</h4>
+<h5>Fixed</h5>
+<ul>
+<li><code>Face::line_gap</code> logic.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.12.3...v0.13.0">0.13.0</a> - 2021-10-24</h4>
+<h5>Added</h5>
+<ul>
+<li>Complete GSUB and GPOS tables support. Available under the <code>opentype-layout</code> feature.</li>
+<li>Public access to all supported TrueType tables. This allows a low-level, but still safe,
+access to internal data layout, which can be used for performance optimization, like caching.</li>
+<li><code>Style</code> enum and <code>Face::style</code> method.</li>
+<li><code>Face::glyph_name</code> can be disabled via the <code>glyph-names</code> feature to reduce binary size.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Improved ascender/descender/line_gap resolving logic.</li>
+<li><code>Face</code> methods: <code>has_glyph_classes</code>, <code>glyph_class</code>, <code>glyph_mark_attachment_class</code>,
+<code>is_mark_glyph</code> and <code>glyph_variation_delta</code> are moved to <code>gdef::Table</code>.</li>
+<li>The <code>Names</code> struct is no longer an iterator, but a container.
+You have to call <code>into_iter()</code> manually.</li>
+<li>The <code>VariationAxes</code> struct is no longer an iterator, but a container.
+You have to call <code>into_iter()</code> manually.</li>
+<li>Most of the <code>Name</code> struct methods become public fields.</li>
+<li><code>Face::units_per_em</code> no longer returns <code>Option</code>.</li>
+<li>(<code>cmap</code>) Improved subtable 12 performance. Thanks to <a href="https://github.com/xnuk">xnuk</a></li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>(c-api) <code>ttfp_glyph_class</code>, <code>ttfp_get_glyph_class</code>, <code>ttfp_get_glyph_mark_attachment_class</code>,
+<code>ttfp_is_mark_glyph</code>, <code>ttfp_glyph_variation_delta</code> and <code>ttfp_has_table</code>.</li>
+<li><code>TableName</code> enum and <code>Face::has_table</code>. Tables can be access directly now.</li>
+<li><code>Face::character_mapping_subtables</code>. Use <code>Face::tables().cmap</code> instead.</li>
+<li><code>Face::kerning_subtables</code>. Use <code>Face::tables().kern</code> instead.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>Iterator::count</code> implementation for <code>cmap::Subtables</code>, <code>name::Names</code> and <code>LazyArrayIter32</code>.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.12.2...v0.12.3">0.12.3</a> - 2021-06-27</h4>
+<h5>Changed</h5>
+<ul>
+<li>(<code>glyf</code>) Always use a calculated bbox.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.12.1...v0.12.2">0.12.2</a> - 2021-06-11</h4>
+<h5>Fixed</h5>
+<ul>
+<li><code>Face::glyph_bounding_box</code> for variable <code>glyf</code>.</li>
+<li>(<code>glyf</code>) Do not skip glyphs with zero-sized bbox.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.12.0...v0.12.1">0.12.1</a> - 2021-05-24</h4>
+<h5>Added</h5>
+<ul>
+<li>Support Format 13 subtables in <code>cmap::Subtable::is_unicode</code>.
+Thanks to <a href="https://github.com/csmulhern">csmulhern</a></li>
+<li>Derive more traits by default. Thanks to <a href="https://github.com/dhardy">dhardy</a></li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.11.0...v0.12.0">0.12.0</a> - 2021-02-14</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>Face::ascender</code> and <code>Face::descender</code> will use
+<a href="https://docs.microsoft.com/en-us/typography/opentype/spec/os2#uswinascent">usWinAscent</a> and
+<a href="https://docs.microsoft.com/en-us/typography/opentype/spec/os2#uswindescent">usWinDescent</a>
+when <code>USE_TYPO_METRICS</code> flag is not set in <code>OS/2</code> table.
+Previously, those values were ignored and
+<a href="https://docs.microsoft.com/en-us/typography/opentype/spec/hhea#ascender">hhea::ascender</a> and
+<a href="https://docs.microsoft.com/en-us/typography/opentype/spec/hhea#descender">hhea::descender</a>
+were used. Now <code>hhea</code> table values will be used only when <code>OS/2</code> table is not present.</li>
+<li><code>Face::outline_glyph</code> and <code>Face::glyph_bounding_box</code> in case of a <code>glyf</code> table
+can fallback to a calculated bbox when the embedded bbox is malformed now.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.10.1...v0.11.0">0.11.0</a> - 2021-02-04</h4>
+<h5>Added</h5>
+<ul>
+<li><code>FaceTables</code>, which allowed to load <code>Face</code> not only from a single chunk of data,
+but also in a per-table way. Which is useful for WOFF parsing.
+No changes to the API.
+Thanks to <a href="https://github.com/fschutt">fschutt</a></li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.10.0...v0.10.1">0.10.1</a> - 2021-01-21</h4>
+<h5>Changed</h5>
+<ul>
+<li>Update a font used for tests.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.9.0...v0.10.0">0.10.0</a> - 2021-01-16</h4>
+<h5>Added</h5>
+<ul>
+<li><code>variable-fonts</code> build feature. Enabled by default.
+By disabling it you can reduce <code>ttf-parser</code> binary size overhead almost twice.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>(<code>gvar</code>) Increase the maximum number of variation tuples from 16 to 32.
+Increases stack usage and makes <code>gvar</code> parsing 10% slower now.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>(<code>CFF</code>) Fix <code>seac</code> processing. Thanks to <a href="https://github.com/wezm">wezm</a></li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.8.3...v0.9.0">0.9.0</a> - 2020-12-05</h4>
+<h5>Removed</h5>
+<ul>
+<li><code>kern</code> AAT subtable 1 aka <code>kern::state_machine</code>.
+Mainly because it's useless without a proper shaping.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.8.2...v0.8.3">0.8.3</a> - 2020-11-15</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Face::glyph_variation_delta</code></li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>Iterator::nth</code> implementation for <code>cmap::Subtables</code> and <code>Names</code>.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.8.1...v0.8.2">0.8.2</a> - 2020-07-31</h4>
+<h5>Added</h5>
+<ul>
+<li><code>cmap::Subtable::codepoints</code></li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>(cmap) Incorrectly returning glyph ID <code>0</code> instead of <code>None</code> for format 0</li>
+<li>(cmap) Possible invalid glyph mapping for format 2</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.8.0...v0.8.1">0.8.1</a> - 2020-07-29</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Face::is_monospaced</code></li>
+<li><code>Face::italic_angle</code></li>
+<li><code>Face::typographic_ascender</code></li>
+<li><code>Face::typographic_descender</code></li>
+<li><code>Face::typographic_line_gap</code></li>
+<li><code>Face::capital_height</code></li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.7.0...v0.8.0">0.8.0</a> - 2020-07-21</h4>
+<h5>Added</h5>
+<ul>
+<li>Allow <code>true</code> magic.</li>
+<li><code>FaceParsingError</code></li>
+<li><code>NormalizedCoordinate</code></li>
+<li><code>Face::variation_coordinates</code></li>
+<li><code>Face::has_non_default_variation_coordinates</code></li>
+<li><code>Face::glyph_name</code> can lookup CFF names too.</li>
+<li><code>Face::table_data</code></li>
+<li><code>Face::character_mapping_subtables</code></li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>(CFF,CFF2) 10% faster parsing.</li>
+<li><code>Face::from_slice</code> returns <code>Result</code> now.</li>
+<li><code>Name::platform_id</code> returns <code>PlatformId</code> instead of <code>Option&lt;PlatformId&gt;</code> now.</li>
+<li>The <code>cmap</code> module became public.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>Face::width</code> parsing.</li>
+<li>Possible u32 overflow on 32-bit platforms during <code>Face::from_slice</code>.</li>
+<li>(cmap) <code>Face::glyph_variation_index</code> processing when the encoding table has only one glyph.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.6.2...v0.7.0">0.7.0</a> - 2020-07-16</h4>
+<h5>Added</h5>
+<ul>
+<li>(CFF) CID fonts support.</li>
+<li>(CFF) <code>seac</code> support.</li>
+<li><code>Font::global_bounding_box</code></li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Rename <code>Font</code> to <code>Face</code>, because this is what it actually is.</li>
+<li>Rename <code>Font::from_data</code> to <code>Font::from_slice</code> to match serde and other libraries.</li>
+<li>Rename <code>Name::name_utf8</code> to <code>Name::to_string</code>.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>Font::family_name</code> and <code>Font::post_script_name</code>. They were a bit confusing.
+Prefer:<pre><code>face.names().find(|name| name.name_id() == name_id::FULL_NAME).and_then(|name| name.to_string())
+</code></pre>
+</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.6.1...v0.6.2">0.6.2</a> - 2020-07-02</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Name::is_unicode</code></li>
+<li><code>Font::family_name</code> will load names with Windows Symbol encoding now.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>Font::glyph_bounding_box</code> will apply variation in case of <code>gvar</code> fonts.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.6.0...v0.6.1">0.6.1</a> - 2020-05-19</h4>
+<h5>Fixed</h5>
+<ul>
+<li>(<code>kern</code>) Support fonts that ignore the subtable size limit.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.5.0...v0.6.0">0.6.0</a> - 2020-05-18</h4>
+<h5>Added</h5>
+<ul>
+<li><code>sbix</code>, <code>CBLC</code>, <code>CBDT</code> and <code>SVG</code> tables support.</li>
+<li><code>Font::glyph_raster_image</code> and <code>Font::glyph_svg_image</code>.</li>
+<li><code>Font::kerning_subtables</code> with subtable formats 0..3 support.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>(c-api) The library doesn't allocate <code>ttfp_font</code> anymore. All allocations should be
+handled by the caller from now.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>Font::glyphs_kerning</code>. Use <code>Font::kerning_subtables</code> instead.</li>
+<li>(c-api) <code>ttfp_create_font</code> and <code>ttfp_destroy_font</code>.
+Use <code>ttfp_font_size_of</code> + <code>ttfp_font_init</code> instead.<pre><code class="syntax-highlight language-c"><span class="n">ttfp_font</span><span class="w"> </span><span class="o">*</span><span class="n">font</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">ttfp_font</span><span class="o">*</span><span class="p">)</span><span class="n">alloca</span><span class="p">(</span><span class="n">ttfp_font_size_of</span><span class="p">());</span>
+<span class="n">ttfp_font_init</span><span class="p">(</span><span class="n">font_data</span><span class="p">,</span><span class="w"> </span><span class="n">font_data_size</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">font</span><span class="p">);</span>
+</code></pre>
+</li>
+<li>Logging support. We haven't used it anyway.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>(<code>gvar</code>) Integer overflow.</li>
+<li>(<code>cmap</code>) Integer overflow during subtable format 2 parsing.</li>
+<li>(<code>CFF</code>, <code>CFF2</code>) DICT number parsing.</li>
+<li><code>Font::glyph_*_advance</code> will return <code>None</code> when glyph ID
+is larger than the number of metrics in the table.</li>
+<li>Ignore variation offset in <code>Font::glyph_*_advance</code> and <code>Font::glyph_*_side_bearing</code>
+when <code>HVAR</code>/<code>VVAR</code> tables are missing.
+Previously returned <code>None</code> which is incorrect.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.4.0...v0.5.0">0.5.0</a> - 2020-03-19</h4>
+<h5>Added</h5>
+<ul>
+<li>Variable fonts support.</li>
+<li>C API.</li>
+<li><code>gvar</code>, <code>CFF2</code>, <code>avar</code>, <code>fvar</code>, <code>HVAR</code>, <code>VVAR</code> and <code>MVAR</code> tables support.</li>
+<li><code>Font::variation_axes</code></li>
+<li><code>Font::set_variation</code></li>
+<li><code>Font::is_variable</code></li>
+<li><code>Tag</code> type.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Multiple issues due to arithmetic overflow.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.3.0...v0.4.0">0.4.0</a> - 2020-02-24</h4>
+<p><strong>A major rewrite.</strong></p>
+<h5>Added</h5>
+<ul>
+<li><code>Font::glyph_bounding_box</code></li>
+<li><code>Font::glyph_name</code></li>
+<li><code>Font::has_glyph_classes</code></li>
+<li><code>Font::glyph_class</code></li>
+<li><code>Font::glyph_mark_attachment_class</code></li>
+<li><code>Font::is_mark_glyph</code></li>
+<li><code>Font::glyph_y_origin</code></li>
+<li><code>Font::vertical_ascender</code></li>
+<li><code>Font::vertical_descender</code></li>
+<li><code>Font::vertical_height</code></li>
+<li><code>Font::vertical_line_gap</code></li>
+<li>Optional <code>log</code> dependency.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>Font::outline_glyph</code> now accepts <code>&amp;mut dyn OutlineBuilder</code> and not <code>&amp;mut impl OutlineBuilder</code>.</li>
+<li><code>Font::ascender</code>, <code>Font::descender</code> and <code>Font::line_gap</code> will check <code>USE_TYPO_METRICS</code>
+flag in OS/2 table now.</li>
+<li><code>glyph_hor_metrics</code> was split into <code>glyph_hor_advance</code> and <code>glyph_hor_side_bearing</code>.</li>
+<li><code>glyph_ver_metrics</code> was split into <code>glyph_ver_advance</code> and <code>glyph_ver_side_bearing</code>.</li>
+<li><code>CFFError</code> is no longer public.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>Error</code> enum. All methods will return <code>Option&lt;T&gt;</code> now.</li>
+<li>All <code>unsafe</code>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>glyph_hor_side_bearing</code> parsing when the number of metrics is less than the total number of glyphs.</li>
+<li>Multiple CFF parsing fixes. The parser is more strict now.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.2.2...v0.3.0">0.3.0</a> - 2019-09-26</h4>
+<h5>Added</h5>
+<ul>
+<li><code>no_std</code> compatibility.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>The library has one <code>unsafe</code> block now.</li>
+<li>35% faster <code>family_name()</code> method.</li>
+<li>25% faster <code>from_data()</code> method for TrueType fonts.</li>
+<li>The <code>Name</code> struct has a new API. Public fields became public functions
+and data is parsed on demand and not beforehand.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.2.1...v0.2.2">0.2.2</a> - 2019-08-12</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Allow format 12 subtables with <em>Unicode full repertoire</em> in <code>cmap</code>.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.2.0...v0.2.1">0.2.1</a> - 2019-08-12</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Check that <code>cmap</code> subtable encoding is Unicode.</li>
+</ul>
+<h4><a href="https://github.com/harfbuzz/ttf-parser/compare/v0.1.0...v0.2.0">0.2.0</a> - 2019-07-10</h4>
+<h5>Added</h5>
+<ul>
+<li>CFF support.</li>
+<li>Basic kerning support.</li>
+<li>All <code>cmap</code> subtable formats except Mixed Coverage (8) are supported.</li>
+<li>Vertical metrics querying from the <code>vmtx</code> table.</li>
+<li>OpenType fonts are allowed now.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>A major rewrite. TrueType tables are no longer public.</li>
+<li>Use <code>GlyphId</code> instead of <code>u16</code>.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>GDEF</code> table parsing.</li>
+</ul>
+</div><p class="table-note">sha256:cfbe5f07c7e664927ea218a00ec699b858952dcbbad3b215700510ffbf61c461</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2018 Yevhenii Reizner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+</code></pre></div><p class="table-note">sha256:f3c9fe731c701ed77fd5fbaac573872af04dc5869385eb9bd5e3c73c42713814</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:38ed131f843eb6a1a9be55b4b5941b41e6e3a5b56923d6626f96457929df0f0f</code></dd><dt>Upstream checksum</dt><dd><code>sha256:d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/ttf-parser&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.25.1&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">apple-layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">core_maths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:core_maths&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;opentype-layout&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;apple-layout&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;variable-fonts&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;glyph-names&quot;</span><span class="p">]</span>
+<span class="n">glyph-names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">gvar-alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">no-std-float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;core_maths&quot;</span><span class="p">]</span>
+<span class="n">opentype-layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">variable-fonts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ttf_parser&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">core_maths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/core_maths&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Caleb Maclennan &lt;caleb@alerque.com&gt;, Laurenz Stampfl &lt;laurenz.stampfl@gmail.com&gt;, Yevhenii Reizner &lt;razrfalcon@gmail.com&gt;, خالد حسني (Khaled Hosny) &lt;khaled@aliftype.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.63.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/ttf-parser/0.25.1">crates.io package</a></li><li><a href="https://github.com/harfbuzz/ttf-parser">Source repository</a></li><li><a href="https://docs.rs/ttf-parser/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">ttf-parser</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/ttf-parser"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.25.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

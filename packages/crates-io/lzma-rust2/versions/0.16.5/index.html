@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>lzma-rust2 0.16.5 · Incan.pub</title><meta name="description" content="LZMA / LZMA2 / LZIP / XZ compression ported from &#39;tukaani xz for java&#39;"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/lzma-rust2</p><div class="title-row"><h1>lzma-rust2</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/lzma-rust2/versions/0.16.5/" selected>0.16.5</option></select></label></div><p class="description">LZMA / LZMA2 / LZIP / XZ compression ported from &#39;tukaani xz for java&#39;</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>LZMA / LZMA2 / LZIP / XZ in native Rust</h3>
+<p><a href="https://crates.io/crates/lzma-rust2">Crate</a>
+<a href="https://docs.rs/lzma-rust2">Documentation</a></p>
+<p>LZMA / LZMA2 / LZIP / XZ compression ported from <a href="https://tukaani.org/xz/java.html">tukaani xz for java</a>.</p>
+<p>This is a fork of the original, unmaintained lzma-rust crate to continue the development and maintenance.</p>
+<h4>Safety</h4>
+<p>Only the <code>optimization</code> feature uses unsafe Rust features to implement optimizations, that are
+not possible in safe Rust. Those optimizations are properly guarded and are of course sound.
+This includes creation of aligned memory, handwritten assembly code for hot functions and some
+pointer logic. Those optimization are well localized and generally consider safe to use, even
+with untrusted input.</p>
+<p>Deactivating the <code>optimization</code> feature will result in 100% standard Rust code.</p>
+<h4>Performance</h4>
+<p>The following part is strictly about single threaded performance. It supports multithreaded encoding and decoding
+through the <code>Lzma2WriterMt</code> and <code>Lzma2ReaderMt</code> structs though.</p>
+<p>When compared against the <code>liblzma</code> crate, which uses the C library of the same name, this crate has improved decoding
+speed.</p>
+<p>Decompression Speed LZMA2
+Decompression Speed LZMA</p>
+<p>Encoding is also well optimized and is surpassing <code>liblzma</code> for level 0 to 3 and matches it for level 4 to 9.</p>
+<p>Compression Speed LZMA2
+Compression Speed LZMA</p>
+<p>Data was assembled using lzma-rust2 v0.4.0 and liblzma v0.4.2.</p>
+<h4>no_std Support</h4>
+<p>This crate supports <code>no_std</code> environments by disabling the default <code>std</code> feature.</p>
+<p>When used in <code>no_std</code> mode, the crate provides custom <code>Read</code>, <code>Write</code>, and <code>Error</code> types
+(defined in <code>no_std.rs</code>) that are compatible with <code>no_std</code> environments. These types offer
+similar functionality to their <code>std::io</code> counterparts but are implemented using only <code>core</code>
+and <code>alloc</code>.</p>
+<p>The custom types include:</p>
+<ul>
+<li><code>Error</code>: A custom error enum with variants for different error conditions.</li>
+<li><code>Read</code>: A trait similar to <code>std::io::Read</code>.</li>
+<li><code>Write</code>: A trait similar to <code>std::io::Write</code>.</li>
+</ul>
+<p>Default implementations for <code>&amp;[u8]</code> (Read) and <code>&amp;mut [u8]</code> (Write) are provided.</p>
+<p>Note that multithreaded features are not available in <code>no_std</code> mode as they require
+standard library threading primitives.</p>
+<h4>License</h4>
+<p>Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>encoder</code></li><li><code>optimization</code></li><li><code>lzip</code></li><li><code>xz</code></li></ul></td></tr><tr><th scope="row"><code>encoder</code></th><td>Yes<small>default → encoder</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>lzip</code></th><td>Yes<small>default → lzip</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>optimization</code></th><td>Yes<small>default → optimization</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>sha2</code></th><td>Yes<small>default → xz → sha2</small></td><td><ul class="effects"><li><code>dep:sha2</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>xz</code></th><td>Yes<small>default → xz</small></td><td><ul class="effects"><li><code>sha2</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/sha2/"><code>crates-io/sha2</code></a><small>Alias: sha2</small></th><td><code>^0.11</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → xz → sha2</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/zip/versions/8.6.0/">crates-io/zip 8.6.0</a><span>Requires ^0.16.1 · alias lzma-rust2 · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="notice">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/lzma-rust2/versions/0.16.5/">0.16.5</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/lzma-rust2/0.16.5">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="http://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>0.16.5 - 2026-07-05</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Hardened the library against malicious or malformed archives.</li>
+</ul>
+<h4>0.16.4 - 2026-05-31</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix invalid XZ output for empty streams</li>
+<li>Fix debug assertion panic on valid flushes</li>
+</ul>
+<h4>0.16.3 - 2026-05-20</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed an issue were custom dictionaries could not be used when using LZMA</li>
+</ul>
+<h4>0.16.2 - 2026-02-16</h4>
+<h5>Fixed</h5>
+<ul>
+<li>We provide our own CRC implementation for lzip and xz, which removes the dependency to the crc crate. No functional
+change to v0.16.0 or v0.16.1</li>
+</ul>
+<h4>0.16.1 - 2026-02-11</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Make sure to at least use crc version 3.2. No functional updates or changes compared to v0.16.1</li>
+</ul>
+<h4>0.16.0 - 2026-02-10</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix compatibility issues with the crc crate by raising MSRV to 1.85. No functional updates or changes compared to
+v0.15.7</li>
+</ul>
+<h4>0.15.7 - 2026-01-13</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Add missing From&lt;TryReserveError&gt; for the no_std Error</li>
+</ul>
+<h4>0.15.6 - 2026-01-06</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix possible panic on out of bound access when reading u32_be correctly</li>
+</ul>
+<h4>0.15.5 - 2026-01-05</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix possible panic in the range decoder when trying to read u32_be data</li>
+<li>Fix race condition in multithreaded code in error conditions</li>
+</ul>
+<h4>0.15.4 - 2025-12-07</h4>
+<h5>Changed</h5>
+<ul>
+<li>Fix CRC dependency to exactly 3.3 or else it could break some builds, wrongly selecting a different major version.</li>
+</ul>
+<h4>0.15.3 - 2025-12-02</h4>
+<h5>Changed</h5>
+<ul>
+<li>Pin CRC dependency to not break MSRV. Most likely we will increase the MSRV in the next minor release.</li>
+</ul>
+<h4>0.15.2 - 2025-11-26</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix possible underflow in BCJ filters (#72)</li>
+</ul>
+<h4>0.15.1 - 2025-10-31</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix fuzzing issues found for the LZMA decoder (#69)</li>
+</ul>
+<h4>0.15.0 - 2025-10-29</h4>
+<h5>Changed</h5>
+<ul>
+<li>Breaking change: <code>LzipReader::new()</code> does not return a <code>Return</code> type anymore, but only itself.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix issue when reading some compressed lzma2 data, which could lead to an integer overflow (#64)</li>
+</ul>
+<h4>0.14.3 - 2025-10-07</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix issue when compiling with feature <code>xz</code> but without including the feature <code>encoder</code> (#61)</li>
+<li>Fix issue when reading XZ files that allocate too many records (#62)</li>
+</ul>
+<h4>0.14.2 - 2025-09-25</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix reading XZ files with multiple streams (#57)</li>
+<li>Fix integer overflow when using LZMA2 dictionary sizes near 4 GiB (#58)</li>
+</ul>
+<h4>0.14.1 - 2025-09-21</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix the safe build without the &quot;optimization&quot; feature.</li>
+</ul>
+<h4>0.14.0 - 2025-09-20</h4>
+<h5>Changed</h5>
+<ul>
+<li>Breaking change: Changed CheckType's default from CRC32 to CRC64 @sorairolake (#37)</li>
+<li>Breaking change: All Writer now use the AutoFinisher struct to provide auto finishing writer @sorairolake (#46)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Export missing <code>FilterConfig</code> and <code>FilterType</code> @sorairolake (#50)</li>
+</ul>
+<h4>0.13.0 - 2025-09-03</h4>
+<h5>Changed</h5>
+<ul>
+<li>Breaking change: Rename identifiers to follow Rust API Guidelines @sorairolake (#35)</li>
+<li>Breaking change: All single threaded reader / writer are now implementing UnwindSafe and RefUnwindSafe.
+Before they saved the last std::io:error and kept returning it for all following red/writes. Now they only
+return that particular error once.</li>
+</ul>
+<h4>0.12.0 - 2025-09-02</h4>
+<ul>
+<li>Reduced MSRV to 1.82</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed documentation @sorairolake</li>
+<li>Improve docs.rs feature compatibility @sorairolake</li>
+<li>Internal cleanup @sorairolake</li>
+</ul>
+<h4>0.11.0 - 2025-08-27</h4>
+<h5>Changed</h5>
+<ul>
+<li>Add writers for lzip and xz that finishes the stream on drop. @sorairolake (#26)</li>
+</ul>
+<h4>0.10.2 - 2025-08-25</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed missing call to .finish() when creating files with BCJ filter with XZ.</li>
+</ul>
+<h4>0.10.1 - 2025-08-25</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix broken BCJWriter that couldn't properly finish it's encoding process. Now has a proper finish() function.</li>
+</ul>
+<h4>0.10.0 - 2025-08-22</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Add missing &quot;inner()&quot; and &quot;inner_mut()&quot; function to the XZ and LZIP reader and writer.</li>
+</ul>
+<h4>0.9.0 - 2025-08-15</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>XZReader</code> and <code>XZWriter</code> are now Send.</li>
+<li>Most reader and writer now have &quot;inner()&quot; and &quot;inner_mut()&quot; functions.</li>
+</ul>
+<h5>Updated</h5>
+<ul>
+<li>Internally refactoring to reduce code duplication for multi-threading code.</li>
+</ul>
+<h4>0.8.2 - 2025-08-13</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Make sure that LZMA reader errors when going out of bound. This could happen if no EOS was found.
+This was not a memory a safety issue, but instead a problem in how we propagated a fail state in light
+of certain optimizations.</li>
+<li>Bound the multithreaded reader as to not use too much memory.</li>
+</ul>
+<h4>0.8.1 - 2025-08-13</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Internally we updated the hash function for the match finders to use a golden ratio based hash instead of the old
+CRC table based hash. In our test data this was a net win, but it turned out, once tested with bigger datasets,
+this is a net loss. So we returned back to the CRC table approach (we speak here about a change below 0.01%, but
+measurable).</li>
+</ul>
+<h4>0.8.0 - 2025-08-10</h4>
+<h5>Added</h5>
+<ul>
+<li>Added single threaded and multithreaded encoder and decoder for the LZIP file format.</li>
+<li>Added multithreaded encoder and decoder for the XZ file format.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Renamed LZMA2's &quot;independent work unit&quot; naming from &quot;stream&quot; to &quot;chunk&quot; to not confuse it with XZ streams.</li>
+<li>LZMA2Writer now take a LZMA2Option struct. This enables both the LZMA2Writer and LZMA2WriterMT to encode multiple
+chunks for multithreaded decoding.</li>
+<li>Changed block size of XZOptions to NonZero type.</li>
+<li>Unified the API of the writers as far as possible.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed unbounded spawning of threads when using the multithreaded version of LZMA2 encoder &amp; decoder.</li>
+<li>Fixed performance regression on linux as reported by @chenxiaolong (#10)</li>
+<li>Fixed compatibility with liblzma when creating XZ files as reported by @chenxiaolong (#14)</li>
+<li>XZWriter properly writes out multiple blocks respecting the block_size.</li>
+</ul>
+<h4>0.7.0 - 2025-08-08</h4>
+<h5>Added</h5>
+<ul>
+<li>Added single threaded encoder and decoder for the XZ file format.</li>
+<li>Ported all pre-filters used by both 7zip and XZ.</li>
+</ul>
+<h4>0.6.1 - 2025-08-03</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed issue with the MT reader discovered by the downstream sevenz-rust2 crate because of incorrect chunk cuts
+(https://github.com/hasenbanck/sevenz-rust2/issues/44).</li>
+</ul>
+<h5>Updated</h5>
+<ul>
+<li>The multithreading now works more efficient, since new threads are only spawned if really needed.</li>
+</ul>
+<h4>0.6.0 - 2025-07-26</h4>
+<h5>Added</h5>
+<ul>
+<li>Added no_std support by disabling the new <code>std</code> feature that is enabled by default. Custom traits and default
+implementation for &amp;[u8] and &amp;mut [u8] are provided.</li>
+</ul>
+<h4>0.5.1 - 2025-07-25</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed possible deadlocks in the multithreaded encoder and decoder.</li>
+</ul>
+<h4>0.5.0 - 2025-07-24</h4>
+<h5>Added</h5>
+<ul>
+<li>Added multithreaded compression for LZMA2.</li>
+<li>Added multithreaded decompression for LZMA2.</li>
+</ul>
+<h5>Updated</h5>
+<ul>
+<li>Renamed LZMA2Options to LZMAOptions, since it described the way we encode the LZMA encoder, which is shared between
+LZMA and LZMA2.</li>
+</ul>
+<h4>0.4.0 - 2025-07-16</h4>
+<h5>Updated</h5>
+<ul>
+<li>Increased the encoding performance. For level 0-3 this crate now is faster than lzma.
+For 4-9 this crate is on same level with liblzma.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Feature &quot;asm&quot; changed to &quot;optimization&quot; and is also enabled by default.
+Have a look at the &quot;Safety&quot; section of the README.md for more details.</li>
+</ul>
+<h4>0.3.1 - 2025-07-12</h4>
+<h5>Fixed</h5>
+<ul>
+<li>No functional changes.</li>
+<li>Fixed the links to the repository.</li>
+</ul>
+<h4>0.3.0 - 2025-07-12</h4>
+<h5>Updated</h5>
+<ul>
+<li>Increased MSRV to v1.85</li>
+<li>Increased the decoding performance while using only safe Rust. On x86-64 the speed-up
+was quite large when compared to the v0.2 branch (+50% throughput).
+Have a look at the &quot;Performance&quot; section of the README.md for more details.</li>
+<li>Added feature flag &quot;asm&quot; which is activated at default which increases the
+decoding speed when using LZMA2.
+Have a look at the &quot;Safety&quot; section of the README.md for more details.</li>
+<li>Add EncodeMode and MFType enums to public interface (used for the encoder options).</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>Remove byteorder dependency.</li>
+<li>Remove internal types from public interface.</li>
+</ul>
+<h4>0.2.2 - 2025-06-28</h4>
+<h5>Updated</h5>
+<ul>
+<li>No functional updated.</li>
+<li>Moved into its own repository.</li>
+</ul>
+<h4>0.2.1 - 2025-05-01</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix integer overflow when decompressing uncompressed files over u32::MAX</li>
+<li>Allow all byteorder versions with major release 1</li>
+</ul>
+</div><p class="table-note">sha256:9adf6e2456b4fb49b05983bfb6eb024e0ef97cba14dcb161afdde91be5520ac0</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.</code></pre></div><p class="table-note">sha256:43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:9d0e254a76e22c4853fa79c33cc2032565df8ac090abf7175db401b9a3aa21f3</code></dd><dt>Upstream checksum</dt><dd><code>sha256:ca93e534d1142d1d0dcca6d25fe302508a5dfb40b302802904577725ea0b695b</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/lzma-rust2&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.16.5&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;encoder&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;optimization&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;lzip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;xz&quot;</span><span class="p">]</span>
+<span class="n">encoder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">lzip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">optimization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">sha2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:sha2&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">xz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;sha2&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lzma_rust2&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">sha2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/sha2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.11&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/lzma-rust2/0.16.5">crates.io package</a></li><li><a href="https://github.com/hasenbanck/lzma-rust2/">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">lzma-rust2</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/lzma-rust2"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.16.5"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

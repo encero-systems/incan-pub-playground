@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>encoding_rs 0.8.42 · Incan.pub</title><meta name="description" content="A Gecko-oriented implementation of the Encoding Standard"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/encoding_rs</p><div class="title-row"><h1>encoding_rs</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/encoding_rs/versions/0.8.42/" selected>0.8.42</option><option value="../../../../../packages/crates-io/encoding_rs/versions/0.8.35/">0.8.35</option></select></label></div><p class="description">A Gecko-oriented implementation of the Encoding Standard</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>(Apache-2.0 OR MIT) AND BSD-3-Clause</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>encoding_rs</h3>
+<p><a href="https://github.com/hsivonen/encoding_rs/actions/workflows/ci.yml">Build Status</a>
+<a href="https://crates.io/crates/encoding_rs">crates.io</a>
+<a href="https://docs.rs/encoding_rs/">docs.rs</a></p>
+<p>encoding_rs an implementation of the (non-JavaScript parts of) the
+<a href="https://encoding.spec.whatwg.org/">Encoding Standard</a> written in Rust.</p>
+<p>The Encoding Standard defines the Web-compatible set of character encodings,
+which means this crate can be used to decode Web content. encoding_rs is
+used in Gecko starting with Firefox 56. Due to the notable overlap between
+the legacy encodings on the Web and the legacy encodings used on Windows,
+this crate may be of use for non-Web-related situations as well; see below
+for links to adjacent crates.</p>
+<p>Additionally, the <code>mem</code> module provides various operations for dealing with
+in-RAM text (as opposed to data that's coming from or going to an IO boundary).
+The <code>mem</code> module is a module instead of a separate crate due to internal
+implementation detail efficiencies.</p>
+<h4>Functionality</h4>
+<p>Due to the Gecko use case, encoding_rs supports decoding to and encoding from
+UTF-16 in addition to supporting the usual Rust use case of decoding to and
+encoding from UTF-8. Additionally, the API has been designed to be FFI-friendly
+to accommodate the C++ side of Gecko.</p>
+<p>Specifically, encoding_rs does the following:</p>
+<ul>
+<li>Decodes a stream of bytes in an Encoding Standard-defined character encoding
+into valid aligned native-endian in-RAM UTF-16 (units of <code>u16</code> / <code>char16_t</code>).</li>
+<li>Encodes a stream of potentially-invalid aligned native-endian in-RAM UTF-16
+(units of <code>u16</code> / <code>char16_t</code>) into a sequence of bytes in an Encoding
+Standard-defined character encoding as if the lone surrogates had been
+replaced with the REPLACEMENT CHARACTER before performing the encode.
+(Gecko's UTF-16 is potentially invalid.)</li>
+<li>Decodes a stream of bytes in an Encoding Standard-defined character
+encoding into valid UTF-8.</li>
+<li>Encodes a stream of valid UTF-8 into a sequence of bytes in an Encoding
+Standard-defined character encoding. (Rust's UTF-8 is guaranteed-valid.)</li>
+<li>Does the above in streaming (input and output split across multiple
+buffers) and non-streaming (whole input in a single buffer and whole
+output in a single buffer) variants.</li>
+<li>Avoids copying (borrows) when possible in the non-streaming cases when
+decoding to or encoding from UTF-8.</li>
+<li>Resolves textual labels that identify character encodings in
+protocol text into type-safe objects representing the those encodings
+conceptually.</li>
+<li>Maps the type-safe encoding objects onto strings suitable for
+returning from <code>document.characterSet</code>.</li>
+<li>Validates UTF-8 (in common instruction set scenarios a bit faster for Web
+workloads than the standard library; hopefully will get upstreamed some
+day) and ASCII.</li>
+</ul>
+<p>Additionally, <code>encoding_rs::mem</code> does the following:</p>
+<ul>
+<li>Checks if a byte buffer contains only ASCII.</li>
+<li>Checks if a potentially-invalid UTF-16 buffer contains only Basic Latin (ASCII).</li>
+<li>Checks if a valid UTF-8, potentially-invalid UTF-8 or potentially-invalid UTF-16
+buffer contains only Latin1 code points (below U+0100).</li>
+<li>Checks if a valid UTF-8, potentially-invalid UTF-8 or potentially-invalid UTF-16
+buffer or a code point or a UTF-16 code unit can trigger right-to-left behavior
+(suitable for checking if the Unicode Bidirectional Algorithm can be optimized
+out).</li>
+<li>Combined versions of the above two checks.</li>
+<li>Converts valid UTF-8, potentially-invalid UTF-8 and Latin1 to UTF-16.</li>
+<li>Converts potentially-invalid UTF-16 and Latin1 to UTF-8.</li>
+<li>Converts UTF-8 and UTF-16 to Latin1 (if in range).</li>
+<li>Finds the first invalid code unit in a buffer of potentially-invalid UTF-16.</li>
+<li>Makes a mutable buffer of potential-invalid UTF-16 contain valid UTF-16.</li>
+<li>Copies ASCII from one buffer to another up to the first non-ASCII byte.</li>
+<li>Converts ASCII to UTF-16 up to the first non-ASCII byte.</li>
+<li>Converts UTF-16 to ASCII up to the first non-Basic Latin code unit.</li>
+</ul>
+<h4>API surprises to watch out for</h4>
+<p>The encoder API encodes to the <a href="https://encoding.spec.whatwg.org/#output-encodings"><em>output encoding</em></a>
+of the <code>Encoding</code> that methods are invoked on. That is, you can't use this crate to produce
+output in UTF-16LE, UTF-16BE, or replacement, since the output encoding
+for those encodings is UTF-8! (Changing the API to make this more obvious from the API
+shape itself would now be a semver break.)</p>
+<h4>Performance</h4>
+<p>Primary performance attention is given to the <code>x86_64</code>, <code>aarch64</code>, and
+<code>thumbv7neon</code> targets with the <code>simd-accel</code> and <code>std</code> Cargo features enabled.</p>
+<p>Speed is a non-goal when encoding to legacy encodings. By default, encoding to
+legacy encodings is optimized for binary size rather than speed, which was
+determined to not be user-visibly slow on Raspberry Pi 3 (which stood in for
+a slow phone for testing) in the Web-exposed encoder use cases.</p>
+<p>See the Cargo features below for optionally making CJK legacy encode faster.</p>
+<p>Various aspects of the code other than ASCII acceleration were optimized
+in 2018 on Haswell using then-current compiler. Alternative approaches
+might be faster today.</p>
+<p>ASCII acceleration was completely rewritten in 2026 targeting the following
+scenarios (with <code>simd-accel</code> and <code>std</code> enabled):</p>
+<ul>
+<li>Base <code>x86_64</code> compilation target running on Zen 3 (i.e. taking AVX2+BMI1
+multiversion paths as applicable).</li>
+<li><code>aarch64</code> running on M3 Pro.</li>
+<li><code>thumbv7neon</code> target running on 32-bit Raspberry Pi OS on Raspberry Pi 4.</li>
+</ul>
+<p>If you are targeting <code>x86_64</code>, <code>i686</code>, <code>aarch64</code>, or <code>thumbv7neon</code>
+targets, it's worthwhile to enable the <code>simd-accel</code> Cargo feature if you
+can tolerate the reliance on nightly Rust features.</p>
+<p>If you are targeting <code>x86_64</code> and you know that the binaries are only going
+to be deployed to x86-64-v3 or higher, it's worthwhile both for run-time
+performance with <code>simd-accel</code> and for build times (see below) regardless of
+<code>simd-accel</code> to compile with <code>RUSTFLAGS='-C target_cpu=x86-64-v3'</code> (or higher).</p>
+<p>A framework for measuring performance is <a href="https://github.com/hsivonen/encoding_bench/">available separately</a>.</p>
+<h4>Rust Version Compatibility</h4>
+<p>It is a goal to support the latest stable Rust, the latest nightly Rust and
+the version of Rust that's used for Firefox Nightly.</p>
+<p>At this time, there is no firm commitment to support a version older than
+what's required by Firefox. MSRV changes are not treated as semver-breaking.</p>
+<p>Furthermore, enabling the <code>simd-accel</code> feature may further constrain the
+compatible Rust versions.</p>
+<p>Currently, the MSRV is 1.88 with or without <code>simd-accel</code>, which is older
+than Firefox's MSRV.</p>
+<h4>Integration with <code>std::io</code></h4>
+<p>Notably, the above feature list doesn't include the capability to wrap
+a <code>std::io::Read</code>, decode it into UTF-8 and presenting the result via
+<code>std::io::Read</code>. The <a href="https://crates.io/crates/encoding_rs_io"><code>encoding_rs_io</code></a>
+crate provides that capability.</p>
+<h4><code>no_std</code> Environment</h4>
+<p>The crate works in a <code>no_std</code> environment. By default, the <code>alloc</code> feature,
+which assumes that an allocator is present is enabled. For a no-allocator
+environment, the default features (i.e. <code>alloc</code>) can be turned off. This
+makes the part of the API that returns <code>Vec</code>/<code>String</code>/<code>Cow</code> unavailable.</p>
+<h4>Decoding Email</h4>
+<p>For decoding character encodings that occur in email, use the
+<a href="https://crates.io/crates/charset"><code>charset</code></a> crate instead of using this
+one directly. (It wraps this crate and adds UTF-7 decoding.)</p>
+<h4>Windows Code Page Identifier Mappings</h4>
+<p>For mappings to and from Windows code page identifiers, use the
+<a href="https://crates.io/crates/codepage"><code>codepage</code></a> crate.</p>
+<h4>DOS Encodings</h4>
+<p>This crate does not support single-byte DOS encodings that aren't required by
+the Web Platform, but the <a href="https://crates.io/crates/oem_cp"><code>oem_cp</code></a> crate does.</p>
+<h4>Preparing Text for the Encoders</h4>
+<p>Normalizing text into Unicode Normalization Form C prior to encoding text into
+a legacy encoding minimizes unmappable characters. Text can be normalized to
+Unicode Normalization Form C using the
+<a href="https://crates.io/crates/icu_normalizer"><code>icu_normalizer</code></a> crate.</p>
+<p>The exception is windows-1258, which after normalizing to Unicode Normalization
+Form C requires tone marks to be decomposed in order to minimize unmappable
+characters. Vietnamese tone marks can be decomposed using the
+<a href="https://crates.io/crates/detone"><code>detone</code></a> crate.</p>
+<h4>Licensing</h4>
+<p>TL;DR: <code>(Apache-2.0 OR MIT) AND BSD-3-Clause</code> for the code and data combination.</p>
+<p>Please see the file named
+<a href="https://github.com/hsivonen/encoding_rs/blob/main/COPYRIGHT">COPYRIGHT</a>.</p>
+<p>The non-test code that isn't generated from the WHATWG data in this crate is
+under Apache-2.0 OR MIT. Test code is under CC0.</p>
+<p>This crate contains code/data generated from WHATWG-supplied data. The WHATWG
+upstream changed its license for portions of specs incorporated into source code
+from CC0 to BSD-3-Clause between the initial release of this crate and the present
+version of this crate. The in-source licensing legends have been updated for the
+parts of the generated code that have changed since the upstream license change.</p>
+<h4>Documentation</h4>
+<p>Generated <a href="https://docs.rs/encoding_rs/">API documentation</a> is available
+online.</p>
+<p>There is a <a href="https://hsivonen.fi/encoding_rs/">long-form write-up</a> about the
+design and internals of the crate.</p>
+<h4>C and C++ bindings</h4>
+<p>An FFI layer for encoding_rs is available as a
+<a href="https://github.com/hsivonen/encoding_c">separate crate</a>. The crate comes
+with a <a href="https://github.com/hsivonen/encoding_c/blob/main/include/encoding_rs_cpp.h">demo C++ wrapper</a>
+using the C++ standard library and <a href="https://github.com/Microsoft/GSL/">GSL</a> types.</p>
+<p>The bindings for the <code>mem</code> module are in the
+<a href="https://github.com/hsivonen/encoding_c_mem">encoding_c_mem crate</a>.</p>
+<p>For the Gecko context, there's a
+<a href="https://searchfox.org/mozilla-central/source/intl/Encoding.h#100">C++ wrapper using the MFBT/XPCOM types</a>.</p>
+<p>There's a <a href="https://hsivonen.fi/modern-cpp-in-rust/">write-up</a> about the C++
+wrappers.</p>
+<h4>Sample programs</h4>
+<ul>
+<li><a href="https://github.com/hsivonen/recode_rs">Rust</a></li>
+<li><a href="https://github.com/hsivonen/recode_c">C</a></li>
+<li><a href="https://github.com/hsivonen/recode_cpp">C++</a></li>
+</ul>
+<h4>Multiversioning</h4>
+<p>When applicable, UTF-8 validation delegates to the <a href="https://crates.io/crates/simdutf8"><code>simdutf8</code></a>
+crate. On x86 and x86_64, the UTF-8 validation function is multiversioned (unless the best version,
+currently AVX2, is known to be usable statically, e.g. by <code>RUSTFLAGS='-C target_cpu=x86-64-v3'</code>).
+This crate takes care of the dispatch using the <a href="https://crates.io/crates/core_detect"><code>core_detect</code></a>
+crate without requiring <code>std</code> and without involving the <code>simd-accel</code> feature.</p>
+<p>With the <code>simd-accel</code> feature, some <em>other</em> aspects of this crate are multiversioned on
+x86 and x86_64 in a way that does require <code>std</code>, because the
+<a href="https://crates.io/crates/multiversion"><code>multiversion</code></a> crate uses <code>std</code> and not
+<code>core_detect</code>. See below.</p>
+<h4>Build times</h4>
+<p>On x86 and x86_64 targets (only), if the <code>std</code> Cargo feature is specified without the
+<code>simd-accel</code> Cargo feature, the usual proc macro dependencies end up in the dependency
+graph but aren't actually used, so it doesn't make sense to enable the <code>std</code> feature
+without also enabling the <code>simd-accel</code> feature.</p>
+<p>If your binary is only going to be deployed to x86-64-v3 or higher, you can avoid the
+proc macro dependencies while still getting the performance benefits by enabling
+<code>simd-accel</code> (with or without <code>std</code>) and specifying <code>RUSTFLAGS='-C target_cpu=x86-64-v3'</code>.</p>
+<p>This issue does not apply to non-x86/x86_64 targets.</p>
+<p>Furthermore, <code>multiversion</code> 0.9.0 brings <code>syn</code> 3 into the dependency graph while
+<code>multiversion</code> 0.8.0 brings <code>syn</code> 2 into the dependency graph. If you don't already
+have <code>syn</code> 3 but do have <code>syn</code> 2 in your dependency graph, you can downgrade
+<code>multiversion</code> to 0.8.0 to avoid two versions of <code>syn</code>.</p>
+<h4>Optional features</h4>
+<p>There are multiple optional features.</p>
+<p>There are remarks about which features are used by Firefox to indicate what
+configuration is the one the crate author pays the most attention to. While
+not a Cargo feature, the panic configuration is relevant in this sense.
+Panic aborts the process in Firefox.</p>
+<p>Historically, there have been bugs that have affected non-Firefox
+configurations but not the Firefox configuration.</p>
+<h5><code>alloc</code> (enabled by default)</h5>
+<p>Enables the parts of the API that deal with <code>String</code>, <code>Vec</code>, and <code>Cow</code>.</p>
+<p>Enabled but not actually used by Firefox.</p>
+<h5><code>std</code></h5>
+<p>When used together with <code>simd-accel</code> (see below), enables run-time detection
+of AVX2+BMI1 on x86 and x86_64 when the compilation target does not include these
+target features statically.</p>
+<p>This feature has no effect on SIMD capabilities in other scenarios. This feature
+is not useful without the <code>simd-accel</code> feature.</p>
+<p>This feature has the side effect of linking <code>std</code>, so this is not compatible
+with the <code>no_std</code> context. Unfortunately, even though CPU feature detection
+uses an instruction rather than syscalls on x86/x86_64, the CPU feature detection
+check requires <code>std</code>, because the corresponding operation on some other
+architectures relies on operating system support.</p>
+<p>Only some operations are multiversioned: Decoding to UTF-16, encoding from
+UTF-16 to UTF-8, and various operations in the <code>mem</code> module. Notably, if
+you don't use the <code>mem</code> module and don't use UTF-16 as the in-memory Unicode
+representation, the <code>std</code> feature won't be useful.</p>
+<p>This feature does not affect multiversioning UTF-8 validation, which uses a
+separate mechanism.</p>
+<p>Used by Firefox.</p>
+<h5><code>simd-accel</code></h5>
+<p>Enables SIMD acceleration using the nightly-dependent <code>core::simd</code> part of
+the standard library.</p>
+<p>This is an opt-in feature, because enabling this feature <em>opts out</em> of Rust's
+guarantees of future compilers compiling old code (aka. &quot;stability story&quot;).</p>
+<p>The <code>simd-accel</code> feature has been tested with these target architectures:</p>
+<ul>
+<li>x86_64</li>
+<li>aarch64</li>
+<li>thumbv7neon</li>
+<li>i686</li>
+</ul>
+<p>With other little-endian target architectures, the code should compute correct
+results, but performance has not been tuned. With big-endian architectures,
+<code>core::simd</code> isn't actually used for now.</p>
+<p>On 32-bit ARM, be careful to either use a <code>thumbv7neon</code> target or to explicitly
+enable <code>neon</code> <em>and</em> also build the standard library with <code>neon</code> enabled.
+Enabling <code>simd-accel</code> will build without error but will not result in the
+intended performance when <code>neon</code> isn't enabled for the compilation or when
+the stardard library has been built without <code>neon</code>. (The <code>thumbv7neon</code> targets
+exist to address this issue.)</p>
+<p>When <code>simd-accel</code> is enabled, this crate benefits from AVX2+BMI1. When targeting
+x86_64, if you know that the binaries will only be run on x86-64-v3 or higher,
+it's beneficial to compile with x86-64-v3 (or higher) statically enabled. If the
+binaries need to also run on x86-64-v2 or x86-64-v1 CPUs and linking <code>std</code> is OK,
+it's beneficial to enable the <code>std</code> feature (see above) in addition to the
+<code>simd-accel</code> feature to enable run-time detection of AVX2+BMI1.</p>
+<p>As of 2026, the crate is developed on Zen 3 and M3 Pro. The configurations that
+get the most attention are aarch64 build target running on M3 Pro, x86_64 build
+target with run-time AVX2+BMI1 detection enabled running on Zen 3, and
+<code>-C target_cpu=x86-64-v3</code> running on Zen 3.</p>
+<p>Occasional performance checks are made on Skylake. Performance may regress
+on x86-64-v1 and x86-64-v2.</p>
+<p>i686 gets the code shape for x86_64 with minimal checks that it compiles
+and runs, but the testing is on x86_64 hardware.</p>
+<p>For thumbv7neon, testing is Raspberry Pi 4 using the 32-bit version of
+Raspberry Pi OS.</p>
+<p>If you use nightly Rust, you use targets whose first component is one of the
+above, and you are prepared <em>to have to revise your configuration when updating
+Rust</em>, you should enable this feature. Otherwise, please <em>do not</em> enable this
+feature.</p>
+<p>Used by Firefox.</p>
+<h5><code>serde</code></h5>
+<p>Enables support for serializing and deserializing <code>&amp;'static Encoding</code>-typed
+struct fields using <a href="https://serde.rs/">Serde</a>.</p>
+<p>Not used by Firefox.</p>
+<h5><code>fast-legacy-encode</code></h5>
+<p>A catch-all option for enabling the fastest legacy encode options. <em>Does not
+affect decode speed or UTF-8 encode speed.</em></p>
+<p>At present, this option is equivalent to enabling the following options:</p>
+<ul>
+<li><code>fast-hangul-encode</code></li>
+<li><code>fast-hanja-encode</code></li>
+<li><code>fast-kanji-encode</code></li>
+<li><code>fast-gb-hanzi-encode</code></li>
+<li><code>fast-big5-hanzi-encode</code></li>
+</ul>
+<p>Adds 176 KB to the binary size.</p>
+<p>Not used by Firefox.</p>
+<h5><code>fast-hangul-encode</code></h5>
+<p>Changes encoding precomposed Hangul syllables into EUC-KR from binary
+search over the decode-optimized tables to lookup by index making Korean
+plain-text encode about 4 times as fast as without this option.</p>
+<p>Adds 20 KB to the binary size.</p>
+<p>Does <em>not</em> affect decode speed.</p>
+<p>Not used by Firefox.</p>
+<h5><code>fast-hanja-encode</code></h5>
+<p>Changes encoding of Hanja into EUC-KR from linear search over the
+decode-optimized table to lookup by index. Since Hanja is practically absent
+in modern Korean text, this option doesn't affect perfomance in the common
+case and mainly makes sense if you want to make your application resilient
+agaist denial of service by someone intentionally feeding it a lot of Hanja
+to encode into EUC-KR.</p>
+<p>Adds 40 KB to the binary size.</p>
+<p>Does <em>not</em> affect decode speed.</p>
+<p>Not used by Firefox.</p>
+<h5><code>fast-kanji-encode</code></h5>
+<p>Changes encoding of Kanji into Shift_JIS, EUC-JP and ISO-2022-JP from linear
+search over the decode-optimized tables to lookup by index making Japanese
+plain-text encode to legacy encodings 30 to 50 times as fast as without this
+option (about 2 times as fast as with <code>less-slow-kanji-encode</code>).</p>
+<p>Takes precedence over <code>less-slow-kanji-encode</code>.</p>
+<p>Adds 36 KB to the binary size (24 KB compared to <code>less-slow-kanji-encode</code>).</p>
+<p>Does <em>not</em> affect decode speed.</p>
+<p>Not used by Firefox.</p>
+<h5><code>less-slow-kanji-encode</code></h5>
+<p>Makes JIS X 0208 Level 1 Kanji (the most common Kanji in Shift_JIS, EUC-JP and
+ISO-2022-JP) encode less slow (binary search instead of linear search) making
+Japanese plain-text encode to legacy encodings 14 to 23 times as fast as
+without this option.</p>
+<p>Adds 12 KB to the binary size.</p>
+<p>Does <em>not</em> affect decode speed.</p>
+<p>Not used by Firefox.</p>
+<h5><code>fast-gb-hanzi-encode</code></h5>
+<p>Changes encoding of Hanzi in the CJK Unified Ideographs block into GBK and
+gb18030 from linear search over a part the decode-optimized tables followed
+by a binary search over another part of the decode-optimized tables to lookup
+by index making Simplified Chinese plain-text encode to the legacy encodings
+100 to 110 times as fast as without this option (about 2.5 times as fast as
+with <code>less-slow-gb-hanzi-encode</code>).</p>
+<p>Takes precedence over <code>less-slow-gb-hanzi-encode</code>.</p>
+<p>Adds 36 KB to the binary size (24 KB compared to <code>less-slow-gb-hanzi-encode</code>).</p>
+<p>Does <em>not</em> affect decode speed.</p>
+<p>Not used by Firefox.</p>
+<h5><code>less-slow-gb-hanzi-encode</code></h5>
+<p>Makes GB2312 Level 1 Hanzi (the most common Hanzi in gb18030 and GBK) encode
+less slow (binary search instead of linear search) making Simplified Chinese
+plain-text encode to the legacy encodings about 40 times as fast as without
+this option.</p>
+<p>Adds 12 KB to the binary size.</p>
+<p>Does <em>not</em> affect decode speed.</p>
+<p>Not used by Firefox.</p>
+<h5><code>fast-big5-hanzi-encode</code></h5>
+<p>Changes encoding of Hanzi in the CJK Unified Ideographs block into Big5 from
+linear search over a part the decode-optimized tables to lookup by index
+making Traditional Chinese plain-text encode to Big5 105 to 125 times as fast
+as without this option (about 3 times as fast as with
+<code>less-slow-big5-hanzi-encode</code>).</p>
+<p>Takes precedence over <code>less-slow-big5-hanzi-encode</code>.</p>
+<p>Adds 40 KB to the binary size (20 KB compared to <code>less-slow-big5-hanzi-encode</code>).</p>
+<p>Does <em>not</em> affect decode speed.</p>
+<p>Not used by Firefox.</p>
+<h5><code>less-slow-big5-hanzi-encode</code></h5>
+<p>Makes Big5 Level 1 Hanzi (the most common Hanzi in Big5) encode less slow
+(binary search instead of linear search) making Traditional Chinese
+plain-text encode to Big5 about 36 times as fast as without this option.</p>
+<p>Adds 20 KB to the binary size.</p>
+<p>Does <em>not</em> affect decode speed.</p>
+<p>Not used by Firefox.</p>
+<h4>Compatibility with rust-encoding</h4>
+<p>A compatibility layer that implements the rust-encoding API on top of
+encoding_rs is
+<a href="https://github.com/hsivonen/encoding_rs_compat">provided as a separate crate</a>
+(cannot be uploaded to crates.io). The compatibility layer was originally
+written with the assumption that Firefox would need it, but it is not currently
+used in Firefox.</p>
+<h4>Regenerating Generated Code</h4>
+<p>To regenerate the generated code:</p>
+<ul>
+<li>Have Python 3 installed.</li>
+<li>Clone <a href="https://github.com/hsivonen/encoding_c"><code>https://github.com/hsivonen/encoding_c</code></a>
+next to the <code>encoding_rs</code> directory.</li>
+<li>Clone <a href="https://github.com/hsivonen/codepage"><code>https://github.com/hsivonen/codepage</code></a>
+next to the <code>encoding_rs</code> directory.</li>
+<li>Clone <a href="https://github.com/whatwg/encoding"><code>https://github.com/whatwg/encoding</code></a>
+next to the <code>encoding_rs</code> directory.</li>
+<li>Checkout revision <code>1d519bf8e5555cef64cf3a712485f41cd1a6a990</code> of the <code>encoding</code> repo.
+(Note: <code>f381389</code> was the revision of <code>encoding</code> used from before the <code>encoding</code> repo
+license change.)</li>
+<li>With the <code>encoding_rs</code> directory as the working directory, run
+<code>python3 generate-encoding-data.py</code>.</li>
+</ul>
+<h4>Roadmap</h4>
+<ul>
+<li>[x] Design the low-level API.</li>
+<li>[x] Provide Rust-only convenience features.</li>
+<li>[x] Provide an stl/gsl-flavored C++ API.</li>
+<li>[x] Implement all decoders and encoders.</li>
+<li>[x] Add unit tests for all decoders and encoders.</li>
+<li>[x] Finish BOM sniffing variants in Rust-only convenience features.</li>
+<li>[x] Document the API.</li>
+<li>[x] Publish the crate on crates.io.</li>
+<li>[x] Create a solution for measuring performance.</li>
+<li>[x] Accelerate ASCII conversions using SSE2 on x86.</li>
+<li>[x] Accelerate ASCII conversions using ALU register-sized operations on
+non-x86 architectures (process an <code>usize</code> instead of <code>u8</code> at a time).</li>
+<li>[x] Split FFI into a separate crate so that the FFI doesn't interfere with
+LTO in pure-Rust usage.</li>
+<li>[x] Compress CJK indices by making use of sequential code points as well
+as Unicode-ordered parts of indices.</li>
+<li>[x] Make lookups by label or name use binary search that searches from the
+end of the label/name to the start.</li>
+<li>[x] Make labels with non-ASCII bytes fail fast.</li>
+<li>[ ] ~Parallelize UTF-8 validation using <a href="https://github.com/nikomatsakis/rayon">Rayon</a>.~
+(This turned out to be a pessimization in the ASCII case due to memory bandwidth reasons.)</li>
+<li>[x] Provide an XPCOM/MFBT-flavored C++ API.</li>
+<li>[x] Investigate accelerating single-byte encode with a single fast-tracked
+range per encoding.</li>
+<li>[x] Replace uconv with encoding_rs in Gecko.</li>
+<li>[x] Implement the rust-encoding API in terms of encoding_rs.</li>
+<li>[x] Add SIMD acceleration for Aarch64.</li>
+<li>[x] Investigate the use of NEON on 32-bit ARM.</li>
+<li>[ ] ~Investigate Björn Höhrmann's lookup table acceleration for UTF-8 as
+adapted to Rust in rust-encoding.~</li>
+<li>[x] Add actually fast CJK encode options.</li>
+<li>[ ] ~Investigate <a href="https://github.com/BobSteagall/CppNow2018/blob/master/FastConversionFromUTF-8/Fast%20Conversion%20From%20UTF-8%20with%20C%2B%2B%2C%20DFAs%2C%20and%20SSE%20Intrinsics%20-%20Bob%20Steagall%20-%20C%2B%2BNow%202018.pdf">Bob Steagall's lookup table acceleration for UTF-8</a>.~</li>
+<li>[x] Provide a build mode that works without <code>alloc</code> (with lesser API surface).</li>
+<li>[x] Migrate to <code>std::simd</code> ~once it is stable and declare 1.0.~</li>
+<li>[x] Migrate <code>unsafe</code> slice access by larger types than <code>u8</code>/<code>u16</code> to ~<code>align_to</code>~ <code>as_chunks</code>.</li>
+</ul>
+<h4>Release Notes</h4>
+<h5>0.8.42</h5>
+<ul>
+<li>Include the <code>multiversion</code> dependency in the dependency graph only if the <code>std</code> feature has been enabled and the architecture is either x86 or x86_64. (For the <code>multiversion</code> dependency to actually <em>do</em> something, the <code>simd-accel</code> feature needs to be enabled in addition to enabling the <code>std</code> feature.)</li>
+</ul>
+<h5>0.8.41</h5>
+<ul>
+<li>Increase the version of the <code>multiversion</code> dependency to 0.9.0 while accepting also 0.8.0 to allow for downgrading
+depending on how crate users with to deduplicate <code>syn</code> 2 vs. 3.</li>
+</ul>
+<h5>0.8.40</h5>
+<ul>
+<li>Increase MSRV to 1.88. (For <code>as_chunks</code> on slice.)</li>
+<li>Fix correctness of buffer boundary handling in two-byte legacy decoders. (Applicable to streaming decode.)</li>
+<li>Make decoder methods that write to <code>String</code> panic-safe so that the <code>String</code> no longer exposes uninitalized memory when user code tries to reuse a decoder that has reached the end of the stream previously, catches the panic, and uses the <code>String</code> afterwards. (Applicable when compiled with panic unwinding and the caller uses the API in an unintended way.)</li>
+<li>Major rewrite of the ASCII acceleration internals to fix correctness in the non-SIMD case, to reduce <code>unsafe</code>, to remove code path divergence based on buffer alignment, and to improve performance.</li>
+<li>Use the <code>simdutf8</code> crate for UTF-8 validation on aarch64, when compiled with Wasm SIMD enabled, and on x86/x86_64 when SSE 4.2 or, even better, AVX2 is available (works even without the <code>simd-accel</code> or <code>std</code> features).</li>
+<li>On x86_64 and x86 with the <code>simd-accel</code> feature enabled, added function multiversioning to use AVX2+BMI1 when available (requires also the new <code>std</code> feature).</li>
+<li>Bound check optimization.</li>
+<li>Documentation tweaks.</li>
+<li>Address compiler warnings and Clippy lints.</li>
+<li>Defense-in-depth in functions that write to <code>&amp;mut str</code> in case there exists a crate-internal bug that panics.</li>
+</ul>
+<p>Thanks to everyone who reported bugs and contributed fixes to this release!</p>
+<h5>0.8.36 though 0.8.39</h5>
+<ul>
+<li>Reserved version numbers.</li>
+</ul>
+<h5>0.8.35</h5>
+<ul>
+<li>Implement changes for GB18030-2022. (Intentionally not treated as a semver break in practice even if this could be argued to be a breaking change in theory.)</li>
+</ul>
+<h5>0.8.34</h5>
+<ul>
+<li>Use the <code>portable_simd</code> nightly feature of the standard library instead of the <code>packed_simd</code> crate. Only affects the <code>simd-accel</code> optional nightly feature.</li>
+<li>Internal documentation improvements and minor code improvements around <code>unsafe</code>.</li>
+<li>Added <code>rust-version</code> to <code>Cargo.toml</code>.</li>
+</ul>
+<h5>0.8.33</h5>
+<ul>
+<li>Use <code>packed_simd</code> instead of <code>packed_simd_2</code> again now that updates are back under the <code>packed_simd</code> name. Only affects the <code>simd-accel</code> optional nightly feature.</li>
+</ul>
+<h5>0.8.32</h5>
+<ul>
+<li>Removed <code>build.rs</code>. (This removal should resolve false positives reported by some antivirus products. This may break some build configurations that have opted out of Rust's guarantees against future build breakage.)</li>
+<li>Internal change to what API is used for reinterpreting the lane configuration of SIMD vectors.</li>
+<li>Documentation improvements.</li>
+</ul>
+<h5>0.8.31</h5>
+<ul>
+<li>Use SPDX with parentheses now that crates.io supports parentheses.</li>
+</ul>
+<h5>0.8.30</h5>
+<ul>
+<li>Update the licensing information to take into account the WHATWG data license change.</li>
+</ul>
+<h5>0.8.29</h5>
+<ul>
+<li>Make the parts that use an allocator optional.</li>
+</ul>
+<h5>0.8.28</h5>
+<ul>
+<li>Fix error in Serde support introduced as part of <code>no_std</code> support.</li>
+</ul>
+<h5>0.8.27</h5>
+<ul>
+<li>Make the crate works in a <code>no_std</code> environment (with <code>alloc</code>).</li>
+</ul>
+<h5>0.8.26</h5>
+<ul>
+<li>Fix oversights in edition 2018 migration that broke the <code>simd-accel</code> feature.</li>
+</ul>
+<h5>0.8.25</h5>
+<ul>
+<li>Do pointer alignment checks in a way where intermediate steps aren't defined to be Undefined Behavior.</li>
+<li>Update the <code>packed_simd</code> dependency to <code>packed_simd_2</code>.</li>
+<li>Update the <code>cfg-if</code> dependency to 1.0.</li>
+<li>Address warnings that have been introduced by newer Rust versions along the way.</li>
+<li>Update to edition 2018, since even prior to 1.0 <code>cfg-if</code> updated to edition 2018 without a semver break.</li>
+</ul>
+<h5>0.8.24</h5>
+<ul>
+<li>Avoid computing an intermediate (not dereferenced) pointer value in a manner designated as Undefined Behavior when computing pointer alignment.</li>
+</ul>
+<h5>0.8.23</h5>
+<ul>
+<li>Remove year from copyright notices. (No features or bug fixes.)</li>
+</ul>
+<h5>0.8.22</h5>
+<ul>
+<li>Formatting fix and new unit test. (No features or bug fixes.)</li>
+</ul>
+<h5>0.8.21</h5>
+<ul>
+<li>Fixed a panic with invalid UTF-16[BE|LE] input at the end of the stream.</li>
+</ul>
+<h5>0.8.20</h5>
+<ul>
+<li>Make <code>Decoder::latin1_byte_compatible_up_to</code> return <code>None</code> in more
+cases to make the method actually useful. While this could be argued
+to be a breaking change due to the bug fix changing semantics, it does
+not break callers that had to handle the <code>None</code> case in a reasonable
+way anyway.</li>
+</ul>
+<h5>0.8.19</h5>
+<ul>
+<li>Removed a bunch of bound checks in <code>convert_str_to_utf16</code>.</li>
+<li>Added <code>mem::convert_utf8_to_utf16_without_replacement</code>.</li>
+</ul>
+<h5>0.8.18</h5>
+<ul>
+<li>Added <code>mem::utf8_latin1_up_to</code> and <code>mem::str_latin1_up_to</code>.</li>
+<li>Added <code>Decoder::latin1_byte_compatible_up_to</code>.</li>
+</ul>
+<h5>0.8.17</h5>
+<ul>
+<li>Update <code>bincode</code> (dev dependency) version requirement to 1.0.</li>
+</ul>
+<h5>0.8.16</h5>
+<ul>
+<li>Switch from the <code>simd</code> crate to <code>packed_simd</code>.</li>
+</ul>
+<h5>0.8.15</h5>
+<ul>
+<li>Adjust documentation for <code>simd-accel</code> (README-only release).</li>
+</ul>
+<h5>0.8.14</h5>
+<ul>
+<li>Made UTF-16 to UTF-8 encode conversion fill the output buffer as
+closely as possible.</li>
+</ul>
+<h5>0.8.13</h5>
+<ul>
+<li>Made the UTF-8 to UTF-16 decoder compare the number of code units written
+with the length of the right slice (the output slice) to fix a panic
+introduced in 0.8.11.</li>
+</ul>
+<h5>0.8.12</h5>
+<ul>
+<li>Removed the <code>clippy::</code> prefix from clippy lint names.</li>
+</ul>
+<h5>0.8.11</h5>
+<ul>
+<li>Changed minimum Rust requirement to 1.29.0 (for the ability to refer
+to the interior of a <code>static</code> when defining another <code>static</code>).</li>
+<li>Explicitly aligned the lookup tables for single-byte encodings and
+UTF-8 to cache lines in the hope of freeing up one cache line for
+other data. (Perhaps the tables were already aligned and this is
+placebo.)</li>
+<li>Added 32 bits of encode-oriented data for each single-byte encoding.
+The change was performance-neutral for non-Latin1-ish Latin legacy
+encodings, improved Latin1-ish and Arabic legacy encode speed
+somewhat (new speed is 2.4x the old speed for German, 2.3x for
+Arabic, 1.7x for Portuguese and 1.4x for French) and improved
+non-Latin1, non-Arabic legacy single-byte encode a lot (7.2x for
+Thai, 6x for Greek, 5x for Russian, 4x for Hebrew).</li>
+<li>Added compile-time options for fast CJK legacy encode options (at
+the cost of binary size (up to 176 KB) and run-time memory usage).
+These options still retain the overall code structure instead of
+rewriting the CJK encoders totally, so the speed isn't as good as
+what could be achieved by using even more memory / making the
+binary even langer.</li>
+<li>Made UTF-8 decode and validation faster.</li>
+<li>Added method <code>is_single_byte()</code> on <code>Encoding</code>.</li>
+<li>Added <code>mem::decode_latin1()</code> and <code>mem::encode_latin1_lossy()</code>.</li>
+</ul>
+<h5>0.8.10</h5>
+<ul>
+<li>Disabled a unit test that tests a panic condition when the assertion
+being tested is disabled.</li>
+</ul>
+<h5>0.8.9</h5>
+<ul>
+<li>Made <code>--features simd-accel</code> work with stable-channel compiler to
+simplify the Firefox build system.</li>
+</ul>
+<h5>0.8.8</h5>
+<ul>
+<li>Made the <code>is_foo_bidi()</code> not treat U+FEFF (ZERO WIDTH NO-BREAK SPACE
+aka. BYTE ORDER MARK) as right-to-left.</li>
+<li>Made the <code>is_foo_bidi()</code> functions report <code>true</code> if the input contains
+Hebrew presentations forms (which are right-to-left but not in a
+right-to-left-roadmapped block).</li>
+</ul>
+<h5>0.8.7</h5>
+<ul>
+<li>Fixed a panic in the UTF-16LE/UTF-16BE decoder when decoding to UTF-8.</li>
+</ul>
+<h5>0.8.6</h5>
+<ul>
+<li>Temporarily removed the debug assertion added in version 0.8.5 from
+<code>convert_utf16_to_latin1_lossy</code>.</li>
+</ul>
+<h5>0.8.5</h5>
+<ul>
+<li>If debug assertions are enabled but fuzzing isn't enabled, lossy conversions
+to Latin1 in the <code>mem</code> module assert that the input is in the range
+U+0000...U+00FF (inclusive).</li>
+<li>In the <code>mem</code> module provide conversions from Latin1 and UTF-16 to UTF-8
+that can deal with insufficient output space. The idea is to use them
+first with an allocation rounded up to jemalloc bucket size and do the
+worst-case allocation only if the jemalloc rounding up was insufficient
+as the first guess.</li>
+</ul>
+<h5>0.8.4</h5>
+<ul>
+<li>Fix SSE2-specific, <code>simd-accel</code>-specific memory corruption introduced in
+version 0.8.1 in conversions between UTF-16 and Latin1 in the <code>mem</code> module.</li>
+</ul>
+<h5>0.8.3</h5>
+<ul>
+<li>Removed an <code>#[inline(never)]</code> annotation that was not meant for release.</li>
+</ul>
+<h5>0.8.2</h5>
+<ul>
+<li>Made non-ASCII UTF-16 to UTF-8 encode faster by manually omitting bound
+checks and manually adding branch prediction annotations.</li>
+</ul>
+<h5>0.8.1</h5>
+<ul>
+<li>Tweaked loop unrolling and memory alignment for SSE2 conversions between
+UTF-16 and Latin1 in the <code>mem</code> module to increase the performance when
+converting long buffers.</li>
+</ul>
+<h5>0.8.0</h5>
+<ul>
+<li>Changed the minimum supported version of Rust to 1.21.0 (semver breaking
+change).</li>
+<li>Flipped around the defaults vs. optional features for controlling the size
+vs. speed trade-off for Kanji and Hanzi legacy encode (semver breaking
+change).</li>
+<li>Added NEON support on ARMv7.</li>
+<li>SIMD-accelerated x-user-defined to UTF-16 decode.</li>
+<li>Made UTF-16LE and UTF-16BE decode a lot faster (including SIMD
+acceleration).</li>
+</ul>
+<h5>0.7.2</h5>
+<ul>
+<li>Add the <code>mem</code> module.</li>
+<li>Refactor SIMD code which can affect performance outside the <code>mem</code>
+module.</li>
+</ul>
+<h5>0.7.1</h5>
+<ul>
+<li>When encoding from invalid UTF-16, correctly handle U+DC00 followed by
+another low surrogate.</li>
+</ul>
+<h5>0.7.0</h5>
+<ul>
+<li><a href="https://github.com/whatwg/encoding/issues/70">Make <code>replacement</code> a label of the replacement
+encoding.</a> (Spec change.)</li>
+<li>Remove <code>Encoding::for_name()</code>. (<code>Encoding::for_label(foo).unwrap()</code> is
+now close enough after the above label change.)</li>
+<li>Remove the <code>parallel-utf8</code> cargo feature.</li>
+<li>Add optional Serde support for <code>&amp;'static Encoding</code>.</li>
+<li>Performance tweaks for ASCII handling.</li>
+<li>Performance tweaks for UTF-8 validation.</li>
+<li>SIMD support on aarch64.</li>
+</ul>
+<h5>0.6.11</h5>
+<ul>
+<li>Make <code>Encoder::has_pending_state()</code> public.</li>
+<li>Update the <code>simd</code> crate dependency to 0.2.0.</li>
+</ul>
+<h5>0.6.10</h5>
+<ul>
+<li>Reserve enough space for NCRs when encoding to ISO-2022-JP.</li>
+<li>Correct max length calculations for multibyte decoders.</li>
+<li>Correct max length calculations before BOM sniffing has been
+performed.</li>
+<li>Correctly calculate max length when encoding from UTF-16 to GBK.</li>
+</ul>
+<h5>0.6.9</h5>
+<ul>
+<li><a href="https://github.com/whatwg/encoding/issues/110">Don't prepend anything when gb18030 range decode
+fails</a>. (Spec change.)</li>
+</ul>
+<h5>0.6.8</h5>
+<ul>
+<li>Correcly handle the case where the first buffer contains potentially
+partial BOM and the next buffer is the last buffer.</li>
+<li>Decode byte <code>7F</code> correctly in ISO-2022-JP.</li>
+<li>Make UTF-16 to UTF-8 encode write closer to the end of the buffer.</li>
+<li>Implement <code>Hash</code> for <code>Encoding</code>.</li>
+</ul>
+<h5>0.6.7</h5>
+<ul>
+<li><a href="https://github.com/whatwg/encoding/issues/105">Map half-width katakana to full-width katana in ISO-2022-JP
+encoder</a>. (Spec change.)</li>
+<li>Give <code>InputEmpty</code> correct precedence over <code>OutputFull</code> when encoding
+with replacement and the output buffer passed in is too short or the
+remaining space in the output buffer is too small after a replacement.</li>
+</ul>
+<h5>0.6.6</h5>
+<ul>
+<li>Correct max length calculation when a partial BOM prefix is part of
+the decoder's state.</li>
+</ul>
+<h5>0.6.5</h5>
+<ul>
+<li>Correct max length calculation in various encoders.</li>
+<li>Correct max length calculation in the UTF-16 decoder.</li>
+<li>Derive <code>PartialEq</code> and <code>Eq</code> for the <code>CoderResult</code>, <code>DecoderResult</code>
+and <code>EncoderResult</code> types.</li>
+</ul>
+<h5>0.6.4</h5>
+<ul>
+<li>Avoid panic when encoding with replacement and the destination buffer is
+too short to hold one numeric character reference.</li>
+</ul>
+<h5>0.6.3</h5>
+<ul>
+<li>Add support for 32-bit big-endian hosts. (For real this time.)</li>
+</ul>
+<h5>0.6.2</h5>
+<ul>
+<li>Fix a panic from subslicing with bad indices in
+<code>Encoder::encode_from_utf16</code>. (Due to an oversight, it lacked the fix that
+<code>Encoder::encode_from_utf8</code> already had.)</li>
+<li>Micro-optimize error status accumulation in non-streaming case.</li>
+</ul>
+<h5>0.6.1</h5>
+<ul>
+<li>Avoid panic near integer overflow in a case that's unlikely to actually
+happen.</li>
+<li>Address Clippy lints.</li>
+</ul>
+<h5>0.6.0</h5>
+<ul>
+<li>Make the methods for computing worst-case buffer size requirements check
+for integer overflow.</li>
+<li>Upgrade rayon to 0.7.0.</li>
+</ul>
+<h5>0.5.1</h5>
+<ul>
+<li>Reorder methods for better documentation readability.</li>
+<li>Add support for big-endian hosts. (Only 64-bit case actually tested.)</li>
+<li>Optimize the ALU (non-SIMD) case for 32-bit ARM instead of x86_64.</li>
+</ul>
+<h5>0.5.0</h5>
+<ul>
+<li>Avoid allocating an excessively long buffers in non-streaming decode.</li>
+<li>Fix the behavior of ISO-2022-JP and replacement decoders near the end of the
+output buffer.</li>
+<li>Annotate the result structs with <code>#[must_use]</code>.</li>
+</ul>
+<h5>0.4.0</h5>
+<ul>
+<li>Split FFI into a separate crate.</li>
+<li>Performance tweaks.</li>
+<li>CJK binary size and encoding performance changes.</li>
+<li>Parallelize UTF-8 validation in the case of long buffers (with optional
+feature <code>parallel-utf8</code>).</li>
+<li>Borrow even with ISO-2022-JP when possible.</li>
+</ul>
+<h5>0.3.2</h5>
+<ul>
+<li>Fix moving pointers to alignment in ALU-based ASCII acceleration.</li>
+<li>Fix errors in documentation and improve documentation.</li>
+</ul>
+<h5>0.3.1</h5>
+<ul>
+<li>Fix UTF-8 to UTF-16 decode for byte sequences beginning with 0xEE.</li>
+<li>Make UTF-8 to UTF-8 decode SSE2-accelerated when feature <code>simd-accel</code> is used.</li>
+<li>When decoding and encoding ASCII-only input from or to an ASCII-compatible
+encoding using the non-streaming API, return a borrow of the input.</li>
+<li>Make encode from UTF-16 to UTF-8 faster.</li>
+</ul>
+<h5>0.3</h5>
+<ul>
+<li>Change the references to the instances of <code>Encoding</code> from <code>const</code> to <code>static</code>
+to make the referents unique across crates that use the refernces.</li>
+<li>Introduce non-reference-typed <code>FOO_INIT</code> instances of <code>Encoding</code> to allow
+foreign crates to initialize <code>static</code> arrays with references to <code>Encoding</code>
+instances even under Rust's constraints that prohibit the initialization of
+<code>&amp;'static Encoding</code>-typed array items with <code>&amp;'static Encoding</code>-typed
+<code>statics</code>.</li>
+<li>Document that the above two points will be reverted if Rust changes <code>const</code>
+to work so that cross-crate usage keeps the referents unique.</li>
+<li>Return <code>Cow</code>s from Rust-only non-streaming methods for encode and decode.</li>
+<li><code>Encoding::for_bom()</code> returns the length of the BOM.</li>
+<li>ASCII-accelerated conversions for encodings other than UTF-16LE, UTF-16BE,
+ISO-2022-JP and x-user-defined.</li>
+<li>Add SSE2 acceleration behind the <code>simd-accel</code> feature flag. (Requires
+nightly Rust.)</li>
+<li>Fix panic with long bogus labels.</li>
+<li>Map <a href="https://github.com/whatwg/encoding/issues/73">0xCA to U+05BA in windows-1255</a>.
+(Spec change.)</li>
+<li>Correct the <a href="https://github.com/whatwg/encoding/issues/53">end of the Shift_JIS EUDC range</a>.
+(Spec change.)</li>
+</ul>
+<h5>0.2.4</h5>
+<ul>
+<li>Polish FFI documentation.</li>
+</ul>
+<h5>0.2.3</h5>
+<ul>
+<li>Fix UTF-16 to UTF-8 encode.</li>
+</ul>
+<h5>0.2.2</h5>
+<ul>
+<li>Add <code>Encoder.encode_from_utf8_to_vec_without_replacement()</code>.</li>
+</ul>
+<h5>0.2.1</h5>
+<ul>
+<li>
+<p>Add <code>Encoding.is_ascii_compatible()</code>.</p>
+</li>
+<li>
+<p>Add <code>Encoding::for_bom()</code>.</p>
+</li>
+<li>
+<p>Make <code>==</code> for <code>Encoding</code> use name comparison instead of pointer comparison,
+because uses of the encoding constants in different crates result in
+different addresses and the constant cannot be turned into statics without
+breaking other things.</p>
+</li>
+</ul>
+<h5>0.2.0</h5>
+<p>The initial release.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>alloc</code></th><td>Yes<small>default → alloc</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>any_all_workaround</code></th><td>No</td><td><ul class="effects"><li><code>dep:any_all_workaround</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>alloc</code></li></ul></td></tr><tr><th scope="row"><code>fast-big5-hanzi-encode</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>fast-gb-hanzi-encode</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>fast-hangul-encode</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>fast-hanja-encode</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>fast-kanji-encode</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>fast-legacy-encode</code></th><td>No</td><td><ul class="effects"><li><code>fast-hangul-encode</code></li><li><code>fast-hanja-encode</code></li><li><code>fast-kanji-encode</code></li><li><code>fast-gb-hanzi-encode</code></li><li><code>fast-big5-hanzi-encode</code></li></ul></td></tr><tr><th scope="row"><code>less-slow-big5-hanzi-encode</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>less-slow-gb-hanzi-encode</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>less-slow-kanji-encode</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>rustversion</code></th><td>No</td><td><ul class="effects"><li><code>dep:rustversion</code></li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>simd-accel</code></th><td>No</td><td><ul class="effects"><li><code>any_all_workaround</code></li><li><code>rustversion</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>No</td><td><ul class="effects"><li><code>dep:multiversion</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><code>crates-io/any_all_workaround</code><small>Alias: any_all_workaround</small></th><td><code>^0.1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/cfg-if/"><code>crates-io/cfg-if</code></a><small>Alias: cfg-if</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/core_detect/"><code>crates-io/core_detect</code></a><small>Alias: core_detect</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(any(target_arch = &quot;x86_64&quot;, target_arch = &quot;x86&quot;))</td></tr><tr><th scope="row"><code>crates-io/multiversion</code><small>Alias: multiversion</small></th><td><code>&gt;=0.8.0, &lt;0.10.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(all(any(target_arch = &quot;x86_64&quot;, target_arch = &quot;x86&quot;), not(all(target_feature = &quot;avx2&quot;, target_feature = &quot;bmi1&quot;))))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/multiversion_no_op/"><code>crates-io/multiversion_no_op</code></a><small>Alias: multiversion_no_op</small></th><td><code>^1.0.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rustversion/"><code>crates-io/rustversion</code></a><small>Alias: rustversion</small></th><td><code>^1.0.19</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/scopeguard/"><code>crates-io/scopeguard</code></a><small>Alias: scopeguard</small></th><td><code>^1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/simdutf8/"><code>crates-io/simdutf8</code></a><small>Alias: simdutf8</small></th><td><code>^0.1.5</code><small>Default features: disabled</small><small>Requests: aarch64_neon, public_imp</small></td><td>Required · when cfg(any(target_arch = &quot;x86_64&quot;, target_arch = &quot;x86&quot;, target_arch = &quot;aarch64&quot;, all(target_arch = &quot;wasm32&quot;, target_feature = &quot;simd128&quot;)))</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/encoding_rs_io/versions/0.1.8/">crates-io/encoding_rs_io 0.1.8</a><span>Requires ^0.8 · alias encoding_rs · </span></li><li><a href="../../../../../packages/crates-io/multer/versions/3.1.0/">crates-io/multer 3.1.0</a><span>Requires ^0.8.20 · alias encoding_rs · </span></li><li><a href="../../../../../packages/crates-io/quick-xml/versions/0.42.0/">crates-io/quick-xml 0.42.0</a><span>Requires ^0.8 · alias encoding_rs · </span></li><li><a href="../../../../../packages/crates-io/reqwest/versions/0.13.5/">crates-io/reqwest 0.13.5</a><span>Requires ^0.8 · alias encoding_rs · cfg(not(all(target_arch = &quot;wasm32&quot;, any(target_os = &quot;unknown&quot;, target_os = &quot;none&quot;))))</span></li><li><a href="../../../../../packages/crates-io/tendril/versions/0.5.1/">crates-io/tendril 0.5.1</a><span>Requires ^0.8.12 · alias encoding_rs · </span></li><li><a href="../../../../../packages/crates-io/ureq/versions/3.4.2/">crates-io/ureq 3.4.2</a><span>Requires ^0.8.34 · alias encoding_rs · </span></li><li><a href="../../../../../packages/crates-io/wasmtime/versions/36.0.17/">crates-io/wasmtime 36.0.17</a><span>Requires ^0.8.31 · alias encoding_rs · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:144bf8ceff989f711cc8e6285fe088c99213b1114c870e1c463816ef0c27b469</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:b482f50d8b48b929f0f7940dbc762803d52c6d9b12325283e7f64cb9d04328ca</small></li><li><code>sha256:34ce5c12139b94f14eae3c3d6a12cd941650a7795346be5fa17b4225d72eaf98</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:d93d438b88adb11aa399858346bc43cd072f8262b2417ead09b0479cfae63349</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:094ad8dc8d377beb0461431b1e2c397a736c999dd6d13a3080f581a1254dcfcc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:6fae2d552a18e91277be7bbce8380f2ed9e3fdfdbb694c700cd17ef3ff26cb98</small></li><li><code>sha256:918fb5d5f3616ffeb543be67a95e325d7cbddaf963be3de80a6ecc4a5da18e47</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:d4f79ca25d28d0771d12845a9ba831d6a9907bbadc8614452fa269abc177fe3a</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d515a27201501388750325cb25c84742376c3bc1daecdb4968e84f6c282da728</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:f068bf80c4be5169344bcaf794b6b98215155d834f24a62cab4ea4b2e856a08c</small></li><li><code>sha256:fc273e5e74caf95dd7184dc775f15a4741a402d914c781d11d2586d349ed9d54</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:330091222c32194dc534f36213e614a859b02f943c1394b638de1acd648b5460</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2897117ae4ec170b945386d63b83dbaebf921df553043c70afb63604ae68ac4d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:38b6bb53715b7bf07d092b335f96a9b52be96c111719f0dd17ca17761b6d4cb4</small></li><li><code>sha256:aa40b4ea8ba9dd47c10e4d64503ea0c92ac0b6792ae57b70b729a337c66264ff</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:dcde52eb256ae42d1eba80dd6f2fcbbe7ede9b5b2170210a3f44a74e478732ae</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>alloc, default</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>alloc, default</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>alloc, default</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>alloc, default</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/encoding_rs/versions/0.8.42/">0.8.42</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/encoding_rs/0.8.42">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/encoding_rs/versions/0.8.35/">0.8.35</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/encoding_rs/0.8.35">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>(Apache-2.0 OR MIT) AND BSD-3-Clause</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+</code></pre></div><p class="table-note">sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright Mozilla Foundation
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:3fa4ca83dcc9237839b1bdeb2e6d16bdfb5ec0c5ce42b24694d8bbf0dcbef72c</p></details><details class="document-file"><summary>LICENSE-WHATWG · Author-provided</summary><div class="readme"><pre><code>Copyright © WHATWG (Apple, Google, Mozilla, Microsoft).
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</code></pre></div><p class="table-note">sha256:838118388fe5c2e7f1dbbaeed13e1c7f3ebf88be91319c7c1d77c18e987d1a50</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:e1e923d0077d2edf75beee5c9e33c3d02f44288c9cd7e15cd825264a9c9f0ded</code></dd><dt>Upstream checksum</dt><dd><code>sha256:8e985e0451871ad22fb8d2b6b076e2028a502a0d3950998c2c5c0a4f9b5d9679</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/encoding_rs&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.8.42&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">any_all_workaround</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:any_all_workaround&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+<span class="n">fast-big5-hanzi-encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">fast-gb-hanzi-encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">fast-hangul-encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">fast-hanja-encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">fast-kanji-encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">fast-legacy-encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast-hangul-encode&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fast-hanja-encode&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fast-kanji-encode&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fast-gb-hanzi-encode&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fast-big5-hanzi-encode&quot;</span><span class="p">]</span>
+<span class="n">less-slow-big5-hanzi-encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">less-slow-gb-hanzi-encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">less-slow-kanji-encode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">rustversion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rustversion&quot;</span><span class="p">]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">simd-accel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;any_all_workaround&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rustversion&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:multiversion&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;encoding_rs&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">any_all_workaround</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/any_all_workaround&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">cfg-if</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cfg-if&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">core_detect</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/core_detect&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(target_arch = </span><span class="se">\&quot;</span><span class="s2">x86_64</span><span class="se">\&quot;</span><span class="s2">, target_arch = </span><span class="se">\&quot;</span><span class="s2">x86</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">multiversion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/multiversion&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.8.0, &lt;0.10.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(all(any(target_arch = </span><span class="se">\&quot;</span><span class="s2">x86_64</span><span class="se">\&quot;</span><span class="s2">, target_arch = </span><span class="se">\&quot;</span><span class="s2">x86</span><span class="se">\&quot;</span><span class="s2">), not(all(target_feature = </span><span class="se">\&quot;</span><span class="s2">avx2</span><span class="se">\&quot;</span><span class="s2">, target_feature = </span><span class="se">\&quot;</span><span class="s2">bmi1</span><span class="se">\&quot;</span><span class="s2">))))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">multiversion_no_op</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/multiversion_no_op&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rustversion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustversion&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.19&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">scopeguard</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/scopeguard&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">simdutf8</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/simdutf8&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.5&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;aarch64_neon&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;public_imp&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(target_arch = </span><span class="se">\&quot;</span><span class="s2">x86_64</span><span class="se">\&quot;</span><span class="s2">, target_arch = </span><span class="se">\&quot;</span><span class="s2">x86</span><span class="se">\&quot;</span><span class="s2">, target_arch = </span><span class="se">\&quot;</span><span class="s2">aarch64</span><span class="se">\&quot;</span><span class="s2">, all(target_arch = </span><span class="se">\&quot;</span><span class="s2">wasm32</span><span class="se">\&quot;</span><span class="s2">, target_feature = </span><span class="se">\&quot;</span><span class="s2">simd128</span><span class="se">\&quot;</span><span class="s2">)))&quot;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;slow_mm_packus_epi16&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;slow_mm_packus_epi16&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;slow_mm_packus_epi16&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;slow_mm_packus_epi16&quot;</span><span class="p">]</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Henri Sivonen &lt;hsivonen@hsivonen.fi&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.88</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/encoding_rs/0.8.42">crates.io package</a></li><li><a href="https://github.com/hsivonen/encoding_rs">Source repository</a></li><li><a href="https://docs.rs/encoding_rs/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">encoding_rs</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/encoding_rs"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.8.42"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

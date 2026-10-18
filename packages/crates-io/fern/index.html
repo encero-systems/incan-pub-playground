@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>fern 0.7.1 · Incan.pub</title><meta name="description" content="Simple, efficient logging"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/fern</p><div class="title-row"><h1>fern</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/fern/versions/0.7.1/" selected>0.7.1</option></select></label></div><p class="description">Simple, efficient logging</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>fern</h3>
+<p><a href="https://crates.io/crates/fern">crates.io version badge</a>
+<a href="https://github.com/daboross/fern/actions/workflows/rust.yml">Build Status</a>
+<a href="http://isitmaintained.com/project/daboross/fern">Average time to resolve an issue</a></p>
+<p>Simple, efficient logging for <a href="https://www.rust-lang.org/">Rust</a>.</p>
+<hr>
+<h4>fern 0.4.4, 0.5.*, 0.6.* security warning - <code>colored</code> feature + global allocator</h4>
+<p>One of our downstream dependencies, <a href="https://docs.rs/atty/">atty</a>, through
+<a href="https://docs.rs/colored/">colored</a>, has an unsoundness issue:
+<a href="https://rustsec.org/advisories/RUSTSEC-2021-0145.html">https://rustsec.org/advisories/RUSTSEC-2021-0145.html</a>.</p>
+<p>This shows up in one situation: if you're using <code>colored</code> 0.1.0 (the crate, or our
+feature), and a custom global allocator.</p>
+<p>Upgrade to <code>fern</code> 0.7.0, and <code>colored</code> 0.2.0 if you depend on it directly, to fix this issue.</p>
+<hr>
+<p>Logging configuration is recursively branched, like a fern: formatting, filters, and output can be applied recursively to match increasingly specific kinds of logging. Fern provides a builder-based configuration backing for rust's standard <a href="https://github.com/rust-lang/log">log</a> crate.</p>
+<pre><code class="syntax-highlight language-rust"><span class="sd">//! With fern, we can:</span>
+
+<span class="c1">// Configure logger at runtime</span>
+<span class="n">fern</span><span class="p">::</span><span class="n">Dispatch</span><span class="p">::</span><span class="n">new</span><span class="p">()</span>
+<span class="w">    </span><span class="c1">// Perform allocation-free log formatting</span>
+<span class="w">    </span><span class="p">.</span><span class="n">format</span><span class="p">(</span><span class="o">|</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">message</span><span class="p">,</span><span class="w"> </span><span class="n">record</span><span class="o">|</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">out</span><span class="p">.</span><span class="n">finish</span><span class="p">(</span><span class="fm">format_args!</span><span class="p">(</span>
+<span class="w">            </span><span class="s">&quot;[{} {} {}] {}&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="n">humantime</span><span class="p">::</span><span class="n">format_rfc3339</span><span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">time</span><span class="p">::</span><span class="n">SystemTime</span><span class="p">::</span><span class="n">now</span><span class="p">()),</span>
+<span class="w">            </span><span class="n">record</span><span class="p">.</span><span class="n">level</span><span class="p">(),</span>
+<span class="w">            </span><span class="n">record</span><span class="p">.</span><span class="n">target</span><span class="p">(),</span>
+<span class="w">            </span><span class="n">message</span>
+<span class="w">        </span><span class="p">))</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="c1">// Add blanket level filter -</span>
+<span class="w">    </span><span class="p">.</span><span class="n">level</span><span class="p">(</span><span class="n">log</span><span class="p">::</span><span class="n">LevelFilter</span><span class="p">::</span><span class="n">Debug</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// - and per-module overrides</span>
+<span class="w">    </span><span class="p">.</span><span class="n">level_for</span><span class="p">(</span><span class="s">&quot;hyper&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">log</span><span class="p">::</span><span class="n">LevelFilter</span><span class="p">::</span><span class="n">Info</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// Output to stdout, files, and other Dispatch configurations</span>
+<span class="w">    </span><span class="p">.</span><span class="n">chain</span><span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::</span><span class="n">stdout</span><span class="p">())</span>
+<span class="w">    </span><span class="p">.</span><span class="n">chain</span><span class="p">(</span><span class="n">fern</span><span class="p">::</span><span class="n">log_file</span><span class="p">(</span><span class="s">&quot;output.log&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// Apply globally</span>
+<span class="w">    </span><span class="p">.</span><span class="n">apply</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+
+<span class="c1">// and log using log crate macros!</span>
+<span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;hello, world!&quot;</span><span class="p">);</span>
+</code></pre>
+<p>Examples of all features at the <a href="https://docs.rs/fern/">api docs</a>. See fern in use with this <a href="https://github.com/daboross/fern/tree/main/examples/cmd-program.rs">example command line program</a>.</p>
+<hr>
+<ul>
+<li><a href="https://docs.rs/fern/">documentation</a></li>
+<li><a href="https://crates.io/crates/fern">crates.io page</a></li>
+<li><a href="https://github.com/daboross/fern/tree/main/examples/cmd-program.rs">example program</a></li>
+</ul>
+<h5>Project Status</h5>
+<p>The fern project is primarily maintained by myself, @daboross on GitHub. It's a hobby project, but one I aim to keep at a high quality.</p>
+<h5>Contributing</h5>
+<p>As this is a hobby project, contributions are very welcome!</p>
+<p>The easiest way for you to contribute right now is to use fern in your application, and see where it's lacking. The current library has a solid base, but it lacks features, and I may not anticipate your use cases.</p>
+<p>If you have a use case fern does not cover, please file an issue. This is immensely useful to me, to anyone wanting to contribute to the project, and to you as well if the feature is implemented.</p>
+<p>If you're interested in helping fix an <a href="https://github.com/daboross/fern/issues">existing issue</a>, or an issue you just filed, help is appreciated.</p>
+<p>See <a href="https://github.com/daboross/fern/blob/988003f04dce6e961695962fc81da98c319cdcfc/./CONTRIBUTING.md">CONTRIBUTING</a> for technical information on contributing.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>chrono</code></th><td>No</td><td><ul class="effects"><li><code>dep:chrono</code></li></ul></td></tr><tr><th scope="row"><code>colored</code></th><td>No</td><td><ul class="effects"><li><code>dep:colored</code></li></ul></td></tr><tr><th scope="row"><code>date-based</code></th><td>No</td><td><ul class="effects"><li><code>chrono</code></li></ul></td></tr><tr><th scope="row"><code>libc</code></th><td>No</td><td><ul class="effects"><li><code>dep:libc</code></li></ul></td></tr><tr><th scope="row"><code>meta-logging-in-format</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>reopen-03</code></th><td>No</td><td><ul class="effects"><li><code>reopen03</code></li><li><code>libc</code></li></ul></td></tr><tr><th scope="row"><code>reopen-1</code></th><td>No</td><td><ul class="effects"><li><code>reopen1</code></li><li><code>libc</code></li></ul></td></tr><tr><th scope="row"><code>reopen03</code></th><td>No</td><td><ul class="effects"><li><code>dep:reopen03</code></li></ul></td></tr><tr><th scope="row"><code>reopen1</code></th><td>No</td><td><ul class="effects"><li><code>dep:reopen1</code></li></ul></td></tr><tr><th scope="row"><code>syslog-3</code></th><td>No</td><td><ul class="effects"><li><code>syslog3</code></li></ul></td></tr><tr><th scope="row"><code>syslog-4</code></th><td>No</td><td><ul class="effects"><li><code>syslog4</code></li></ul></td></tr><tr><th scope="row"><code>syslog-6</code></th><td>No</td><td><ul class="effects"><li><code>syslog6</code></li></ul></td></tr><tr><th scope="row"><code>syslog-7</code></th><td>No</td><td><ul class="effects"><li><code>syslog7</code></li></ul></td></tr><tr><th scope="row"><code>syslog3</code></th><td>No</td><td><ul class="effects"><li><code>dep:syslog3</code></li></ul></td></tr><tr><th scope="row"><code>syslog4</code></th><td>No</td><td><ul class="effects"><li><code>dep:syslog4</code></li></ul></td></tr><tr><th scope="row"><code>syslog6</code></th><td>No</td><td><ul class="effects"><li><code>dep:syslog6</code></li></ul></td></tr><tr><th scope="row"><code>syslog7</code></th><td>No</td><td><ul class="effects"><li><code>dep:syslog7</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/chrono/"><code>crates-io/chrono</code></a><small>Alias: chrono</small></th><td><code>^0.4</code><small>Default features: disabled</small><small>Requests: clock, std</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/colored/"><code>crates-io/colored</code></a><small>Alias: colored</small></th><td><code>^2.1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/libc/"><code>crates-io/libc</code></a><small>Alias: libc</small></th><td><code>^0.2.58</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(not(windows))</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/log/"><code>crates-io/log</code></a><small>Alias: log</small></th><td><code>^0.4</code><small>Default features: enabled</small><small>Requests: std</small></td><td>Required</td></tr><tr><th scope="row"><code>crates-io/reopen</code><small>Alias: reopen03</small></th><td><code>^0.3</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(not(windows))</td></tr><tr><th scope="row"><code>crates-io/reopen</code><small>Alias: reopen1</small></th><td><code>~1</code><small>Default features: enabled</small><small>Requests: signals</small></td><td>Optional · not enabled by defaults · when cfg(not(windows))</td></tr><tr><th scope="row"><code>crates-io/syslog</code><small>Alias: syslog3</small></th><td><code>^3</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(not(windows))</td></tr><tr><th scope="row"><code>crates-io/syslog</code><small>Alias: syslog4</small></th><td><code>^4</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(not(windows))</td></tr><tr><th scope="row"><code>crates-io/syslog</code><small>Alias: syslog6</small></th><td><code>^6</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(not(windows))</td></tr><tr><th scope="row"><code>crates-io/syslog</code><small>Alias: syslog7</small></th><td><code>^7</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(not(windows))</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/av-scenechange/versions/0.14.1/">crates-io/av-scenechange 0.14.1</a><span>Requires ^0.7 · alias fern · </span></li><li><a href="../../../packages/crates-io/rav1e/versions/0.8.1/">crates-io/rav1e 0.8.1</a><span>Requires ^0.7 · alias fern · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="notice">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/fern/versions/0.7.1/">0.7.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/fern/0.7.1">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Unreleased</h3>
+<h3>0.7.1 (2024-12-15)</h3>
+<ul>
+<li>Add syslog v7 support (thanks <a href="https://github.com/BlackDex">@BlackDex</a>!)</li>
+</ul>
+<h3>0.7.0 (2024-10-20)</h3>
+<ul>
+<li>Upgrade <code>colored</code> to version 2. This is a breaking change due to
+<code>colored</code> being exposed in the public API of <code>fern</code>. (thanks <a href="https://github.com/faern">@faern</a> for
+doing the boilerplate here!)</li>
+<li>Remove most of the unsoundness warning, and update it to reflect fern 0.7.0
+fixing the issue.</li>
+</ul>
+<h3>0.6.2 (2023-03-23)</h3>
+<ul>
+<li>Add security warning for &quot;colored&quot; feature when using a global allocator
+to doc homepage and README.md. See
+<a href="https://github.com/daboross/fern/blob/fern-0.6.2/README.md">fern-0.6.2 README.md</a></li>
+<li>Change examples to use <code>env_logger</code>-style formatting</li>
+<li>Improve main documentation example explanation</li>
+<li>Misc. style improvements (clippy lint fixes which have no functional change)</li>
+</ul>
+<h3>0.6.1 (2022-04-15)</h3>
+<ul>
+<li>Document reopen feature requiring a feature flag
+(thanks <a href="https://github.com/Palladinium">@Palladinium</a>!)</li>
+<li>Fix typo in colors documentation (thanks <a href="https://github.com/sourcefrog">@sourcefrog</a>!)</li>
+<li>Add support for reopen v1 under reopen-1 feature (thanks <a href="https://github.com/vorner">@vorner</a>!)</li>
+<li>Add syslog v6 support under syslog-6 feature (thanks folk at <a href="https://github.com/EasyPost">@EasyPost</a>!)</li>
+<li>Fix README badges</li>
+</ul>
+<h3>0.6.0 (2020-03-09)</h3>
+<ul>
+<li>Move date-based file logger under its own feature (thanks <a href="https://github.com/dekellum">@dekellum</a>!)</li>
+</ul>
+<h3>0.5.9 (2019-10-23)</h3>
+<ul>
+<li>Add a rotating date-based file logger (thanks <a href="https://github.com/tanujitghosh">@tanujitghosh</a>!)</li>
+<li>Add a file logger which supports reopening files on SIGHUP via the
+<a href="https://github.com/vorner/reopen">reopen</a> crate (thanks <a href="https://github.com/itkovian">@itkovian</a>!)</li>
+<li>Ensure Windows console colors are enabled whenever a ColoredLevelConfig
+is created on Windows (thanks <a href="https://github.com/Songtronix">@Songtronix</a>!)</li>
+<li>Change minimum rust version from 1.16 to 1.32, as it had already
+been effectively changed by a patch update in one of our
+dependencies (cfg-if)</li>
+<li>Update crate to Rust 2018 edition (thanks <a href="https://github.com/tymcauley">@tymcauley</a>!)</li>
+</ul>
+<h3>0.5.8 (2019-03-25)</h3>
+<ul>
+<li>Change <code>syslog</code> feature to no longer re-export anything on Windows.
+Previously, using <code>syslog</code> on windows would simply fail to compile.
+(thanks <a href="https://github.com/17dec">@17dec</a>!)</li>
+<li>Fix <code>log_enabled!</code> macro only checking dispatch at surface and not
+at sub-levels. Actually logging still only does a shallow check, but
+now <code>log_enabled!()</code> should be actually accurate.</li>
+</ul>
+<h3>0.5.7 (2018-11-11)</h3>
+<ul>
+<li>Fix colored log level display to honor formatting flags such as &quot;{:&gt;5}&quot;
+(thanks <a href="https://github.com/ExpHP">@ExpHP</a>!)</li>
+</ul>
+<h3>0.5.6 (2018-06-19)</h3>
+<ul>
+<li>Add another fuller example for colored logging (thanks <a href="https://github.com/digitalatigid">@digitalatigid</a>!)</li>
+<li>Add support for syslog version 4.0.0 under feature flag <code>syslog-4</code>.
+<ul>
+<li>Does not remove syslog-3 support</li>
+<li>Includes support for RFC5424 formatting, but requires manually
+transforming the log record into the key/value pairs syslog
+expects.</li>
+</ul>
+</li>
+<li>Add shorthand for calling an arbitrary function as a logging backend</li>
+</ul>
+<h3>0.5.5 (2018-03-25)</h3>
+<ul>
+<li>Add a log handler for logging into an arbitrary <code>Write</code> object. (thanks <a href="https://github.com/vorner">@vorner</a>!)</li>
+</ul>
+<h3>0.5.4 (2018-02-17)</h3>
+<ul>
+<li>Add a log handler which panics on all messages. This can be used in
+test configurations to turn warning or error messages into hard
+errors.</li>
+<li>meta: add test coverage reporting via tarpaulin and coveralls</li>
+</ul>
+<h3>0.5.3 (2018-02-04)</h3>
+<ul>
+<li>Add support for <code>Display::fmt</code> implementations which call the global
+logger via a 'meta-logging-in-format' flag. (thanks <a href="https://github.com/jakunar">@jakunar</a>!)
+<ul>
+<li>This is disabled by default, see 'meta' module for more info.</li>
+</ul>
+</li>
+</ul>
+<h3>0.5.2 (2018-01-02)</h3>
+<ul>
+<li>Re-add compatibility for rust versions 1.16.0+, and add CI testing
+with rustc 1.16.0 to ensure this is kept in the future.</li>
+<li>Add some more general documentation updates and clarity increases.</li>
+<li>Add a CHANGELOG.md which mirrors git tag releases.</li>
+<li>Update documentation links to point to docs.rs rather than custom
+hosted documentation.</li>
+<li>Fix ColoredLevelConfig::default being an inherent method rather than
+an implementation of the Default trait.</li>
+<li>Add direct support for the syslog crate under the &quot;syslog-3&quot;
+feature flag.
+<ul>
+<li>Add a module worth of documentation for using fern with syslog.</li>
+</ul>
+</li>
+</ul>
+<h3>0.5.1 (2017-12-26)</h3>
+<ul>
+<li>Re-add support for colored log levels with the 'colored' feature
+<ul>
+<li>Support for this was accidentally dropped in 0.5.0.</li>
+</ul>
+</li>
+<li>Fix the ability to run tests on windows, and refactor integration
+tests for developer clarity</li>
+<li>Update documentation for clarity</li>
+</ul>
+<p>Short list of changes in 0.5.0:</p>
+<ul>
+<li>Updated from log 0.3 to log 0.4. Both are interoperable, but using
+log 0.4 provides a much cleaner log interface for fern to use
+internally</li>
+<li>Removed fern::FernLog.</li>
+<li>Renamed fern::color::ColoredLogLevelConfig to ColoredLevelConfig</li>
+<li>Greatly simplified testing</li>
+</ul>
+<h3>0.5.0 (2017-12-25)</h3>
+<ul>
+<li>Update from log 0.3 to log 0.4. Both log versions are interoperable,
+but line numbers from libraries using 0.4 won't show up in binaries
+with recievers using log 0.4.
+<ul>
+<li>To clarify: both fern 0.4 and 0.5 will work perfectly with all
+libraries, but line numbers will always be 0 if you use fern 0.4
+and log 0.4.</li>
+</ul>
+</li>
+<li>Remove fern::FernLog. With log 0.4, log records can be constructed
+directly, and fern loggers can now recieve just a record rather than
+a record and the formatted display string.</li>
+<li>Notable changes in the log crate: log::LogLevel is renamed to
+log::Level, and log::LogLevelFilter is renamed to log::LevelFilter.</li>
+<li>fern::color::ColoredLogLevelConfig has been renamed to
+fern::color::ColoredLevelConfig to match log crate renamings.</li>
+<li>fern tests have been greatly simplified with the new support for
+creating log records manually. it's now possible to just run
+&quot;cargo test&quot; and test all of fern's functionality.</li>
+</ul>
+<h3>0.4.4 (2017-12-22)</h3>
+<ul>
+<li>Add support for coloring log levels in Unix terminals using the
+'colored' crate (thanks <a href="https://github.com/nihiluis">@nihiluis</a>!)
+<ul>
+<li>This is enabled via the 'colored' feature, and adds a fern::color
+module.</li>
+</ul>
+</li>
+</ul>
+<h3>0.4.3 (2017-09-20)</h3>
+<ul>
+<li>Add support for sending to an std::sync::mpsc::Sender as a log output
+(thanks <a href="https://github.com/gingerDevilish">@gingerDevilish</a>!)</li>
+</ul>
+<h3>0.4.2 (2017-08-20)</h3>
+<ul>
+<li>Documentation hotfix after a premature release of version 0.4.1</li>
+</ul>
+<h3>0.4.1 (2017-08-20)</h3>
+<ul>
+<li>Lots of documentation tweaks and reworking</li>
+<li>Add CONTRIBUTING file and update README to invite new contributors</li>
+<li>Improve example application to be more realistic</li>
+<li>A few small internal improvements, mostly code cleanup here</li>
+</ul>
+<h3>0.4.0 (2017-05-09)</h3>
+<ul>
+<li>
+<p>Rework API surface to be builder-based for simpler configuration</p>
+<ul>
+<li>Rename DispatchConfig to Dispatch, OutputConfig to Output and
+FernLogger to FernLog</li>
+</ul>
+</li>
+<li>
+<p>Rework inner log structure for more efficiency</p>
+<ul>
+<li>Different outputs are now stored in an <code>enum</code> rather than every
+sublogger being a Box&lt;FernLog&gt; with dynamic dispatch</li>
+<li>Remove LogError; handle errors within individual loggers now - and
+only within loggers which actually need it</li>
+<li>Remove unnecessary wrapping of streams with an Arc (now just uses
+Mutex for File streams)</li>
+<li>Remove unnecessary wrapping of Stdout and Stderr streams with a
+Mutex, when they are already synchronized</li>
+<li>Pass around just &amp;fmt::Arguments + &amp;log::LogRecord instead of
+passing each individual LogRecord part</li>
+</ul>
+</li>
+<li>
+<p>Move opening of files and stdout/stderr from configuration
+&quot;building&quot; to configuring</p>
+<ul>
+<li>Instead of taking OpenOptions, log configuration now just takes an
+already-opened std::io::File object</li>
+<li>fern::InitError is now a convenience API, and is never returned
+from any fern APIs</li>
+</ul>
+</li>
+<li>
+<p>Redo formatting to work without allocation - formatting closures now
+finish with a callback rather than returning a value</p>
+</li>
+<li>
+<p>Update examples to use <code>chrono</code> instead of the <code>time</code> crate</p>
+<ul>
+<li>This removes another extra allocation - chrono can format time
+directly to a writer, without allocating intermediate the result
+to a String</li>
+</ul>
+</li>
+<li>
+<p>Add much more documentation: almost every builder method has a full
+example, and all features should be thoroughly explained</p>
+</li>
+<li>
+<p>Add appveyor and travis-ci badges to README and Cargo.toml</p>
+</li>
+</ul>
+<h3>0.3.5 (2015-05-06)</h3>
+<ul>
+<li>Build changes to .travis.yml</li>
+<li>Add html_root_url doc attribute</li>
+<li>Add file_with_line_sep and file_with_options_and_line_sep
+configuration construction options to allow specifying a line
+separator other than the default '\n'</li>
+</ul>
+<h3>0.3.4 (2015-04-16)</h3>
+<ul>
+<li>Update for rustc version e9080ec39 (1.0.0-beta.2)
+<ul>
+<li>Update to use no_test to ignore doc tests, rather than ignore</li>
+<li>Remove all stability attributes on public types</li>
+<li>Add rust version matrix for testing on travis, to test on beta as
+well as nightly builds</li>
+</ul>
+</li>
+</ul>
+<h3>0.3.3 (2015-04-03)</h3>
+<ul>
+<li>Update for rustc version 9854143cb (1.0.0-beta)
+<ul>
+<li>Derive Clone for all types deriving Copy</li>
+<li>Update docs a bit for that switch to <code>time</code> crate</li>
+</ul>
+</li>
+<li>Switch to time crate instead of chrono for tests, as chrono hasn't
+updated for rustc 1.0.0-beta yet.</li>
+<li>Instead of implementing a sudo-time crate as a workaround for
+https://github.com/rust-lang/cargo/issues/1474, just disable the doc
+test, and copy the code to a separate file in tests/</li>
+</ul>
+<h3>0.3.2 (2015-04-03)</h3>
+<ul>
+<li>Update to rustc version 2e3b0c051
+<ul>
+<li>Add a workaround for
+https://github.com/rust-lang/cargo/issues/1474 in doc tests</li>
+<li>Implement From for errors instead of FromError</li>
+<li>Remove now unrequired feature gate</li>
+</ul>
+</li>
+<li>Implement error::Error for error types</li>
+</ul>
+<h3>0.3.1 (2015-03-26)</h3>
+<ul>
+<li>Updates to rustc version 27901849e</li>
+</ul>
+<h3>0.3.0 (2015-03-25)</h3>
+<ul>
+<li>Updates to rustc version 123a754cb</li>
+<li>Updates to log version 0.3.0</li>
+<li>Reworks fern::OutputConfig to be a struct with functions to
+construct configurations, rather than an enum with variants for each
+configuration.
+<ul>
+<li>This is a breaking change, as all constructors on
+fern::OutputConfig have been renamed from UpperCase to lower_case.</li>
+<li>This also now allows fern::OutputConfig to be constructed with
+anything which implements <code>AsRef&lt;path::Path&gt;</code>.
+<ul>
+<li>For example, <code>fern::OutputConfig::file(&quot;some-file.log&quot;)</code> works,
+without having to construct a Path or PathBuf manually.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3>0.2.1 (2015-03-19)</h3>
+<ul>
+<li>Updates to rustc version 3e4be02b8</li>
+<li>Updates documentation</li>
+</ul>
+<h3>0.2.0 (2015-03-08)</h3>
+<p>This version reworks the public API in order to turn fern into a
+backend to the <code>log</code> crate.</p>
+<p>API Changes:</p>
+<ul>
+<li>Remove the <code>local</code> module, as the <code>log</code> crate now handles storing a
+global logger.</li>
+<li>fern::Logger <em>must</em> now be Sync + Send</li>
+<li>BoxedLogger and ArcLogger typedefs are removed, due to writing <code>+ Sync + Send</code> no longer being required</li>
+<li>Now everything just uses Box&lt;Logger&gt;</li>
+<li>Level is removed, in favor of using log::LogLevel and
+log::LogLevelFilter</li>
+<li>LoggerConfig is renamed into DispatchConfig</li>
+<li>Rename <code>Error</code> to <code>LogError</code>
+<ul>
+<li>Implement <code>fmt::Display</code> for <code>LogError</code></li>
+</ul>
+</li>
+<li>A new <code>Formatter</code> type is added for formatting closures. It also now
+takes a &amp;log::LogLocation parameters as well.</li>
+<li>OutputConfig::Parent is renamed into OutputConfig::Child, this seems
+to make more sense, given that you can have any number of children</li>
+<li>Logger::log() now takes (&amp;str, &amp;log::LogLevel, &amp;log::LogLocation)
+instead of (&amp;fern::Level, &amp;str)</li>
+<li>Add an <code>IntoLog</code> trait which DispatchConfig and OutputConfig
+implement (instead of having <code>into_logger()</code> on each of them.
+<ul>
+<li>Add an <code>into_log()</code> method to the IntoLog trait that turns a log
+configuration into a <code>log::Log</code> (as apposed to <code>fern::Logger</code>)</li>
+<li>Rename <code>IntoLog.into_logger()</code> to <code>IntoLog.into_fern_logger()</code> in
+order to differentiate from the <code>into_log()</code> method.</li>
+</ul>
+</li>
+<li>Add a <code>fern::init_global_logger()</code> method which sets the global
+<code>log</code> crate logger from a log configuration</li>
+<li>Add an <code>InitError</code> error which is used by <code>init_global_logger()</code> for
+either an IO error or <code>log::SetLoggerError</code></li>
+<li>Update everything to use the new io and path modules</li>
+<li>Add a <code>FileOptions</code> option to <code>OutputConfig</code> which allows for
+specifying an <code>OpenOptions</code> for opening the log file with</li>
+</ul>
+<p>Additional Changes:</p>
+<ul>
+<li>The docs have been rewritten to be up to date with all the above
+changes
+<ul>
+<li>The code snippets in the docs are now all tested! This is instead
+of having <code>no_test</code> and not having fully workable code examples.</li>
+</ul>
+</li>
+<li>There is a new <code>tests/lib.rs</code> file which contains tests for
+initializing fern and log filtering with different log levels.</li>
+</ul>
+<h3>0.1.12 (2015-02-21)</h3>
+<ul>
+<li>Fixes compile warnings and errors for rustc version 522d09dfe
+(thanks <a href="https://github.com/gareins">@gareins</a>!)</li>
+<li>Adds static life bound</li>
+<li>Switches to using old_path feature instead of path feature</li>
+</ul>
+<h3>0.1.11 (2015-02-13)</h3>
+<ul>
+<li>Fixes small documentation error</li>
+<li>Fixes compile errors in rustc version 3ef8ff1f8</li>
+</ul>
+<h3>0.1.10 (2015-02-03)</h3>
+<ul>
+<li>Finishes updating to rustc version eaf4c5c78
+<ul>
+<li>Last version compiled, but had many warnings</li>
+<li>Move all #[experimental] features to #[unstable]</li>
+<li>Add #![feature(io, core)]</li>
+<li>Remove unrequired .iter() call</li>
+</ul>
+</li>
+</ul>
+<h3>0.1.9 (2015-02-03)</h3>
+<ul>
+<li>Updates to rustc version eaf4c5c78
+<ul>
+<li>Changes all usages of std::io to std::old_io</li>
+</ul>
+</li>
+</ul>
+<h3>0.1.8 (2015-01-27)</h3>
+<ul>
+<li>Updates to rustc version 458a6a2f6</li>
+</ul>
+<h3>0.1.7 (2015-01-09)</h3>
+<ul>
+<li>Update to latest rustc (44a287e6e)</li>
+</ul>
+<h3>0.1.6 (2015-01-07)</h3>
+<p>This update mainly just cleans stuff up and updates for the latest
+rustc (ea6f65c5f)</p>
+<ul>
+<li>Update to using f.write_str(... instead of write!(f, &quot;{}&quot;, ...) for
+simplicity</li>
+<li>Update to use (closure)(...) instead of closure.call((...)) because
+directly calling works now</li>
+<li>Remove #![feature()] attributes for unboxed_closures and
+old_orphan_check, as they are no longer required.</li>
+</ul>
+<h3>0.1.5 (2015-01-05)</h3>
+<ul>
+<li>Updates for the latest rustc version, ad9e75938.</li>
+<li>Fixes all lines which go past the 99 character line limit.</li>
+</ul>
+<h3>0.1.4 (2015-01-01)</h3>
+<p>This version is <em>not</em> backwards compatible. The change was necessary
+for the latest rust update however, so only a minor version increment
+was added.</p>
+<ul>
+<li>Changes from using IoResult&lt;()&gt; to Result&lt;(), fern::Error&gt; for
+return types from logging operations.</li>
+<li>Updates for latest rustc</li>
+</ul>
+<h3>0.1.3 (2014-12-27)</h3>
+<ul>
+<li>Adds a new public module, local, which stores a thread-local logger.</li>
+<li>Adds a new logger 'NullLogger', which does nothing with logged
+mesages.</li>
+<li>Fixes WriterLogger to append to opened files instead of overwriting.</li>
+<li>Adds a ton more documentation</li>
+</ul>
+<h3>0.1.2 (2014-12-24)</h3>
+<ul>
+<li>Adds type aliases BoxedLogger and ArcLogger, which resolve to
+<code>Box&lt;Logger + Sync + Send&gt;</code> and
+<code>sync::Arc&lt;Box&lt;Logger + Sync + Send&gt;&gt;</code> respectively.</li>
+</ul>
+<h3>0.1.1 (2014-12-22)</h3>
+<ul>
+<li>Adds a workaround for a bug introduced a compiler update.</li>
+</ul>
+<h3>0.1.0 (2014-12-19)</h3>
+<p>First release, version 0.1.0.</p>
+</div><p class="table-note">sha256:bda9a40b1f91f3687ccaea697cf4ef3828899258bf77717c7e7fdc0fea637a8e</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2014-2017 David Ross
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:618bcda011fe31b4710082efc2785b51da642e236ed99fc1b5e34229836c915e</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:f689f026d3bae381ee5e04d480a740112bf4bef865447986342b4a2a9b85f40c</code></dd><dt>Upstream checksum</dt><dd><code>sha256:4316185f709b23713e41e3195f90edef7fb00c3ed4adc79769cf09cc762a3b29</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/fern&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.7.1&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">chrono</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:chrono&quot;</span><span class="p">]</span>
+<span class="n">colored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:colored&quot;</span><span class="p">]</span>
+<span class="n">date-based</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;chrono&quot;</span><span class="p">]</span>
+<span class="n">libc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:libc&quot;</span><span class="p">]</span>
+<span class="n">meta-logging-in-format</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">reopen-03</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;reopen03&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;libc&quot;</span><span class="p">]</span>
+<span class="n">reopen-1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;reopen1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;libc&quot;</span><span class="p">]</span>
+<span class="n">reopen03</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:reopen03&quot;</span><span class="p">]</span>
+<span class="n">reopen1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:reopen1&quot;</span><span class="p">]</span>
+<span class="n">syslog-3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;syslog3&quot;</span><span class="p">]</span>
+<span class="n">syslog-4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;syslog4&quot;</span><span class="p">]</span>
+<span class="n">syslog-6</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;syslog6&quot;</span><span class="p">]</span>
+<span class="n">syslog-7</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;syslog7&quot;</span><span class="p">]</span>
+<span class="n">syslog3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:syslog3&quot;</span><span class="p">]</span>
+<span class="n">syslog4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:syslog4&quot;</span><span class="p">]</span>
+<span class="n">syslog6</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:syslog6&quot;</span><span class="p">]</span>
+<span class="n">syslog7</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:syslog7&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;fern&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">chrono</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/chrono&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;clock&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">colored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/colored&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">libc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/libc&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.58&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(not(windows))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">log</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/log&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">reopen03</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/reopen&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(not(windows))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">reopen1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/reopen&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;~1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;signals&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(not(windows))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syslog3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syslog&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(not(windows))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syslog4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syslog&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(not(windows))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syslog6</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syslog&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^6&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(not(windows))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syslog7</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syslog&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^7&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(not(windows))&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>David Ross &lt;daboross@daboross.net&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.60</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/fern/0.7.1">crates.io package</a></li><li><a href="https://github.com/daboross/fern">Source repository</a></li><li><a href="https://docs.rs/fern/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">fern</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/fern"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.7.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

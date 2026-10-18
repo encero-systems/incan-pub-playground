@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ahash 0.8.12 · Incan.pub</title><meta name="description" content="A non-cryptographic hash function using AES-NI for high performance"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/ahash</p><div class="title-row"><h1>ahash</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/ahash/versions/0.8.12/" selected>0.8.12</option></select></label></div><p class="description">A non-cryptographic hash function using AES-NI for high performance</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>aHash     Build Status Licence Downloads</h3>
+<p>AHash is the <a href="https://github.com/tkaitchuck/aHash/blob/master/compare/readme.md#Speed">fastest</a>,
+<a href="https://github.com/tkaitchuck/aHash/wiki/How-aHash-is-resists-DOS-attacks">DOS resistant hash</a> currently available in Rust.
+AHash is intended <em>exclusively</em> for use in in-memory hashmaps.</p>
+<p>AHash's output is of <a href="https://github.com/tkaitchuck/aHash/blob/master/compare/readme.md#Quality">high quality</a> but aHash is <strong>not</strong> a cryptographically secure hash.</p>
+<h4>Design</h4>
+<p>Because AHash is a keyed hash, each map will produce completely different hashes, which cannot be predicted without knowing the keys.
+<a href="https://github.com/tkaitchuck/aHash/wiki/How-aHash-is-resists-DOS-attacks">This prevents DOS attacks where an attacker sends a large number of items whose hashes collide that get used as keys in a hashmap.</a></p>
+<p>This also avoids <a href="https://accidentallyquadratic.tumblr.com/post/153545455987/rust-hash-iteration-reinsertion">accidentally quadratic behavior by reading from one map and writing to another.</a></p>
+<h4>Goals and Non-Goals</h4>
+<p>AHash does <em>not</em> have a fixed standard for its output. This allows it to improve over time. For example,
+if any faster algorithm is found, aHash will be updated to incorporate the technique.
+Similarly, should any flaw in aHash's DOS resistance be found, aHash will be changed to correct the flaw.</p>
+<p>Because it does not have a fixed standard, different computers or computers on different versions of the code will observe different hash values.
+As such, aHash is not recommended for use other than in-memory maps. Specifically, aHash is not intended for network use or in applications which persist hashed values.
+(In these cases <code>HighwayHash</code> would be a better choice)</p>
+<p>Additionally, aHash is not intended to be cryptographically secure and should not be used as a MAC, or anywhere which requires a cryptographically secure hash.
+(In these cases <code>SHA-3</code> would be a better choice)</p>
+<h4>Usage</h4>
+<p>AHash is a drop in replacement for the default implementation of the <code>Hasher</code> trait. To construct a <code>HashMap</code> using aHash
+as its hasher do the following:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">ahash</span><span class="p">::{</span><span class="n">AHasher</span><span class="p">,</span><span class="w"> </span><span class="n">RandomState</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">map</span><span class="p">:</span><span class="w"> </span><span class="nc">HashMap</span><span class="o">&lt;</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="n">RandomState</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span><span class="p">::</span><span class="n">default</span><span class="p">();</span>
+<span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="mi">34</span><span class="p">);</span>
+</code></pre>
+<p>For convenience, wrappers called <code>AHashMap</code> and <code>AHashSet</code> are also provided.
+These do the same thing with slightly less typing.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">ahash</span><span class="p">::</span><span class="n">AHashMap</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">map</span><span class="p">:</span><span class="w"> </span><span class="nc">AHashMap</span><span class="o">&lt;</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AHashMap</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="mi">34</span><span class="p">);</span>
+<span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">56</span><span class="p">,</span><span class="w"> </span><span class="mi">78</span><span class="p">);</span>
+</code></pre>
+<h4>Flags</h4>
+<p>The aHash package has the following flags:</p>
+<ul>
+<li><code>std</code>: This enables features which require the standard library. (On by default) This includes providing the utility classes <code>AHashMap</code> and <code>AHashSet</code>.</li>
+<li><code>serde</code>: Enables <code>serde</code> support for the utility classes <code>AHashMap</code> and <code>AHashSet</code>.</li>
+<li><code>runtime-rng</code>: To obtain a seed for Hashers will obtain randomness from the operating system. (On by default)
+This is done using the <a href="https://github.com/rust-random/getrandom">getrandom</a> crate.</li>
+<li><code>compile-time-rng</code>: For OS targets without access to a random number generator, <code>compile-time-rng</code> provides an alternative.
+If <code>getrandom</code> is unavailable and <code>compile-time-rng</code> is enabled, aHash will generate random numbers at compile time and embed them in the binary.</li>
+<li><code>nightly-arm-aes</code>: To use AES instructions on 32-bit ARM, which requires nightly. This is not needed on AArch64.
+This allows for DOS resistance even if there is no random number generator available at runtime (assuming the compiled binary is not public).
+This makes the binary non-deterministic. (If non-determinism is a problem see <a href="https://github.com/tkaitchuck/constrandom#deterministic-builds">constrandom's documentation</a>)</li>
+</ul>
+<p>If both <code>runtime-rng</code> and <code>compile-time-rng</code> are enabled the <code>runtime-rng</code> will take precedence and <code>compile-time-rng</code> will do nothing.
+If neither flag is set, seeds can be supplied by the application. <a href="https://docs.rs/ahash/latest/ahash/random_state/struct.RandomState.html">Multiple apis</a>
+are available to do this.</p>
+<h4>Comparison with other hashers</h4>
+<p>A full comparison with other hashing algorithms can be found <a href="https://github.com/tkaitchuck/aHash/blob/master/compare/readme.md">here</a></p>
+<p>Hasher performance</p>
+<p>For a more representative performance comparison which includes the overhead of using a HashMap, see <a href="https://github.com/rust-lang/hashbrown#performance">HashBrown's benchmarks</a>
+as HashBrown now uses aHash as its hasher by default.</p>
+<h4>Hash quality</h4>
+<p>AHash passes the full <a href="https://github.com/rurban/smhasher">SMHasher test suite</a>.</p>
+<p>The code to reproduce the result, and the full output <a href="https://github.com/tkaitchuck/aHash/tree/master/smhasher">are checked into the repo</a>.</p>
+<h4>Additional FAQ</h4>
+<p>A separate FAQ document is maintained <a href="https://github.com/tkaitchuck/aHash/blob/master/FAQ.md">here</a>.
+If you have questions not covered there, open an issue <a href="https://github.com/tkaitchuck/aHash/issues">here</a>.</p>
+<h4>License</h4>
+<p>Licensed under either of:</p>
+<ul>
+<li>Apache License, Version 2.0, (<a href="https://github.com/tkaitchuck/ahash/blob/9aa1ba20f05ed582eda04ea625d5658c92195a57/LICENSE-APACHE">LICENSE-APACHE</a> or http://www.apache.org/licenses/LICENSE-2.0)</li>
+<li>MIT license (<a href="https://github.com/tkaitchuck/ahash/blob/9aa1ba20f05ed582eda04ea625d5658c92195a57/LICENSE-MIT">LICENSE-MIT</a> or http://opensource.org/licenses/MIT)</li>
+</ul>
+<p>at your option.</p>
+<h4>Contribution</h4>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
+additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>atomic-polyfill</code></th><td>No</td><td><ul class="effects"><li><code>dep:portable-atomic</code></li><li><code>once_cell/critical-section</code></li></ul></td></tr><tr><th scope="row"><code>compile-time-rng</code></th><td>No</td><td><ul class="effects"><li><code>const-random</code></li></ul></td></tr><tr><th scope="row"><code>const-random</code></th><td>No</td><td><ul class="effects"><li><code>dep:const-random</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>runtime-rng</code></li></ul></td></tr><tr><th scope="row"><code>getrandom</code></th><td>Yes<small>default → runtime-rng → getrandom</small></td><td><ul class="effects"><li><code>dep:getrandom</code></li></ul></td></tr><tr><th scope="row"><code>nightly-arm-aes</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>no-rng</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>runtime-rng</code></th><td>Yes<small>default → runtime-rng</small></td><td><ul class="effects"><li><code>getrandom</code></li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/cfg-if/"><code>crates-io/cfg-if</code></a><small>Alias: cfg-if</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/const-random/"><code>crates-io/const-random</code></a><small>Alias: const-random</small></th><td><code>^0.1.17</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/getrandom/"><code>crates-io/getrandom</code></a><small>Alias: getrandom</small></th><td><code>^0.3.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → runtime-rng → getrandom</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/once_cell/"><code>crates-io/once_cell</code></a><small>Alias: once_cell</small></th><td><code>^1.18.0</code><small>Default features: disabled</small><small>Requests: alloc</small></td><td>Required · when cfg(not(all(target_arch = &quot;arm&quot;, target_os = &quot;none&quot;)))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/portable-atomic/"><code>crates-io/portable-atomic</code></a><small>Alias: portable-atomic</small></th><td><code>^1.0.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0.117</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/zerocopy/"><code>crates-io/zerocopy</code></a><small>Alias: zerocopy</small></th><td><code>^0.8.24</code><small>Default features: disabled</small><small>Requests: simd</small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/arrow-array/versions/60.0.0/">crates-io/arrow-array 60.0.0</a><span>Requires ^0.8 · alias ahash · cfg(target_arch = &quot;wasm32&quot;)</span></li><li><a href="../../../../../packages/crates-io/arrow-array/versions/60.0.0/">crates-io/arrow-array 60.0.0</a><span>Requires ^0.8 · alias ahash · cfg(not(target_arch = &quot;wasm32&quot;))</span></li><li><a href="../../../../../packages/crates-io/arrow-array/versions/58.4.0/">crates-io/arrow-array 58.4.0</a><span>Requires ^0.8 · alias ahash · cfg(target_arch = &quot;wasm32&quot;)</span></li><li><a href="../../../../../packages/crates-io/arrow-array/versions/58.4.0/">crates-io/arrow-array 58.4.0</a><span>Requires ^0.8 · alias ahash · cfg(not(target_arch = &quot;wasm32&quot;))</span></li><li><a href="../../../../../packages/crates-io/arrow-select/versions/60.0.0/">crates-io/arrow-select 60.0.0</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/arrow-select/versions/58.4.0/">crates-io/arrow-select 58.4.0</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/datafusion-common/versions/53.1.0/">crates-io/datafusion-common 53.1.0</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/datafusion-functions-aggregate/versions/53.1.0/">crates-io/datafusion-functions-aggregate 53.1.0</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/datafusion-functions-aggregate-common/versions/53.1.0/">crates-io/datafusion-functions-aggregate-common 53.1.0</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/datafusion-physical-expr/versions/53.1.0/">crates-io/datafusion-physical-expr 53.1.0</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/datafusion-physical-expr-common/versions/53.1.0/">crates-io/datafusion-physical-expr-common 53.1.0</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/datafusion-physical-plan/versions/53.1.0/">crates-io/datafusion-physical-plan 53.1.0</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.14.5/">crates-io/hashbrown 0.14.5</a><span>Requires ^0.8.7 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/jsonschema/versions/0.58.6/">crates-io/jsonschema 0.58.6</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/jsonschema-value/versions/0.58.6/">crates-io/jsonschema-value 0.58.6</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/parquet/versions/58.4.0/">crates-io/parquet 58.4.0</a><span>Requires ^0.8 · alias ahash · cfg(target_arch = &quot;wasm32&quot;)</span></li><li><a href="../../../../../packages/crates-io/parquet/versions/58.4.0/">crates-io/parquet 58.4.0</a><span>Requires ^0.8 · alias ahash · cfg(not(target_arch = &quot;wasm32&quot;))</span></li><li><a href="../../../../../packages/crates-io/redis/versions/1.7.1/">crates-io/redis 1.7.1</a><span>Requires ^0.8.11 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/referencing/versions/0.58.6/">crates-io/referencing 0.58.6</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/serde-saphyr/versions/0.0.29/">crates-io/serde-saphyr 0.0.29</a><span>Requires ^0.8 · alias ahash · </span></li><li><a href="../../../../../packages/crates-io/tracing-log/versions/0.2.0/">crates-io/tracing-log 0.2.0</a><span>Requires ^0.7.6 · alias ahash · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom, runtime-rng, serde, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5411df0348c27043ff6497a657cb8dd7489d0f71b11c5f481e13346baa5c5e0e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:0dedfcfd7e249cc809b5d7ed45be248b86a5baf377427813eb8091e46a2624d8</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom, runtime-rng, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1cf01bd80f71dc006576e9b72ed7686b421fe7e32a2e29fc5dfc2eeac6a1a941</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:94e4d6cd676f5ca159b0cc9b90d3fca1c371d95c20a79552814c3ed26ec549f1</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>getrandom, runtime-rng</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:dc30589e14786a8081157621266cc4497db2dbd2c7a239c340934b5f1a1d09b7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:668186dd4a6f858fdb4e7a42eb8eac0af15ed6a9c3e9e545293c08fd2932f517</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom, runtime-rng, serde, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:cf83285542d33715b17d32811b1e5c96dcc00229147191ed6a2f9394d5c94d89</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:f0971af2f9e07cf68d8d7801bfee6d8e60b8d88e77908b39465be1a8965909db</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom, runtime-rng, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:dad1168951ebadfbb13bc1f5bfe6a981c3419d7292abac4027bad4c81e425465</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:33cb7aa99417e479be597fc89b7d645afd149681052ac54fe4fe191e65a5e702</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>getrandom, runtime-rng</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:df6c85f7345c4b3eac74100764c4f033304f1c93cdd6338cdb037dbbf6fec2f1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:f340e00a7198ae7056704a60f41f9f8b846580b4fe0e0f7e18296753d429db1a</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom, runtime-rng, serde, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0851171e1ff1595819519644330aa293a7d63e9d9246d5fec849f79050af8e99</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:fb3592990d7195141ee5c97ac3341ae4be5c90170c69b29fb2a6c8a5f63f6a3a</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom, runtime-rng, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:de5881f95466403b1cef111fbfdffc4ca083953cb393a846cf8bea40fc394bbd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:3fb68496c1325111f2e4b245bed7296fdc265265483d8c8ad3d735dbb4d9b805</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>getrandom, runtime-rng</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:fa8efc339f1574adc18373cc1739de69ef1d3e4ab58cf08bbc7b76dbb2a87957</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53950367">Attestation reference</a><small>Archive: sha256:9950d40192ec9f3c7b3c2ea43cb438421a032274758b64854c7d49fba9f77921</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom, runtime-rng, serde, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:747c05721f8c8dc0e6c909b737ac440b47ba95821c9a7624bd166ff06edbf4c6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:710d99f861b48bfba14775d3296fc8c1966de78d6c6e6214439408aad3ef0fc7</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom, runtime-rng, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7a10a1909c8cf15c1b1498a0c1a3e380d317f9e6162356b82690800f9a29943c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:29065c0c9e7aa14f448e936ca42e1d3dea84c1f70846033f730fd28b2bd55815</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>getrandom, runtime-rng</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e2af2fdae34d711105e6993a919225fd69d623f24e2d788a1d136308026f46eb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:910b6b2c2a2e097d47090b094deecb4c39dda915865068db9a678de2a33d7ea5</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, getrandom, runtime-rng, serde, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, getrandom, runtime-rng, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>getrandom, runtime-rng</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, getrandom, runtime-rng, serde, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, getrandom, runtime-rng, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>getrandom, runtime-rng</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>default, getrandom, runtime-rng, serde, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>default, getrandom, runtime-rng, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>getrandom, runtime-rng</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>default, getrandom, runtime-rng, serde, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>default, getrandom, runtime-rng, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>getrandom, runtime-rng</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/ahash/versions/0.8.12/">0.8.12</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/ahash/0.8.12">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2018 Tom Kaitchuck
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:0444c6991eead6822f7b9102e654448d51624431119546492e8b231db42c48bb</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:a05b01ee666c3a1ea663753e57c4141dd60427b5428706e728162dc8fd29fd96</code></dd><dt>Upstream checksum</dt><dd><code>sha256:5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/ahash&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.8.12&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">atomic-polyfill</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:portable-atomic&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;once_cell/critical-section&quot;</span><span class="p">]</span>
+<span class="n">compile-time-rng</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;const-random&quot;</span><span class="p">]</span>
+<span class="n">const-random</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:const-random&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">]</span>
+<span class="n">getrandom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:getrandom&quot;</span><span class="p">]</span>
+<span class="n">nightly-arm-aes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">no-rng</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">runtime-rng</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;getrandom&quot;</span><span class="p">]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ahash&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">cfg-if</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cfg-if&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">const-random</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/const-random&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.17&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">getrandom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">once_cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/once_cell&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.18.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(not(all(target_arch = </span><span class="se">\&quot;</span><span class="s2">arm</span><span class="se">\&quot;</span><span class="s2">, target_os = </span><span class="se">\&quot;</span><span class="s2">none</span><span class="se">\&quot;</span><span class="s2">)))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">portable-atomic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/portable-atomic&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.117&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zerocopy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zerocopy&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8.24&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;simd&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;runtime-rng&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;folded_multiply&quot;</span><span class="p">]</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Tom Kaitchuck &lt;Tom.Kaitchuck@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.60.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/ahash/0.8.12">crates.io package</a></li><li><a href="https://github.com/tkaitchuck/ahash">Source repository</a></li><li><a href="https://docs.rs/ahash">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">ahash</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/ahash"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.8.12"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

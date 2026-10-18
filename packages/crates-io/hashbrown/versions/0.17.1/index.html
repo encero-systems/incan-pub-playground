@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>hashbrown 0.17.1 · Incan.pub</title><meta name="description" content="A Rust port of Google&#39;s SwissTable hash map"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/hashbrown</p><div class="title-row"><h1>hashbrown</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/hashbrown/versions/0.17.1/" selected>0.17.1</option><option value="../../../../../packages/crates-io/hashbrown/versions/0.17.0/">0.17.0</option><option value="../../../../../packages/crates-io/hashbrown/versions/0.16.1/">0.16.1</option><option value="../../../../../packages/crates-io/hashbrown/versions/0.15.5/">0.15.5</option><option value="../../../../../packages/crates-io/hashbrown/versions/0.14.5/">0.14.5</option></select></label></div><p class="description">A Rust port of Google&#39;s SwissTable hash map</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>hashbrown</h3>
+<p><a href="https://github.com/rust-lang/hashbrown/actions">Build Status</a>
+<a href="https://crates.io/crates/hashbrown">crates.io</a>
+<a href="https://docs.rs/hashbrown">Documentation</a>
+<a href="https://github.com/rust-lang/hashbrown">Rust</a></p>
+<p>This crate is a Rust port of Google's high-performance <a href="https://abseil.io/blog/20180927-swisstables">SwissTable</a> hash map,
+adapted to make it a drop-in replacement for Rust's standard <code>HashMap</code> and
+<code>HashSet</code> types.</p>
+<p>The original C++ version of SwissTable can be found <a href="https://github.com/abseil/abseil-cpp/blob/master/absl/container/internal/raw_hash_set.h">here</a>, and this
+<a href="https://www.youtube.com/watch?v=ncHmEUmJZf4">CppCon talk</a> gives an overview of how the algorithm works.</p>
+<p>Since Rust 1.36, the Rust standard library has adopted this implementation for
+<code>HashMap</code>, using its own default hasher (see
+<a href="https://doc.rust-lang.org/std/hash/struct.DefaultHasher.html"><code>std::hash::DefaultHasher</code></a>).
+However you may still want to use this crate instead since it works in
+environments without <code>std</code>, such as embedded systems and kernels.</p>
+<h4><a href="https://github.com/rust-lang/hashbrown/blob/c62a63a61b7caf2de8f9ecb7b06a66b0ab6bdf3d/CHANGELOG.md">Change log</a></h4>
+<h4>Features</h4>
+<ul>
+<li>Drop-in replacement for the standard library <code>HashMap</code> and <code>HashSet</code> types.</li>
+<li>Uses <a href="https://github.com/orlp/foldhash">foldhash</a> as the default hasher, which
+is much faster than SipHash. However, foldhash does <em>not provide the same
+level of HashDoS resistance</em> as SipHash, so if that is important to you, you
+might want to consider using a different hasher.</li>
+<li>Around 2x faster than the previous standard library <code>HashMap</code>.</li>
+<li>Lower memory usage: only 1 byte of overhead per entry instead of 8.</li>
+<li>Compatible with <code>#[no_std]</code> (but requires a global allocator with the <code>alloc</code>
+crate).</li>
+<li>Empty hash maps do not allocate any memory.</li>
+<li>SIMD lookups to scan multiple hash entries in parallel.</li>
+</ul>
+<h4>Usage</h4>
+<p>Add this to your <code>Cargo.toml</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">hashbrown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.17&quot;</span>
+</code></pre>
+<p>Then:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">hashbrown</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">map</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;one&quot;</span><span class="p">);</span>
+</code></pre>
+<h4>Flags</h4>
+<p>This crate has the following Cargo features:</p>
+<ul>
+<li><code>nightly</code>: Enables nightly-only features including: <code>#[may_dangle]</code>.</li>
+<li><code>serde</code>: Enables serde serialization support.</li>
+<li><code>rayon</code>: Enables rayon parallel iterator support.</li>
+<li><code>equivalent</code>: Allows comparisons to be customized with the <code>Equivalent</code> trait.
+(enabled by default)</li>
+<li><code>raw-entry</code>: Enables access to the deprecated <code>RawEntry</code> API.</li>
+<li><code>inline-more</code>: Adds inline hints to most functions, improving run-time
+performance at the cost of compilation time. (enabled by default)</li>
+<li><code>default-hasher</code>: Compiles with foldhash as default hasher. (enabled by
+default)</li>
+<li><code>allocator-api2</code>: Enables support for allocators that support
+<code>allocator-api2</code>. (enabled by default)</li>
+</ul>
+<h4>License</h4>
+<p>Licensed under either of:</p>
+<ul>
+<li>Apache License, Version 2.0, (<a href="https://github.com/rust-lang/hashbrown/blob/c62a63a61b7caf2de8f9ecb7b06a66b0ab6bdf3d/LICENSE-APACHE">LICENSE-APACHE</a> or
+https://www.apache.org/licenses/LICENSE-2.0)</li>
+<li>MIT license (<a href="https://github.com/rust-lang/hashbrown/blob/c62a63a61b7caf2de8f9ecb7b06a66b0ab6bdf3d/LICENSE-MIT">LICENSE-MIT</a> or
+https://opensource.org/license/mit)</li>
+</ul>
+<p>at your option.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>alloc</code></th><td>No</td><td><ul class="effects"><li><code>dep:alloc</code></li></ul></td></tr><tr><th scope="row"><code>allocator-api2</code></th><td>Yes<small>default → allocator-api2</small></td><td><ul class="effects"><li><code>dep:allocator-api2</code></li></ul></td></tr><tr><th scope="row"><code>core</code></th><td>No</td><td><ul class="effects"><li><code>dep:core</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>default-hasher</code></li><li><code>inline-more</code></li><li><code>allocator-api2</code></li><li><code>equivalent</code></li><li><code>raw-entry</code></li></ul></td></tr><tr><th scope="row"><code>default-hasher</code></th><td>Yes<small>default → default-hasher</small></td><td><ul class="effects"><li><code>dep:foldhash</code></li></ul></td></tr><tr><th scope="row"><code>equivalent</code></th><td>Yes<small>default → equivalent</small></td><td><ul class="effects"><li><code>dep:equivalent</code></li></ul></td></tr><tr><th scope="row"><code>inline-more</code></th><td>Yes<small>default → inline-more</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>nightly</code></th><td>No</td><td><ul class="effects"><li><code>foldhash?/nightly</code></li></ul></td></tr><tr><th scope="row"><code>raw-entry</code></th><td>Yes<small>default → raw-entry</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>rayon</code></th><td>No</td><td><ul class="effects"><li><code>dep:rayon</code></li></ul></td></tr><tr><th scope="row"><code>rustc-dep-of-std</code></th><td>No</td><td><ul class="effects"><li><code>nightly</code></li><li><code>core</code></li><li><code>alloc</code></li><li><code>rustc-internal-api</code></li></ul></td></tr><tr><th scope="row"><code>rustc-internal-api</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde_core</code></li><li><code>dep:serde</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><code>crates-io/rustc-std-workspace-alloc</code><small>Alias: alloc</small></th><td><code>^1.0.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/allocator-api2/"><code>crates-io/allocator-api2</code></a><small>Alias: allocator-api2</small></th><td><code>^0.2.9</code><small>Default features: disabled</small><small>Requests: alloc</small></td><td>Enabled through default → allocator-api2</td></tr><tr><th scope="row"><code>crates-io/rustc-std-workspace-core</code><small>Alias: core</small></th><td><code>^1.0.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/equivalent/"><code>crates-io/equivalent</code></a><small>Alias: equivalent</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Enabled through default → equivalent</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/foldhash/"><code>crates-io/foldhash</code></a><small>Alias: foldhash</small></th><td><code>^0.2.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Enabled through default → default-hasher</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rayon/"><code>crates-io/rayon</code></a><small>Alias: rayon</small></th><td><code>^1.9.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0.220</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(any())</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde_core/"><code>crates-io/serde_core</code></a><small>Alias: serde_core</small></th><td><code>^1.0.221</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/arrow-array/versions/60.0.0/">crates-io/arrow-array 60.0.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/arrow-array/versions/58.4.0/">crates-io/arrow-array 58.4.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/borsh/versions/1.8.1/">crates-io/borsh 1.8.1</a><span>Requires &gt;=0.11, &lt;0.16.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/cranelift-codegen/versions/0.123.17/">crates-io/cranelift-codegen 0.123.17</a><span>Requires ^0.15 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/cranelift-frontend/versions/0.123.17/">crates-io/cranelift-frontend 0.123.17</a><span>Requires ^0.15 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/crc-fast/versions/1.10.0/">crates-io/crc-fast 1.10.0</a><span>Requires ^0.16.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/dashmap/versions/6.2.1/">crates-io/dashmap 6.2.1</a><span>Requires ^0.14.5 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/dashmap/versions/6.1.0/">crates-io/dashmap 6.1.0</a><span>Requires ^0.14.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/datafusion-common/versions/53.1.0/">crates-io/datafusion-common 53.1.0</a><span>Requires ^0.16.1 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/datafusion-functions-nested/versions/53.1.0/">crates-io/datafusion-functions-nested 53.1.0</a><span>Requires ^0.16.1 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/datafusion-physical-expr/versions/53.1.0/">crates-io/datafusion-physical-expr 53.1.0</a><span>Requires ^0.16.1 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/datafusion-physical-expr-common/versions/53.1.0/">crates-io/datafusion-physical-expr-common 53.1.0</a><span>Requires ^0.16.1 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/datafusion-physical-plan/versions/53.1.0/">crates-io/datafusion-physical-plan 53.1.0</a><span>Requires ^0.16.1 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/gimli/versions/0.34.0/">crates-io/gimli 0.34.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/hashlink/versions/0.12.2/">crates-io/hashlink 0.12.2</a><span>Requires ^0.17 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/hashlink/versions/0.11.1/">crates-io/hashlink 0.11.1</a><span>Requires ^0.16 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/hashlink/versions/0.10.0/">crates-io/hashlink 0.10.0</a><span>Requires ^0.15 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/indexmap/versions/2.14.2/">crates-io/indexmap 2.14.2</a><span>Requires ^0.17 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/indexmap/versions/2.14.0/">crates-io/indexmap 2.14.0</a><span>Requires ^0.17 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/kasuari/versions/0.4.12/">crates-io/kasuari 0.4.12</a><span>Requires ^0.16 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/lru/versions/0.18.5/">crates-io/lru 0.18.5</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/object/versions/0.40.0/">crates-io/object 0.40.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/object/versions/0.39.1/">crates-io/object 0.39.1</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/object/versions/0.37.3/">crates-io/object 0.37.3</a><span>Requires ^0.15.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/ordered-multimap/versions/0.7.3/">crates-io/ordered-multimap 0.7.3</a><span>Requires ^0.14.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/parquet/versions/58.4.0/">crates-io/parquet 58.4.0</a><span>Requires ^0.17 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/petgraph/versions/0.8.3/">crates-io/petgraph 0.8.3</a><span>Requires ^0.15.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/publicsuffix/versions/2.3.0/">crates-io/publicsuffix 2.3.0</a><span>Requires ^0.15.1 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/pyo3/versions/0.29.3/">crates-io/pyo3 0.29.3</a><span>Requires &gt;=0.15.0, &lt;0.18 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_intern/versions/0.0.325/">crates-io/ra_ap_intern 0.0.325</a><span>Requires 0.14.* · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_span/versions/0.0.325/">crates-io/ra_ap_span 0.0.325</a><span>Requires 0.14.* · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/ratatui-core/versions/0.1.2/">crates-io/ratatui-core 0.1.2</a><span>Requires ^0.17 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/ratatui-widgets/versions/0.3.2/">crates-io/ratatui-widgets 0.3.2</a><span>Requires ^0.17 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/redis/versions/1.7.1/">crates-io/redis 1.7.1</a><span>Requires ^0.17 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/referencing/versions/0.58.6/">crates-io/referencing 0.58.6</a><span>Requires ^0.17 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/regalloc2/versions/0.12.2/">crates-io/regalloc2 0.12.2</a><span>Requires ^0.15 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/regress/versions/0.10.5/">crates-io/regress 0.10.5</a><span>Requires ^0.16.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/rkyv/versions/0.8.18/">crates-io/rkyv 0.8.18</a><span>Requires ^0.17 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/rkyv/versions/0.8.18/">crates-io/rkyv 0.8.18</a><span>Requires ^0.14 · alias hashbrown-0_14 · </span></li><li><a href="../../../../../packages/crates-io/rkyv/versions/0.8.18/">crates-io/rkyv 0.8.18</a><span>Requires ^0.15 · alias hashbrown-0_15 · </span></li><li><a href="../../../../../packages/crates-io/rkyv/versions/0.8.18/">crates-io/rkyv 0.8.18</a><span>Requires ^0.16 · alias hashbrown-0_16 · </span></li><li><a href="../../../../../packages/crates-io/rowan/versions/0.15.17/">crates-io/rowan 0.15.17</a><span>Requires ^0.14.3 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/rsqlite-vfs/versions/0.1.1/">crates-io/rsqlite-vfs 0.1.1</a><span>Requires ^0.16.1 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/rustls/versions/0.23.45/">crates-io/rustls 0.23.45</a><span>Requires ^0.15 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/salsa/versions/0.25.2/">crates-io/salsa 0.25.2</a><span>Requires ^0.15 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/serde_with/versions/3.24.0/">crates-io/serde_with 3.24.0</a><span>Requires ^0.14.0 · alias hashbrown_0_14 · </span></li><li><a href="../../../../../packages/crates-io/serde_with/versions/3.24.0/">crates-io/serde_with 3.24.0</a><span>Requires ^0.15.0 · alias hashbrown_0_15 · </span></li><li><a href="../../../../../packages/crates-io/serde_with/versions/3.24.0/">crates-io/serde_with 3.24.0</a><span>Requires ^0.16.0 · alias hashbrown_0_16 · </span></li><li><a href="../../../../../packages/crates-io/serde_with/versions/3.24.0/">crates-io/serde_with 3.24.0</a><span>Requires ^0.17.0 · alias hashbrown_0_17 · </span></li><li><a href="../../../../../packages/crates-io/similar/versions/3.2.0/">crates-io/similar 3.2.0</a><span>Requires ^0.15 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/sqlx-core/versions/0.9.0/">crates-io/sqlx-core 0.9.0</a><span>Requires ^0.16.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/tokio-util/versions/0.7.19/">crates-io/tokio-util 0.7.19</a><span>Requires ^0.15.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.261.0/">crates-io/wasmparser 0.261.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.259.0/">crates-io/wasmparser 0.259.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.247.0/">crates-io/wasmparser 0.247.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.244.0/">crates-io/wasmparser 0.244.0</a><span>Requires ^0.15.2 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.236.1/">crates-io/wasmparser 0.236.1</a><span>Requires ^0.15.2 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/wasmtime/versions/36.0.17/">crates-io/wasmtime 36.0.17</a><span>Requires ^0.15 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.261.0/">crates-io/wit-parser 0.261.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.259.0/">crates-io/wit-parser 0.259.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.247.0/">crates-io/wit-parser 0.247.0</a><span>Requires ^0.17.0 · alias hashbrown · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1ce4d10cf154f63b66545aabe9a120d9056906028a7c83e234d40d686f32cc7d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53380173">Attestation reference</a><small>Archive: sha256:d51ffbffe0c0aef18d1553ef92f52179cb8ada76aa5830f74575dd764c06e88f</small></li><li><code>sha256:7cd2c80da675e019562ebebceea7c2e6b624891b73a6bea94b3f5c1acf9bb260</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:2978395ed3703c4fffaaa9faa8f1c60a62518d2f2a51e9423baadb02d6bf104e</small></li><li><code>sha256:dbb38f361cc76039bf015db9e6c0acd779bb889562fb9c43e3d6103beae654d5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:346419aa78c7e073c1d7c88430881abeaef7fa2a5af7252ffc3ee37687ae7bf6</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>allocator-api2, default, default-hasher, equivalent, inline-more, raw-entry</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:126cd4bcda568db509abbdf31406d7d2a55aa74951b7e4394df686a839d36b7d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:00869a46b9604cb72e3340b1096b19ffc22a7ff1ec46ce0b18e764c18309c519</small></li><li><code>sha256:7d9643399d3a272e2d910d378df1cf83db962be552113e6c07192264b0c9f651</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53380173">Attestation reference</a><small>Archive: sha256:6446954379a5f4e080c4cb472dbe166ac99b70b94d22c4816b74b74efe491c37</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:90726d775bf5547908b20e8b458f88c489f586781a61ea4971bd0ebf8bee85c2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53954876">Attestation reference</a><small>Archive: sha256:80224b0688b5227cf6bbfdad3b885f0e305db4360d35407f85c57745f62fd3cd</small></li><li><code>sha256:bf3926a15469c89f3f420950b027cbf108a9478866153b75206d474db1b99816</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:d883bd130764a558b79066e4fde893665d8b8395283430ae736b8fe9298f3dc3</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher, inline-more</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:00584c84e4290c028a7bd9ebea782cc7dabe9f713f33141ae0fc9b9030040027</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:f7d46d9f6d668f2db3519a0cb0e2b4dfcd21403ff4a6c215fff4f4c169152965</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher, serde</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:3b6b5a4ca6d7fdcb543b48bed58607aaf82fcd2c2ea0abf700edc2140d2e19b7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:34620d177ac45bc816762925ef979bb46dcd7fd77fd49a263e6845c1b7b35791</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0d8e1f90918b70b2a76c5db886db583b96925cfb2d0f75d8f3fd68346ead34a9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54020554">Attestation reference</a><small>Archive: sha256:a3c076ce174ff8e8ad9e7357d6e7d7415c94ede1e1f4cca93820caf55867e1f8</small></li><li><code>sha256:3127087c9f62de5923ff5160cf29993737764ccb8fdf0be5e2bb572b0f9dde99</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53435964">Attestation reference</a><small>Archive: sha256:2d764a35d51d8afac4284b50995466715ddddd12260c98fd51cc0fd6ccf637cc</small></li><li><code>sha256:62c9cb21ce4c6644367281cc7aabff880de09fa420810849dba1ec372a59c72a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:9cddc4ad8369d613a79cc04fa34d10960dc038c623a389a23c853f73d3430422</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>allocator-api2, default, default-hasher, equivalent, inline-more, raw-entry</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:4f9c5d25b13656aacd9a1b0a544498860caeb12865690c381f2bf94b180652ec</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53435964">Attestation reference</a><small>Archive: sha256:3bb951e005aab08a5c455b8fab2d61bfb1a615ffa3a5925aac70c053ec4716da</small></li><li><code>sha256:af109efaee8b99733521bd5715eedced46f4678c8821e8643beb78f11ca8862b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54020554">Attestation reference</a><small>Archive: sha256:54ae7951abd5b07c8f348538fdfdd8715785ce975871e03d830667cc81696d4e</small></li><li><code>sha256:f510a9b7f2fc03eea71035a4e1fa89768d06d4a4fd23100cbfd290ef0fd50db8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:bff67b903a31fc324abb80250ccfd6118365f840d93a92d947af8b57ca2858e2</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:605e935eae46ace8aa389c82db3b8125b7e593b164d419f29f1adb464e70f410</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:dbfd0983026c20f52ade2623cf68cda68997c1fde029f5d987a01bcdcd21a5ad</small></li><li><code>sha256:b1cfe62b5f3a60a3da231bb73ff2e738d02364f69390cbc67037ddce5eeb5279</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:87717813c89c227af9b633f9ee6b415dce4028fcb2fdf56712fa47112aa93ed9</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher, inline-more</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2f05b8b90c3ebafe65ecad55c3ac00d74d2ddc31c0f14539fc91f6f57eaec7b7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:047115352be45db42dfc1ff2e3821317efe2235af9d9ff0f7a066b0e5189a547</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher, serde</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:de0f60ba787499328d3a7e60435444e88a8fef6a387325e2298aabc0b8c9e3da</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:939ef5fcea121eb4d2e191334c0954fedc36a4aef30500c7961eff01662a9ca9</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:accb8f3d48b7ebd47b7363f695ada446c8f07bde856bd057f63736cb5130c8c3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:03ce23cdcf84ba579d6f031c27eb74377fa10c1172fd43e2de5ddea0a9ed60be</small></li><li><code>sha256:e394fd29a7469d0ff8fc2ea87ceb8e1413cfacb9ff46280ed17ecbbfc7bba140</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53438446">Attestation reference</a><small>Archive: sha256:400c224ef1078dad9f41d853571334f2ee471545645340efda088776ed2aabcd</small></li><li><code>sha256:e59819ade09cd3d7758be1e40f1cb368710e414cb6050f1d906faccf6c7c730f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674109">Attestation reference</a><small>Archive: sha256:4b98405fcf502326d7504476e673fe570dc629409352d25bf07ee24006928695</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>allocator-api2, default, default-hasher, equivalent, inline-more, raw-entry</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5d41ec7b1eeb20e73be877fe07966039f67cf885ce450a3409914c31157651ee</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674109">Attestation reference</a><small>Archive: sha256:833b92b1d7a995df68a6fa7f4e8ece060cab12ac7c49e723d74f2853ff0722ee</small></li><li><code>sha256:6ab5ea3a69aec18c8bc747b1a8084e19b2edacc8308019ee986eb7e78f7b3a8a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:09ee047223adee2dc6ce718a0c212aaa5973e4969a1b6f139a2c3b7085b6d3bd</small></li><li><code>sha256:e3b81a7ebc4b592e3b7800561c71d0af5dd5b161d71c98ff5b004aca79cd4245</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53438446">Attestation reference</a><small>Archive: sha256:51d0abafed86f40014fd5c04d20b44a7a504a19ef8f5ecd9b4fe4a43a72b61fc</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e6969556de73ae016d3d0719554c80f8a101d38e5d55cfdbdc2a420b276702d0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:1eae57e039aae997b3870f373a6247da530b8f32510e1f1a4ccb05eb150e2b56</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher, inline-more</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b4ef01c1749717ca51bbeee7ed391309c5ae0e69cdc943dbc822ceaca23bbcca</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674983">Attestation reference</a><small>Archive: sha256:58609c49653884548bacd2d7f3d26eebac87dd667008fb7b8b8204b97d98b352</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher, serde</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:67e4ee5381dbbab6158dd1d574bb71161a19e8c96111d22dbeb5f770fed7a330</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:1b839e958a93bd5b0a6c8f914d83838f61a74a3172c39f2c21acb7ab43f06799</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8c63ea60ad3df3e7f3b69d7501b1c5ae3e5d26421a914a88cbc69bed3292ac12</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53440441">Attestation reference</a><small>Archive: sha256:4b012c722ff1223f7603a2240d26fe64ead21ee6a5c9ccaf1e02f56a7221181f</small></li><li><code>sha256:9bf51e20a06710f1bd2e2bb4c737a68adc5ffa981b9463bb3b457681e3477025</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54075092">Attestation reference</a><small>Archive: sha256:5e02654e624d97136b2bf4312df6866eb22a3ffd4ebfebf79d0661b5abf69f97</small></li><li><code>sha256:cd232ca44d82f9926030e3a860e8373bbd5771f9cebca3fb3464a0d1ff04df2d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:091915bc0eb842bed7531a33efff8ee68119ec31d2ae40759d69b49622b6b7c1</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>allocator-api2, default, default-hasher, equivalent, inline-more, raw-entry</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5a739373b4bd5a4548dd2b49e6c7909d4776a4d44d00ae08c45b3862aa6f3943</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53440441">Attestation reference</a><small>Archive: sha256:58d53b64ccd90d589f84f55dfad1211b9e2fb5aac75655245a4c0db5df0fd41d</small></li><li><code>sha256:ae13a59d8b74d6270dcfb5a7105a776023a5998899c1749d676740fba50c0cba</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54075092">Attestation reference</a><small>Archive: sha256:e1373f9e6082aa2a5c47785c73297142e865b10f1ebe423810d33d07c29e50ff</small></li><li><code>sha256:c527d373ea1f700fbaf6585a40f6379b8de1b20fee03b24bc5808a78d76cbbe1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:17c1f810851cd88938d8d7d1b4a7e0a7c674699aa1b967bb8607aff11ded55dd</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5eb24ca06ce71876e2fdaebf0dd4b6fffc4d0e97a27502cb1d9017b85186c792</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:3a34031f18415bce585bb5a513093745c59b532a1408d68922291a65312e058d</small></li><li><code>sha256:7709755182aedbdd108fee946075a3d85a358e70c9f41317a5c033bbdc9ea8eb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:7b7f65671e95ce6a5a3b5ee3fcca0fccedee6d7c574f9a5ec73308161910b969</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher, inline-more</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1d694a3b4a2e5f677c5a764d4af33cf99abf17680401191b65b4ecd4938060c4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:4107d19d7b2d0b16a50ce2662d3a5219b0d4ee93b75a3a12a05286b80b28bf33</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default-hasher, serde</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:c1cf6dd976d509e561bf2a62de1b0ae1e54b7ff8362ac7550e324bcf269265e0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:10819564a5c2e4d2b73537a003bdda4dff6d7d1fda7a761a6238a76e828a810a</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td></td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/hashbrown/versions/0.17.1/">0.17.1</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/hashbrown/0.17.1">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/hashbrown/versions/0.17.0/">0.17.0</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/hashbrown/0.17.0">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/hashbrown/versions/0.16.1/">0.16.1</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/hashbrown/0.16.1">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/hashbrown/versions/0.15.5/">0.15.5</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/hashbrown/0.15.5">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/hashbrown/versions/0.14.5/">0.14.5</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/hashbrown/0.14.5">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.15.2...HEAD">Unreleased</a></h4>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.17.0...v0.17.1">0.17.1</a> - 2026-04-20</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>HashMap::rustc_try_insert</code> (#722)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.16.1...v0.17.0">0.17.0</a> - 2026-04-06</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>hash_table::OccupiedEntry::replace_entry_with</code> (#669)</li>
+<li>Added <code>hash_map::{OccupiedEntry::into_entry, VacantEntryRef::insert_entry_with_key}</code> (#670)</li>
+<li>Added <code>hash_table::UnsafeIter</code> (#667)</li>
+<li>Added <code>iter</code> methods to various <code>HashTable</code> iterators (#667)</li>
+<li>Added <code>HashMap::{replace_key,replace_key_unchecked,insert_with_key_unchecked}</code> (#681)</li>
+<li>Added <code>into_map</code> methods to all <code>HashMap</code> entry types (#686)</li>
+<li>Added <code>into_table</code> methods to all <code>HashTable</code> entry types (#686)</li>
+<li>Added <code>#[must_use]</code> to constructors (#697)</li>
+<li><code>TryReserveError</code> now implements <code>Error</code> (#698)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Changed <code>EntryRef</code> to use <code>ToOwned</code> (#670)</li>
+<li>Bumped MSRV to 1.85 (2024 edition) (#676)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>HashTable:clone_from</code> now forwards to <code>RawTable::clone_from</code> instead of using the default implementation (#668)</li>
+<li>Fixed potential UB in <code>RawTableInner::fallible_with_capacity</code> (#692)</li>
+<li>Fixed incorrect length if a hasher panics during rehash (#710)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.16.0...v0.16.1">0.16.1</a> - 2025-11-20</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>HashTable</code> methods related to the raw bucket index (#657)</li>
+<li>Added <code>VacantEntryRef::insert_with_key</code> (#579)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Removed specialization for <code>Copy</code> types (#662)</li>
+<li>The <code>get_many_mut</code> family of methods have been renamed to <code>get_disjoint_mut</code>
+to match the standard library. The old names are still present for now, but
+deprecated. (#648)</li>
+<li>Recognize and use over-sized allocations when using custom allocators. (#523)</li>
+<li>Depend on <code>serde_core</code> instead of <code>serde</code>. (#649)</li>
+<li>Optimized <code>collect</code> on rayon parallel iterators. (#652)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.15.5...v0.16.0">0.16.0</a> - 2025-08-28</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump foldhash, the default hasher, to 0.2.0.</li>
+<li>Replaced <code>DefaultHashBuilder</code> with a newtype wrapper around <code>foldhash</code> instead
+of re-exporting it directly.</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.15.4...v0.15.5">0.15.5</a> - 2025-08-07</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>Entry::or_default_entry</code> and <code>Entry::or_insert_entry</code>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Re-implemented likely/unlikely with <code>#[cold]</code></li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.15.3...v0.15.4">0.15.4</a> - 2025-06-05</h4>
+<h5>Changed</h5>
+<ul>
+<li>Removed optional dependency on compiler-builtins. This only affects building as part of <code>std</code>.</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.15.2...v0.15.3">0.15.3</a> - 2025-04-29</h4>
+<h5>Added</h5>
+<ul>
+<li>SIMD implementation for LoongArch (#592, requires nightly)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Optimized insertion path by avoiding an unnecessary <code>match_empty</code> (#607)</li>
+<li>Increased minimum table size for small types (#615)</li>
+<li>Dropped FnMut trait bounds from <code>ExtractIf</code> data structures (#616)</li>
+<li>Relaxed constraint in <code>hash_map::EntryRef</code> insertion methods <code>K: From&lt;&amp;Q&gt;</code> to &amp;Q: <code>Into&lt;K&gt;</code> (#611)</li>
+<li>Added allocator template argument for <code>rustc_iter</code> (#605)</li>
+<li>The <code>allocator-api2/nightly</code> feature is no longer enabled by <code>hashbrown/nightly</code> (#606)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.15.1...v0.15.2">v0.15.2</a> - 2024-11-14</h4>
+<h5>Added</h5>
+<ul>
+<li>Marked <code>const fn</code> constructors as <code>rustc_const_stable_indirect</code> when built as
+part of the standard library. (#586)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.15.0...v0.15.1">v0.15.1</a> - 2024-11-03</h4>
+<p>This release removes the <code>borsh</code> feature introduced in 0.15.0 because it was
+found to be incorrectly implemented. Users should use the <code>hashbrown</code> feature of
+the <code>borsh</code> crate instead which provides the same trait implementations.</p>
+<h4><s><a href="https://github.com/rust-lang/hashbrown/compare/v0.14.5...v0.15.0">v0.15.0</a> - 2024-10-01</s></h4>
+<p>This release was <em>yanked</em> due to a broken implementation of the <code>borsh</code> feature.</p>
+<p>This update contains breaking changes that remove the <code>raw</code> API with the hope of
+centralising on the <code>HashTable</code> API in the future. You can follow the discussion
+and progress in #545 to discuss features you think should be added to this API
+that were previously only possible on the <code>raw</code> API.</p>
+<h5>Added</h5>
+<ul>
+<li>Added <code>borsh</code> feature with <code>BorshSerialize</code> and <code>BorshDeserialize</code> impls. (#525)</li>
+<li>Added <code>Assign</code> impls for <code>HashSet</code> operators. (#529)</li>
+<li>Added <code>Default</code> impls for iterator types. (#542)</li>
+<li>Added <code>HashTable::iter_hash{,_mut}</code> methods. (#549)</li>
+<li>Added <code>Hash{Table,Map,Set}::allocation_size</code> methods. (#553)</li>
+<li>Implemented <code>Debug</code> and <code>FusedIterator</code> for all <code>HashTable</code> iterators. (#561)</li>
+<li>Specialized <code>Iterator::fold</code> for all <code>HashTable</code> iterators. (#561)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Changed <code>hash_set::VacantEntry::insert</code> to return <code>OccupiedEntry</code>. (#495)</li>
+<li>Improved<code>hash_set::Difference::size_hint</code> lower-bound. (#530)</li>
+<li>Improved <code>HashSet::is_disjoint</code> performance. (#531)</li>
+<li><code>equivalent</code> feature is now enabled by default. (#532)</li>
+<li><code>HashSet</code> operators now return a set with the same allocator. (#529)</li>
+<li>Changed the default hasher to foldhash. (#563)</li>
+<li><code>ahash</code> feature has been renamed to <code>default-hasher</code>. (#533)</li>
+<li>Entry API has been reworked and several methods have been renamed. (#535)</li>
+<li><code>Hash{Map,Set}::insert_unique_unchecked</code> is now unsafe. (#556)</li>
+<li>The signature of <code>get_many_mut</code> and related methods was changed. (#562)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed typos, stray backticks in docs. (#558, #560)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>Raw entry API is now under <code>raw-entry</code> feature, to be eventually removed. (#534, #555)</li>
+<li>Raw table API has been made private and the <code>raw</code> feature is removed;
+in the future, all code should be using the <code>HashTable</code> API instead. (#531, #546)</li>
+<li><code>rykv</code> feature was removed; this is now provided by the <code>rykv</code> crate instead. (#554)</li>
+<li><code>HashSet::get_or_insert_owned</code> was removed in favor of <code>get_or_insert_with</code>. (#555)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.14.4...v0.14.5">v0.14.5</a> - 2024-04-28</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed index calculation in panic guard of <code>clone_from_impl</code>. (#511)</li>
+</ul>
+<h4><s><a href="https://github.com/rust-lang/hashbrown/compare/v0.14.3...v0.14.4">v0.14.4</a> - 2024-03-19</s></h4>
+<p>This release was <em>yanked</em> due to a breaking change.</p>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.14.2...v0.14.3">v0.14.3</a> - 2023-11-26</h4>
+<h5>Added</h5>
+<ul>
+<li>Specialized <code>fold</code> implementation of iterators. (#480)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Avoid using unstable <code>ptr::invalid_mut</code> on nightly. (#481)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.14.1...v0.14.2">v0.14.2</a> - 2023-10-19</h4>
+<h5>Added</h5>
+<ul>
+<li><code>HashTable</code> type which provides a low-level but safe API with explicit hashing. (#466)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Disabled the use of NEON instructions on big-endian ARM. (#475)</li>
+<li>Disabled the use of NEON instructions on Miri. (#476)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.14.0...v0.14.1">v0.14.1</a> - 2023-09-28</h4>
+<h5>Added</h5>
+<ul>
+<li>Allow serializing <code>HashMap</code>s that use a custom allocator. (#449)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Use the <code>Equivalent</code> trait from the <code>equivalent</code> crate. (#442)</li>
+<li>Slightly improved performance of table resizing. (#451)</li>
+<li>Relaxed MSRV to 1.63.0. (#457)</li>
+<li>Removed <code>Clone</code> requirement from custom allocators. (#468)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed custom allocators being leaked in some situations. (#439, #465)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.13.2...v0.14.0">v0.14.0</a> - 2023-06-01</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for <code>allocator-api2</code> crate
+for interfacing with custom allocators on stable. (#417)</li>
+<li>Optimized implementation for ARM using NEON instructions. (#430)</li>
+<li>Support for rkyv serialization. (#432)</li>
+<li><code>Equivalent</code> trait to look up values without <code>Borrow</code>. (#345)</li>
+<li><code>Hash{Map,Set}::raw_table_mut</code> is added which returns a mutable reference. (#404)</li>
+<li>Fast path for <code>clear</code> on empty tables. (#428)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Optimized insertion to only perform a single lookup. (#277)</li>
+<li><code>DrainFilter</code> (<code>drain_filter</code>) has been renamed to <code>ExtractIf</code> and no longer drops remaining
+elements when the iterator is dropped. #(374)</li>
+<li>Bumped MSRV to 1.64.0. (#431)</li>
+<li><code>{Map,Set}::raw_table</code> now returns an immutable reference. (#404)</li>
+<li><code>VacantEntry</code> and <code>OccupiedEntry</code> now use the default hasher if none is
+specified in generics. (#389)</li>
+<li><code>RawTable::data_start</code> now returns a <code>NonNull</code> to match <code>RawTable::data_end</code>. (#387)</li>
+<li><code>RawIter::{reflect_insert, reflect_remove}</code> are now unsafe. (#429)</li>
+<li><code>RawTable::find_potential</code> is renamed to <code>find_or_find_insert_slot</code> and returns an <code>InsertSlot</code>. (#429)</li>
+<li><code>RawTable::remove</code> now also returns an <code>InsertSlot</code>. (#429)</li>
+<li><code>InsertSlot</code> can be used to insert an element with <code>RawTable::insert_in_slot</code>. (#429)</li>
+<li><code>RawIterHash</code> no longer has a lifetime tied to that of the <code>RawTable</code>. (#427)</li>
+<li>The trait bounds of <code>HashSet::raw_table</code> have been relaxed to not require <code>Eq + Hash</code>. (#423)</li>
+<li><code>EntryRef::and_replace_entry_with</code> and <code>OccupiedEntryRef::replace_entry_with</code>
+were changed to give a <code>&amp;K</code> instead of a <code>&amp;Q</code> to the closure.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>Support for <code>bumpalo</code> as an allocator with custom wrapper.
+Use <code>allocator-api2</code> feature in <code>bumpalo</code> to use it as an allocator
+for <code>hashbrown</code> collections. (#417)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.13.1...v0.13.2">v0.13.2</a> - 2023-01-12</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Added <code>#[inline(always)]</code> to <code>find_inner</code>. (#375)</li>
+<li>Fixed <code>RawTable::allocation_info</code> for empty tables. (#376)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.12.3...v0.13.1">v0.13.1</a> - 2022-11-10</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>Equivalent</code> trait to customize key lookups. (#350)</li>
+<li>Added support for 16-bit targets. (#368)</li>
+<li>Added <code>RawTable::allocation_info</code> which provides information about the memory
+usage of a table. (#371)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Bumped MSRV to 1.61.0.</li>
+<li>Upgraded to <code>ahash</code> 0.8. (#357)</li>
+<li>Make <code>with_hasher_in</code> const. (#355)</li>
+<li>The following methods have been removed from the <code>RawTable</code> API in favor of
+safer alternatives:
+<ul>
+<li><code>RawTable::erase_no_drop</code> =&gt; Use <code>RawTable::erase</code> or <code>RawTable::remove</code> instead.</li>
+<li><code>Bucket::read</code> =&gt; Use <code>RawTable::remove</code> instead.</li>
+<li><code>Bucket::drop</code> =&gt; Use <code>RawTable::erase</code> instead.</li>
+<li><code>Bucket::write</code> =&gt; Use <code>Bucket::as_mut</code> instead.</li>
+</ul>
+</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Ensure that <code>HashMap</code> allocations don't exceed <code>isize::MAX</code>. (#362)</li>
+<li>Fixed issue with field retagging in scopeguard. (#359)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.12.2...v0.12.3">v0.12.3</a> - 2022-07-17</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed double-drop in <code>RawTable::clone_from</code>. (#348)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.12.1...v0.12.2">v0.12.2</a> - 2022-07-09</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>Entry</code> API for <code>HashSet</code>. (#342)</li>
+<li>Added <code>Extend&lt;&amp;'a (K, V)&gt; for HashMap&lt;K, V, S, A&gt;</code>. (#340)</li>
+<li>Added length-based short-circuiting for hash table iteration. (#338)</li>
+<li>Added a function to access the <code>RawTable</code> of a <code>HashMap</code>. (#335)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Edited <code>do_alloc</code> to reduce LLVM IR generated. (#341)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.12.0...v0.12.1">v0.12.1</a> - 2022-05-02</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed underflow in <code>RawIterRange::size_hint</code>. (#325)</li>
+<li>Fixed the implementation of <code>Debug</code> for <code>ValuesMut</code> and <code>IntoValues</code>. (#325)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.11.2...v0.12.0">v0.12.0</a> - 2022-01-17</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>From&lt;[T; N]&gt;</code> and <code>From&lt;[(K, V); N]&gt;</code> for <code>HashSet</code> and <code>HashMap</code> respectively. (#297)</li>
+<li>Added an <code>allocator()</code> getter to HashMap and HashSet. (#257)</li>
+<li>Added <code>insert_unique_unchecked</code> to <code>HashMap</code> and <code>HashSet</code>. (#293)</li>
+<li>Added <code>into_keys</code> and <code>into_values</code> to HashMap. (#295)</li>
+<li>Implement <code>From&lt;array&gt;</code> on <code>HashSet</code> and <code>HashMap</code>. (#298)</li>
+<li>Added <code>entry_ref</code> API to <code>HashMap</code>. (#201)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Bumped minimum Rust version to 1.56.1 and edition to 2021.</li>
+<li>Use u64 for the GroupWord on WebAssembly. (#271)</li>
+<li>Optimized <code>find</code>. (#279)</li>
+<li>Made rehashing and resizing less generic to reduce compilation time. (#282)</li>
+<li>Inlined small functions. (#283)</li>
+<li>Use <code>BuildHasher::hash_one</code> when <code>feature = &quot;nightly&quot;</code> is enabled. (#292)</li>
+<li>Relaxed the bounds on <code>Debug</code> for <code>HashSet</code>. (#296)</li>
+<li>Rename <code>get_each_mut</code> to <code>get_many_mut</code> and align API with the stdlib. (#291)</li>
+<li>Don't hash the key when searching in an empty table. (#305)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Guard against allocations exceeding isize::MAX. (#268)</li>
+<li>Made <code>RawTable::insert_no_grow</code> unsafe. (#254)</li>
+<li>Inline <code>static_empty</code>. (#280)</li>
+<li>Fixed trait bounds on Send/Sync impls. (#303)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.11.1...v0.11.2">v0.11.2</a> - 2021-03-25</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Added missing allocator type parameter to <code>HashMap</code>'s and <code>HashSet</code>'s <code>Clone</code> impls. (#252)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.11.0...v0.11.1">v0.11.1</a> - 2021-03-20</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Added missing <code>pub</code> modifier to <code>BumpWrapper</code>. (#251)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.10.0...v0.11.0">v0.11.0</a> - 2021-03-14</h4>
+<h5>Added</h5>
+<ul>
+<li>Added safe <code>try_insert_no_grow</code> method to <code>RawTable</code>. (#229)</li>
+<li>Added support for <code>bumpalo</code> as an allocator without the <code>nightly</code> feature. (#231)</li>
+<li>Implemented <code>Default</code> for <code>RawTable</code>. (#237)</li>
+<li>Added new safe methods <code>RawTable::get_each_mut</code>, <code>HashMap::get_each_mut</code>, and
+<code>HashMap::get_each_key_value_mut</code>. (#239)</li>
+<li>Added <code>From&lt;HashMap&lt;T, ()&gt;&gt;</code> for <code>HashSet&lt;T&gt;</code>. (#235)</li>
+<li>Added <code>try_insert</code> method to <code>HashMap</code>. (#247)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>The minimum Rust version has been bumped to 1.49.0. (#230)</li>
+<li>Significantly improved compilation times by reducing the amount of generated IR. (#205)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>We no longer re-export the unstable allocator items from the standard library, nor the stable shims approximating the same. (#227)</li>
+<li>Removed hasher specialization support from <code>aHash</code>, which was resulting in inconsistent hashes being generated for a key. (#248)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed union length comparison. (#228)</li>
+</ul>
+<h4><s><a href="https://github.com/rust-lang/hashbrown/compare/v0.9.1...v0.10.0">v0.10.0</a> - 2021-01-16</s></h4>
+<p>This release was <em>yanked</em> due to inconsistent hashes being generated with the <code>nightly</code> feature. (#248)</p>
+<h5>Changed</h5>
+<ul>
+<li>Parametrized <code>RawTable</code>, <code>HashSet</code> and <code>HashMap</code> over an allocator. (#133)</li>
+<li>Improved branch prediction hints on stable. (#209)</li>
+<li>Optimized hashing of primitive types with AHash using specialization. (#207)</li>
+<li>Only instantiate <code>RawTable</code>'s reserve functions once per key-value. (#204)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.9.0...v0.9.1">v0.9.1</a> - 2020-09-28</h4>
+<h5>Added</h5>
+<ul>
+<li>Added safe methods to <code>RawTable</code> (#202):
+<ul>
+<li><code>get</code>: <code>find</code> and <code>as_ref</code></li>
+<li><code>get_mut</code>: <code>find</code> and <code>as_mut</code></li>
+<li><code>insert_entry</code>: <code>insert</code> and <code>as_mut</code></li>
+<li><code>remove_entry</code>: <code>find</code> and <code>remove</code></li>
+<li><code>erase_entry</code>: <code>find</code> and <code>erase</code></li>
+</ul>
+</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Removed <code>from_key_hashed_nocheck</code>'s <code>Q: Hash</code>. (#200)</li>
+<li>Made <code>RawTable::drain</code> safe. (#201)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.8.2...v0.9.0">v0.9.0</a> - 2020-09-03</h4>
+<h5>Fixed</h5>
+<ul>
+<li><code>drain_filter</code> now removes and yields items that do match the predicate,
+rather than items that don't.  This is a <strong>breaking change</strong> to match the
+behavior of the <code>drain_filter</code> methods in <code>std</code>. (#187)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li>Added <code>replace_entry_with</code> to <code>OccupiedEntry</code>, and <code>and_replace_entry_with</code> to <code>Entry</code>. (#190)</li>
+<li>Implemented <code>FusedIterator</code> and <code>size_hint</code> for <code>DrainFilter</code>. (#188)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>The minimum Rust version has been bumped to 1.36 (due to <code>crossbeam</code> dependency). (#193)</li>
+<li>Updated <code>ahash</code> dependency to 0.4. (#198)</li>
+<li><code>HashMap::with_hasher</code> and <code>HashSet::with_hasher</code> are now <code>const fn</code>. (#195)</li>
+<li>Removed <code>T: Hash + Eq</code> and <code>S: BuildHasher</code> bounds on <code>HashSet::new</code>,
+<code>with_capacity</code>, <code>with_hasher</code>, and <code>with_capacity_and_hasher</code>.  (#185)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.8.1...v0.8.2">v0.8.2</a> - 2020-08-08</h4>
+<h5>Changed</h5>
+<ul>
+<li>Avoid closures to improve compile times. (#183)</li>
+<li>Do not iterate to drop if empty. (#182)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.8.0...v0.8.1">v0.8.1</a> - 2020-07-16</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>erase</code> and <code>remove</code> to <code>RawTable</code>. (#171)</li>
+<li>Added <code>try_with_capacity</code> to <code>RawTable</code>. (#174)</li>
+<li>Added methods that allow re-using a <code>RawIter</code> for <code>RawDrain</code>,
+<code>RawIntoIter</code>, and <code>RawParIter</code>. (#175)</li>
+<li>Added <code>reflect_remove</code> and <code>reflect_insert</code> to <code>RawIter</code>. (#175)</li>
+<li>Added a <code>drain_filter</code> function to <code>HashSet</code>. (#179)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Deprecated <code>RawTable::erase_no_drop</code> in favor of <code>erase</code> and <code>remove</code>. (#176)</li>
+<li><code>insert_no_grow</code> is now exposed under the <code>&quot;raw&quot;</code> feature. (#180)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.7.2...v0.8.0">v0.8.0</a> - 2020-06-18</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Marked <code>RawTable::par_iter</code> as <code>unsafe</code>. (#157)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Reduced the size of <code>HashMap</code>. (#159)</li>
+<li>No longer create tables with a capacity of 1 element. (#162)</li>
+<li>Removed <code>K: Eq + Hash</code> bounds on <code>retain</code>. (#163)</li>
+<li>Pulled in <code>HashMap</code> changes from rust-lang/rust (#164):
+<ul>
+<li><code>extend_one</code> support on nightly.</li>
+<li><code>CollectionAllocErr</code> renamed to <code>TryReserveError</code>.</li>
+<li>Added <code>HashSet::get_or_insert_owned</code>.</li>
+<li><code>Default</code> for <code>HashSet</code> no longer requires <code>T: Eq + Hash</code> and <code>S: BuildHasher</code>.</li>
+</ul>
+</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.7.1...v0.7.2">v0.7.2</a> - 2020-04-27</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>or_insert_with_key</code> to <code>Entry</code>. (#152)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Partially reverted <code>Clone</code> optimization which was unsound. (#154)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Disabled use of <code>const-random</code> by default, which prevented reproducible builds. (#155)</li>
+<li>Optimized <code>repeat</code> function. (#150)</li>
+<li>Use <code>NonNull</code> for buckets, which improves codegen for iterators. (#148)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.7.0...v0.7.1">v0.7.1</a> - 2020-03-16</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>HashMap::get_key_value_mut</code>. (#145)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Optimized <code>Clone</code> implementation. (#146)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.6.3...v0.7.0">v0.7.0</a> - 2020-01-31</h4>
+<h5>Added</h5>
+<ul>
+<li>Added a <code>drain_filter</code> function to <code>HashMap</code>. (#135)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Updated <code>ahash</code> dependency to 0.3. (#141)</li>
+<li>Optimized set union and intersection. (#130)</li>
+<li><code>raw_entry</code> can now be used without requiring <code>S: BuildHasher</code>. (#123)</li>
+<li><code>RawTable::bucket_index</code> can now be used under the <code>raw</code> feature. (#128)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.6.2...v0.6.3">v0.6.3</a> - 2019-10-31</h4>
+<h5>Added</h5>
+<ul>
+<li>Added an <code>ahash-compile-time-rng</code> feature (enabled by default) which allows disabling the
+<code>compile-time-rng</code> feature in <code>ahash</code> to work around a Cargo bug. (#125)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.6.1...v0.6.2">v0.6.2</a> - 2019-10-23</h4>
+<h5>Added</h5>
+<ul>
+<li>Added an <code>inline-more</code> feature (enabled by default) which allows choosing a tradeoff between
+runtime performance and compilation time. (#119)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.6.0...v0.6.1">v0.6.1</a> - 2019-10-04</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>Entry::insert</code> and <code>RawEntryMut::insert</code>. (#118)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>Group::static_empty</code> was changed from a <code>const</code> to a <code>static</code> (#116).</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.5.1...v0.6.0">v0.6.0</a> - 2019-08-13</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed AHash accidentally depending on <code>std</code>. (#110)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>The minimum Rust version has been bumped to 1.32 (due to <code>rand</code> dependency).</li>
+</ul>
+<h4><s><a href="https://github.com/rust-lang/hashbrown/compare/v0.5.0...v0.5.1">v0.5.1</a> - 2019-08-04</s></h4>
+<p>This release was <em>yanked</em> due to a breaking change for users of <code>no-default-features</code>.</p>
+<h5>Added</h5>
+<ul>
+<li>The experimental and unsafe <code>RawTable</code> API is available under the &quot;raw&quot; feature. (#108)</li>
+<li>Added entry-like methods for <code>HashSet</code>. (#98)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Changed the default hasher from FxHash to AHash. (#97)</li>
+<li><code>hashbrown</code> is now fully <code>no_std</code> on recent Rust versions (1.36+). (#96)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>We now avoid growing the table during insertions when it wasn't necessary. (#106)</li>
+<li><code>RawOccupiedEntryMut</code> now properly implements <code>Send</code> and <code>Sync</code>. (#100)</li>
+<li>Relaxed <code>lazy_static</code> version. (#92)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.4.0...v0.5.0">v0.5.0</a> - 2019-06-12</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Resize with a more conservative amount of space after deletions. (#86)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Exposed the Layout of the failed allocation in CollectionAllocErr::AllocErr. (#89)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.3.1...v0.4.0">v0.4.0</a> - 2019-05-30</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed <code>Send</code> trait bounds on <code>IterMut</code> not matching the libstd one. (#82)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.3.0...v0.3.1">v0.3.1</a> - 2019-05-30</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed incorrect use of slice in unsafe code. (#80)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.2.2...v0.3.0">v0.3.0</a> - 2019-04-23</h4>
+<h5>Changed</h5>
+<ul>
+<li>Changed shrink_to to not panic if min_capacity &lt; capacity. (#67)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Worked around emscripten bug emscripten-core/emscripten-fastcomp#258. (#66)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.2.1...v0.2.2">v0.2.2</a> - 2019-04-16</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Inlined non-nightly lowest_set_bit_nonzero. (#64)</li>
+<li>Fixed build on latest nightly. (#65)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.2.0...v0.2.1">v0.2.1</a> - 2019-04-14</h4>
+<h5>Changed</h5>
+<ul>
+<li>Use for_each in map Extend and FromIterator. (#58)</li>
+<li>Improved worst-case performance of HashSet.is_subset. (#61)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Removed incorrect debug_assert. (#60)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.1.8...v0.2.0">v0.2.0</a> - 2019-03-31</h4>
+<h5>Changed</h5>
+<ul>
+<li>The code has been updated to Rust 2018 edition. This means that the minimum
+Rust version has been bumped to 1.31 (2018 edition).</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li>Added <code>insert_with_hasher</code> to the raw_entry API to allow <code>K: !(Hash + Eq)</code>. (#54)</li>
+<li>Added support for using hashbrown as the hash table implementation in libstd. (#46)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed cargo build with minimal-versions. (#45)</li>
+<li>Fixed <code>#[may_dangle]</code> attributes to match the libstd <code>HashMap</code>. (#46)</li>
+<li>ZST keys and values are now handled properly. (#46)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.1.7...v0.1.8">v0.1.8</a> - 2019-01-14</h4>
+<h5>Added</h5>
+<ul>
+<li>Rayon parallel iterator support (#37)</li>
+<li><code>raw_entry</code> support (#31)</li>
+<li><code>#[may_dangle]</code> on nightly (#31)</li>
+<li><code>try_reserve</code> support (#31)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed variance on <code>IterMut</code>. (#31)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.1.6...v0.1.7">v0.1.7</a> - 2018-12-05</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed non-SSE version of convert_special_to_empty_and_full_to_deleted. (#32)</li>
+<li>Fixed overflow in rehash_in_place. (#33)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.1.5...v0.1.6">v0.1.6</a> - 2018-11-17</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed compile error on nightly. (#29)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.1.4...v0.1.5">v0.1.5</a> - 2018-11-08</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed subtraction overflow in generic::Group::match_byte. (#28)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.1.3...v0.1.4">v0.1.4</a> - 2018-11-04</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed a bug in the <code>erase_no_drop</code> implementation. (#26)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.1.2...v0.1.3">v0.1.3</a> - 2018-11-01</h4>
+<h5>Added</h5>
+<ul>
+<li>Serde support. (#14)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Make the compiler inline functions more aggressively. (#20)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.1.1...v0.1.2">v0.1.2</a> - 2018-10-31</h4>
+<h5>Fixed</h5>
+<ul>
+<li><code>clear</code> segfaults when called on an empty table. (#13)</li>
+</ul>
+<h4><a href="https://github.com/rust-lang/hashbrown/compare/v0.1.0...v0.1.1">v0.1.1</a> - 2018-10-30</h4>
+<h5>Fixed</h5>
+<ul>
+<li><code>erase_no_drop</code> optimization not triggering in the SSE2 implementation. (#3)</li>
+<li>Missing <code>Send</code> and <code>Sync</code> for hash map and iterator types. (#7)</li>
+<li>Bug when inserting into a table smaller than the group width. (#5)</li>
+</ul>
+<h4>v0.1.0 - 2018-10-29</h4>
+<ul>
+<li>Initial release</li>
+</ul>
+</div><p class="table-note">sha256:dddef7405a9fccaffc2ca6c3a76f602bb2d2b4caac35370dbb0a3787ffcd4993</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2016 Amanieu d'Antras
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:ff8f68cb076caf8cefe7a6430d4ac086ce6af2ca8ce2c4e5a2004d4552ef52a2</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:9d89bc787c92a1506b4b124c1f24eead6cd9fde80e1b64c49c47cd8b53e72708</code></dd><dt>Upstream checksum</dt><dd><code>sha256:ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/hashbrown&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.17.1&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:alloc&quot;</span><span class="p">]</span>
+<span class="n">allocator-api2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:allocator-api2&quot;</span><span class="p">]</span>
+<span class="n">core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:core&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default-hasher&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;inline-more&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;allocator-api2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;equivalent&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;raw-entry&quot;</span><span class="p">]</span>
+<span class="n">default-hasher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:foldhash&quot;</span><span class="p">]</span>
+<span class="n">equivalent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:equivalent&quot;</span><span class="p">]</span>
+<span class="n">inline-more</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">nightly</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;foldhash?/nightly&quot;</span><span class="p">]</span>
+<span class="n">raw-entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">rayon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rayon&quot;</span><span class="p">]</span>
+<span class="n">rustc-dep-of-std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;nightly&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;core&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rustc-internal-api&quot;</span><span class="p">]</span>
+<span class="n">rustc-internal-api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hashbrown&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustc-std-workspace-alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">allocator-api2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/allocator-api2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustc-std-workspace-core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">equivalent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/equivalent&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">foldhash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/foldhash&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rayon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rayon&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.9.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.220&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any())&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde_core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.221&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.85.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/hashbrown/0.17.1">crates.io package</a></li><li><a href="https://github.com/rust-lang/hashbrown">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">hashbrown</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/hashbrown"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.17.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

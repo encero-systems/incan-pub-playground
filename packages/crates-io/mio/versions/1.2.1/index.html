@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>mio 1.2.1 · Incan.pub</title><meta name="description" content="Lightweight non-blocking I/O."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/mio</p><div class="title-row"><h1>mio</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/mio/versions/1.2.4/">1.2.4</option><option value="../../../../../packages/crates-io/mio/versions/1.2.1/" selected>1.2.1</option></select></label></div><p class="description">Lightweight non-blocking I/O.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><p class="version-warning">Viewing an older indexed version. <a href="../../../../../packages/crates-io/mio/">View latest indexed version 1.2.4 →</a></p><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Mio – Metal I/O</h3>
+<p>Mio is a fast, low-level I/O library for Rust focusing on non-blocking APIs and
+event notification for building high performance I/O apps with as little
+overhead as possible over the OS abstractions.</p>
+<p><a href="https://crates.io/crates/mio">Crates.io</a>
+<a href="https://github.com/tokio-rs/mio/blob/80c693cf7a1977885d6a7d416f7f5b77afe53a27/LICENSE">MIT licensed</a>
+<a href="https://github.com/tokio-rs/mio/actions?query=workflow%3ACI+branch%3Amaster">Build Status</a></p>
+<p><strong>API documentation</strong></p>
+<ul>
+<li><a href="https://docs.rs/mio/%5E1">v1</a></li>
+<li><a href="https://docs.rs/mio/%5E0.8">v0.8</a></li>
+</ul>
+<p>This is a low level library, if you are looking for something easier to get
+started with, see <a href="https://tokio.rs">Tokio</a>.</p>
+<h4>Usage</h4>
+<p>To use <code>mio</code>, first add this to your <code>Cargo.toml</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">mio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1&quot;</span>
+</code></pre>
+<p>Next we can start using Mio. The following is a quick introduction using
+<code>TcpListener</code> and <code>TcpStream</code>. Note that <code>features = [&quot;os-poll&quot;, &quot;net&quot;]</code> must be
+specified for this example.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">mio</span><span class="p">::</span><span class="n">net</span><span class="p">::{</span><span class="n">TcpListener</span><span class="p">,</span><span class="w"> </span><span class="n">TcpStream</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">mio</span><span class="p">::{</span><span class="n">Events</span><span class="p">,</span><span class="w"> </span><span class="n">Interest</span><span class="p">,</span><span class="w"> </span><span class="n">Poll</span><span class="p">,</span><span class="w"> </span><span class="n">Token</span><span class="p">};</span>
+
+<span class="c1">// Some tokens to allow us to identify which event is for which socket.</span>
+<span class="k">const</span><span class="w"> </span><span class="n">SERVER</span><span class="p">:</span><span class="w"> </span><span class="nc">Token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Token</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="k">const</span><span class="w"> </span><span class="n">CLIENT</span><span class="p">:</span><span class="w"> </span><span class="nc">Token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Token</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Error</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Create a poll instance.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">poll</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Poll</span><span class="p">::</span><span class="n">new</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// Create storage for events.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">events</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Events</span><span class="p">::</span><span class="n">with_capacity</span><span class="p">(</span><span class="mi">128</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Setup the server socket.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">addr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;127.0.0.1:13265&quot;</span><span class="p">.</span><span class="n">parse</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TcpListener</span><span class="p">::</span><span class="n">bind</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// Start listening for incoming connections.</span>
+<span class="w">    </span><span class="n">poll</span><span class="p">.</span><span class="n">registry</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">register</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">server</span><span class="p">,</span><span class="w"> </span><span class="n">SERVER</span><span class="p">,</span><span class="w"> </span><span class="n">Interest</span><span class="p">::</span><span class="n">READABLE</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Setup the client socket.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TcpStream</span><span class="p">::</span><span class="n">connect</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// Register the socket.</span>
+<span class="w">    </span><span class="n">poll</span><span class="p">.</span><span class="n">registry</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">register</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">client</span><span class="p">,</span><span class="w"> </span><span class="n">CLIENT</span><span class="p">,</span><span class="w"> </span><span class="n">Interest</span><span class="p">::</span><span class="n">READABLE</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Interest</span><span class="p">::</span><span class="n">WRITABLE</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Start an event loop.</span>
+<span class="w">    </span><span class="k">loop</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Poll Mio for events, blocking until we get an event.</span>
+<span class="w">        </span><span class="n">poll</span><span class="p">.</span><span class="n">poll</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">events</span><span class="p">,</span><span class="w"> </span><span class="nb">None</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// Process each event.</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="n">event</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">events</span><span class="p">.</span><span class="n">iter</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// We can use the token we previously provided to `register` to</span>
+<span class="w">            </span><span class="c1">// determine for which socket the event is.</span>
+<span class="w">            </span><span class="k">match</span><span class="w"> </span><span class="n">event</span><span class="p">.</span><span class="n">token</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">SERVER</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="c1">// If this is an event for the server, it means a connection</span>
+<span class="w">                    </span><span class="c1">// is ready to be accepted.</span>
+<span class="w">                    </span><span class="c1">//</span>
+<span class="w">                    </span><span class="c1">// Accept the connection and drop it immediately. This will</span>
+<span class="w">                    </span><span class="c1">// close the socket and notify the client of the EOF.</span>
+<span class="w">                    </span><span class="kd">let</span><span class="w"> </span><span class="n">connection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">server</span><span class="p">.</span><span class="n">accept</span><span class="p">();</span>
+<span class="w">                    </span><span class="nb">drop</span><span class="p">(</span><span class="n">connection</span><span class="p">);</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">                </span><span class="n">CLIENT</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="n">event</span><span class="p">.</span><span class="n">is_writable</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="c1">// We can (likely) write to the socket without blocking.</span>
+<span class="w">                    </span><span class="p">}</span>
+
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="n">event</span><span class="p">.</span><span class="n">is_readable</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="c1">// We can (likely) read from the socket without blocking.</span>
+<span class="w">                    </span><span class="p">}</span>
+
+<span class="w">                    </span><span class="c1">// Since the server just shuts down the connection, let&#39;s</span>
+<span class="w">                    </span><span class="c1">// just exit from our event loop.</span>
+<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="nb">Ok</span><span class="p">(());</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">                </span><span class="c1">// We don&#39;t expect any events with tokens other than those we provided.</span>
+<span class="w">                </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">unreachable!</span><span class="p">(),</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Features</h4>
+<ul>
+<li>Non-blocking TCP, UDP, UDS</li>
+<li>I/O event queue backed by epoll, kqueue, and IOCP</li>
+<li>Zero allocations at runtime</li>
+<li>Platform specific extensions</li>
+</ul>
+<h4>Non-goals</h4>
+<p>The following are specifically omitted from Mio and are left to the user
+or higher-level libraries.</p>
+<ul>
+<li>File operations</li>
+<li>Thread pools / multi-threaded event loop</li>
+<li>Timers</li>
+</ul>
+<h4>Platforms</h4>
+<p>Currently supported platforms:</p>
+<ul>
+<li>Android (API level 21)</li>
+<li>DragonFly BSD</li>
+<li>FreeBSD</li>
+<li>Linux</li>
+<li>NetBSD</li>
+<li>OpenBSD</li>
+<li>Windows</li>
+<li>iOS</li>
+<li>macOS</li>
+</ul>
+<p>Mio can handle interfacing with each of the event systems of the aforementioned
+platforms. The details of their implementation are further discussed in the
+<code>Poll</code> type of the API documentation (see above).</p>
+<p>Mio generally supports the same versions of the above mentioned platforms as
+Rust the language (rustc) does, unless otherwise noted.</p>
+<p>The Windows implementation for polling sockets is using the <a href="https://github.com/piscisaureus/wepoll">wepoll</a> strategy.
+This uses the Windows AFD system to access socket readiness events.</p>
+<h5>Unsupported</h5>
+<ul>
+<li>Wine, see <a href="https://github.com/tokio-rs/mio/issues/1444">issue #1444</a></li>
+</ul>
+<h4>MSRV Policy</h4>
+<p>The MSRV (Minimum Supported Rust Version) is fixed for a given minor (1.x)
+version. However it can be increased when bumping minor versions, i.e. going
+from 1.0 to 1.1 allows us to increase the MSRV. Users unable to increase their
+Rust version can use an older minor version instead. Below is a list of Mio versions
+and their MSRV:</p>
+<ul>
+<li>v0.8: Rust 1.46.</li>
+<li>v1.0: Rust 1.70.</li>
+<li>v1.1: Rust 1.71.</li>
+<li>v1.2: Rust 1.71.</li>
+</ul>
+<p>Note however that Mio also has dependencies, which might have different MSRV
+policies. We try to stick to the above policy when updating dependencies, but
+this is not always possible.</p>
+<h4>Unsupported flags</h4>
+<p>Mio uses different implementations to support the same functionality depending
+on the platform. Mio generally uses the &quot;best&quot; implementation possible, where
+&quot;best&quot; usually means most efficient for Mio's use case. However this means that
+the implementation is often specific to a limited number of platforms, meaning
+we often have multiple implementations for the same functionality. In some cases
+it might be required to not use the &quot;best&quot; implementation, but another
+implementation Mio supports (on other platforms). <strong>Mio does not officially
+support secondary implementations on platforms</strong>, however we do have various cfg
+flags to force another implementation for these situations.</p>
+<p>Current flags:</p>
+<ul>
+<li><code>mio_unsupported_force_poll_poll</code>, uses an implementation based on <code>poll(2)</code>
+for <code>mio::Poll</code>.</li>
+<li><code>mio_unsupported_force_waker_pipe</code>, uses an implementation based on <code>pipe(2)</code>
+for <code>mio::Waker</code>.</li>
+</ul>
+<p><strong>Again, Mio does not officially supports this</strong>. Furthermore these flags may
+disappear in the future.</p>
+<h4>Community</h4>
+<p>A group of Mio users hang out on <a href="https://discord.gg/tokio">Discord</a>, this can be a good place to go for
+questions. It's also possible to open a <a href="https://github.com/tokio-rs/mio/issues/new">new issue on GitHub</a> to ask questions,
+report bugs or suggest new features.</p>
+<h4>Contributing</h4>
+<p>Interested in getting involved? We would love to help you! For simple
+bug fixes, just submit a PR with the fix and we can discuss the fix
+directly in the PR. If the fix is more complex, start with an issue.</p>
+<p>If you want to propose an API change, create an issue to start a
+discussion with the community. Also, feel free to talk with us in Discord.</p>
+<p>Finally, be kind. We support the <a href="https://www.rust-lang.org/policies/code-of-conduct">Rust Code of Conduct</a>.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>log</code></li></ul></td></tr><tr><th scope="row"><code>log</code></th><td>Yes<small>default → log</small></td><td><ul class="effects"><li><code>dep:log</code></li></ul></td></tr><tr><th scope="row"><code>net</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>os-ext</code></th><td>No</td><td><ul class="effects"><li><code>os-poll</code></li><li><code>windows-sys/Win32_System_Pipes</code></li><li><code>windows-sys/Win32_Security</code></li></ul></td></tr><tr><th scope="row"><code>os-poll</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/libc/"><code>crates-io/libc</code></a><small>Alias: libc</small></th><td><code>^0.2.183</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(any(unix, target_os = &quot;hermit&quot;, target_os = &quot;wasi&quot;))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/log/"><code>crates-io/log</code></a><small>Alias: log</small></th><td><code>^0.4.8</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → log</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/wasi/"><code>crates-io/wasi</code></a><small>Alias: wasi</small></th><td><code>^0.11.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(target_os = &quot;wasi&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/windows-sys/"><code>crates-io/windows-sys</code></a><small>Alias: windows-sys</small></th><td><code>^0.61</code><small>Default features: enabled</small><small>Requests: Wdk_Foundation, Wdk_Storage_FileSystem, Wdk_System_IO, Win32_Foundation, Win32_Networking_WinSock, Win32_Security, Win32_Storage_FileSystem, Win32_System_IO, Win32_System_WindowsProgramming</small></td><td>Required · when cfg(windows)</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/crossterm/versions/0.29.0/">crates-io/crossterm 0.29.0</a><span>Requires ^1.0 · alias mio · cfg(unix)</span></li><li><a href="../../../../../packages/crates-io/io-extras/versions/0.18.4/">crates-io/io-extras 0.18.4</a><span>Requires ^1.0.2 · alias mio · </span></li><li><a href="../../../../../packages/crates-io/io-lifetimes/versions/3.0.1/">crates-io/io-lifetimes 3.0.1</a><span>Requires ^1.0.0 · alias mio · cfg(not(target_os = &quot;wasi&quot;))</span></li><li><a href="../../../../../packages/crates-io/io-lifetimes/versions/2.0.4/">crates-io/io-lifetimes 2.0.4</a><span>Requires ^0.8.0 · alias mio · cfg(not(target_os = &quot;wasi&quot;))</span></li><li><a href="../../../../../packages/crates-io/notify/versions/8.2.0/">crates-io/notify 8.2.0</a><span>Requires ^1.0 · alias mio · cfg(any(target_os = &quot;freebsd&quot;, target_os = &quot;openbsd&quot;, target_os = &quot;netbsd&quot;, target_os = &quot;dragonflybsd&quot;, target_os = &quot;ios&quot;))</span></li><li><a href="../../../../../packages/crates-io/notify/versions/8.2.0/">crates-io/notify 8.2.0</a><span>Requires ^1.0 · alias mio · cfg(any(target_os = &quot;linux&quot;, target_os = &quot;android&quot;))</span></li><li><a href="../../../../../packages/crates-io/notify/versions/8.2.0/">crates-io/notify 8.2.0</a><span>Requires ^1.0 · alias mio · cfg(target_os = &quot;macos&quot;)</span></li><li><a href="../../../../../packages/crates-io/signal-hook-mio/versions/0.3.0/">crates-io/signal-hook-mio 0.3.0</a><span>Requires ~0.6 · alias mio-0_6 · </span></li><li><a href="../../../../../packages/crates-io/signal-hook-mio/versions/0.3.0/">crates-io/signal-hook-mio 0.3.0</a><span>Requires ~0.7 · alias mio-0_7 · </span></li><li><a href="../../../../../packages/crates-io/signal-hook-mio/versions/0.3.0/">crates-io/signal-hook-mio 0.3.0</a><span>Requires ~0.8 · alias mio-0_8 · </span></li><li><a href="../../../../../packages/crates-io/signal-hook-mio/versions/0.3.0/">crates-io/signal-hook-mio 0.3.0</a><span>Requires ^1.0 · alias mio-1_0 · </span></li><li><a href="../../../../../packages/crates-io/signal-hook-mio/versions/0.2.5/">crates-io/signal-hook-mio 0.2.5</a><span>Requires ~0.6 · alias mio-0_6 · </span></li><li><a href="../../../../../packages/crates-io/signal-hook-mio/versions/0.2.5/">crates-io/signal-hook-mio 0.2.5</a><span>Requires ~0.7 · alias mio-0_7 · </span></li><li><a href="../../../../../packages/crates-io/signal-hook-mio/versions/0.2.5/">crates-io/signal-hook-mio 0.2.5</a><span>Requires ~0.8 · alias mio-0_8 · </span></li><li><a href="../../../../../packages/crates-io/signal-hook-mio/versions/0.2.5/">crates-io/signal-hook-mio 0.2.5</a><span>Requires ^1.0 · alias mio-1_0 · </span></li><li><a href="../../../../../packages/crates-io/tokio/versions/1.53.2/">crates-io/tokio 1.53.2</a><span>Requires ^1.2.0 · alias mio · cfg(all(tokio_unstable, target_os = &quot;linux&quot;))</span></li><li><a href="../../../../../packages/crates-io/tokio/versions/1.53.2/">crates-io/tokio 1.53.2</a><span>Requires ^1.2.0 · alias mio · </span></li><li><a href="../../../../../packages/crates-io/tokio/versions/1.53.1/">crates-io/tokio 1.53.1</a><span>Requires ^1.2.0 · alias mio · cfg(all(tokio_unstable, target_os = &quot;linux&quot;))</span></li><li><a href="../../../../../packages/crates-io/tokio/versions/1.53.1/">crates-io/tokio 1.53.1</a><span>Requires ^1.2.0 · alias mio · </span></li><li><a href="../../../../../packages/crates-io/tokio/versions/1.52.3/">crates-io/tokio 1.52.3</a><span>Requires ^1.2.0 · alias mio · cfg(all(tokio_unstable, target_os = &quot;linux&quot;))</span></li><li><a href="../../../../../packages/crates-io/tokio/versions/1.52.3/">crates-io/tokio 1.52.3</a><span>Requires ^1.2.0 · alias mio · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="notice">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>net, os-ext, os-poll</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>net, os-ext, os-poll</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/mio/versions/1.2.4/">1.2.4</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/mio/1.2.4">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/mio/versions/1.2.1/">1.2.1</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/mio/1.2.1">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>1.2.1</h3>
+<ul>
+<li>Add support for horizonOS/n3ds
+(https://github.com/tokio-rs/mio/pull/1951).</li>
+<li>On Windows set <code>WSA_FLAG_NO_HANDLE_INHERIT</code> for socket creation
+(https://github.com/tokio-rs/mio/pull/1946).</li>
+<li>Fixed a race condition in Windows' <code>NamedPipe::connect</code>
+(https://github.com/tokio-rs/mio/pull/1954).</li>
+<li>Fixed a casting issue when polling with a timeout larger than ~24.8 days on Linux
+(https://github.com/tokio-rs/mio/pull/1948).</li>
+</ul>
+<h3>1.2.0</h3>
+<ul>
+<li>Support was added for WASM Preview 2
+(https://github.com/tokio-rs/mio/pull/1931).</li>
+<li>Implement <code>AsFd</code> for <code>Registry</code>
+(https://github.com/tokio-rs/mio/pull/1936).</li>
+<li>The backlog size for listeners were changed to match std lib
+(https://github.com/tokio-rs/mio/pull/1934).</li>
+</ul>
+<h3>1.1.1</h3>
+<ul>
+<li>Handle <code>ERROR_MORE_DATA</code> when scheduling reads for Window named pipes
+(https://github.com/tokio-rs/mio/pull/1921).</li>
+<li>Fix compilation error on NetBSD due to changes in types in the libc crate
+(https://github.com/tokio-rs/mio/pull/1923).</li>
+</ul>
+<h3>1.1.0</h3>
+<p>MSRV was increased to 1.71 to support windows-sys v0.61.</p>
+<ul>
+<li>Changed the backlog passed to listen to match the standard library, this
+should effect most users but see the pr for details
+(https://github.com/tokio-rs/mio/pull/1896).</li>
+<li>Fixed an issue where <code>TcpStream::peek</code> returned <code>WouldBlock</code> the events would
+stop working correctly
+(https://github.com/tokio-rs/mio/pull/1895).</li>
+<li>Added support for cygwin
+(https://github.com/tokio-rs/mio/pull/1871).</li>
+<li>Make <code>Event</code> <code>Send</code> and <code>Sync</code> on platforms using kqueue
+(https://github.com/tokio-rs/mio/pull/1906).</li>
+<li>Fixed an issue where it would reach <code>unreachable!</code> code in <code>NamedPipe</code>
+(https://github.com/tokio-rs/mio/pull/1903).</li>
+<li>Updated windows-sys to 0.60 and 0.61
+(https://github.com/tokio-rs/mio/pull/1891
+and https://github.com/tokio-rs/mio/pull/1901).</li>
+</ul>
+<h3>1.0.4</h3>
+<ul>
+<li>Update windows-sys to 0.59
+(https://github.com/tokio-rs/mio/pull/1857).</li>
+<li>Fix build failure of uds tests on Android
+(https://github.com/tokio-rs/mio/pull/1847).</li>
+<li>Fix set nonblocking socket on AIX
+(https://github.com/tokio-rs/mio/pull/1867).</li>
+<li>Emit a better error when using mio on WASM
+(https://github.com/tokio-rs/mio/pull/1856).</li>
+</ul>
+<h3>1.0.3</h3>
+<ul>
+<li>Implement more I/O safety traits
+(https://github.com/tokio-rs/mio/pull/1831).</li>
+<li>Remove hermit-abi dependency, now using libc
+(https://github.com/tokio-rs/mio/pull/1830).</li>
+<li>Use <code>poll(2)</code> implementation on AIX, removing the need for using
+<code>mio_unsupported_force_poll_poll</code>
+(https://github.com/tokio-rs/mio/pull/1833).</li>
+</ul>
+<h3>1.0.2</h3>
+<ul>
+<li>Work around eventfd bug on illumos
+(https://github.com/tokio-rs/mio/pull/1826).</li>
+<li>Fix dead code warning on Hermit when building with <code>--no-default-features --features os-ext</code>
+(https://github.com/tokio-rs/mio/pull/1828).</li>
+</ul>
+<h3>1.0.1</h3>
+<ul>
+<li>Added Fuchsia support
+(https://github.com/tokio-rs/mio/pull/1811).</li>
+<li>Added GNU/Hurd support
+(https://github.com/tokio-rs/mio/pull/1816).</li>
+<li>Fixed an issue where accepting on a UDS socket without sometime pass an address
+with a NULL byte to SocketAddr::from_pathname
+(https://github.com/tokio-rs/mio/pull/1817).</li>
+<li>Internal cleanups that should make the <code>cfg</code> situations easier to follow
+(https://github.com/tokio-rs/mio/pull/1812,
+https://github.com/tokio-rs/mio/pull/1813).</li>
+</ul>
+<h3>1.0</h3>
+<p>With v1 Mio is able to bump its MSRV to 1.70, allowing us to implement I/O
+safety traits (https://github.com/rust-lang/rust/issues/87074) and replace
+<code>SocketAddr</code> with the version found in the standard library.</p>
+<h4>Added</h4>
+<ul>
+<li>Implement <code>AsFd</code> for<code>TcpListener</code>, <code>TcpStream</code>, <code>UdpSocket</code>, <code>UnixDatagram</code>,
+<code>UnixListener</code>, <code>UnixStream</code>, <code>pipe::Receiver</code> and <code>pipe::Sender</code>
+(https://github.com/tokio-rs/mio/pull/1749, https://github.com/tokio-rs/mio/pull/1797).</li>
+<li>Implement <code>From</code> for <code>TcpListener</code>, <code>TcpStream</code>, <code>UdpSocket</code>, <code>UnixDatagram</code>,
+<code>UnixListener</code>, and <code>UnixStream</code> for their standard library counterpart
+(https://github.com/tokio-rs/mio/pull/1767).</li>
+<li>Add support for abstract namespaces on Android
+(https://github.com/tokio-rs/mio/pull/1749).</li>
+<li>Add support for QNX OS
+(https://github.com/tokio-rs/mio/pull/1766,
+https://github.com/tokio-rs/mio/pull/1800).</li>
+<li>Add support for Apple visionOS
+(https://github.com/tokio-rs/mio/pull/1795).</li>
+<li>Support for Haiku
+(https://github.com/tokio-rs/mio/pull/1807).</li>
+</ul>
+<h4>Removed</h4>
+<ul>
+<li>The <code>SocketAddr</code> type is removed in favour of <code>std::os::unix::net::SocketAddr</code>
+(https://github.com/tokio-rs/mio/pull/1760). All methods on Mio's version
+should exist on the version in the standard library.</li>
+</ul>
+<h4>Changes</h4>
+<ul>
+<li>MSRV was updated to 1.74, updating to Rust edition edition
+(https://github.com/tokio-rs/mio/pull/1733).</li>
+<li><code>UnixDatagram::{local_addr,peer_addr,bind_addr,recv_from}</code>,
+<code>UnixListener::{local_addr,bind_addr,accept}</code> and
+<code>UnixStream::{local_addr,peer_addr,connect_addr}</code> return and/or use
+<code>std::os::unix::net::SocketAddr</code> instead of Mio's own <code>SocketAddr</code> type
+(https://github.com/tokio-rs/mio/pull/1760).</li>
+<li>Use <code>OwnedFd</code> internally for <code>Poll</code> where possible
+(https://github.com/tokio-rs/mio/pull/1749).</li>
+<li>Support ESP-IDF and Hermit without cfg flags
+(https://github.com/tokio-rs/mio/pull/1789,
+https://github.com/tokio-rs/mio/pull/1802,
+https://github.com/tokio-rs/mio/pull/1802).</li>
+<li>Updated windows-sys to v0.52
+(https://github.com/tokio-rs/mio/pull/1668).</li>
+</ul>
+<h3>0.8.11</h3>
+<ul>
+<li>Fix receiving IOCP events after deregistering a Windows named pipe
+(https://github.com/tokio-rs/mio/pull/1760, backport pr:
+https://github.com/tokio-rs/mio/pull/1761).</li>
+</ul>
+<h3>0.8.10</h3>
+<h4>Added</h4>
+<ul>
+<li>Solaris support
+(https://github.com/tokio-rs/mio/pull/1724).</li>
+</ul>
+<h3>0.8.9</h3>
+<h4>Added</h4>
+<ul>
+<li>ESP-IDF framework support
+(https://github.com/tokio-rs/mio/pull/1692).</li>
+<li>AIX operating system support
+(https://github.com/tokio-rs/mio/pull/1704).</li>
+<li>Vita support
+(https://github.com/tokio-rs/mio/pull/1721).</li>
+<li><code>{UnixListener,UnixStream}:bind_addr</code>
+(https://github.com/tokio-rs/mio/pull/1630).</li>
+<li><code>mio_unsupported_force_poll_poll</code> and <code>mio_unsupported_force_waker_pipe</code>
+<strong>unsupported</strong> configuration flags to force a specific poll or waker
+implementation
+(https://github.com/tokio-rs/mio/pull/1684,
+https://github.com/tokio-rs/mio/pull/1685,
+https://github.com/tokio-rs/mio/pull/1692).</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>The <code>pipe(2)</code> based waker (swapped file descriptors)
+(https://github.com/tokio-rs/mio/pull/1722).</li>
+<li>The duplicate waker check to work correctly with cloned <code>Registry</code>s.
+(https://github.com/tokio-rs/mio/pull/1706).</li>
+</ul>
+<h3>0.8.8</h3>
+<h4>Fixed</h4>
+<ul>
+<li>Fix compilation on WASI (https://github.com/tokio-rs/mio/pull/1676).</li>
+</ul>
+<h3>0.8.7</h3>
+<h4>Added</h4>
+<ul>
+<li>Add/fix support for tvOS and watchOS, Mio should now build for tvOS and
+watchOS, but we don't have a CI setup yet
+(https://github.com/tokio-rs/mio/pull/1658).</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>Made the <code>log</code> dependency optional behind the <code>log</code> feature flag (enabled by
+default). Users that disabled Mio's default features will now not see any
+logging from Mio, enabling the <code>log</code> feature will fix that. This was done in
+response to the <code>log</code> crate increasing it's MSRV to v1.60, see
+https://github.com/rust-lang/log/pull/552
+(https://github.com/tokio-rs/mio/pull/1673).</li>
+<li>Update windows-sys dependency to v0.48
+(https://github.com/tokio-rs/mio/pull/1663).</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>Fix overflow in <code>Poll::poll</code> when using <code>Duration::MAX</code> as timeout
+(https://github.com/tokio-rs/mio/pull/1657).</li>
+</ul>
+<h3>0.8.6</h3>
+<h4>Added</h4>
+<ul>
+<li><code>Interest::PRIORITY</code> on Linux and Android, to trigger <code>Event::is_priority</code>
+(https://github.com/tokio-rs/mio/pull/1647).</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>Updated windows-sys to 0.45
+(https://github.com/tokio-rs/mio/pull/1644).</li>
+<li>We started testing with sanitizers on the CI
+(https://github.com/tokio-rs/mio/pull/1648).</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>A number of potential fd leaks when setup resulted in an error right after
+creation (https://github.com/tokio-rs/mio/pull/1636).</li>
+<li>Less truncating for timeout values in <code>Poll::poll</code>
+(https://github.com/tokio-rs/mio/pull/1642).</li>
+</ul>
+<h3>0.8.5</h3>
+<h4>Changed</h4>
+<ul>
+<li>Updated <code>windows-sys</code> to 0.42.0
+(https://github.com/tokio-rs/mio/pull/1624).</li>
+<li>Officially document Wine as not supported, some people claimed it worked,
+other claims it doesn't, but nobody stepped up to fix the problem
+(https://github.com/tokio-rs/mio/pull/1596).</li>
+<li>Switch to GitHub Actions
+(https://github.com/tokio-rs/mio/pull/1598, https://github.com/tokio-rs/mio/pull/1601).</li>
+<li>Documented the current Poll::poll time behaviour
+(https://github.com/tokio-rs/mio/pull/1603).</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>Timeout less than one millisecond becoming zero millsiconds
+(https://github.com/tokio-rs/mio/pull/1615, https://github.com/tokio-rs/mio/pull/1616)</li>
+<li>Undefined reference to <code>epoll\_create1</code> on Android API level &lt; 21.
+(https://github.com/tokio-rs/mio/pull/1590).</li>
+</ul>
+<h3>0.8.4</h3>
+<h4>Added</h4>
+<ul>
+<li>Support <code>Registery::try_clone</code> on <code>wasm32-wasi</code>
+(https://github.com/tokio-rs/mio/pull/1576).</li>
+<li>Add docs about polling without registering event sources
+(https://github.com/tokio-rs/mio/pull/1585).</li>
+</ul>
+<h3>0.8.3</h3>
+<h4>Changed</h4>
+<ul>
+<li>Replace <code>winapi</code> dependency with <code>windows-sys</code>.
+(https://github.com/tokio-rs/mio/pull/1556).</li>
+<li>Future proofed the kevent ABI for FreeBSD
+(https://github.com/tokio-rs/mio/pull/1572).</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>Improved support for Redox, making it possible to run on stable Rust
+(https://github.com/tokio-rs/mio/pull/1555).</li>
+<li>Don't ignore EAGAIN in UDS connect call
+(https://github.com/tokio-rs/mio/pull/1564).</li>
+<li>Documentation of <code>TcpStream::connect</code>
+(https://github.com/tokio-rs/mio/pull/1565).</li>
+</ul>
+<h3>0.8.2</h3>
+<h4>Added</h4>
+<ul>
+<li>Experimental support for Redox.</li>
+</ul>
+<h3>0.8.1</h3>
+<h4>Added</h4>
+<ul>
+<li>Add <code>try_io</code> method to all I/O types (#1551). This execute a user defined I/O
+closure while updating Mio's internal state ensuring that the I/O type
+receives more events if it hits a WouldBlock error. This is added to the
+following types:
+<ul>
+<li><code>TcpStream</code></li>
+<li><code>UdpSocket</code></li>
+<li><code>UnixDatagram</code></li>
+<li><code>UnixStream</code></li>
+<li><code>unix::pipe::Sender</code></li>
+<li><code>unix::pipe::Receiver</code></li>
+</ul>
+</li>
+<li>Basic, experimental support for <code>wasm32-wasi</code> target (#1549). Note that a lot
+of time type are still missing, e.g. the <code>Waker</code>, and may never be possible to
+implement.</li>
+</ul>
+<h3>0.8.0</h3>
+<h4>Removed</h4>
+<ul>
+<li>Deprecated features (https://github.com/tokio-rs/mio/commit/105f8f2afb57b01ddea716a0aa9720f226c520e3):
+<ul>
+<li>extra-docs (always enabled)</li>
+<li>tcp (replaced with &quot;net&quot; feature).</li>
+<li>udp (replaced with &quot;net&quot; feature).</li>
+<li>uds (replaced with &quot;net&quot; feature).</li>
+<li>pipe (replaced with &quot;os-ext&quot; feature).</li>
+<li>os-util (replaced with &quot;os-ext&quot; feature).</li>
+</ul>
+</li>
+<li><code>TcpSocket</code> type
+(https://github.com/tokio-rs/mio/commit/02e9be41f27daf822575444fdd2b3067433a5996).
+The socket2 crate provides all the functionality and more.</li>
+<li>Support for Solaris, it never really worked anyway
+(https://github.com/tokio-rs/mio/pull/1528).</li>
+</ul>
+<h4>Changes</h4>
+<ul>
+<li>Update minimum Rustc version (MSVR) to 1.46.0
+(https://github.com/tokio-rs/mio/commit/5c577efecd23750a9a3e0f6ad080ab98f14a255d).</li>
+</ul>
+<h4>Added</h4>
+<ul>
+<li><code>UdpSocket::peer_addr</code>
+(https://github.com/tokio-rs/mio/commit/5fc104d08e0e74c8a19247f7cba0f058699fc438).</li>
+</ul>
+<h3>0.7.14</h3>
+<h4>Fixes</h4>
+<ul>
+<li>Remove use unsound internal macro (#1519).</li>
+</ul>
+<h4>Added</h4>
+<ul>
+<li><code>sys::unix::SocketAddr::as_abstract_namespace()</code> (#1520).</li>
+</ul>
+<h3>0.7.13</h3>
+<h4>Fixes</h4>
+<ul>
+<li>Fix <code>Registry::try_clone</code> invalid usage of <code>F_DUPFD_CLOEXEC</code> (#1497,
+https://github.com/tokio-rs/mio/commit/2883f5c1f35bf1a59682c5ffc4afe6b97d7d6e68).</li>
+</ul>
+<h3>0.7.12 (yanked)</h3>
+<h4>Fixes</h4>
+<ul>
+<li>Set <code>FD_CLOEXEC</code> when calling <code>Registry::try_clone</code>
+(https://github.com/tokio-rs/mio/commit/d1617b567ff6bc669d71e367d22e0e93ff7e2e24 for epoll and
+(https://github.com/tokio-rs/mio/commit/b367a05e408ca90a26383c3aa16d8a16f019dc59 for kqueue).</li>
+</ul>
+<h3>0.7.11</h3>
+<h4>Fixes</h4>
+<ul>
+<li>Fix missing feature of winapi.
+(https://github.com/tokio-rs/mio/commit/a7e61db9e3c2b929ef1a33532bfcc22045d163ce).</li>
+</ul>
+<h3>0.7.10</h3>
+<h4>Fixes</h4>
+<ul>
+<li>Fix an instance of not doc(cfg(.*))
+(https://github.com/tokio-rs/mio/commit/25e8f911357c740034f10a170dfa4ea1b28234ce).</li>
+</ul>
+<h3>0.7.9</h3>
+<h4>Fixes</h4>
+<ul>
+<li>Fix error handling in <code>NamedPipe::write</code>
+(https://github.com/tokio-rs/mio/commit/aec872be9732e5c6685100674278be27f54a271b).</li>
+<li>Use <code>accept(2)</code> on x86 Android instead of <code>accept4(2)</code>
+(https://github.com/tokio-rs/mio/commit/6f86b925d3e48f30905d5cfa54348acf3f1fa036,
+https://github.com/tokio-rs/mio/commit/8d5414880ab82178305ac1d2c16d715e58633d3e).</li>
+<li>Improve error message when opening AFD device
+(https://github.com/tokio-rs/mio/commit/139f7c4422321eb4a17b14ae2c296fddd19a8804).</li>
+</ul>
+<h3>0.7.8</h3>
+<h4>Fixes</h4>
+<ul>
+<li>Fix <code>TcpStream::set_linger</code> on macOS
+(https://github.com/tokio-rs/mio/commit/175773ce02e85977db81224c782c8d140aba8543).</li>
+<li>Fix compilation on DragonFlyBSD
+(https://github.com/tokio-rs/mio/commit/b51af46b28871f8dd3233b490ee62237ffed6a26).</li>
+</ul>
+<h3>0.7.7</h3>
+<h4>Added</h4>
+<ul>
+<li><code>UdpSocket::only_v6</code>
+(https://github.com/tokio-rs/mio/commit/0101e05a800f17fb88f4315d9b9fe0f08cca6e57).</li>
+<li><code>Clone</code> implementation for <code>Event</code>
+(https://github.com/tokio-rs/mio/commit/26540ebbae89df6d4d08465c56f715d8f2addfc3).</li>
+<li><code>AsRawFd</code> implementation for <code>Registry</code>
+(https://github.com/tokio-rs/mio/commit/f70daa72da0042b1880256164774c3286d315a02).</li>
+<li><code>Read</code> and <code>Write</code> implementation for <code>&amp;unix::pipe::Sender</code> and <code>Receiver</code>,
+that is on the reference to them, an implementation existed on the types
+themselves already
+(https://github.com/tokio-rs/mio/commit/1be481dcbbcb6906364008b5d61e7f53cddc3eb3).</li>
+</ul>
+<h4>Fixes</h4>
+<ul>
+<li>Underflow in <code>SocketAddr::address</code>
+(https://github.com/tokio-rs/mio/commit/6d3fa69240cd4bb95e9d34605c660c30245a18bd).</li>
+<li>Android build with the net feature enabled, but with os-poll disabled
+(https://github.com/tokio-rs/mio/commit/49d8fd33e026ad6e2c055d05d6667180ba2af7be).</li>
+<li>Solaris build with the net feature enabled, but with os-poll disabled
+(https://github.com/tokio-rs/mio/commit/a6e025e9d9511639ec106ebedc0dd312bdc9be12).</li>
+<li>Ensure that <code>Waker::wake</code> works on illumos systems with poor <code>pipe(2)</code> and
+<code>epoll(2)</code> interaction using <code>EPOLLET</code>
+(https://github.com/tokio-rs/mio/commit/943d4249dcc17cd8b4d2250c4fa19116097248fa).</li>
+<li>Fix <code>unix::pipe</code> on illumos
+(https://github.com/tokio-rs/mio/commit/0db49f6d5caf54b12176821363d154384357e70a).</li>
+</ul>
+<h3>0.7.6</h3>
+<h4>Added</h4>
+<ul>
+<li><code>net</code> feature, replaces <code>tcp</code>, <code>udp</code> and <code>uds</code> features
+(https://github.com/tokio-rs/mio/commit/a301ba520a8479b459c4acdcefa4a7c5eea818c7).</li>
+<li><code>os-ext</code> feature, replaces <code>os-util</code> and <code>pipe</code> features
+(https://github.com/tokio-rs/mio/commit/f5017fae8a3d3bb4b4cada25b01a2d76a406badc).</li>
+<li>Added keepalive support to <code>TcpSocket</code>
+(https://github.com/tokio-rs/mio/commit/290c43a96662d54ab7c4b8814e5a9f9a9e523fda).</li>
+<li><code>TcpSocket::set_{send, recv}_buffer_size</code>
+(https://github.com/tokio-rs/mio/commit/40c4af79bf5b32b8fbdbf6f2e5c16290e1d3d406).</li>
+<li><code>TcpSocket::get_linger</code>
+(https://github.com/tokio-rs/mio/commit/13e82ced655bbb6e2729226e485a7de9f2c2ccd9).</li>
+<li>Implement <code>IntoRawFd</code> for <code>TcpSocket</code>
+(https://github.com/tokio-rs/mio/commit/50548ed45d0b2c98f1f2e003e210d14195284ef4).</li>
+</ul>
+<h4>Deprecated</h4>
+<ul>
+<li>The <code>tcp</code>, <code>udp</code> and <code>uds</code> features, replaced by a new <code>net</code> feature.
+(https://github.com/tokio-rs/mio/commit/a301ba520a8479b459c4acdcefa4a7c5eea818c7).</li>
+<li>The <code>extra-docs</code> feature, now enabled by default.
+(https://github.com/tokio-rs/mio/commit/25731e8688a2d91c5c700674a2c2d3841240ece1).</li>
+<li>The <code>os-util</code> and <code>pipe</code> features, replaced by a new <code>os-ext</code> feature.
+(https://github.com/tokio-rs/mio/commit/f5017fae8a3d3bb4b4cada25b01a2d76a406badc).</li>
+</ul>
+<h4>Fixes</h4>
+<ul>
+<li>Incorrect assumption of the layout of <code>std::net::SocketAddr</code>. Previously Mio
+would assume that <code>SocketAddrV{4,6}</code> had the same layout as
+<code>libc::sockaddr_in(6)</code>, however this is not guaranteed by the standard
+library.
+(https://github.com/tokio-rs/mio/commit/152e0751f0be1c9b0cbd6778645b76bcb0eba93c).</li>
+<li>Also bumped the miow dependency to version 0.3.6 to solve the same problem as
+above.</li>
+</ul>
+<h3>0.7.5</h3>
+<h4>Added</h4>
+<ul>
+<li><code>TcpSocket::get_localaddr()</code> retrieves local address
+(https://github.com/tokio-rs/mio/commit/b41a022b2242eef1969c70c8ba93e04c528dba47).</li>
+<li><code>TcpSocket::set_reuseport()</code> &amp; <code>TcpSocket::get_reuseport()</code> configures and reads <code>SO_REUSEPORT</code>
+(https://github.com/tokio-rs/mio/commit/183bbe409ab69cbf9db41d0263b41ec86202d9a0).</li>
+<li><code>unix:pipe()</code> a wrapper around pipe(2) sys call
+(https://github.com/tokio-rs/mio/commit/2b7c0967a7362303946deb3d4ca2ae507af6c72d).</li>
+<li>Add a check that a single Waker is active per Poll instance (only in debug mode)
+(https://github.com/tokio-rs/mio/commit/f4874f28b32efcf4841691884c65a89734d96a56).</li>
+<li>Added <code>Interest:remove()</code>
+(https://github.com/tokio-rs/mio/commit/b8639c3d9ac07bb7e2e27685680c8a6510fa1357).</li>
+</ul>
+<h3>0.7.4</h3>
+<h4>Fixes</h4>
+<ul>
+<li>lost &quot;socket closed&quot; events on windows
+(https://github.com/tokio-rs/mio/commit/50c299aca56c4a26e5ed20c283007239fbe6a7a7).</li>
+</ul>
+<h4>Added</h4>
+<ul>
+<li><code>TcpSocket::set_linger()</code> configures SO_LINGER
+(https://github.com/tokio-rs/mio/commit/3b4096565c1a879f651b8f8282ecdcbdbd5c92d3).</li>
+</ul>
+<h3>0.7.3</h3>
+<h4>Added</h4>
+<ul>
+<li><code>TcpSocket</code> for configuring a TCP socket before connecting or listening
+(https://github.com/tokio-rs/mio/commit/5b09e60d0f64419b989bda88c86a3147334a03b3).</li>
+</ul>
+<h3>0.7.2</h3>
+<h4>Added</h4>
+<ul>
+<li>Windows named pipe support.
+(https://github.com/tokio-rs/mio/commit/52e8c2220e87696d20f13561402bcaabba4136ed).</li>
+</ul>
+<h3>0.7.1</h3>
+<h4>Reduced support for 32-bit Apple targets</h4>
+<p>In January 2020 Rust reduced its support for 32-bit Apple targets
+(https://blog.rust-lang.org/2020/01/03/reducing-support-for-32-bit-apple-targets.html).
+Starting with v0.7.1 Mio will do the same as we're no longer checking 32 bit
+iOS/macOS on our CI.</p>
+<h4>Added</h4>
+<ul>
+<li>Support for illumos
+(https://github.com/tokio-rs/mio/commit/976f2354d0e8fbbb64fba3bf017d7131f9c369a0).</li>
+<li>Report <code>epoll(2)</code>'s <code>EPOLLERR</code> event as <code>Event::is_write_closed</code> if it's the
+only event
+(https://github.com/tokio-rs/mio/commit/0c77b5712d675eeb9bd43928b5dd7d22b2c7ac0c).</li>
+<li>Optimised event::Iter::{size_hint, count}
+(https://github.com/tokio-rs/mio/commit/40df934a11b05233a7796c4de19a4ee06bc4e03e).</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>Work around Linux kernel &lt; 2.6.37 bug on 32-bits making timeouts longer then
+~30 minutes effectively infinite
+(https://github.com/tokio-rs/mio/commit/d555991f5ee81f6c1eec0fe481557d3d5b8d5ff4).</li>
+<li>Set <code>SO_NOSIGPIPE</code> on all sockets (not just UDP) on for Apple targets
+(https://github.com/tokio-rs/mio/commit/b8bbdcb0d3236f4c4acb257996d42a88dc9987d9).</li>
+<li>Properly handle <code>POLL_ABORT</code> on Windows
+(https://github.com/tokio-rs/mio/commit/a98da62b3ed1eeed1770aaca12f46d647e4fa749).</li>
+<li>Improved error handling around failing <code>SIO_BASE_HANDLE</code> calls on Windows
+(https://github.com/tokio-rs/mio/commit/b15fc18458a79ef8a51f73effa92548650f4e5dc).</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>On NetBSD we now use <code>accept4(2)</code>
+(https://github.com/tokio-rs/mio/commit/4e306addc7144f2e02a7e8397c220b179a006a19).</li>
+<li>The package uploaded to crates.io should be slightly smaller
+(https://github.com/tokio-rs/mio/commit/eef8d3b9500bc0db957cd1ac68ee128ebc68351f).</li>
+</ul>
+<h4>Removed</h4>
+<ul>
+<li>Dependency on <code>lazy_static</code> on Windows
+(https://github.com/tokio-rs/mio/commit/57e4c2a8ac153bc7bb87829e22cf0a21e3927e8a).</li>
+</ul>
+<h3>0.7.0</h3>
+<p>Version 0.7 of Mio contains various major changes compared to version 0.6.
+Overall a large number of API changes have been made to reduce the complexity of
+the implementation and remove overhead where possible.</p>
+<p>Please refer to the <a href="https://tokio.rs/blog/2019-12-mio-v0.7-alpha.1/">blog post about
+0.7-alpha.1</a> for additional
+information.</p>
+<h4>Added</h4>
+<ul>
+<li><code>Interest</code> structure that replaces <code>Ready</code> in registering event sources.</li>
+<li><code>Registry</code> structure that separates the registering and polling functionality.</li>
+<li><code>Waker</code> structure that allows another thread to wake a thread polling <code>Poll</code>.</li>
+<li>Unix Domain Socket (UDS) types: <code>UnixDatagram</code>, <code>UnixListener</code> and
+<code>UnixStream</code>.</li>
+</ul>
+<h4>Removed</h4>
+<ul>
+<li>All code deprecated in 0.6 was removed in 0.7.</li>
+<li>Support for Fuchsia was removed as the code was unmaintained.</li>
+<li>Support for Bitrig was removed, rustc dropped support for it also.</li>
+<li><code>UnixReady</code> was merged into <code>Ready</code>.</li>
+<li>Custom user-space readiness queue was removed, this includes the public
+<code>Registration</code> and <code>SetReadiness</code> types.</li>
+<li><code>PollOpt</code> was removed and all registrations use edge-triggers. See the upgrade
+guide on how to process event using edge-triggers.</li>
+<li>The network types (types in the <code>net</code> module) now support only the same API as
+found in the standard library, various methods on the types were removed.</li>
+<li><code>TcpStream</code> now supports vectored I/O.</li>
+<li><code>Poll::poll_interruptible</code> was removed. Instead <code>Poll::poll</code> will now return
+an error if one occurs.</li>
+<li><code>From&lt;usize&gt;</code> is removed from <code>Token</code>, the internal field is still public, so
+<code>Token(my_token)</code> can still be used.</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>Various documentation improvements were made around correct usage of <code>Poll</code>
+and registered event sources. It is recommended to reread the documentation of
+at least <code>event::Source</code> and <code>Poll</code>.</li>
+<li>Mio now uses Rust 2018 and rustfmt for all code.</li>
+<li><code>Event</code> was changed to be a wrapper around the OS event. This means it can be
+significantly larger on some OSs.</li>
+<li><code>Ready</code> was removed and replaced with various <code>is_*</code> methods on <code>Event</code>. For
+example instead checking for readable readiness using
+<code>Event::ready().is_readable()</code>, you would call <code>Event::is_readable()</code>.</li>
+<li><code>Ready::is_hup</code> was removed in favour of <code>Event::is_read_closed</code> and
+<code>Event::is_write_closed</code>.</li>
+<li>The Iterator implementation of <code>Events</code> was changed to return <code>&amp;Event</code>.</li>
+<li><code>Evented</code> was renamed to <code>event::Source</code> and now takes mutable reference to
+the source.</li>
+<li>Minimum supported Rust version was increased to 1.39.</li>
+<li>By default Mio now uses a shim implementation. To enable the full
+implementation, that uses the OS, enable the <code>os-oll</code> feature. To enable the
+network types use <code>tcp</code>, <code>udp</code> and/or <code>uds</code>. For more documentation on the
+features see the <code>feature</code> module in the API documentation (requires the
+<code>extra-docs</code> feature).</li>
+<li>The entire Windows implementation was rewritten.</li>
+<li>Various optimisation were made to reduce the number of system calls in
+creating and using sockets, e.g. making use of <code>accept4(2)</code>.</li>
+<li>The <code>fmt::Debug</code> implementation of <code>Events</code> is now actually useful as it
+prints all <code>Event</code>s.</li>
+</ul>
+<h3>0.6.23 (Dec 01, 2020)</h3>
+<h5>Changed</h5>
+<ul>
+<li><strong>MSRV</strong>: Increased the MSRV from 1.18.0 (Jun 8, 2017) to 1.31.0 (Dec 6,
+2018)
+(https://github.com/tokio-rs/mio/commit/4879e0d32ddfd98e762fc87240e594a3ad8fca30).</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Work around Linux kernel &lt; 2.6.37 bug on 32-bits making timeouts longer then
+~30 minutes effectively infinite
+(https://github.com/tokio-rs/mio/commit/e7cba59950e9c9fa6194e29b5b1e72029e3df455).</li>
+<li>Update miow and net2 dependencies to get rid of invalid memory layout assumption
+(https://github.com/tokio-rs/mio/commit/13f02ac0a86d7c0c0001e5ff8960a0b4340d075c).</li>
+</ul>
+<h3>0.6.22 (May 01, 2020)</h3>
+<h5>Added</h5>
+<ul>
+<li>Add support for illumos target (#1294)</li>
+</ul>
+<h3>0.6.21 (November 27, 2019)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>remove <code>=</code> dependency on <code>cfg-if</code>.</li>
+</ul>
+<h3>0.6.20 (November 21, 2019)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Use default IOCP concurrency value (#1161).</li>
+<li>setting FD_CLOEXEC in pipe (#1095).</li>
+</ul>
+<h3>0.6.19 (May 28, 2018)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Do not trigger HUP events on kqueue platforms (#958).</li>
+</ul>
+<h3>0.6.18 (May 24, 2018)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Fix compilation on kqueue platforms with 32bit C long (#948).</li>
+</ul>
+<h3>0.6.17 (May 15, 2018)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Don't report <code>RDHUP</code> as <code>HUP</code> (#939)</li>
+<li>Fix lazycell related compilation issues.</li>
+<li>Fix EPOLLPRI conflicting with READABLE</li>
+<li>Abort process on ref count overflows</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li>Define PRI on all targets</li>
+</ul>
+<h3>0.6.16 (September 5, 2018)</h3>
+<ul>
+<li>Add EPOLLPRI readiness to UnixReady on supported platforms (#867)</li>
+<li>Reduce spurious awaken calls (#875)</li>
+</ul>
+<h3>0.6.15 (July 3, 2018)</h3>
+<ul>
+<li>Implement <code>Evented</code> for containers (#840).</li>
+<li>Fix android-aarch64 build (#850).</li>
+</ul>
+<h3>0.6.14 (March 8, 2018)</h3>
+<ul>
+<li>Add <code>Poll::poll_interruptible</code> (#811)</li>
+<li>Add <code>Ready::all</code> and <code>usize</code> conversions (#825)</li>
+</ul>
+<h3>0.6.13 (February 5, 2018)</h3>
+<ul>
+<li>Fix build on DragonFlyBSD.</li>
+<li>Add <code>TcpListener::from_std</code> that does not require the socket addr.</li>
+<li>Deprecate <code>TcpListener::from_listener</code> in favor of from_std.</li>
+</ul>
+<h3>0.6.12 (January 5, 2018)</h3>
+<ul>
+<li>Add <code>TcpStream::peek</code> function (#773).</li>
+<li>Raise minimum Rust version to 1.18.0.</li>
+<li><code>Poll</code>: retry select() when interrupted by a signal (#742).</li>
+<li>Deprecate <code>Events</code> index access (#713).</li>
+<li>Add <code>Events::clear</code> (#782).</li>
+<li>Add support for <code>lio_listio</code> (#780).</li>
+</ul>
+<h3>0.6.11 (October 25, 2017)</h3>
+<ul>
+<li>Allow register to take empty interest (#640).</li>
+<li>Fix bug with TCP errors on windows (#725).</li>
+<li>Add TcpListener::accept_std (#733).</li>
+<li>Update IoVec to fix soundness bug -- includes behavior change. (#747).</li>
+<li>Minimum Rust version is now 1.14.0.</li>
+<li>Fix Android x86_64 build.</li>
+<li>Misc API &amp; doc polish.</li>
+</ul>
+<h3>0.6.10 (July 27, 2017)</h3>
+<ul>
+<li>Experimental support for Fuchsia</li>
+<li>Add <code>only_v6</code> option for UDP sockets</li>
+<li>Fix build on NetBSD</li>
+<li>Minimum Rust version is now 1.13.0</li>
+<li>Assignment operators (e.g. <code>|=</code>) are now implemented for <code>Ready</code></li>
+</ul>
+<h3>0.6.9 (June 7, 2017)</h3>
+<ul>
+<li>More socket options are exposed through the TCP types, brought in through the
+<code>net2</code> crate.</li>
+</ul>
+<h3>0.6.8 (May 26, 2017)</h3>
+<ul>
+<li>Support Fuchia</li>
+<li>POSIX AIO support</li>
+<li>Fix memory leak caused by Register::new2</li>
+<li>Windows: fix handling failed TCP connections</li>
+<li>Fix build on aarch64-linux-android</li>
+<li>Fix usage of <code>O_CLOEXEC</code> with <code>SETFL</code></li>
+</ul>
+<h3>0.6.7 (April 27, 2017)</h3>
+<ul>
+<li>Ignore EPIPE coming out of <code>kevent</code></li>
+<li>Timer thread should exit when timer is dropped.</li>
+</ul>
+<h3>0.6.6 (March 22, 2017)</h3>
+<ul>
+<li>Add send(), recv() and connect() to UDPSocket.</li>
+<li>Fix bug in custom readiness queue</li>
+<li>Move net types into <code>net</code> module</li>
+</ul>
+<h3>0.6.5 (March 14, 2017)</h3>
+<ul>
+<li>Misc improvements to kqueue bindings</li>
+<li>Add official support for iOS, Android, BSD</li>
+<li>Reimplement custom readiness queue</li>
+<li><code>Poll</code> is now <code>Sync</code></li>
+<li>Officially deprecate non-core functionality (timers, channel, etc...)</li>
+<li><code>Registration</code> now implements <code>Evented</code></li>
+<li>Fix bug around error conditions with <code>connect</code> on windows.</li>
+<li>Use iovec crate for scatter / gather operations</li>
+<li>Only support readable and writable readiness on all platforms</li>
+<li>Expose additional readiness in a platform specific capacity</li>
+</ul>
+<h3>0.6.4 (January 24, 2017)</h3>
+<ul>
+<li>Fix compilation on musl</li>
+<li>Add <code>TcpStream::from_stream</code> which converts a std TCP stream to Mio.</li>
+</ul>
+<h3>0.6.3 (January 22, 2017)</h3>
+<ul>
+<li>Implement readv/writev for <code>TcpStream</code>, allowing vectored reads/writes to
+work across platforms</li>
+<li>Remove <code>nix</code> dependency</li>
+<li>Implement <code>Display</code> and <code>Error</code> for some channel error types.</li>
+<li>Optimize TCP on Windows through <code>SetFileCompletionNotificationModes</code></li>
+</ul>
+<h3>0.6.2 (December 18, 2016)</h3>
+<ul>
+<li>Allow registration of custom handles on Windows (like <code>EventedFd</code> on Unix)</li>
+<li>Send only one byte for the awakener on Unix instead of four</li>
+<li>Fix a bug in the timer implementation which caused an infinite loop</li>
+</ul>
+<h3>0.6.1 (October 30, 2016)</h3>
+<ul>
+<li>Update dependency of <code>libc</code> to 0.2.16</li>
+<li>Fix channel <code>dec</code> logic</li>
+<li>Fix a timer bug around timeout cancellation</li>
+<li>Don't allocate buffers for TCP reads on Windows</li>
+<li>Touched up documentation in a few places</li>
+<li>Fix an infinite looping timer thread on OSX</li>
+<li>Fix compile on 32-bit OSX</li>
+<li>Fix compile on FreeBSD</li>
+</ul>
+<h3>0.6.0 (September 2, 2016)</h3>
+<ul>
+<li>Shift primary API towards <code>Poll</code></li>
+<li><code>EventLoop</code> and types to <code>deprecated</code> mod. All contents of the
+<code>deprecated</code> mod will be removed by Mio 1.0.</li>
+<li>Increase minimum supported Rust version to 1.9.0</li>
+<li>Deprecate unix domain socket implementation in favor of using a
+version external to Mio. For example: https://github.com/alexcrichton/mio-uds.</li>
+<li>Remove various types now included in <code>std</code></li>
+<li>Updated TCP &amp; UDP APIs to match the versions in <code>std</code></li>
+<li>Enable implementing <code>Evented</code> for any type via <code>Registration</code></li>
+<li>Rename <code>IoEvent</code> -&gt; <code>Event</code></li>
+<li>Access <code>Event</code> data via functions vs. public fields.</li>
+<li>Expose <code>Events</code> as a public type that is passed into <code>Poll</code></li>
+<li>Use <code>std::time::Duration</code> for all APIs that require a time duration.</li>
+<li>Polled events are now retrieved via <code>Events</code> type.</li>
+<li>Implement <code>std::error::Error</code> for <code>TimerError</code></li>
+<li>Relax <code>Send</code> bound on notify messages.</li>
+<li>Remove <code>Clone</code> impl for <code>Timeout</code> (future proof)</li>
+<li>Remove <code>mio::prelude</code></li>
+<li>Remove <code>mio::util</code></li>
+<li>Remove dependency on bytes</li>
+</ul>
+<h3>0.5.0 (December 3, 2015)</h3>
+<ul>
+<li>Windows support (#239)</li>
+<li>NetBSD support (#306)</li>
+<li>Android support (#295)</li>
+<li>Don't re-export bytes types</li>
+<li>Renamed <code>EventLoop::register_opt</code> to <code>EventLoop::register</code> (#257)</li>
+<li><code>EventLoopConfig</code> is now a builder instead of having public struct fields. It
+is also no longer <code>Copy</code>. (#259)</li>
+<li><code>TcpSocket</code> is no longer exported in the public API (#262)</li>
+<li>Integrate with net2. (#262)</li>
+<li><code>TcpListener</code> now returns the remote peer address from <code>accept</code> as well (#275)</li>
+<li>The <code>UdpSocket::{send_to, recv_from}</code> methods are no longer generic over <code>Buf</code>
+or <code>MutBuf</code> but instead take slices directly. The return types have also been
+updated to return the number of bytes transferred. (#260)</li>
+<li>Fix bug with kqueue where an error on registration prevented the
+changelist from getting flushed (#276)</li>
+<li>Support sending/receiving FDs over UNIX sockets (#291)</li>
+<li>Mio's socket types are permanently associated with an EventLoop (#308)</li>
+<li>Reduce unnecessary poll wakeups (#314)</li>
+</ul>
+<h3>0.4.1 (July 21, 2015)</h3>
+<ul>
+<li>[BUGFIX] Fix notify channel concurrency bug (#216)</li>
+</ul>
+<h3>0.4.0 (July 16, 2015)</h3>
+<ul>
+<li>[BUGFIX] EventLoop::register requests all events, not just readable.</li>
+<li>[BUGFIX] Attempting to send a message to a shutdown event loop fails correctly.</li>
+<li>[FEATURE] Expose TCP shutdown</li>
+<li>[IMPROVEMENT] Coalesce readable &amp; writable into <code>ready</code> event (#184)</li>
+<li>[IMPROVEMENT] Rename TryRead &amp; TryWrite function names to avoid conflict with std.</li>
+<li>[IMPROVEMENT] Provide TCP and UDP types in Mio (path to windows #155)</li>
+<li>[IMPROVEMENT] Use clock_ticks crate instead of time (path to windows #155)</li>
+<li>[IMPROVEMENT] Move unix specific features into mio::unix module</li>
+<li>[IMPROVEMENT] TcpListener sets SO_REUSEADDR by default</li>
+</ul>
+</div><p class="table-note">sha256:72bfd2ef71f99d40acb831928512f46114d7fcb7adc32a75b5182af7e7029792</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2014 Carl Lerche and other MIO contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:07919255c7e04793d8ea760d6c2ce32d19f9ff02bdbdde3ce90b1e1880929a9b</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:44f9b05ce879bdabea372a62d4275f885d7faea0887e4cab7e97423b63195525</code></dd><dt>Upstream checksum</dt><dd><code>sha256:02bd0af71c67b473010cbbc60715ee815645a4dc942899111f494b4b737d6fda</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at efce0ce</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/mio&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.2.1&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;log&quot;</span><span class="p">]</span>
+<span class="n">log</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:log&quot;</span><span class="p">]</span>
+<span class="n">net</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">os-ext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;os-poll&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;windows-sys/Win32_System_Pipes&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;windows-sys/Win32_Security&quot;</span><span class="p">]</span>
+<span class="n">os-poll</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mio&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">libc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/libc&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.183&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(unix, target_os = </span><span class="se">\&quot;</span><span class="s2">hermit</span><span class="se">\&quot;</span><span class="s2">, target_os = </span><span class="se">\&quot;</span><span class="s2">wasi</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">log</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/log&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4.8&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">wasi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/wasi&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.11.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_os = </span><span class="se">\&quot;</span><span class="s2">wasi</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">windows-sys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/windows-sys&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.61&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Wdk_Foundation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Wdk_Storage_FileSystem&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Wdk_System_IO&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Foundation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Networking_WinSock&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Security&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Storage_FileSystem&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_System_IO&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_System_WindowsProgramming&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(windows)&quot;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;net&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;os-ext&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;os-poll&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:9ebe09693379e402e89284142b16dc935412d6addfd66c604969e8f15a42d5e0&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;net&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;os-ext&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;os-poll&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:0c8061b2662bc8ca14686e8ca0bdae3a8ac591e732140705967e33167a5b2d9d&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Carl Lerche &lt;me@carllerche.com&gt;, Thomas de Zeeuw &lt;thomasdezeeuw@gmail.com&gt;, Tokio Contributors &lt;team@tokio.rs&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.71</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/mio/1.2.1">crates.io package</a></li><li><a href="https://github.com/tokio-rs/mio">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">mio</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/mio"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.2.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

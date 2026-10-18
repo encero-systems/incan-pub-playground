@@ -1,0 +1,1372 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>rust_decimal 1.43.0 · Incan.pub</title><meta name="description" content="Decimal number implementation written in pure Rust suitable for financial and fixed-precision calculations."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/rust_decimal</p><div class="title-row"><h1>rust_decimal</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/rust_decimal/versions/1.43.0/" selected>1.43.0</option></select></label></div><p class="description">Decimal number implementation written in pure Rust suitable for financial and fixed-precision calculations.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Decimal   <a href="https://actions-badge.atrox.dev/paupino/rust-decimal/goto">Build Status</a> <a href="https://crates.io/crates/rust-decimal">Latest Version</a> <a href="https://docs.rs/rust_decimal">Docs Badge</a></h3>
+<p>A Decimal number implementation written in pure Rust suitable for financial calculations that require significant
+integral and fractional digits with no round-off errors.</p>
+<p>The binary representation consists of a 96 bit integer number, a scaling factor used to specify the decimal fraction and
+a 1 bit sign. Because of this representation, trailing zeros are preserved and may be exposed when in string form. These
+can be truncated using the <code>normalize</code> or <code>round_dp</code> functions.</p>
+<h4>Installing</h4>
+<pre><code>$ cargo add rust_decimal
+</code></pre>
+<p>Alternatively, you can edit your <code>Cargo.toml</code> directly and run <code>cargo update</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">rust_decimal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.43&quot;</span>
+</code></pre>
+<p>To enable macro support, you can enable the <code>macros</code> feature:</p>
+<pre><code>$ cargo add rust_decimal --features macros
+</code></pre>
+<h4>Usage</h4>
+<p>Decimal numbers can be created in a few distinct ways. The easiest and most efficient method of creating a Decimal is to
+use the macro:</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// Import via use rust_decimal_macros or use the `macros` feature to import at the crate level</span>
+<span class="c1">// `use rust_decimal_macros::dec;`</span>
+<span class="c1">// or</span>
+<span class="c1">// `use rust_decimal::dec;`</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dec</span><span class="o">!</span><span class="p">(</span><span class="o">-</span><span class="mf">1.23</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dec</span><span class="o">!</span><span class="p">(</span><span class="mf">3.45</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">number</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="o">!</span><span class="p">(</span><span class="mf">2.22</span><span class="p">));</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">number</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;2.22&quot;</span><span class="p">);</span>
+</code></pre>
+<p>Alternatively you can also use one of the Decimal number convenience
+functions (<a href="https://docs.rs/rust_decimal/">see the docs</a> for more details):</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// Using the prelude can help importing trait based functions (e.g. core::str::FromStr).</span>
+<span class="k">use</span><span class="w"> </span><span class="n">rust_decimal</span><span class="p">::</span><span class="n">prelude</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="c1">// Using an integer followed by the decimal points</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">scaled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Decimal</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">202</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;2.02&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+
+<span class="c1">// From a 128 bit integer</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">balance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Decimal</span><span class="p">::</span><span class="n">from_i128_with_scale</span><span class="p">(</span><span class="mi">5_897_932_384_626_433_832</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;58979323846264338.32&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">balance</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+
+<span class="c1">// From a string representation</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">from_string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Decimal</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="s">&quot;2.02&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;2.02&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">from_string</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+
+<span class="c1">// From a string representation in a different base</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">from_string_base16</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Decimal</span><span class="p">::</span><span class="n">from_str_radix</span><span class="p">(</span><span class="s">&quot;ffff&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;65535&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">from_string_base16</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+
+<span class="c1">// From scientific notation</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">sci</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Decimal</span><span class="p">::</span><span class="n">from_scientific</span><span class="p">(</span><span class="s">&quot;9.7e-7&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;0.00000097&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">sci</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+
+<span class="c1">// Using the `Into` trait</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">my_int</span><span class="p">:</span><span class="w"> </span><span class="nc">Decimal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3_</span><span class="k">i32</span><span class="p">.</span><span class="n">into</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">my_int</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+
+<span class="c1">// Using the raw decimal representation</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">pi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Decimal</span><span class="p">::</span><span class="n">from_parts</span><span class="p">(</span><span class="mi">1_102_470_952</span><span class="p">,</span><span class="w"> </span><span class="mi">185_874_565</span><span class="p">,</span><span class="w"> </span><span class="mi">1_703_060_790</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="mi">28</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;3.1415926535897932384626433832&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pi</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+
+<span class="c1">// If the `macros` feature is enabled, it also allows for the `dec!` macro</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">amount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dec</span><span class="o">!</span><span class="p">(</span><span class="mf">25.12</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;25.12&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">amount</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+</code></pre>
+<p>Once you have instantiated your <code>Decimal</code> number you can perform calculations with it just like any other number:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">rust_decimal</span><span class="p">::</span><span class="n">prelude</span><span class="p">::</span><span class="o">*</span><span class="p">;</span><span class="w"> </span><span class="c1">// Includes the `dec` macro when feature specified</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">amount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dec</span><span class="o">!</span><span class="p">(</span><span class="mf">25.12</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">tax_percentage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dec</span><span class="o">!</span><span class="p">(</span><span class="mf">0.085</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">amount</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">amount</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tax_percentage</span><span class="p">).</span><span class="n">round_dp</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">total</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="o">!</span><span class="p">(</span><span class="mf">27.26</span><span class="p">));</span>
+</code></pre>
+<h4>Features</h4>
+<p><strong>Behavior / Functionality</strong></p>
+<ul>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#borsh">borsh</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#bytemuck">bytemuck</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#c-repr">c-repr</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#legacy-ops">legacy-ops</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#macros">macros</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#maths">maths</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#ndarray">ndarray</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#rocket-traits">rocket-traits</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#rust-fuzz">rust-fuzz</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#std">std</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#wasm">wasm</a></li>
+</ul>
+<p><strong>Database</strong></p>
+<ul>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#db-postgres">db-postgres</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#db-tokio-postgres">db-tokio-postgres</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#db-diesel-postgres">db-diesel-postgres</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#db-diesel-mysql">db-diesel-mysql</a></li>
+</ul>
+<p><strong>Serde</strong></p>
+<ul>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#serde-float">serde-float</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#serde-str">serde-str</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#serde-arbitrary-precision">serde-arbitrary-precision</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#serde-with-float">serde-with-float</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#serde-with-str">serde-with-str</a></li>
+<li><a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/README.md#serde-with-arbitrary-precision">serde-with-arbitrary-precision</a></li>
+</ul>
+<h5><code>align16</code></h5>
+<p>Forces <code>Decimal</code>'s alignment to 16 bytes (128 bits). This is identical to <code>u128</code> and <code>i128</code>'s alignment on x86 platforms.</p>
+<h5><code>borsh</code></h5>
+<p>Enables <a href="https://borsh.io/">Borsh</a> serialization for <code>Decimal</code>.</p>
+<h5><code>bytemuck</code></h5>
+<p>Enables <a href="https://github.com/Lokathor/bytemuck">bytemuck</a> support by deriving <code>Pod</code> and <code>Zeroable</code> for <code>Decimal</code>. This also activates the <code>c-repr</code> feature since <code>Pod</code> requires <code>repr(C)</code>.</p>
+<h5><code>c-repr</code></h5>
+<p>Forces <code>Decimal</code> to use <code>[repr(C)]</code>.</p>
+<h5><code>db-postgres</code></h5>
+<p>Enables a PostgreSQL communication module. It allows for reading and writing the <code>Decimal</code>
+type by transparently serializing/deserializing into the <code>NUMERIC</code> data type within PostgreSQL.</p>
+<h5><code>db-tokio-postgres</code></h5>
+<p>Enables the tokio postgres module allowing for async communication with PostgreSQL.</p>
+<h5><code>db-diesel-postgres</code></h5>
+<p>Enable <a href="https://diesel.rs"><code>diesel</code></a> PostgreSQL support.</p>
+<h5><code>db-diesel-mysql</code></h5>
+<p>Enable <a href="https://diesel.rs"><code>diesel</code></a> MySQL support.</p>
+<h5><code>legacy-ops</code></h5>
+<p><strong>Warning:</strong> This is deprecated and will be removed from a future versions.</p>
+<p>As of <code>1.10</code> the algorithms used to perform basic operations have changed which has benefits of significant speed
+improvements.
+To maintain backwards compatibility this can be opted out of by enabling the <code>legacy-ops</code> feature.</p>
+<h5><code>macros</code></h5>
+<p>The <code>macros</code> feature enables a compile time macro <code>dec</code> to be available at both the crate root, and via prelude.</p>
+<p>This parses the input at compile time and converts it to an optimized <code>Decimal</code> representation. Invalid inputs will
+cause a compile time error.</p>
+<p>Any Rust number format is supported, including scientific notation and alternate bases.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">rust_decimal</span><span class="p">::</span><span class="n">prelude</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">dec</span><span class="o">!</span><span class="p">(</span><span class="mf">1.23</span><span class="p">),</span><span class="w"> </span><span class="n">Decimal</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">));</span>
+</code></pre>
+<h5><code>maths</code></h5>
+<p>The <code>maths</code> feature enables additional complex mathematical functions such as <code>pow</code>, <code>ln</code>, <code>enf</code>, <code>exp</code> etc.
+Documentation detailing the additional functions can be found on the
+<a href="https://docs.rs/rust_decimal/latest/rust_decimal/trait.MathematicalOps.html"><code>MathematicalOps</code></a> trait.</p>
+<p>Please note that <code>ln</code> and <code>log10</code> will panic on invalid input with <code>checked_ln</code> and <code>checked_log10</code> the preferred
+functions
+to curb against this. When the <code>maths</code> feature was first developed the library would instead return <code>0</code> on invalid
+input. To re-enable this
+non-panicking behavior, please use the feature: <code>maths-nopanic</code>.</p>
+<h5><code>ndarray</code></h5>
+<p>Enables arithmetic operations using <a href="https://github.com/rust-ndarray/ndarray"><code>ndarray</code></a> on arrays of <code>Decimal</code>.</p>
+<h5><code>proptest</code></h5>
+<p>Enables a <a href="https://github.com/proptest-rs/proptest"><code>proptest</code></a> strategy to generate values for Rust Decimal.</p>
+<h5><code>rand</code></h5>
+<p>Implements <code>rand::distributions::Distribution&lt;Decimal&gt;</code> to allow the creation of random instances.</p>
+<p>Note: When using <code>rand::Rng</code> trait to generate a decimal between a range of two other decimals, the scale of the
+randomly-generated
+decimal will be the same as the scale of the input decimals (or, if the inputs have different scales, the higher of the
+two).</p>
+<h5><code>rkyv</code></h5>
+<p>Removed in <code>1.43.0</code>. This feature previously enabled <a href="https://github.com/rkyv/rkyv">rkyv</a> <code>0.7</code> serialization for
+<code>Decimal</code>. The <code>0.7</code> line is no longer supported upstream and will not receive further fixes
+(see <a href="https://rustsec.org/advisories/RUSTSEC-2026-0235.html">RUSTSEC-2026-0235</a>), so it was carried in every downstream
+lockfile regardless of whether the feature was enabled.</p>
+<p>Use rkyv's <a href="https://rkyv.org/derive-macro-features/remote-derive.html">remote derives</a> instead. These work against any
+rkyv version without <code>rust_decimal</code> needing to depend on rkyv at all, and are demonstrated in <code>examples/rkyv-remote</code>:</p>
+<pre><code>use rkyv::{rancor::Error, Archive, Deserialize, Serialize};
+use rust_decimal::prelude::{dec, Decimal};
+
+#[derive(Archive, Serialize, Deserialize, Debug, PartialEq, Eq)]
+struct Root {
+    #[rkyv(with = RkyvDecimal)]
+    decimal: Decimal,
+}
+
+/// Archived layout of `Decimal`
+#[derive(Archive, Serialize, Deserialize)]
+#[rkyv(remote = Decimal)]
+struct RkyvDecimal {
+    #[rkyv(getter = Decimal::serialize)]
+    bytes: [u8; 16],
+}
+
+impl From&lt;RkyvDecimal&gt; for Decimal {
+    fn from(RkyvDecimal { bytes }: RkyvDecimal) -&gt; Self {
+        Self::deserialize(bytes)
+    }
+}
+</code></pre>
+<h5><code>rocket-traits</code></h5>
+<p>Enable support for Rocket forms by implementing the <code>FromFormField</code> trait.</p>
+<h5><code>rust-fuzz</code></h5>
+<p>Enable <code>rust-fuzz</code> support by implementing the <code>Arbitrary</code> trait.</p>
+<h5><code>serde-float</code></h5>
+<blockquote>
+<p><strong>Note:</strong> This feature applies float serialization/deserialization rules as the default method for handling <code>Decimal</code>
+numbers.
+See also the <code>serde-with-*</code> features for greater flexibility.</p>
+</blockquote>
+<p>Enable this so that JSON serialization of <code>Decimal</code> types are sent as a float instead of a string (default).</p>
+<p>e.g. with this turned on, JSON serialization would output:</p>
+<pre><code>{
+  "value": 1.234
+}
+</code></pre>
+<h5><code>serde-str</code></h5>
+<blockquote>
+<p><strong>Note:</strong> This feature applies string serialization/deserialization rules as the default method for handling <code>Decimal</code>
+numbers.
+See also the <code>serde-with-*</code> features for greater flexibility.</p>
+</blockquote>
+<p>This is typically useful for <code>bincode</code> or <code>csv</code> like implementations.</p>
+<p>Since <code>bincode</code> does not specify type information, we need to ensure that a type hint is provided in order to
+correctly be able to deserialize. Enabling this feature on its own will force deserialization to use <code>deserialize_str</code>
+instead of <code>deserialize_any</code>.</p>
+<p>If, for some reason, you also have <code>serde-float</code> enabled then this will use <code>deserialize_f64</code> as a type hint. Because
+converting to <code>f64</code> <em>loses</em> precision, it's highly recommended that you do NOT enable this feature when working with
+<code>bincode</code>. That being said, this will only use 8 bytes so is slightly more efficient in terms of storage size.</p>
+<h5><code>serde-arbitrary-precision</code></h5>
+<blockquote>
+<p><strong>Note:</strong> This feature applies arbitrary serialization/deserialization rules as the default method for
+handling <code>Decimal</code> numbers.
+See also the <code>serde-with-*</code> features for greater flexibility.</p>
+</blockquote>
+<p>This is used primarily with <code>serde_json</code> and consequently adds it as a &quot;weak dependency&quot;. This supports the
+<code>arbitrary_precision</code> feature inside <code>serde_json</code> when parsing decimals.</p>
+<p>This is recommended when parsing &quot;float&quot; looking data as it will prevent data loss.</p>
+<p>Please note, this currently serializes numbers in a float like format by default, which can be an unexpected
+consequence. For greater
+control over the serialization format, please use the <code>serde-with-arbitrary-precision</code> feature.</p>
+<h5><code>serde-with-float</code></h5>
+<p>Enable this to access the module for serializing <code>Decimal</code> types to a float. This can be used in <code>struct</code> definitions
+like so:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">FloatExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(with = </span><span class="s">&quot;rust_decimal::serde::float&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">Decimal</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">OptionFloatExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(with = </span><span class="s">&quot;rust_decimal::serde::float_option&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Decimal</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>Alternatively, if only the serialization feature is desired (e.g. to keep flexibility while deserialization):</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">FloatExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(serialize_with = </span><span class="s">&quot;rust_decimal::serde::float::serialize&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">Decimal</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<h5><code>serde-with-str</code></h5>
+<p>Enable this to access the module for serializing <code>Decimal</code> types to a <code>String</code>. This can be used in <code>struct</code> definitions
+like so:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">StrExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(with = </span><span class="s">&quot;rust_decimal::serde::str&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">Decimal</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">OptionStrExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(with = </span><span class="s">&quot;rust_decimal::serde::str_option&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Decimal</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>This feature isn't typically required for serialization however can be useful for deserialization purposes since it does
+not require
+a type hint. Consequently, you can force this for just deserialization by:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">StrExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(deserialize_with = </span><span class="s">&quot;rust_decimal::serde::str::deserialize&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">Decimal</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<h5><code>serde-with-arbitrary-precision</code></h5>
+<p>Enable this to access the module for deserializing <code>Decimal</code> types using the <code>serde_json/arbitrary_precision</code> feature.
+This can be used in <code>struct</code> definitions like so:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">ArbitraryExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(with = </span><span class="s">&quot;rust_decimal::serde::arbitrary_precision&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">Decimal</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">OptionArbitraryExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(with = </span><span class="s">&quot;rust_decimal::serde::arbitrary_precision_option&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Decimal</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>An unexpected consequence of this feature is that it will serialize as a float like number. To prevent this, you can
+target the struct to only deserialize with the <code>arbitrary_precision</code> feature:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">ArbitraryExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(deserialize_with = </span><span class="s">&quot;rust_decimal::serde::arbitrary_precision::deserialize&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">Decimal</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>This will ensure that serialization still occurs as a string.</p>
+<p>Please see the <code>examples</code> directory for more information regarding <code>serde_json</code> scenarios.</p>
+<h5><code>std</code></h5>
+<p>Enable <code>std</code> library support. This is enabled by default, however in the future will be opt in. For now, to
+support <code>no_std</code>
+libraries, this crate can be compiled with <code>--no-default-features</code>.</p>
+<h5><code>wasm</code></h5>
+<p>Enable <a href="https://github.com/rustwasm/wasm-bindgen"><code>wasm-bindgen</code></a> support which makes <code>Decimal</code> compatible with the
+<code>wasm_bindgen</code> attribute macro and exposes the following methods across boundaries:</p>
+<ul>
+<li><code>fromNumber()</code> / <code>toNumber()</code> — convert between <code>Decimal</code> and the primitive <code>number</code> type.</li>
+<li><code>fromString()</code> / <code>toString()</code> — convert between <code>Decimal</code> and a string representation.</li>
+</ul>
+<h4>Building</h4>
+<p>Please refer to the <a href="https://github.com/paupino/rust-decimal/blob/8592462ca2d928ea46e6358e530a5c7d4b38f7d6/BUILD.md">Build document</a> for more information on building and testing Rust Decimal.</p>
+<h4>Minimum Rust Compiler Version</h4>
+<p>The current <em>minimum</em> compiler version is <code>1.67.1</code> which was released on <code>2023-02-09</code>.</p>
+<p>This library maintains support for rust compiler versions that are 4 minor versions away from the current stable rust
+compiler version.
+For example, if the current stable compiler version is <code>1.50.0</code> then we will guarantee support up to and
+including <code>1.46.0</code>.
+Of note, we will only update the minimum supported version if and when required.</p>
+<h4>Comparison to other Decimal implementations</h4>
+<p>During the development of this library, there were various design decisions made to ensure that decimal calculations
+would
+be quick, accurate and efficient. Some decisions, however, put limitations on what this library can do and ultimately
+what
+it is suitable for. One such decision was the structure of the internal decimal representation.</p>
+<p>This library uses a mantissa of 96 bits made up of three 32-bit unsigned integers with a fourth 32-bit unsigned integer
+to represent the scale/sign
+(similar to the C and .NET Decimal implementations).
+This structure allows us to make use of algorithmic optimizations to implement basic arithmetic; ultimately this gives
+us the ability
+to squeeze out performance and make it one of the fastest implementations available. The downside of this approach
+however is that
+the maximum number of significant digits that can be represented is roughly 28 base-10 digits (29 in some cases).</p>
+<p>While this constraint is not an issue for many applications (e.g. when dealing with money), some applications may
+require a higher number of significant digits to be represented. Fortunately,
+there are alternative implementations that may be worth investigating, such as:</p>
+<ul>
+<li><a href="https://crates.io/crates/bigdecimal">bigdecimal</a></li>
+<li><a href="https://crates.io/crates/decimal-rs">decimal-rs</a></li>
+</ul>
+<p>If you have further questions about the suitability of this library for your project, then feel free to either start a
+<a href="https://github.com/paupino/rust-decimal/discussions">discussion</a> or open
+an <a href="https://github.com/paupino/rust-decimal/issues">issue</a> and we'll
+do our best to help.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>align16</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>borsh</code></th><td>No</td><td><ul class="effects"><li><code>dep:borsh</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>bytemuck</code></th><td>No</td><td><ul class="effects"><li><code>c-repr</code></li><li><code>dep:bytemuck</code></li><li><code>dep:bytemuck_derive</code></li></ul></td></tr><tr><th scope="row"><code>c-repr</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>db-diesel-mysql</code></th><td>No</td><td><ul class="effects"><li><code>dep:diesel</code></li><li><code>diesel/mysql_backend</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>db-diesel-postgres</code></th><td>No</td><td><ul class="effects"><li><code>dep:diesel</code></li><li><code>diesel/postgres_backend</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>db-diesel2-mysql</code></th><td>No</td><td><ul class="effects"><li><code>db-diesel-mysql</code></li></ul></td></tr><tr><th scope="row"><code>db-diesel2-postgres</code></th><td>No</td><td><ul class="effects"><li><code>db-diesel-postgres</code></li></ul></td></tr><tr><th scope="row"><code>db-postgres</code></th><td>No</td><td><ul class="effects"><li><code>dep:bytes</code></li><li><code>dep:postgres-types</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>db-tokio-postgres</code></th><td>No</td><td><ul class="effects"><li><code>dep:bytes</code></li><li><code>dep:postgres-types</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>serde</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>diesel</code></th><td>No</td><td><ul class="effects"><li><code>dep:diesel</code></li></ul></td></tr><tr><th scope="row"><code>legacy-ops</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>macros</code></th><td>No</td><td><ul class="effects"><li><code>dep:rust_decimal_macros</code></li></ul></td></tr><tr><th scope="row"><code>maths</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>maths-nopanic</code></th><td>No</td><td><ul class="effects"><li><code>maths</code></li></ul></td></tr><tr><th scope="row"><code>ndarray</code></th><td>No</td><td><ul class="effects"><li><code>dep:ndarray</code></li></ul></td></tr><tr><th scope="row"><code>proptest</code></th><td>No</td><td><ul class="effects"><li><code>dep:proptest</code></li></ul></td></tr><tr><th scope="row"><code>rand</code></th><td>No</td><td><ul class="effects"><li><code>dep:rand</code></li></ul></td></tr><tr><th scope="row"><code>rand-0_9</code></th><td>No</td><td><ul class="effects"><li><code>dep:rand-0_9</code></li></ul></td></tr><tr><th scope="row"><code>rocket-traits</code></th><td>No</td><td><ul class="effects"><li><code>dep:rocket</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>rust-fuzz</code></th><td>No</td><td><ul class="effects"><li><code>dep:arbitrary</code></li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>Yes<small>default → serde</small></td><td><ul class="effects"><li><code>dep:serde</code></li><li><code>wasm-bindgen?/serde</code></li></ul></td></tr><tr><th scope="row"><code>serde-arbitrary-precision</code></th><td>No</td><td><ul class="effects"><li><code>serde-with-arbitrary-precision</code></li></ul></td></tr><tr><th scope="row"><code>serde-bincode</code></th><td>No</td><td><ul class="effects"><li><code>serde-str</code></li></ul></td></tr><tr><th scope="row"><code>serde-float</code></th><td>No</td><td><ul class="effects"><li><code>serde-with-float</code></li></ul></td></tr><tr><th scope="row"><code>serde-str</code></th><td>No</td><td><ul class="effects"><li><code>serde-with-str</code></li></ul></td></tr><tr><th scope="row"><code>serde-with-arbitrary-precision</code></th><td>No</td><td><ul class="effects"><li><code>serde</code></li><li><code>dep:serde_json</code></li><li><code>serde_json/arbitrary_precision</code></li><li><code>serde_json/std</code></li><li><code>zmij</code></li></ul></td></tr><tr><th scope="row"><code>serde-with-float</code></th><td>No</td><td><ul class="effects"><li><code>serde</code></li></ul></td></tr><tr><th scope="row"><code>serde-with-str</code></th><td>No</td><td><ul class="effects"><li><code>serde</code></li></ul></td></tr><tr><th scope="row"><code>serde_json</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde_json</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>arrayvec/std</code></li><li><code>wasm-bindgen?/std</code></li><li><code>borsh?/std</code></li><li><code>bytes?/std</code></li><li><code>rand?/std</code></li><li><code>rand-0_9?/std</code></li><li><code>serde?/std</code></li><li><code>serde_json?/std</code></li></ul></td></tr><tr><th scope="row"><code>tokio-pg</code></th><td>No</td><td><ul class="effects"><li><code>db-tokio-postgres</code></li></ul></td></tr><tr><th scope="row"><code>tokio-postgres</code></th><td>No</td><td><ul class="effects"><li><code>dep:tokio-postgres</code></li></ul></td></tr><tr><th scope="row"><code>wasm</code></th><td>No</td><td><ul class="effects"><li><code>dep:wasm-bindgen</code></li></ul></td></tr><tr><th scope="row"><code>zmij</code></th><td>No</td><td><ul class="effects"><li><code>dep:zmij</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/arbitrary/"><code>crates-io/arbitrary</code></a><small>Alias: arbitrary</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/arrayvec/"><code>crates-io/arrayvec</code></a><small>Alias: arrayvec</small></th><td><code>^0.7</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/borsh/"><code>crates-io/borsh</code></a><small>Alias: borsh</small></th><td><code>^1.1.1</code><small>Default features: disabled</small><small>Requests: derive, unstable__schema</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/bytemuck/"><code>crates-io/bytemuck</code></a><small>Alias: bytemuck</small></th><td><code>^1.17.1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/bytemuck_derive/"><code>crates-io/bytemuck_derive</code></a><small>Alias: bytemuck_derive</small></th><td><code>^1.7.1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/bytes/"><code>crates-io/bytes</code></a><small>Alias: bytes</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/diesel</code><small>Alias: diesel</small></th><td><code>^2.2.3</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/ndarray/"><code>crates-io/ndarray</code></a><small>Alias: ndarray</small></th><td><code>^0.15.6</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/num-traits/"><code>crates-io/num-traits</code></a><small>Alias: num-traits</small></th><td><code>^0.2</code><small>Default features: disabled</small><small>Requests: i128</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/postgres-types/"><code>crates-io/postgres-types</code></a><small>Alias: postgres-types</small></th><td><code>^0.2</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/proptest/"><code>crates-io/proptest</code></a><small>Alias: proptest</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: std</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rand/"><code>crates-io/rand</code></a><small>Alias: rand</small></th><td><code>^0.8.6</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rand/"><code>crates-io/rand</code></a><small>Alias: rand-0_9</small></th><td><code>^0.9</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/rocket</code><small>Alias: rocket</small></th><td><code>^0.5.0-rc.3</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/rust_decimal_macros</code><small>Alias: rust_decimal_macros</small></th><td><code>^1.37.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Enabled through default → serde</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde_json/"><code>crates-io/serde_json</code></a><small>Alias: serde_json</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/tokio-postgres</code><small>Alias: tokio-postgres</small></th><td><code>^0.7</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/wasm-bindgen/"><code>crates-io/wasm-bindgen</code></a><small>Alias: wasm-bindgen</small></th><td><code>^0.2</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(target_arch = &quot;wasm32&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/zmij/"><code>crates-io/zmij</code></a><small>Alias: zmij</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/pyo3/versions/0.29.3/">crates-io/pyo3 0.29.3</a><span>Requires ^1.15 · alias rust_decimal · </span></li><li><a href="../../../../../packages/crates-io/redis/versions/1.7.1/">crates-io/redis 1.7.1</a><span>Requires ^1.42.0 · alias rust_decimal · </span></li><li><a href="../../../../../packages/crates-io/schemars/versions/1.2.2/">crates-io/schemars 1.2.2</a><span>Requires ^1.13 · alias rust_decimal1 · </span></li><li><a href="../../../../../packages/crates-io/schemars/versions/0.8.22/">crates-io/schemars 0.8.22</a><span>Requires ^1 · alias rust_decimal · </span></li><li><a href="../../../../../packages/crates-io/sqlx-core/versions/0.9.0/">crates-io/sqlx-core 0.9.0</a><span>Requires ^1.36.0 · alias rust_decimal · </span></li><li><a href="../../../../../packages/crates-io/sqlx-mysql/versions/0.9.0/">crates-io/sqlx-mysql 0.9.0</a><span>Requires ^1.36.0 · alias rust_decimal · </span></li><li><a href="../../../../../packages/crates-io/sqlx-postgres/versions/0.9.0/">crates-io/sqlx-postgres 0.9.0</a><span>Requires ^1.36.0 · alias rust_decimal · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, serde, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a1303cec531ca3e778e2ce20673462c2071652f1f8dc8cda049a3447b046e6b6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:0a9709c9487f5e444b6f29d98c8dbbe2219375447c9ba2b87c8cb755b2ce7714</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, serde, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a48b6b68c6b97d892e8df9878009356cb5b5d5865f8466a2191781acb5b304b4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:842ee793bceedbfb797249e6f6c1b6efd7507e8e20ff0d758de411f020305d63</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, serde, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:494fa566bf546372be42ac531004f98276e9511c58271d32e5c67002798a02cd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:5e75013ec605c80f85f42e8e557902abee8c6114826ca46ff9a8c88b9c96ebbd</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, serde, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ca6e751a90e29281e7b976d8bf06360c2b7a819c00e9cb0195d48f39c3843c6c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:129d538e49b142fc7afee1fa6504134184b48725adacbc08d512701b7f7f904a</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, serde, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, serde, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>default, serde, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>default, serde, std</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/rust_decimal/versions/1.43.0/">1.43.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/rust_decimal/1.43.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Version History</h3>
+<p><strong>Please see <a href="https://github.com/paupino/rust-decimal/releases">Github Releases</a> for version history going forward.</strong></p>
+<h3>1.36.0</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes a bug where <code>from_sql</code> was converting <code>Numeric::NaN</code> to <code>0</code> rather than returning an
+error. (<a href="https://github.com/paupino/rust-decimal/pull/656">#656</a>).</li>
+<li>Fixes an issue where <code>i128::MIN</code> would cause overflow when calling
+<code>from_i128</code> (<a href="https://github.com/paupino/rust-decimal/pull/657">#657</a>).</li>
+<li>Fixes issue with <code>abs_sub</code> whereby it was not returning the
+difference (<a href="https://github.com/paupino/rust-decimal/pull/666">#666</a>).</li>
+<li>Fixes issue with <code>serde_str</code> after downstream dependency
+update (<a href="https://github.com/paupino/rust-decimal/pull/670">#670</a>).</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Github workflow improvements (<a href="https://github.com/paupino/rust-decimal/pull/658">#658</a>).</li>
+<li>Diesel 1 feature has been deprecated and Diesel 2 was upgraded to
+v2.2 (<a href="https://github.com/paupino/rust-decimal/pull/663">#663</a>).</li>
+<li>Replace <code>proptest</code> strategy to improve generation of random
+values (<a href="https://github.com/paupino/rust-decimal/pull/659">#659</a>).</li>
+</ul>
+<h3>1.35.0</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes an issue where reading from Postgres may cause a panic instead of raising an
+Error (<a href="https://github.com/paupino/rust-decimal/pull/653">#653</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Reduces PostgreSQL import dependencies by only requiring the common <code>postgres-types</code>
+crate. (<a href="https://github.com/paupino/rust-decimal/pull/651">#651</a>)</li>
+</ul>
+<h5>Credit</h5>
+<p>Thank you to <a href="https://github.com/the-kenny">@the-kenny</a> for your contribution!</p>
+<h4>1.34.3</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes an issue where when hydrating an underflowing <code>NUMERIC</code> value from PostgreSQL it would sometimes generate an
+invalid
+Decimal (<a href="https://github.com/paupino/rust-decimal/pull/647">#647</a>)</li>
+</ul>
+<h4>1.34.2</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Deprecate <code>macros</code> feature until circular dependency issue is resolved properly.</li>
+</ul>
+<h4>1.34.1</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Hotfix for circular dependency when using the <code>macros</code> feature.</li>
+</ul>
+<h4>1.34.0</h4>
+<h5>Added</h5>
+<ul>
+<li><code>rust_decimal_macros</code> can now be utilized using the <code>macros</code> feature
+flag. (<a href="https://github.com/paupino/rust-decimal/pull/628">#628</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Reimplement <code>pow</code> function to more effectively handle larger
+exponents (<a href="https://github.com/paupino/rust-decimal/pull/638">#638</a>)</li>
+<li>Fixes error handling when parsing a <code>Decimal</code> from a string when a decimal point or placeholder is at the rounding
+position (<a href="https://github.com/paupino/rust-decimal/pull/636">#636</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Added documentation for serde features as well as a few
+examples. (<a href="https://github.com/paupino/rust-decimal/pull/630">#630</a>)</li>
+<li>Documentation and rustdoc generation
+improvements (<a href="https://github.com/paupino/rust-decimal/pull/633">#633</a>, <a href="https://github.com/paupino/rust-decimal/pull/634">#634</a>)</li>
+</ul>
+<h5>Credit</h5>
+<p>Thank you to <a href="https://github.com/robjtede">@robjtede</a> and <a href="https://github.com/schungx">@schungx</a> for your contributions
+this release.</p>
+<p>Last but not least, a special thank you to <a href="https://github.com/Tony-Samuels">@Tony-Samuels</a> for your help with
+managing <code>rust_decimal</code>!</p>
+<h4>1.33.1</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes an issue when converting from a <code>Decimal</code> to a float whereby the float would be inaccurate after
+rounding. (<a href="https://github.com/paupino/rust-decimal/pull/625">#625</a>)</li>
+</ul>
+<h4>1.33.0</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes an issue when adding/subtracting two <code>Decimal</code>s when one has a scale of
+29. (<a href="https://github.com/paupino/rust-decimal/pull/619">#619</a>)</li>
+<li>An empty string will be parsed as <code>None</code> during JSON deserialization instead of
+panicking. (<a href="https://github.com/paupino/rust-decimal/pull/607">#607</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Upgrades <code>borsh</code> to version <code>1.1</code> as a result of
+a <a href="https://rustsec.org/advisories/RUSTSEC-2023-0033.html">security advisory</a>. (<a href="https://github.com/paupino/rust-decimal/pull/621">#621</a>)</li>
+</ul>
+<h5>Credit</h5>
+<p>Thank you to <a href="https://github.com/gai6948">@gai6948</a> for their contribution! Also thank you to all of those that pushed
+for the security advisory changes.</p>
+<h4>1.32.0</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes an issue with <code>is_integer</code> returning incorrect results for mantissa's 10^n where n &gt;=
+10. (<a href="https://github.com/paupino/rust-decimal/pull/605">#605</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>byteorder</code> is no longer required as a dependency for the postgres
+feature. (<a href="https://github.com/paupino/rust-decimal/pull/603">#603</a>)</li>
+</ul>
+<h5>Credit</h5>
+<p>Thank you to <a href="https://github.com/psychon">@psychon</a> for your contribution!</p>
+<h4>1.31.0</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes an issue with <code>trunc_with_scale</code> implicitly rounding in some
+scenarios (<a href="https://github.com/paupino/rust-decimal/pull/600">#600</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Various dependency features were updated.</li>
+</ul>
+<h5>Credit</h5>
+<p>Thank you to <a href="https://github.com/mkatychev">@mkatychev</a> for your contribution this release.</p>
+<h4>1.30.0</h4>
+<p>As the minor releases for Rust Decimal are getting smaller, I'll be looking at formally starting version 2 of the
+Decimal library. This will be unstable as we find experiment with a new API and address some of the constraints the
+current
+implementation of the library has (e.g. revised error types for better const support).</p>
+<h5>Added</h5>
+<ul>
+<li>Add <code>proptest</code> feature support for <code>Decimal</code> (<a href="https://github.com/paupino/rust-decimal/pull/582">#582</a>).</li>
+<li>Implement an <code>is_integer</code> function for an efficient means to check whether a <code>Decimal</code> is an integer with no
+fractional portion. (<a href="https://github.com/paupino/rust-decimal/pull/591">#591</a>).</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Improved GitHub Actions Workflow (<a href="https://github.com/paupino/rust-decimal/pull/592">#592</a>).</li>
+</ul>
+<h5>Credit</h5>
+<p>Thank you to <a href="https://github.com/cardoe/">@cardoe</a> for your contribution!</p>
+<h4>1.29.1</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes an issue with <code>checked_cos</code> and <code>checked_sin</code> where <code>QUARTER_PI</code> would send the calculation into an infinite
+loop. (#<a href="https://github.com/paupino/rust-decimal/pull/585">585</a>)</li>
+</ul>
+<h4>1.29.0</h4>
+<h5>Added</h5>
+<ul>
+<li>New <code>trunc_with_scale</code> function which allows you to truncate a decimal number whilst retaining a specified
+precision. (<a href="https://github.com/paupino/rust-decimal/pull/576">#576</a>), (<a href="https://github.com/paupino/rust-decimal/pull/578">#578</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix issue when rounding using a high precision decimal place on zero values. This would previously allow the <code>Decimal</code>
+number to enter into an invalid state. (<a href="https://github.com/paupino/rust-decimal/pull/575">#575</a>)</li>
+</ul>
+<h5>Changed</h5>
+<p>There were also a couple of housekeeping tasks, to help pave the way for v2 of Rust Decimal.</p>
+<ul>
+<li>Clean up features so that they are explicit in the <code>cargo.toml</code> and leverage the new <code>dep:</code> syntax where
+required. (<a href="https://github.com/paupino/rust-decimal/pull/579">#579</a>)</li>
+<li>Restructure and compartmentalize Makefile. (<a href="https://github.com/paupino/rust-decimal/pull/580">#580</a>)</li>
+</ul>
+<h5>Credit</h5>
+<p>Thank you <a href="https://github.com/c410-f3r">@c410-f3r</a> and <a href="https://github.com/jon-chuang">@jon-chuang</a> for your
+contributions to this release!</p>
+<h4>1.28.1</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Bumped <code>borsh</code> and <code>criterion</code> dependencies to the latest
+versions. (<a href="https://github.com/paupino/rust-decimal/pull/568">#568</a>)</li>
+<li>Removed erroneous debug statements in <code>serde-with-str</code>
+feature. (<a href="https://github.com/paupino/rust-decimal/pull/571">#571</a>)</li>
+</ul>
+<p>Thanks <a href="https://github.com/attila-lin">@attila-lin</a> for your help bumping dependencies.</p>
+<h4>1.28.0</h4>
+<h5>Added</h5>
+<ul>
+<li>Implement <code>TryFrom&lt;&amp;str&gt;</code> for <code>Decimal</code> (<a href="https://github.com/paupino/rust-decimal/pull/560">#560</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Explicit string deserialize for <code>Option&lt;Decimal&gt;</code> when
+using <code>serde-with-str</code> (<a href="https://github.com/paupino/rust-decimal/pull/565">#565</a>)</li>
+<li>Fix for <code>rescale</code> preventing <code>Decimal::ZERO</code> to be rescaled to an invalid
+precision (<a href="https://github.com/paupino/rust-decimal/pull/566">#566</a>)</li>
+</ul>
+<h5>Credit</h5>
+<p>Thank you to <a href="https://github.com/c410-f3r">@c410-f3r</a> for your diligent help adding features to this library!</p>
+<h4>1.27.0</h4>
+<h5>Added</h5>
+<ul>
+<li>Added <code>Copy</code>/<code>Clone</code> traits for <code>rkvy::Archive</code> (<a href="https://github.com/paupino/rust-decimal/pull/539">#539</a>)</li>
+<li>Support precision for scientific notation
+formatting (<a href="https://github.com/paupino/rust-decimal/pull/555">#555</a>, <a href="https://github.com/paupino/rust-decimal/pull/557">#557</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed edge case parsing of strings whereby it would incorrectly error instead of
+round (<a href="https://github.com/paupino/rust-decimal/pull/541">#541</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Update diesel feature to use release version (<a href="https://github.com/paupino/rust-decimal/pull/546">#546</a>)</li>
+<li>Updated documentation to include <code>cargo-edit</code> instructions (<a href="https://github.com/paupino/rust-decimal/pull/538">#538</a>)</li>
+<li>Start using new feature resolver for cargo dependencies (<a href="https://github.com/paupino/rust-decimal/pull/551">#551</a>)</li>
+<li>Optional serde deserialization avoids using <code>deserialize_any</code> except in explicit use
+cases (<a href="https://github.com/paupino/rust-decimal/pull/558">#558</a>)</li>
+</ul>
+<h5>Credit</h5>
+<p>This release wouldn't have been possible without the help of the community. Special call out and thank you
+to <a href="https://github.com/icy-ux">@icy-ux</a>, <a href="https://github.com/CAD97">@CAD97</a>, <a href="https://github.com/nicksenger">@nicksenger</a>,
+<a href="https://github.com/c410-f3r">@c410-f3r</a> and <a href="https://github.com/yongqli">@yongqli</a>.</p>
+<h4>1.26.1</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes <code>docs.rs</code> <a href="https://docs.rs/crate/rust_decimal/1.26.0/builds/605522">failing to compile</a> due to mutually
+exclusive <code>diesel1</code> and <code>diesel2</code> features. The previous <code>compile_error!</code>
+was in fact an <a href="https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features">anti-pattern</a>.
+Consequently,
+if both <code>diesel1</code> and <code>diesel2</code> features are specified then it will favor <code>diesel2</code>. This helps prevent any conflict
+scenarios
+and ultimately resolves the downstream <code>docs.rs</code> issue.</li>
+</ul>
+<h4>1.26.0</h4>
+<h5>Added</h5>
+<ul>
+<li><code>serde-with-*</code> features now support <code>Option&lt;T&gt;</code> variants (<a href="https://github.com/paupino/rust-decimal/pull/524">#524</a>).</li>
+<li>Implementation support for <code>core::iter::Product</code> (<a href="https://github.com/paupino/rust-decimal/pull/525">#525</a>).</li>
+<li>Diesel <code>2.0.0-rc.1</code> support via <code>db-diesel2-mysql</code> and <code>db-diesel2-postgres</code>
+features. (<a href="https://github.com/paupino/rust-decimal/pull/533">#533</a>
+and (<a href="https://github.com/paupino/rust-decimal/pull/532">#532</a>)).</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixes a silent overflow in <code>from_str</code> when parsing <code>Decimal::MAX</code> with a fractional
+portion. (<a href="https://github.com/paupino/rust-decimal/pull/530">#530</a>).</li>
+</ul>
+<h5>Credit</h5>
+<p>Thank you to <a href="https://github.com/Guara92">@Guara92</a> who made the initial <code>diesel2</code> PR which made parallel implementation
+a breeze! Also, once again, thank you
+to <a href="https://github.com/c410-f3r">@c410-f3r</a> for implementing the missing <code>Product</code> trait!</p>
+<h4>1.25.0</h4>
+<h5>Added</h5>
+<ul>
+<li>Expands <code>rand</code> support to implement <code>SampleUniform</code> to allow for <code>rng.gen_range</code>
+calls (<a href="https://github.com/paupino/rust-decimal/pull/519">#519</a>)</li>
+<li>Adds <a href="https://github.com/rkyv/rkyv"><code>rkyv</code> framework</a> support for zero-cost (de)
+serialization (<a href="https://github.com/paupino/rust-decimal/pull/520">#520</a>)</li>
+</ul>
+<p>A big thank you to <a href="https://github.com/lukesneeringer">@lukesneeringer</a> and <a href="https://github.com/dovahcrow">@dovahcrow</a>
+for your help building
+features for this release.</p>
+<h4>1.24.0</h4>
+<ul>
+<li>Introduces new feature <code>rand</code> which allows for random number generation
+within <code>rust_decimal</code> (<a href="https://github.com/paupino/rust-decimal/pull/517">#517</a>).</li>
+<li>Upgrade to Rust 2021 and remove unnecessary dependencies to improve build
+speed (<a href="https://github.com/paupino/rust-decimal/pull/513">#513</a>, <a href="https://github.com/paupino/rust-decimal/pull/516">#516</a>)</li>
+<li>Some test scoping improvements to ensure we capture as many test combinations as
+possible (<a href="https://github.com/paupino/rust-decimal/pull/503">#503</a>, <a href="https://github.com/paupino/rust-decimal/pull/504">#504</a>).</li>
+</ul>
+<p>A big thank you to <a href="https://github.com/c410-f3r">@c410-f3r</a> for their contributions to this release!</p>
+<h4>1.23.1</h4>
+<p>Fixes issue with <code>no_std</code> compatability introduced
+in <code>1.23.0</code> (<a href="https://github.com/paupino/rust-decimal/pull/501">#501</a>).</p>
+<h4>1.23.0</h4>
+<ul>
+<li>Add <code>BorschSchema</code> support for the <code>borsh</code> feature (<a href="https://github.com/paupino/rust-decimal/pull/498">#498</a>).</li>
+<li>Implement <code>TryFrom</code> for Decimal primitive types (<a href="https://github.com/paupino/rust-decimal/pull/493">#493</a>).</li>
+<li>Fix <code>to_i64</code> to support <code>i64::MIN</code> (<a href="https://github.com/paupino/rust-decimal/pull/496">#496</a>).</li>
+<li>Implement <code>Inv</code> from <code>num_traits</code> (<a href="https://github.com/paupino/rust-decimal/pull/495">#495</a>).</li>
+<li>Some minor housekeeping
+tasks (<a href="https://github.com/paupino/rust-decimal/pull/487">#487</a>, <a href="https://github.com/paupino/rust-decimal/pull/490">#490</a>).</li>
+</ul>
+<p>Thank you <a href="https://github.com/turion">@turion</a>, <a href="https://github.com/arthurprs">@arthurprs</a>
+and <a href="https://github.com/jnitard">@jnitard</a> for your help with this release.</p>
+<h4>1.22.0</h4>
+<ul>
+<li>Add support for <code>borsh</code> serialization/deserialization (<a href="https://github.com/paupino/rust-decimal/pull/478">#478</a>).</li>
+<li>Fixes an issue with <code>serde-with-str</code> where it wasn't behaving the same as <code>serde-str</code> when
+using <code>bincode</code> (<a href="https://github.com/paupino/rust-decimal/pull/484">#484</a>).</li>
+<li>Added <code>must_use</code> to <code>is_sign_negative</code> and <code>unpack</code> (<a href="https://github.com/paupino/rust-decimal/pull/482">#482</a>).</li>
+<li>Minor documentation fixes.</li>
+</ul>
+<p>Thank you <a href="https://github.com/jkbpvsc">@jkbpvsc</a> for your help in this release.</p>
+<h4>1.21.0</h4>
+<ul>
+<li>Saturating op variants have been added: <code>saturating_add</code>, <code>saturating_sub</code>
+and <code>saturating_mul</code> (<a href="https://github.com/paupino/rust-decimal/pull/464">#464</a>)</li>
+<li>Fixes issue with <code>log10</code> values <code>0 &lt; x &lt; 1</code> (<a href="https://github.com/paupino/rust-decimal/pull/469">#469</a>)</li>
+<li>Various documentation fixes/cleanup.</li>
+</ul>
+<p>Thank you <a href="https://github.com/c410-f3r">@c410-f3r</a> for your work in this release!</p>
+<h4>1.20.0</h4>
+<ul>
+<li>Additional fuzz testing for deserialize (<a href="https://github.com/paupino/rust-decimal/pull/452">#452</a>)</li>
+<li>Documentation fix for rounding strategy (<a href="https://github.com/paupino/rust-decimal/pull/458">#458</a>)</li>
+<li><code>from_str</code> is now over 4x faster, utilizing const generics and
+TCO (<a href="https://github.com/paupino/rust-decimal/pull/456">#456</a>)</li>
+<li>Fixed <code>from_str</code> issue with rounding issues when too many digits in source
+string. (<a href="https://github.com/paupino/rust-decimal/issues/453">#453</a>)</li>
+<li>New <code>serde-with</code> functionality for greater configurability when
+using <code>serde</code> (<a href="https://github.com/paupino/rust-decimal/pull/459">#459</a>)</li>
+<li>Various maintenance tasks (<a href="https://github.com/paupino/rust-decimal/pull/460">#460</a>)</li>
+</ul>
+<p>This is truly a collaborative release and has some significant contributions from the community. A huge thank
+you to everyone involved:</p>
+<ul>
+<li><a href="https://github.com/chris-cantor">@chris-cantor</a></li>
+<li><a href="https://github.com/TradingTomatillo">@TradingTomatillo</a></li>
+<li><a href="https://github.com/c410-f3r">@c410-f3r</a></li>
+<li><a href="https://github.com/ShigotoMitame">@ShigotoMitame</a></li>
+<li><a href="https://github.com/luke-brown">@luke-brown</a></li>
+</ul>
+<h4>1.19.0</h4>
+<p>This is a minor dot release and contains library updates (<a href="https://github.com/paupino/rust-decimal/pull/334">#334</a>) and
+expanded scope in <code>prelude</code> to include <code>num_traits::Signed</code> (<a href="https://github.com/paupino/rust-decimal/pull/450">#450</a>).
+While subtle, it also expands the way towards some bigger improvements including variable precision.</p>
+<p>Of a larger note, the minimum Rust compiler version has been updated so we can start utilizing various compiler features
+(such as const generics). The miminum compiler version is now <code>1.51.0</code>.</p>
+<p>Thank you to <a href="https://github.com/c410-f3r">@c410-f3r</a> and <a href="https://github.com/jracollins">@jracollins</a> for your
+contributions
+to this release.</p>
+<h4>1.18.0</h4>
+<ul>
+<li>Fixes integer handling for <code>to_f64</code> when scale is set
+to <code>0</code>. <a href="https://github.com/paupino/rust-decimal/pull/443">#443</a>.
+Thank you <a href="https://github.com/anatols">@anatols</a> for creating this fix.</li>
+<li>Add support for Rocket Forms using the feature
+flag <code>rocket-traits</code>. <a href="https://github.com/paupino/rust-decimal/pull/445">#445</a>.
+Thank you <a href="https://github.com/Misterio77">@Misterio77</a> for putting this together.</li>
+<li>Add Diesel MySQL support, enabled by the feature
+flag <code>db-diesel-mysq</code>. <a href="https://github.com/paupino/rust-decimal/pull/446">#446</a>.</li>
+</ul>
+<h4>1.17.0</h4>
+<ul>
+<li>Fixes panic when display precision was specified greater than
+30. <a href="https://github.com/paupino/rust-decimal/issues/428">#428</a>.</li>
+<li>Binds <code>deserialize</code> so that invalid scale values cannot be set. This may be a breaking change for some users
+leveraging
+this in a <code>const</code> function. <a href="https://github.com/paupino/rust-decimal/issues/428">#428</a>.</li>
+<li>Fixes an issue in <code>round_sf</code> whereby integral values that started with a 0 or 1 would output incorrect rounded
+numbers. <a href="https://github.com/paupino/rust-decimal/issues/430">#430</a>, <a href="https://github.com/paupino/rust-decimal/issues/437">#437</a>.</li>
+<li>Adds <code>from_f32_retain</code> and <code>from_f64_retain</code> functions which allow parsing a floating point number and retaining any
+excess precision. <a href="https://github.com/paupino/rust-decimal/issues/438">#438</a>.</li>
+</ul>
+<h4>1.16.0</h4>
+<ul>
+<li>Implement <code>sin</code>/<code>cos</code>/<code>tan</code> functions which are enabled within the <code>maths</code>
+feature. <a href="https://github.com/paupino/rust-decimal/pull/413">#413</a>.</li>
+<li>Implement <code>round_sf</code> and <code>round_sf_with_strategy</code> to enable significant figure
+rounding. <a href="https://github.com/paupino/rust-decimal/pull/421">#421</a></li>
+<li>Remove unnecessary <code>std</code> feature from <code>arrayvec</code> usage <a href="https://github.com/paupino/rust-decimal/pull/417">#417</a>.</li>
+<li>Adhoc benchmarking and fuzz tooling improvements <a href="https://github.com/paupino/rust-decimal/pull/412">#412</a>,
+<a href="https://github.com/paupino/rust-decimal/pull/415">#415</a>, <a href="https://github.com/paupino/rust-decimal/pull/416">#416</a>,
+<a href="https://github.com/paupino/rust-decimal/pull/418">#418</a>.</li>
+</ul>
+<p>Thank you to <a href="https://github.com/c410-f3r">@c410-f3r</a> for all your help with fuzz and benchmarking improvements!</p>
+<h4>1.15.0</h4>
+<p>A minor bug and feature release which adds a couple of new functions as well as cleans up some documentation:</p>
+<ul>
+<li>Support for serializing to float without converting to float via the <code>serde-arbitrary-precision</code> feature.
+<a href="https://github.com/paupino/rust-decimal/issues/402">#402</a>.
+Thanks <a href="https://github.com/JamesHinshelwood">@JamesHinshelwood</a>!
+for finding and fixing this!</li>
+<li>Add <code>log10</code> support to the <code>maths</code> feature. Please note that <code>ln</code> and <code>log10</code> will now panic on invalid input since
+both
+functions have a <code>checked_*</code> equivalent. This is the preferred approach going forward, however if you would like to
+re-enable
+the previous behavior please use the <code>maths-nopanic</code>
+feature. <a href="https://github.com/paupino/rust-decimal/issues/397">#397</a>.</li>
+<li>Added further constants to the <code>Decimal</code> library including <code>TWO</code>, <code>TEN</code>, <code>ONE_HUNDRED</code>, <code>ONE_THOUSAND</code>,
+and <code>NEGATIVE_ONE</code>.
+<a href="https://github.com/paupino/rust-decimal/issues/400">#400</a>.</li>
+<li>Fixes serialization issue for <code>-0</code> whereby <code>-</code> would be
+output <a href="https://github.com/paupino/rust-decimal/pull/406">#406</a>. Thanks
+<a href="https://github.com/edwardycl">@edwardycl</a>!</li>
+<li>Fixes float rounding before return in <code>to_f64</code>. <a href="https://github.com/paupino/rust-decimal/issues/401">#401</a>.</li>
+<li>Added <code>BUILD.md</code> file to help people get set up with Rust Decimal locally and cleaned up some
+documentation examples.</li>
+</ul>
+<h4>1.14.3</h4>
+<p>Fixes an issue <a href="https://github.com/paupino/rust-decimal/issues/398">#398</a> where <code>Decimal::ZERO.ln()</code> would panic rather
+than returning <code>Decimal::ZERO</code>. This
+aligns the behavior with calling <code>ln</code> on negative decimals.</p>
+<p>Thank you to <a href="https://github.com/SebRollen">@SebRollen</a> for finding and fixing this.</p>
+<h4>1.14.2</h4>
+<p>Fixes an overflow issue during division under some specific
+circumstances. (<a href="https://github.com/paupino/rust-decimal/issues/392">#392</a>)</p>
+<h4>1.14.1</h4>
+<p>A bug fix release following on from <code>1.14.0</code>:</p>
+<ul>
+<li>Fixes an issue whereby in some cases when subtracting a 64 bit <code>Decimal</code> a negating overflow would occur during
+underflow.
+<a href="https://github.com/paupino/rust-decimal/issues/384">#384</a>. Thank you to <a href="https://github.com/c410-f3r">@c410-f3r</a> for
+finding
+this as part of fuzz testing.</li>
+<li>Fixes an issue with <code>exp</code> whereby negative values lost accuracy due to inability to converge.
+<a href="https://github.com/paupino/rust-decimal/issues/378">#378</a>. Thank you to <a href="https://github.com/schungx">@schungx</a> for
+finding this and proposing a fix.</li>
+<li>Fixes some documentation issues.</li>
+</ul>
+<h4>1.14.0</h4>
+<ul>
+<li>Added <code>checked_exp</code> and <code>checked_norm_pdf</code> functions <a href="https://github.com/paupino/rust-decimal/pull/375">#375</a>.</li>
+<li>Fixes bug in division under certain circumstances whereby overflow would occur during
+rounding. <a href="https://github.com/paupino/rust-decimal/pull/377">#377</a></li>
+<li>Documentation improvements</li>
+</ul>
+<p>Thank you to <a href="https://github.com/falsetru">@falsetru</a>, <a href="https://github.com/schungx">@schungx</a>
+and <a href="https://github.com/blasrodri">@blasrodri</a> for your
+help with this release!</p>
+<h4>1.13.0</h4>
+<p>This is a minor update to the library providing a few new features and one breaking change (I'm not using semver
+properly here
+sorry).</p>
+<ul>
+<li><code>#[must_use]</code> added to functions to provide additional compiler hints.</li>
+<li><code>try_from_i128_with_scale</code> function added to safely handle <code>i128</code> overflow errors.</li>
+<li>New <code>c-repr</code> feature added which will ensure that <code>#[repr(C)]</code> is used on the <code>Decimal</code> type.
+Thanks <a href="https://github.com/jean-airoldie">@jean-airoldie</a>.</li>
+<li>Small improvements to <code>from_scientific</code>. It now supports a wider range of values as well has slightly faster
+performance.</li>
+<li>Support for negative and decimal <code>pow</code> functions. This is <em>breaking</em> since <code>powi(u64)</code> has been renamed
+to <code>powi(i64)</code>. If you want to
+continue using <code>u64</code> arguments then please use <code>powu(u64)</code>. The fractional functions should be considered experimental
+for the time being
+and may have subtle issues that still need ironing out. Functions are now:
+<ul>
+<li><code>powi</code>, <code>checked_powi</code> - When the exponent is a signed integer.</li>
+<li><code>powu</code>, <code>checked_powu</code> - When the exponent is an unsigned integer.</li>
+<li><code>powf</code>, <code>checked_powf</code> - When the exponent is a floating point number. Please note, numbers with a fractional
+component
+will use an approximation function.</li>
+<li><code>powd</code>, <code>checked_powd</code> - When the exponent is a <code>Decimal</code>. Please note, numbers with a fractional component will
+use
+an approximation function.</li>
+</ul>
+</li>
+</ul>
+<h4>1.12.4</h4>
+<p>Adds <code>num_traits::One</code> back to <code>rust_decimal::prelude</code> to prevent unnecessary downstream dependency breakages.
+Thanks <a href="https://github.com/spearman">@spearman</a>.</p>
+<h4>1.12.3</h4>
+<p>Fixes an issue <a href="https://github.com/paupino/rust-decimal/issues/361">#361</a> when rounding a small number towards zero.</p>
+<h4>1.12.2</h4>
+<p>Fixes small regression whereby <code>0 - 0</code> was producing <code>-0</code>. Thank
+you <a href="https://github.com/KonishchevDmitry">@KonishchevDmitry</a> for
+providing a swift fix (<a href="https://github.com/paupino/rust-decimal/pull/356">#356</a>).</p>
+<h4>1.12.1</h4>
+<p>Added <code>num_traits::Zero</code> back to <code>rust_decimal::prelude</code> to prevent unnecessary downstream dependency breakages.</p>
+<h4>1.12.0</h4>
+<p>This version releases faster operation support for <code>add</code>, <code>sub</code>, <code>cmp</code>, <code>rem</code> and <code>mul</code> to match the renewed <code>div</code>
+strategy.
+It does this by leveraging 64 bit support when it makes sense, while attempting to still keep 32 bit optimizations in
+place.
+To ensure correct functionality, thousands more tests were included to cover a wide variety of different scenarios
+and bit combinations. Compared to previous operations, we get the following speed improvements:</p>
+<ul>
+<li><code>add</code> - up to 2.2x faster</li>
+<li><code>div</code> - up to 428x faster</li>
+<li><code>mul</code> - up to 1.8x faster</li>
+<li><code>rem</code> - up to 1.08x faster</li>
+<li><code>sub</code> - up to 2.5x faster</li>
+</ul>
+<p>Of course, if old functionality is desired, it can be re-enabled by using the <code>legacy-ops</code> feature.</p>
+<p>Other improvements include:</p>
+<ul>
+<li>Remove unnecessary <code>String</code> allocation when parsing a scientific number format.
+Thanks <a href="https://github.com/thomcc">@thomcc</a> for the fix <a href="https://github.com/paupino/rust-decimal/pull/350">#350</a>.</li>
+<li>Fixes overflow bug with <code>sqrt</code> when using the smallest possible representable
+number. <a href="https://github.com/paupino/rust-decimal/pull/349">#349</a>.</li>
+<li>Some minor optimizations in the <code>maths</code> feature. Future work will involve speeding up this feature by keeping
+operations
+in an internal format until required.</li>
+<li>Added associated constants for <code>MIN</code>, <code>MAX</code> and <code>ZERO</code>. Deprecated <code>min_value()</code> and <code>max_value()</code> in favor of these
+new
+constants.</li>
+<li><code>-0</code> now gets corrected to <code>0</code>. During operation rewrite I needed to consider operations such as <code>-0 * 2</code> - in cases
+like
+this I opted towards <code>0</code> always being the right number and <code>-0</code> being superfluous (since <code>+0 == -0</code>). Consequently,
+parsing
+<code>-0</code> etc <em>in general</em> will automatically be parsed as <code>0</code>. Of course, this <em>may</em> be a breaking change so if this
+functionality is required then please create an issue with the use case described.</li>
+<li>Small breaking change by renaming <code>is_negative</code> to <code>negative</code> in <code>UnpackedDecimal</code>.</li>
+<li>Some internal housekeeping was made to help make way for version 2.0 improvements.</li>
+</ul>
+<h4>1.11.1</h4>
+<p>This is a documentation only release and has no new functionality included. Thank
+you <a href="https://github.com/c410-f3r">@c410-f3r</a> for the documentation fix.</p>
+<h4>1.11.0</h4>
+<p>This release includes a number of bug fixes and ergonomic improvements.</p>
+<ul>
+<li>Mathematical functionality is now behind a feature flag. This should help optimize library size when functions such as
+<code>log</code> and <code>pow</code> are not required (e.g. simple financial applications). Mathematical functionality is now behind
+the <code>maths</code>
+feature flag. <a href="https://github.com/paupino/rust-decimal/pull/321">#321</a>.</li>
+<li>Numerous test coverage improvements to ensure broader
+coverage. <a href="https://github.com/paupino/rust-decimal/pull/322">#322</a>,
+<a href="https://github.com/paupino/rust-decimal/pull/323">#323</a></li>
+<li>Various documentation
+improvements. <a href="https://github.com/paupino/rust-decimal/pull/324">#324</a>, <a href="https://github.com/paupino/rust-decimal/pull/342">#342</a></li>
+<li>Fixes <code>u128</code> and <code>i128</code> parsing. <a href="https://github.com/paupino/rust-decimal/pull/332">#332</a></li>
+<li>Implemented <code>Checked*</code> traits from <code>num_traits</code>. <a href="https://github.com/paupino/rust-decimal/pull/333">#333</a>. Thank you
+<a href="https://github.com/teoxoy">@teoxoy</a></li>
+<li>Added <code>checked_powi</code> function to <code>maths</code> feature. <a href="https://github.com/paupino/rust-decimal/pull/336">#336</a></li>
+<li>Updated <code>from_parts</code> to avoid accidental scale clobbering. <a href="https://github.com/paupino/rust-decimal/pull/337">#337</a></li>
+<li>Added support for the <code>Arbitrary</code> trait for <code>rust-fuzz</code> support. This is behind the feature flag <code>rust-fuzz</code>.
+<a href="https://github.com/paupino/rust-decimal/pull/338">#338</a></li>
+<li>Fixes <code>e^-1</code> returning an incorrect approximation. <a href="https://github.com/paupino/rust-decimal/pull/339">#339</a></li>
+<li>Revamp of <code>RoundingStrategy</code> naming and documentation (<a href="https://github.com/paupino/rust-decimal/pull/340">#340</a>).
+The old naming was ambiguous in interpretation - the new naming
+convention follows guidance from other libraries to ensure an easy to follow scheme. The <code>RoundingStrategy</code> enum now
+includes:
+<ul>
+<li><code>MidpointNearestEven</code> (previously <code>BankersRounding</code>)</li>
+<li><code>MidpointAwayFromZero</code> (previously <code>RoundHalfUp</code>)</li>
+<li><code>MidpointTowardZero</code> (previously <code>RoundHalfDown</code>)</li>
+<li><code>ToZero</code> (previously <code>RoundDown</code>)</li>
+<li><code>AwayFromZero</code> (previously <code>RoundUp</code>)</li>
+<li><code>ToNegativeInfinity</code> - new rounding strategy</li>
+<li><code>ToPositiveInfinity</code> - new rounding strategy</li>
+</ul>
+</li>
+<li>Added function to access <code>mantissa</code> directly. <a href="https://github.com/paupino/rust-decimal/pull/341">#341</a></li>
+<li>Added a feature to <code>rust_decimal_macros</code> to make re-exporting the macro from a downstream crate more approachable.
+Enabling the <code>reexportable</code> feature will ensure that the generated code doesn't require <code>rust_decimal</code> to be exposed
+at
+the root level. <a href="https://github.com/paupino/rust-decimal/pull/343">#343</a></li>
+</ul>
+<h4>1.10.3</h4>
+<ul>
+<li>Fixes bug in bincode serialization where a negative symbol causes a buffer overflow (#317).</li>
+</ul>
+<h4>1.10.2</h4>
+<ul>
+<li>Fixes a bug introduced in division whereby certain values when using a large remainder cause an incorrect results (
+#314).</li>
+</ul>
+<h4>1.10.1</h4>
+<ul>
+<li>Fixes bug introduced in <code>neg</code> whereby sign would always be turned negative as opposed to being correctly negated.</li>
+</ul>
+<p>Thank you <a href="https://github.com/KonishchevDmitry">KonishchevDmitry</a> for finding and fixing this.</p>
+<h4>1.10.0</h4>
+<ul>
+<li>Upgrade <code>postgres</code> to <code>0.19</code> and <code>tokio-postgres</code> to <code>0.7</code>.</li>
+<li>Faster <code>serde</code> serialization by preventing heap allocation.</li>
+<li>Alternative division algorithm which provides significant speed improvements. The new algorithms are enabled by
+default,
+but can be disabled with the feature: <code>legacy-ops</code>. Further work to improve other operations will
+be made available in future versions.</li>
+<li>Add <code>TryFrom</code> for <code>f32</code>/<code>f64</code> to/from Decimal</li>
+</ul>
+<p>Thank you for the the community help and support for making this release happen, in particular:
+<a href="https://github.com/jean-airoldie">jean-airoldie</a>, <a href="https://github.com/gakonst">gakonst</a>, <a href="https://github.com/okaneco">okaneco</a>
+and
+<a href="https://github.com/c410-f3r">c410-f3r</a>.</p>
+<h4>1.9.0</h4>
+<ul>
+<li>Added arbitrary precision support for <code>serde_json</code> deserialization (#283)</li>
+<li>Add <code>u128</code> and <code>i128</code> <code>FromPrimitive</code> overrides to prevent default implementation kicking in. Also adds default <code>From</code>
+interceptors to avoid having to use trait directly. (#282)</li>
+<li>Alias <code>serde-bincode</code> as <code>serde-str</code> to make usage clearer (#279)</li>
+<li>Adds scientific notation to format strings via <code>UpperExp</code> and <code>LowerExp</code> traits. (#271)</li>
+<li>Upgrade <code>tokio-postgres</code> and <code>postgres</code> libraries.</li>
+<li>Add statistical function support for <code>powi</code>, <code>sqrt</code>, <code>exp</code>, <code>norm_cdf</code>, <code>norm_pdf</code>, <code>ln</code> &amp; <code>erf</code> (#281, #287)</li>
+<li>Allow <code>sum</code> across immutable references (#280)</li>
+</ul>
+<p>Thank you for all the community help and support with this release, in particular <a href="https://github.com/xilec">xilec</a>,
+<a href="https://github.com/remkade">remkade</a> and <a href="https://github.com/Anders429">Anders429</a>.</p>
+<h4>1.8.1</h4>
+<p>Make <code>std</code> support the default to prevent breaking downstream library dependencies. To enable <code>no_std</code> support please
+set
+default features to false and opt-in to any required components. e.g.</p>
+<pre><code>rust_decimal = { default-features = false, version = "1.8.0" }
+</code></pre>
+<h4>1.8.0</h4>
+<ul>
+<li><code>no_std</code> support added to Rust Decimal by default. <code>std</code> isn't required to use Rust Decimal, however can be enabled by
+using the <code>std</code> feature. <a href="https://github.com/paupino/rust-decimal/issues/190">#190</a></li>
+<li>Fixes issue with Decimal sometimes losing precision
+through <code>to_f64</code>. <a href="https://github.com/paupino/rust-decimal/issues/267">#267</a>.</li>
+<li>Add <code>Clone</code>, <code>Copy</code>, <code>PartialEq</code> and <code>Eq</code> derives to <code>RoundingStrategy</code>.</li>
+<li>Remove Proc Macro hack due to procedural macros as expressions being stabilized.</li>
+<li>Minor optimizations</li>
+</ul>
+<p>Thank you to <a href="https://github.com/c410-f3r">@c410-f3r</a>, <a href="https://github.com/smessmer">@smessmer</a>
+and <a href="https://github.com/KiChjang">@KiChjang</a>.</p>
+<h4>1.7.0</h4>
+<ul>
+<li>Enables <code>bincode</code> support via the feature <code>serde-bincode</code>. This provides a long term fix for a regression
+that was introduced in version <code>0.6.5</code> (tests now cover this
+case!). <a href="https://github.com/paupino/rust-decimal/issues/43">Issue 43</a>.</li>
+<li>Fixes issue where <code>rescale</code> on zero would not have an affect. This was due to an early exit condition which failed to
+set the new scale. <a href="https://github.com/paupino/rust-decimal/issues/253">Issue 253</a>.</li>
+<li>Add <code>min</code> and <code>max</code> functions, similar to what <code>f32</code> and <code>f64</code> provide. Thank
+you <a href="https://github.com/michalsieron">@michalsieron</a>.</li>
+<li>Updates documentation for <code>is_sign_positive</code> and <code>is_sign_negative</code> to specify that the sign bit is being checked.</li>
+</ul>
+<p>Please note: feature naming conventions have been modified, however backwards compatible aliases have been created where
+necessary. It's highly recommended that you move over to the new naming conventions as these aliases may be removed at a
+later date.</p>
+<h4>1.6.0</h4>
+<ul>
+<li>Fixes issue with PostgreSQL conversions whereby certain inputs would cause unexpected
+outputs. <a href="https://github.com/paupino/rust-decimal/issues/241">Issue 241</a>.</li>
+<li>Fixes issue with <code>from_str_radix</code> whereby rounding logic would kick in too early,
+especially with radix less than 10. <a href="https://github.com/paupino/rust-decimal/issues/242">Issue 242</a>.</li>
+<li>Fixes issue whereby <code>from_str</code> (implicity <code>from_str_radix</code>) would panic when there was overflow
+and overflow significant digit was &lt; 5. <a href="https://github.com/paupino/rust-decimal/issues/246">Issue 246</a>.</li>
+<li>Make <code>bytes</code> and <code>byteorder</code> optional since they're only used in the <code>postgres</code> feature and tests.</li>
+<li>Fix edge case in <code>from_i128_with_scale</code> when <code>i128::MIN</code> was provided.</li>
+</ul>
+<p>Thank you
+to <a href="https://github.com/serejkaaa512">@serejkaaa512</a>, <a href="https://github.com/AbsurdlySuspicious">@AbsurdlySuspicious</a>
+and <a href="(https://github.com/0e4ef622)">@0e4ef622</a> for your contributions!</p>
+<h4>1.5.0</h4>
+<ul>
+<li>Added additional <code>RoundStrategy</code> abilities: <code>RoundUp</code> to always round up and <code>RoundDown</code> to always round down.</li>
+<li>Updated prelude to include expected structs and traits by default.</li>
+</ul>
+<p>Special thank you to <a href="https://github.com/jean-airoldie">@jean-airoldie</a> for adding the additional rounding strategies
+and to <a href="https://github.com/pfrenssen">@pfrenssen</a> for fixing an
+issue in the README.</p>
+<h4>1.4.1</h4>
+<ul>
+<li>Performance improvements for <code>to_f64</code> when using a scale &gt; 0.</li>
+</ul>
+<p>Special thank you to <a href="https://github.com/hengchu">@hengchu</a> who discovered and resolved the issue!</p>
+<h4>1.4.0</h4>
+<ul>
+<li>Allow uppercase &quot;E&quot; in scientific notation.</li>
+<li>Allow scientific notation in <code>dec!</code> macro.</li>
+<li>Deprecate <code>set_sign</code> and replace with <code>set_sign_positive</code> and <code>set_sign_negative</code>. This is intended
+to improve the readability of the API.</li>
+<li>Fixes precision issue when parsing <code>f64</code> values. The base 2 mantissa of the float was assuming guaranteed accuracy
+of 53 bit precision, however 52 bit precision is more accurate (<code>f64</code> only).</li>
+<li>Removes deprecated usage of <code>Error::description</code>.</li>
+</ul>
+<h4>1.3.0</h4>
+<ul>
+<li>Replace <code>num</code> dependency with <code>num_trait</code> - implemented <code>Signed</code> and <code>Num</code> traits.</li>
+</ul>
+<h4>1.2.1</h4>
+<ul>
+<li>Fixes issue whereby overflow would occur reading from PostgreSQL with high precision. The library now
+handles this by rounding high precision numbers as they're read as opposed to crashing (similar to other
+underflow situations e.g. 1/3).</li>
+</ul>
+<h4>1.2.0</h4>
+<ul>
+<li>Retain trailing zeros from PostgreSQL. This ensures that the scale is maintained when serialized into the Decimal
+type.</li>
+<li>Fixes issue where -0 != 0 (these are now equivalent - thank you @hengchu for discovering).</li>
+<li>Improve hashing function so that the following property is true: <code>k1 == k2 -&gt; hash(k1) == hash(k2)</code></li>
+<li>Update normalize function so that -0 normalizes to 0.</li>
+</ul>
+<p>Special thanks to @hathawsh for their help in this release!</p>
+<h4>1.1.0</h4>
+<ul>
+<li>Update to Postgres 0.17 and add postgres async/await support via <code>tokio-pg</code></li>
+<li>Added option for serializing decimals as float via <code>serde-float</code></li>
+</ul>
+<p>Special thanks to @pimeys and @kaibyao!</p>
+<h4>1.0.3</h4>
+<p>Updates dependencies to prevent build issues.</p>
+<h4>1.0.2</h4>
+<p>Bug fix release:</p>
+<ul>
+<li>Fixes issue where scaling logic produced incorrect results when one arm was a high precision zero. Thank you
+@KonishchevDmitry!</li>
+</ul>
+<h4>1.0.1</h4>
+<p>Bug fix release:</p>
+<ul>
+<li>Fixes issue where <code>ToSql</code> was incorrectly calculating weight when whole portion = numeric portion.</li>
+<li>Fixes issue where <code>Decimal::new</code> incorrectly handled <code>i64::max_value()</code> and <code>i64::min_value()</code>.</li>
+<li>Fixes issue where <code>rem</code> operation incorrectly returned results when <code>scale</code> was required.</li>
+</ul>
+<h4>1.0.0</h4>
+<p>This release represents the start of semantic versioning and allows the library to start making fundamental improvements
+under
+the guise of V2.0. Leading up to that I expect to release 1.x versions which will include adding
+various mathematical functions such as <code>pow</code>, <code>ln</code>, <code>log10</code> etc.</p>
+<p>Version <code>1.0.0</code> does come with some new features:</p>
+<ul>
+<li>Checked Operations! This implements <code>checked_add</code>, <code>checked_sub</code>, <code>checked_mul</code>, <code>checked_div</code> and <code>checked_rem</code>.</li>
+<li>Fixes overflow from <code>max_value()</code> and <code>min_value()</code> for <code>i32</code> and <code>i64</code>.</li>
+<li>Minor documentation improvements and test coverage.</li>
+</ul>
+<p>Special thanks to @0e4ef622 for their help with this release!</p>
+<h4>0.11.3</h4>
+<ul>
+<li>Add prelude to help num trait inclusion (<code>use rust_decimal::prelude::*</code>)</li>
+<li>Add <code>Default</code> trait to the library. This is equivalent to using <code>Decimal::zero()</code></li>
+<li>Added assignment operators for references.</li>
+</ul>
+<p>Special thanks to @jean-airoldie for his help with this release!</p>
+<h4>0.11.2</h4>
+<ul>
+<li>Fall back to <code>from_scientific</code> when <code>from_str</code> fails during deserialization. Thanks @mattjbray!</li>
+<li>Added basic <code>Sum</code> trait implementation</li>
+</ul>
+<h4>0.11.1</h4>
+<ul>
+<li>Fixes a bug in <code>floor</code> and <code>ceil</code> where negative numbers were incorrectly handled.</li>
+</ul>
+<h4>0.11.0</h4>
+<ul>
+<li>Macros are now supported on stable. This does use a <a href="https://github.com/dtolnay/proc-macro-hack">hack</a> for the
+meantime
+so due diligence is required before usage.</li>
+<li>Fixes issue when parsing strings where an underscore preceded a decimal point.</li>
+<li><code>const_fn</code> support via a feature flag. In the future this will be the default option however in order to support older
+compiler versions is behind a feature flag.</li>
+</ul>
+<h4>0.10.2</h4>
+<ul>
+<li>Macros (nightly) now output structural data as opposed to serialized data. This is fully backwards compatible and
+results in some minor performance improvements. Also, removed feature gate so that it can be compiled in stable.</li>
+<li>Fixes a string parsing bug when given highly significant numbers that require rounding.</li>
+</ul>
+<h4>0.10.1</h4>
+<ul>
+<li>Bumped dependencies to remove some legacy serialization requirements.</li>
+</ul>
+<h4>0.10.0</h4>
+<p>Special thanks to @xilec, @snd and @AndrewSpeed for their help with this release.</p>
+<ul>
+<li>New rounding strategies introduced via <code>round_dp_with_strategy</code>. Previously default rounding support used bankers
+rounding by default whereas now you can choose to round the half way point either up or down.</li>
+<li>PostgreSQL write performance improved so that it is at least 3 times faster than the previous implementation.</li>
+<li><code>Debug</code> trait now outputs the actual decimal number by default to make it more useful within consuming libraries (
+e.g. <code>criterion.rs</code>). To get something similar to the previous functionality you can use the <code>unpack</code> argument - this
+is likely for core <code>rust-decimal</code> library maintainers.</li>
+<li>Various other performance improvements for common operations such as <code>rescale</code>, <code>sub</code> and <code>div</code>.</li>
+</ul>
+<h4>0.9.1</h4>
+<ul>
+<li>Performance optimization for <code>add</code>.</li>
+</ul>
+<h4>0.9.0</h4>
+<ul>
+<li>Introduces the <code>Neg</code> trait to support the ability to use <code>-decimal_variable</code>.</li>
+<li>Fixes bug with underflow on addition.</li>
+</ul>
+<h4>0.8.1</h4>
+<p>This release updates the published documentation only and is a no-op for functionality.</p>
+<h4>0.8.0</h4>
+<ul>
+<li>Introduces <code>from_scientific</code> allowing parsing of scientific notation into the Decimal type.</li>
+<li>Fixes a bug when formatting a number with a leading zero's.</li>
+</ul>
+<h4>0.7.2</h4>
+<ul>
+<li>Fixes bug in <code>rescale</code> whereby scaling which invoked rounding incorrectly set the new scale for the left/right sides.</li>
+</ul>
+<h4>0.7.1</h4>
+<ul>
+<li>Fixes bug in <code>cmp</code> whereby two negatives would return an incorrect result.</li>
+<li>Further documentation examples</li>
+<li>Small improvements in division logic</li>
+<li>New <code>abs</code>, <code>floor</code> and <code>ceil</code> functions.</li>
+</ul>
+<h4>0.7.0</h4>
+<p>This is a minor version bump as we slowly build our way towards 1.0. Thank you for everyone's support and help as we get
+there! This has a few notable changes - also introducing a few new interfaces which is the reason for the version bump:</p>
+<ul>
+<li><code>from_parts</code> function to allow effective creation of <code>Decimal</code>'s without requiring binary serialization. An example of
+this benefit is with the lazy static group initializers for Postgres.</li>
+<li><code>normalize</code> function to allow stripping trailing zero's easily.</li>
+<li><code>trunc</code> function allows truncation of a number without any rounding. This effectively &quot;truncates&quot; the fractional part
+of the number.</li>
+<li><code>fract</code> function returns the fractional part of the number without the integral.</li>
+<li>Minor improvements in some iterator logic, utilizing the compiler for further optimizations.</li>
+<li>Fixes issue in string parsing logic whereby <code>_</code> would cause numbers to be incorrectly identified.</li>
+<li>Many improvements to <code>mul</code>. Numbers utilizing the <code>lo</code> portion of the decimal only will now be shortcut and bigger
+numbers will now correctly overflow. True overflows will still panic, however large underflows will now be rounded as
+necessary as opposed to panicing.</li>
+<li><code>Hash</code> was implemented by convention in <code>0.6.5</code> however is reimplemented explicitly in <code>0.7.0</code> for effectiveness.</li>
+<li>PostgreSQL read performance improved by pre-caching groups and leveraging <code>normalize</code> (i.e. avoiding strings). Further
+optimizations can be made in write however require some <code>div</code> optimizations first.</li>
+<li>Added short circuit write improvement for zero in PostgreSQL writes.</li>
+<li>Benchmarks are now recorded per build so we can start tracking where slow downs have occurred. This does mean there is
+a performance hit on Travis builds however hopefully the pay off will make it worthwhile.</li>
+</ul>
+<h4>0.6.5</h4>
+<p>Fixes issue with rescale sometimes causing a silent overflow which led to incorrect results during addition, subtraction
+and compare. Consequently Decimal now rounds the most significant number so that these operations work successfully.</p>
+<p>In addition, Decimal now derive's the <code>Hash</code> trait so that it can be used for indexing.</p>
+<h4>0.6.4</h4>
+<p>Fixes silent overflow errors when parsing highly significant strings. <code>from_str</code> will now round in these scenario's,
+similar to oleaut32 behavior.</p>
+<h4>0.6.3</h4>
+<p>Fixes a regression in ordering where by different scales would be rescaled towards losing precision instead of
+increasing precision. Have added numerous test suites to help cover more issues like this in the future.
+Also fixes an issue in parsing invalid strings whereby the precision exceeded our maximum precision. Previously, this
+would work with unintended results however this now returns an Error returned from <code>FromStr</code>.</p>
+<h4>0.6.2</h4>
+<p>Fixes an issue with division of rational numbers allowing results greater than <code>MAX_PRECISION</code>. This would ultimately
+cause issues for future operations on this number.
+In addition, in some cases transitive operations would not be equal due to overflow being lost.</p>
+<h4>0.6.1</h4>
+<p>This minor release is purely to expose <code>rust_decimal_macros</code> for use on the nightly channel. Documentation has been
+updated accordingly.</p>
+<h4>0.6.0</h4>
+<p>This release has a few major changes to the internal workings of the <code>Decimal</code> implementation and consequently comes
+with a number of performance improvements.</p>
+<ul>
+<li>Floats can now be parsed into a <code>Decimal</code> type using <code>from_f32</code> and <code>from_f64</code>.</li>
+<li><code>add</code>, <code>sub</code>, <code>mul</code> run roughly 1500% faster than before.</li>
+<li><code>div</code> run's roughly 1000% faster than before with room for future improvement.</li>
+<li>Also get significant speed improvements with <code>cmp</code>, <code>rescale</code>, <code>round_dp</code> and some string manipulations.</li>
+<li>Implemented <code>*Assign</code> traits for simpler usage.</li>
+<li>Removed <code>BigInt</code> and <code>BigUint</code> as being intermediary data types.</li>
+</ul>
+<h4>0.5.2</h4>
+<p>Minor bug fix to prevent a <code>panic</code> from overflow during comparison of high significant digit decimals.</p>
+<h4>0.5.1</h4>
+<p>Minor bux fix to prevent <code>panic</code> upon parsing an empty string.</p>
+<h4>0.5.0</h4>
+<ul>
+<li>Removes postgres from default feature set.</li>
+<li><code>bincode</code> support for serde</li>
+<li>Better support for format strings</li>
+<li>Benchmarks added to tests</li>
+</ul>
+<h4>0.4.2</h4>
+<p>Fixes bug in <code>cmp</code> whereby negative's were not being compared correctly.</p>
+<h4>0.4.1</h4>
+<p>Minor bug fix to support creating negative numbers using the default constructor.</p>
+<h4>0.4.0</h4>
+<p>This release is a stylistic cleanup however does include some minor changes that may break existing builds.</p>
+<h5>Changed</h5>
+<ul>
+<li>Serde is now optional. You can enable Serde support within <code>features</code> using the keyword <code>serde</code>.</li>
+<li>Serde now returns errors on invalid input as opposed to <code>0</code>.</li>
+<li><code>f64</code> conversion support has been added.</li>
+<li>Update Postgres dependency to use v0.15.</li>
+</ul>
+<h4>0.3.1</h4>
+<p>This is a documentation release that should help with discoverability and usage.</p>
+<h4>0.3.0</h4>
+<h5>Changed</h5>
+<ul>
+<li>Removed trait <code>ToDecimal</code> and replaced with builtin <a href="https://doc.rust-lang.org/std/convert/trait.From.html"><code>From</code></a>
+trait (<a href="https://github.com/paupino/rust-decimal/pull/12"><code>#12</code></a>)</li>
+</ul>
+</div><p class="table-note">sha256:5b9d443fa24553085c7d8d5ee91ee1a00089e8c3b438d4e9f2eba0326112d417</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2016 Paul Mason
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:f8218253704e32441cafea1b9b3bcb2c6a3c51c5553cd8513d179290202bccb2</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:8e903faf835cc751719b4c30bc90e0b29941495e9d2ecea8f348a43b5c246220</code></dd><dt>Upstream checksum</dt><dd><code>sha256:7653272e75dcac41dc199fbea6f5797633994fafd339943c06c9af16bf29cd3a</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rust_decimal&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.43.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">align16</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">borsh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:borsh&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">bytemuck</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;c-repr&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:bytemuck&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:bytemuck_derive&quot;</span><span class="p">]</span>
+<span class="n">c-repr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">db-diesel-mysql</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:diesel&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;diesel/mysql_backend&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">db-diesel-postgres</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:diesel&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;diesel/postgres_backend&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">db-diesel2-mysql</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;db-diesel-mysql&quot;</span><span class="p">]</span>
+<span class="n">db-diesel2-postgres</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;db-diesel-postgres&quot;</span><span class="p">]</span>
+<span class="n">db-postgres</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:bytes&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:postgres-types&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">db-tokio-postgres</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:bytes&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:postgres-types&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">diesel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:diesel&quot;</span><span class="p">]</span>
+<span class="n">legacy-ops</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">macros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rust_decimal_macros&quot;</span><span class="p">]</span>
+<span class="n">maths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">maths-nopanic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;maths&quot;</span><span class="p">]</span>
+<span class="n">ndarray</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:ndarray&quot;</span><span class="p">]</span>
+<span class="n">proptest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:proptest&quot;</span><span class="p">]</span>
+<span class="n">rand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rand&quot;</span><span class="p">]</span>
+<span class="n">rand-0_9</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rand-0_9&quot;</span><span class="p">]</span>
+<span class="n">rocket-traits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rocket&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">rust-fuzz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:arbitrary&quot;</span><span class="p">]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;wasm-bindgen?/serde&quot;</span><span class="p">]</span>
+<span class="n">serde-arbitrary-precision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde-with-arbitrary-precision&quot;</span><span class="p">]</span>
+<span class="n">serde-bincode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde-str&quot;</span><span class="p">]</span>
+<span class="n">serde-float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde-with-float&quot;</span><span class="p">]</span>
+<span class="n">serde-str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde-with-str&quot;</span><span class="p">]</span>
+<span class="n">serde-with-arbitrary-precision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:serde_json&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde_json/arbitrary_precision&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde_json/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;zmij&quot;</span><span class="p">]</span>
+<span class="n">serde-with-float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">]</span>
+<span class="n">serde-with-str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">]</span>
+<span class="n">serde_json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde_json&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;arrayvec/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;wasm-bindgen?/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;borsh?/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;bytes?/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rand?/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rand-0_9?/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde?/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde_json?/std&quot;</span><span class="p">]</span>
+<span class="n">tokio-pg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;db-tokio-postgres&quot;</span><span class="p">]</span>
+<span class="n">tokio-postgres</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tokio-postgres&quot;</span><span class="p">]</span>
+<span class="n">wasm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:wasm-bindgen&quot;</span><span class="p">]</span>
+<span class="n">zmij</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:zmij&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rust_decimal&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">arbitrary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/arbitrary&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">arrayvec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/arrayvec&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.7&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">borsh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/borsh&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.1.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;unstable__schema&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">bytemuck</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/bytemuck&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.17.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">bytemuck_derive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/bytemuck_derive&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.7.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/bytes&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">diesel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/diesel&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.2.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">ndarray</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/ndarray&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.15.6&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">num-traits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/num-traits&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;i128&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">postgres-types</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/postgres-types&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">proptest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/proptest&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rand&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8.6&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rand-0_9</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rand&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rocket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rocket&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.5.0-rc.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rust_decimal_macros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rust_decimal_macros&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.37.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde_json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_json&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tokio-postgres</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tokio-postgres&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.7&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">wasm-bindgen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/wasm-bindgen&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_arch = </span><span class="se">\&quot;</span><span class="s2">wasm32</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zmij</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zmij&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;README-lib.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;out/README-lib.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">digest</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;sha256:cc1a64a6250d5c4bed130b453930ac64b7bd01f435e3fbe1b7135c7738c0f8f4&quot;</span><span class="w"> </span><span class="p">}]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;README-lib.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;out/README-lib.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">digest</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;sha256:cc1a64a6250d5c4bed130b453930ac64b7bd01f435e3fbe1b7135c7738c0f8f4&quot;</span><span class="w"> </span><span class="p">}]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;README-lib.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;out/README-lib.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">digest</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;sha256:cc1a64a6250d5c4bed130b453930ac64b7bd01f435e3fbe1b7135c7738c0f8f4&quot;</span><span class="w"> </span><span class="p">}]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;README-lib.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;out/cc1a64a6250d/README-lib.md&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">digest</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;sha256:cc1a64a6250d5c4bed130b453930ac64b7bd01f435e3fbe1b7135c7738c0f8f4&quot;</span><span class="w"> </span><span class="p">}]</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Paul Mason &lt;paul@form1.co.nz&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.67.1</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/rust_decimal/1.43.0">crates.io package</a></li><li><a href="https://github.com/paupino/rust-decimal">Source repository</a></li><li><a href="https://docs.rs/rust_decimal/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">rust_decimal</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/rust_decimal"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.43.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

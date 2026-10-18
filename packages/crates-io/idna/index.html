@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>idna 1.1.0 · Incan.pub</title><meta name="description" content="IDNA (Internationalizing Domain Names in Applications) and Punycode."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/idna</p><div class="title-row"><h1>idna</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/idna/versions/1.1.0/" selected>1.1.0</option></select></label></div><p class="description">IDNA (Internationalizing Domain Names in Applications) and Punycode.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3><code>idna</code></h3>
+<p>IDNA library for Rust implementing <a href="https://www.unicode.org/reports/tr46/">UTS 46: Unicode IDNA Compatibility Processing</a> as parametrized by the <a href="https://url.spec.whatwg.org/#idna">WHATWG URL Standard</a>.</p>
+<h4>What it does</h4>
+<ul>
+<li>An implementation of UTS 46 is provided, with configurable ASCII deny list (e.g. STD3 or WHATWG rules).</li>
+<li>A callback mechanism is provided for pluggable logic for deciding if a label is deemed potentially too misleading to render as Unicode in a user interface.</li>
+<li>Errors are marked as U+FFFD REPLACEMENT CHARACTERs in Unicode output so that locations of errors may be illustrated to the user.</li>
+</ul>
+<h4>What it does not do</h4>
+<ul>
+<li>There is no default/sample policy provided for the callback mechanism mentioned above.</li>
+<li>Only UTS 46 is implemented: There is no API to request strictly IDNA 2008 only or strictly IDNA 2003 only.</li>
+<li>There is no API for categorizing errors beyond there being an error.</li>
+<li>Checks that are configurable in UTS 46 but that the WHATWG URL Standard always set a particular way (regardless of the <em>beStrict</em> flag in the URL Standard) cannot be configured (with the exception of the old deprecated API supporting transitional processing).</li>
+</ul>
+<h4>Usage</h4>
+<p>Apps that need to prepare a hostname for usage in protocols are likely to only need the top-level function <code>domain_to_ascii_cow</code> with <code>AsciiDenyList::URL</code> as the second argument. Note that this rejects IPv6 addresses, so before this, you need to check if the first byte of the input is <code>b'['</code> and, if it is, treat the input as an IPv6 address instead.</p>
+<p>Apps that need to display host names to the user should use <code>uts46::Uts46::to_user_interface</code>. The <em>ToUnicode</em> operation is rarely appropriate for direct application usage.</p>
+<h4>Cargo features</h4>
+<ul>
+<li><code>alloc</code> - For future proofing. Currently always required. Currently, the crate internal may allocate heap but for typical inputs do not allocate on the heap (apart from the output <code>String</code> when applicable).</li>
+<li><code>compiled_data</code> - For future proofing. Currently always required. (Passed through to ICU4X.)</li>
+<li><code>std</code> - Adds <code>impl std::error::Error for Errors {}</code> (and implies <code>alloc</code>).</li>
+<li>By default, all of the above are enabled.</li>
+</ul>
+<h4>Alternative Unicode back ends</h4>
+<p>By default, <code>idna</code> uses <a href="https://github.com/unicode-org/icu4x/">ICU4X</a> as its Unicode back end. If you wish to opt for different tradeoffs between correctness, run-time performance, binary size, compile time, and MSRV, please see the <a href="https://docs.rs/crate/idna_adapter/latest">README of the latest version of the <code>idna_adapter</code> crate</a> for how to opt into a different Unicode back end.</p>
+<h4>Breaking changes since 0.5.0</h4>
+<ul>
+<li>Stricter IDNA 2008 restrictions are no longer supported. Attempting to enable them panics immediately. UTS 46 allows all the names that IDNA 2008 allows, and when transitional processing is disabled, they resolve the same way. There are additional names that IDNA 2008 disallows but UTS 46 maps to names that IDNA 2008 allows (notably, input is mapped to fold-case output). UTS 46 also allows symbols that were allowed in IDNA 2003 as well as newer symbols that are allowed according to the same principle. (Earlier versions of this crate allowed rejecting such symbols. Rejecting characters that UTS 46 maps to IDNA 2008-permitted characters wasn't supported in earlier versions, either.)</li>
+<li><code>domain_to_ascii_strict</code> now performs the <em>CheckHyphens</em> check (matching previous documentation).</li>
+<li>The ContextJ rules are now implemented and always enabled, even when using the old deprecated API, so input that fails those rules is rejected.</li>
+<li>The <code>Idna::to_ascii_inner</code> method has been removed. It didn't make sense as a public method, since callers were unable to figure out if there were errors. (A GitHub search found no callers for this method.)</li>
+<li>Punycode labels whose decoding does not yield any non-ASCII characters are now treated as being in error.</li>
+<li>When turning off default cargo features, the cargo feature <code>compiled_data</code> needs to be explicitly enabled.</li>
+</ul>
+<h4>License</h4>
+<p>MIT OR Apache-2.0 for the code. Additionally, there is a test data file, IdnaTestV2.txt, under Unicode-3.0.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>alloc</code></th><td>Yes<small>default → std → alloc</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>compiled_data</code></th><td>Yes<small>default → compiled_data</small></td><td><ul class="effects"><li><code>idna_adapter/compiled_data</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>compiled_data</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>alloc</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/idna_adapter/"><code>crates-io/idna_adapter</code></a><small>Alias: idna_adapter</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/smallvec/"><code>crates-io/smallvec</code></a><small>Alias: smallvec</small></th><td><code>^1.13.1</code><small>Default features: enabled</small><small>Requests: const_generics</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/utf8_iter/"><code>crates-io/utf8_iter</code></a><small>Alias: utf8_iter</small></th><td><code>^1.0.4</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/cookie_store/versions/0.22.1/">crates-io/cookie_store 0.22.1</a><span>Requires ^1.0 · alias idna · </span></li><li><a href="../../../packages/crates-io/hickory-net/versions/0.26.3/">crates-io/hickory-net 0.26.3</a><span>Requires ^1.0.3 · alias idna · </span></li><li><a href="../../../packages/crates-io/hickory-proto/versions/0.26.3/">crates-io/hickory-proto 0.26.3</a><span>Requires ^1.0.3 · alias idna · </span></li><li><a href="../../../packages/crates-io/jsonschema/versions/0.58.6/">crates-io/jsonschema 0.58.6</a><span>Requires ^1.0.2 · alias idna · </span></li><li><a href="../../../packages/crates-io/publicsuffix/versions/2.3.0/">crates-io/publicsuffix 2.3.0</a><span>Requires ^1.0 · alias idna · </span></li><li><a href="../../../packages/crates-io/url/versions/2.5.8/">crates-io/url 2.5.8</a><span>Requires ^1.1.0 · alias idna · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, compiled_data, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:721f31a7432d81bf42a0428330511343b557a06568fef64b6e0a093d138cf3cc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:2c26b02eb1759f897855ee6a39222d45fb84ccf1b275af382e3aa1d520f41766</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, compiled_data, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:26a363894348822907b57576eab382a603ea0fc7a1792ddcc882ca1b5de09810</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:1dae9b652c366ead10a9a0d993633cd741317c6783c1dd755a51f4f40f940157</small></li><li><code>sha256:5025d5b8dd2744c4619c81dbe3920cf8c8628a65f9e544eb3b13ded3f73cbfd3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:da206353ced8562c87886a0ff5a47e745ea944bca35ff3670db20963a37e6dc5</small></li><li><code>sha256:65818ccf3c23fd4c11024255bec661a33a4db5e97ef3f1921b66ecd51f6a577b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:04a1e9df46b42e7170af0a1c3fa540b1588d434cba4de1d182423d58f2bf1b34</small></li><li><code>sha256:b748c9cf146a54e3d728493f4b1ec9428a1f00cfa6e7156afac24944d2f5070e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:29ec7d23d25e602bd1569a6cf2b7a85cadd3b1b3e96d5ee72000106720acaf41</small></li><li><code>sha256:d3c42973f348be79bb53f8d82911510871a6ceb27b415d36b65b4c523fb5c0c1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:ccc798aa5c55a71f4286baaa8178d803f84dfc03c5dd4bce8e70117974c935f6</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, compiled_data, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a0a5c99f74b4d8b9a6d2ee08b15cc58bea22d4c77c6c0673d6da9daf74a0b765</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:2fa6b362e63e3e2e495344c8c5e182c3746cf60f679150f469c4bd4d0c582169</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, compiled_data, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:621e291795a18ca2b359fff0d2563fb4081c274f6de972e702532f6bbad5ec1e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:0c12cb0250dc31ccbfda478bf7965d1025710b0ceb047677f6cdc454004050e9</small></li><li><code>sha256:800c49d46767c618997c857a5f686445106670f1b5158587977827a81213e829</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:34e844832879d715674753a4c0ede607c94a0bfdd6b6869859b03e1d5e530ecf</small></li><li><code>sha256:8bba954f5f3bfb7ddc87c0c012cec49b38115668be07bf9e38d0dc2d24ba2838</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:54b727a6e107b7b06b87ddd0b6d857a94954b9c596ff00a353b002713a3f7f6f</small></li><li><code>sha256:ab972c75bacebb596282c88f1f13a6717b118f29ad0c4c9b704a67e67da0ed5e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:6b69b54d5cf0d97ddaab1182601fbec2d3e1c97fbc3a7b450772e93544dd60b5</small></li><li><code>sha256:e1b854138c5f00fe9852b107fb79ef62bd42f37ea3e0c109660e392edc31174f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:2eb8c13d4df9c380e5484198df564f0b288c0262cca54184cd76d88806ce672d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, compiled_data, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:70fbfc5ae3d8609c00c25ecceca56c996802514bc67f38d0d726b0903baa81ce</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674983">Attestation reference</a><small>Archive: sha256:a6c43c7c8e289b6a45e758170b0ada74d0afe6aebd5dfedbbe8fdd5e3e6bae80</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, compiled_data, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1aae19e3af9110dcaa8dcf062b898a195968d8ede4b446ab243a27d142a5c76d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:88659e2a07d64520712c65e6590d00dae270a218258826e30bd860985324d640</small></li><li><code>sha256:62ddc7dcdc2b04b0b05581c31d062972eca3a6a9939512703eca12d8dde183ab</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:e239ab9c2496a00eadb14339b67f05cf7a060a492df63b6f78b2e8a51cf2ae8b</small></li><li><code>sha256:92a1c928c0e04c10fd11f4127edd399ac09a7c69dcb9e417aad3e99e178fd573</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:f372908566f2f391e6e401e4c4d1e4da45ce85035fbdaa614337950df54bb1c0</small></li><li><code>sha256:9e8b221a7811c34927175340fd85e3f3fcb2cfefef60ec4151e985a0b4f9196f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:9292e7baa3e8a86ee9e9697b2cf4df31c007484aef321681580eb79deda809e9</small></li><li><code>sha256:bc0cff78f741ce75c1ceb99658d9b46f13e59c2eabe8583a4543b89d9cb07a8b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:faf0d9da4fa7128b52d0d7b9292f981ca064b8b9e89e66de6f060764bc72e7fc</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, compiled_data, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:075b43b9108ce3a656ae8288e8050e596dcd39721c6f7491966bbb7994615a0f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:90550b3b4ae98bc3b3325788d3ba46a8b8d3c627a5b51a1764ebc501c45bb9a8</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, compiled_data, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:129cf72594c49637b15d669ffe807b3a3459b03064e66d133a2fe04440d22d14</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:d5a8d88296ffeee27928f1fc4e35207445c943ee1532d7d33aea05e34b886b07</small></li><li><code>sha256:1efe7092fcda8b770dceeb7ca9b4c1049a4c43ea728f71a9cbfd72bae7ec8b0e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:9b6d0e88c3b2b3c69d11c2338cb76c10497f89ef57abb179a943b7041fc3c10f</small></li><li><code>sha256:6efdc6fb54097d8ec6637e66a61e51304dbe37cda3e87b48d543971d1704a173</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:288e8f870cfc3cdd3ec4a61cd2de56c9d24f927bc0083ef7090d8a22260d695a</small></li><li><code>sha256:8e678f4fdb39dbc5a055a828af5e2b28ec96b03235aaa29cdd008983f8978c1d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:6dfa45395df210151dac002ddf9a5e7a1b34833138a18240abf223c2b7583be4</small></li><li><code>sha256:ba345e842ecca03596df7cd53d6728bae0a9383627f45d6fe67774e7446d0199</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:349028c0e82d75c71a34512f75495ec5bc47a9f2de9a49495969eec2306d728b</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>alloc, compiled_data, std</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/idna/versions/1.1.0/">1.1.0</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/idna/1.1.0">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2013-2025 The rust-url developers
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:b38f11f6096706e6de553dabe2a7ed142d59b6fa8c97e290c67496154745cdd5</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:85368c32fe87cf5ba9c0f82577b5b424ec7a3481e111ae2b02306db7b202289f</code></dd><dt>Upstream checksum</dt><dd><code>sha256:3b0875f23caa03898994f6ddc501886a45c7d3d62d04d2d90788d47be1b1e4de</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/idna&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.1.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">compiled_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;idna_adapter/compiled_data&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;compiled_data&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;idna&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">idna_adapter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/idna_adapter&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">smallvec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/smallvec&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.13.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;const_generics&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">utf8_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/utf8_iter&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.4&quot;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;compiled_data&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>The rust-url developers</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.57</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/idna/1.1.0">crates.io package</a></li><li><a href="https://github.com/servo/rust-url/">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">idna</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/idna"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.1.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

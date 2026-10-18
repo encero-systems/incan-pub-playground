@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>micromap 0.3.0 · Incan.pub</title><meta name="description" content="The fastest alternative to HashMap, for maps smaller than 20 keys"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/micromap</p><div class="title-row"><h1>micromap</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/micromap/versions/0.3.0/" selected>0.3.0</option></select></label></div><p class="description">The fastest alternative to HashMap, for maps smaller than 20 keys</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>The Fastest Linear Map in Rust</h3>
+<p><a href="https://github.com/yegor256/micromap/actions/workflows/cargo.yml">cargo</a>
+<a href="https://crates.io/crates/micromap">crates.io</a>
+<a href="https://docs.rs/micromap/latest/micromap/">docs.rs</a>
+<a href="https://blog.rust-lang.org/2024/06/13/Rust-1.79.0.html">MSRV</a>
+<a href="https://github.com/yegor256/micromap/blob/master/LICENSE.txt">License</a>
+<a href="https://codecov.io/gh/yegor256/micromap">codecov</a>
+<a href="https://hitsofcode.com/view/github/yegor256/micromap">Hits-of-Code</a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fyegor256%2Fmicromap?ref=badge_shield&amp;amp;issueType=license">FOSSA Status</a></p>
+<p>A much faster alternative of
+<a href="https://doc.rust-lang.org/std/collections/struct.HashMap.html"><code>HashMap</code></a>,
+for very small maps.
+It is also faster than
+<a href="https://github.com/rust-lang/rustc-hash">FxHashMap</a>,
+<a href="https://github.com/rust-lang/hashbrown">hashbrown</a>,
+<a href="https://github.com/robjtede/tinymap">ArrayMap</a>,
+<a href="https://crates.io/crates/indexmap">IndexMap</a>,
+and <em>all</em> others.
+The smaller the map, the higher the performance.
+It was observed that when a map contains more than 20 keys,
+it may be better to use the standard
+<a href="https://doc.rust-lang.org/std/collections/struct.HashMap.html"><code>HashMap</code></a>,
+since the performance of <code>micromap::Map</code> <em>may</em> start to degrade.
+See the <a href="https://github.com/yegor256/micromap/blob/72d6d2b26678b6e41d2bc94d215e619b94a4fa75/README.md#benchmark">benchmarking results</a> below.</p>
+<p>First, add this to <code>Cargo.toml</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">micromap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1.0&quot;</span>
+</code></pre>
+<p>Then, use it like a standard hash map... well, almost:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">micromap</span><span class="p">::</span><span class="n">Map</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nc">Map</span><span class="o">&lt;</span><span class="kt">u64</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Map</span><span class="p">::</span><span class="n">new</span><span class="p">();</span><span class="w"> </span><span class="c1">// allocation on stack</span>
+<span class="n">m</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;foo&quot;</span><span class="p">);</span>
+<span class="n">m</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;bar&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">len</span><span class="p">());</span>
+</code></pre>
+<p>Pay attention, here the map is created with an extra generic argument <code>10</code>.
+This is the total size of the map, which is allocated on stack when <code>::new()</code>
+is called. Unlike <code>HashMap</code>, the <code>Map</code> doesn't use heap at all. If more than
+ten keys will be added to the map, it will panic.</p>
+<p>Read <a href="https://docs.rs/micromap/latest/micromap/">the API documentation</a>.
+The struct
+<a href="https://docs.rs/micromap/latest/micromap/struct.Map.html"><code>micromap::Map</code></a>
+is designed to be as closely similar to
+<a href="https://doc.rust-lang.org/std/collections/struct.HashMap.html"><code>std::collections::HashMap</code></a> as possible.</p>
+<h4>Benchmark</h4>
+<p>There is a summary of a simple benchmark, where we compared <code>micromap::Map</code> with
+a few other Rust maps, changing the total capacity of the map (horizontal axis).
+We applied the same interactions
+(<a href="https://github.com/yegor256/micromap/blob/master/tests/benchmark.rs"><code>benchmark.rs</code></a>)
+to them and measured how fast they performed. In the following table,
+the numbers over 1.0 indicate performance gain,
+while the numbers below 1.0 demonstrate performance loss.</p>
+<p></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align:right">2</th>
+<th style="text-align:right">4</th>
+<th style="text-align:right">8</th>
+<th style="text-align:right">16</th>
+<th style="text-align:right">32</th>
+<th style="text-align:right">64</th>
+<th style="text-align:right">128</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>flurry::HashMap</code></td>
+<td style="text-align:right">306.47</td>
+<td style="text-align:right">73.70</td>
+<td style="text-align:right">29.08</td>
+<td style="text-align:right">18.83</td>
+<td style="text-align:right">7.14</td>
+<td style="text-align:right">4.48</td>
+<td style="text-align:right">2.70</td>
+</tr>
+<tr>
+<td><code>hashbrown::HashMap</code></td>
+<td style="text-align:right">20.72</td>
+<td style="text-align:right">9.55</td>
+<td style="text-align:right">4.80</td>
+<td style="text-align:right">3.13</td>
+<td style="text-align:right">1.08</td>
+<td style="text-align:right">0.55</td>
+<td style="text-align:right">0.32</td>
+</tr>
+<tr>
+<td><code>heapless::LinearMap</code></td>
+<td style="text-align:right">1.44</td>
+<td style="text-align:right">1.32</td>
+<td style="text-align:right">0.87</td>
+<td style="text-align:right">1.19</td>
+<td style="text-align:right">0.80</td>
+<td style="text-align:right">1.01</td>
+<td style="text-align:right">1.02</td>
+</tr>
+<tr>
+<td><code>indexmap::IndexMap</code></td>
+<td style="text-align:right">16.51</td>
+<td style="text-align:right">13.55</td>
+<td style="text-align:right">6.93</td>
+<td style="text-align:right">4.96</td>
+<td style="text-align:right">1.95</td>
+<td style="text-align:right">1.16</td>
+<td style="text-align:right">0.68</td>
+</tr>
+<tr>
+<td><code>linear_map::LinearMap</code></td>
+<td style="text-align:right">1.69</td>
+<td style="text-align:right">1.37</td>
+<td style="text-align:right">0.75</td>
+<td style="text-align:right">0.87</td>
+<td style="text-align:right">0.67</td>
+<td style="text-align:right">1.02</td>
+<td style="text-align:right">0.98</td>
+</tr>
+<tr>
+<td><code>linked_hash_map::LinkedHashMap</code></td>
+<td style="text-align:right">27.19</td>
+<td style="text-align:right">19.37</td>
+<td style="text-align:right">8.85</td>
+<td style="text-align:right">6.15</td>
+<td style="text-align:right">2.38</td>
+<td style="text-align:right">1.43</td>
+<td style="text-align:right">0.84</td>
+</tr>
+<tr>
+<td><code>litemap::LiteMap</code></td>
+<td style="text-align:right">1.73</td>
+<td style="text-align:right">1.93</td>
+<td style="text-align:right">3.60</td>
+<td style="text-align:right">2.95</td>
+<td style="text-align:right">1.29</td>
+<td style="text-align:right">0.93</td>
+<td style="text-align:right">0.62</td>
+</tr>
+<tr>
+<td><code>micromap::Map</code> 👍</td>
+<td style="text-align:right">1.00</td>
+<td style="text-align:right">1.00</td>
+<td style="text-align:right">1.00</td>
+<td style="text-align:right">1.00</td>
+<td style="text-align:right">1.00</td>
+<td style="text-align:right">1.00</td>
+<td style="text-align:right">1.00</td>
+</tr>
+<tr>
+<td><code>nohash_hasher::BuildNoHashHasher</code></td>
+<td style="text-align:right">20.25</td>
+<td style="text-align:right">10.16</td>
+<td style="text-align:right">4.98</td>
+<td style="text-align:right">2.93</td>
+<td style="text-align:right">1.03</td>
+<td style="text-align:right">0.68</td>
+<td style="text-align:right">0.39</td>
+</tr>
+<tr>
+<td><code>rustc_hash::FxHashMap</code></td>
+<td style="text-align:right">20.14</td>
+<td style="text-align:right">9.93</td>
+<td style="text-align:right">4.56</td>
+<td style="text-align:right">2.73</td>
+<td style="text-align:right">0.86</td>
+<td style="text-align:right">0.53</td>
+<td style="text-align:right">0.31</td>
+</tr>
+<tr>
+<td><code>std::collections::BTreeMap</code></td>
+<td style="text-align:right">21.44</td>
+<td style="text-align:right">13.51</td>
+<td style="text-align:right">7.05</td>
+<td style="text-align:right">5.71</td>
+<td style="text-align:right">2.00</td>
+<td style="text-align:right">1.28</td>
+<td style="text-align:right">0.84</td>
+</tr>
+<tr>
+<td><code>std::collections::HashMap</code></td>
+<td style="text-align:right">20.50</td>
+<td style="text-align:right">12.19</td>
+<td style="text-align:right">6.24</td>
+<td style="text-align:right">4.36</td>
+<td style="text-align:right">1.67</td>
+<td style="text-align:right">1.03</td>
+<td style="text-align:right">0.60</td>
+</tr>
+<tr>
+<td><code>tinymap::array_map::ArrayMap</code></td>
+<td style="text-align:right">3.22</td>
+<td style="text-align:right">3.91</td>
+<td style="text-align:right">2.97</td>
+<td style="text-align:right">4.22</td>
+<td style="text-align:right">3.49</td>
+<td style="text-align:right">4.47</td>
+<td style="text-align:right">5.05</td>
+</tr>
+</tbody>
+</table>
+<p>The experiment <a href="https://github.com/yegor256/micromap/actions/workflows/benchmark.yml">was performed</a> on 11-03-2026.
+There were 1000000 repetitions.
+The entire benchmark took 278s.
+Uname: 'Linux'.</p>
+<p></p>
+<p>As you see, the highest performance gain was achieved for the maps that
+were smaller than ten keys.
+For the maps of just a few keys, the gain was enormous.</p>
+<h4>MSRV (Minimum Supported Rust Version)</h4>
+<p><strong><code>Rust 1.79</code></strong></p>
+<p>(Enabling some features will affect MSRV, the documentation will note it.)</p>
+<h4>How to Contribute</h4>
+<p>First, install <a href="https://www.rust-lang.org/tools/install">Rust</a>, update to the
+last version by <code>rustup update stable</code>, and then:</p>
+<pre><code>cargo test -vv
+</code></pre>
+<p>If everything goes well, fork repository, make changes, send us a
+<a href="https://www.yegor256.com/2014/04/15/github-guidelines.html">pull request</a>.
+We will review your changes and apply them to the <code>master</code> branch shortly,
+provided they don't violate our quality standards. To avoid frustration,
+before sending us your pull request please run <code>cargo test</code> again. Also,
+run <code>cargo fmt</code> and <code>cargo clippy</code>.</p>
+<p>Also, before you start making changes, run benchmarks:</p>
+<pre><code>cargo bench --bench bench
+</code></pre>
+<p>If you modified the comment docs, run this to check:</p>
+<ul>
+<li>Linux:</li>
+</ul>
+<pre><code>RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps
+</code></pre>
+<ul>
+<li>Windows(PowerShell):</li>
+</ul>
+<pre><code>$env:RUSTDOCFLAGS="--cfg docsrs"; cargo +nightly doc --all-features --no-deps --open; Remove-Item Env:\RUSTDOCFLAGS
+</code></pre>
+<p>Then, after the changes you make, run it again.
+Compare the results.
+If your changes degrade the performance,
+think twice before submitting a pull request.</p>
+<p>About the <strong>version change</strong>, we follow the rules of this
+<a href="https://doc.rust-lang.org/cargo/reference/semver.html">Cargo SemVer reference</a>
+. If your code has an impact on semver compatibility, such as
+<strong>breaking changes</strong>, then you may also need to explicitly upgrade the version.
+Because our project version uses a placeholder, you can
+<em>add a hint note after the version number <code>0.0.0</code></em> in Cargo.toml
+<code>package.version</code> to mark that you want to update the version, which we call
+&quot;version hint&quot;, as follows:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[package]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;micromap&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.0.0&quot;</span><span class="w"> </span><span class="c1"># hint: 1.2.3</span>
+<span class="c1"># ...</span>
+</code></pre>
+<p>If no version change is required, do not add any comments after the version
+number <code>0.0.0</code>.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0.228</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/referencing/versions/0.58.6/">crates-io/referencing 0.58.6</a><span>Requires ^0.3.0 · alias micromap · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:50162616af31e8f9f5feeff1c2ef16da288ad7cd6cf1b34be0b803692a503f9f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:ad13a3f71985175dc14cece8202af1a75a3dcd5d233f891082e1e55f0ac32a22</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0a08257ed597d86a262920327cbcdfa1bee2e5f37c997395d99db630817f71e0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:ab96ff4efb57d2d7248a5a48dc4b5a265644854f3d9e64c289222895bfcb0732</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:cfbbece54095b14ab4d9624b2f96bd1e8cf92c27a2a83d1cebe24284d5257a0b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:e977a1ddb080a510efca4e215ec7be5483c78349f97f0bed6a86c9644c4a9767</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5f3782fbe38fb8e24bf345d9b757e51dd9c06b231c76be95f4401f08f871f9c0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:dd0f5cd79aa39a35090c27dc95de159f08fcef526b7ae1d1b0a2f11f39a6bd43</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/micromap/versions/0.3.0/">0.3.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/micromap/0.3.0">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE.txt · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2023-2026 Yegor Bugayenko
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:9387c2d197e2370a740ca457dae1662c56de56b811ee4862024343961307f9bf</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:2511ae13f214ce2822078fd49f282bace0d8a50ac6aa2b54715f88f0f67767c0</code></dd><dt>Upstream checksum</dt><dd><code>sha256:c2a86d3146ed3995b5913c414f6664344b9617457320782e64f0bb44afd49d74</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/micromap&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.3.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;micromap&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.228&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.79</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/micromap/0.3.0">crates.io package</a></li><li><a href="https://github.com/yegor256/micromap">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">micromap</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/micromap"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.3.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

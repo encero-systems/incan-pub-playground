@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>moka 0.12.16 · Incan.pub</title><meta name="description" content="A fast and concurrent cache library inspired by Java Caffeine"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/moka</p><div class="title-row"><h1>moka</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/moka/versions/0.12.16/" selected>0.12.16</option></select></label></div><p class="description">A fast and concurrent cache library inspired by Java Caffeine</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>(MIT OR Apache-2.0) AND Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Moka</h3>
+<p><a href="https://github.com/moka-rs/moka/actions?query=workflow%3ACI">GitHub Actions</a>
+<a href="https://crates.io/crates/moka">crates.io release</a>
+<a href="https://docs.rs/moka">docs</a>
+<a href="https://deepwiki.com/moka-rs/moka">DeepWiki</a>
+<a href="https://deps.rs/repo/github/moka-rs/moka">dependency status</a>
+<a href="https://codecov.io/gh/moka-rs/moka">codecov</a>
+<a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#license">license</a></p>
+<blockquote>
+<p>[!NOTE]
+If you have any questions about Moka's APIs or internal design, you can ask the
+AI chatbot at DeepWiki in a natural language:
+<a href="https://deepwiki.com/moka-rs/moka">https://deepwiki.com/moka-rs/moka</a></p>
+</blockquote>
+<blockquote>
+<p>[!NOTE]
+<code>v0.12.0</code> had major breaking changes on the API and internal behavior. Please read
+the <a href="https://github.com/moka-rs/moka/blob/main/MIGRATION-GUIDE.md">MIGRATION-GUIDE.md</a> for the details.</p>
+</blockquote>
+<hr>
+<p>Moka is a fast, concurrent cache library for Rust. Moka is inspired by the
+<a href="https://github.com/ben-manes/caffeine">Caffeine</a> library for Java.</p>
+<p>Moka provides cache implementations on top of hash maps. They support full
+concurrency of retrievals and a high expected concurrency for updates.</p>
+<p>All caches perform a best-effort bounding of a hash map using an entry replacement
+algorithm to determine which entries to evict when the capacity is exceeded.</p>
+<h4>Features</h4>
+<p>Moka provides a rich and flexible feature set while maintaining high hit ratio and a
+high level of concurrency for concurrent access.</p>
+<ul>
+<li>Thread-safe, highly concurrent in-memory cache implementations:
+<ul>
+<li>Synchronous caches that can be shared across OS threads.</li>
+<li>An asynchronous (futures aware) cache.</li>
+</ul>
+</li>
+<li>A cache can be bounded by one of the followings:
+<ul>
+<li>The maximum number of entries.</li>
+<li>The total weighted size of entries. (Size aware eviction)</li>
+</ul>
+</li>
+<li>Maintains near optimal hit ratio by using an entry replacement algorithms inspired
+by Caffeine:
+<ul>
+<li>Admission to a cache is controlled by the Least Frequently Used (LFU) policy.</li>
+<li>Eviction from a cache is controlled by the Least Recently Used (LRU) policy.</li>
+<li><a href="https://github.com/moka-rs/moka/wiki#admission-and-eviction-policies">More details and some benchmark results are available here</a>.</li>
+</ul>
+</li>
+<li>Supports expiration policies:
+<ul>
+<li>Time to live.</li>
+<li>Time to idle.</li>
+<li>Per-entry variable expiration.</li>
+</ul>
+</li>
+<li>Supports eviction listener, a callback function that will be called when an entry
+is removed from the cache.</li>
+</ul>
+<h5>Choosing the right cache for your use case</h5>
+<p>No cache implementation is perfect for every use cases. Moka is a complex software
+and can be overkill for your use case. Sometimes simpler caches like
+<a href="https://crates.io/crates/mini-moka">Mini Moka</a> or <a href="https://crates.io/crates/quick_cache">Quick Cache</a> might be a better fit.</p>
+<p>The following table shows the trade-offs between the different cache implementations:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Feature</th>
+<th style="text-align:left">Moka v0.12</th>
+<th style="text-align:left">Mini Moka v0.10</th>
+<th style="text-align:left">Quick Cache v0.6</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Thread-safe, sync cache</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+</tr>
+<tr>
+<td style="text-align:left">Thread-safe, async cache</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">✅</td>
+</tr>
+<tr>
+<td style="text-align:left">Non-concurrent cache</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+</tr>
+<tr>
+<td style="text-align:left">Bounded by the maximum number of entries</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+</tr>
+<tr>
+<td style="text-align:left">Bounded by the total weighted size of entries</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+</tr>
+<tr>
+<td style="text-align:left">Near optimal hit ratio</td>
+<td style="text-align:left">✅ TinyLFU</td>
+<td style="text-align:left">✅ TinyLFU</td>
+<td style="text-align:left">✅ S3-FIFO</td>
+</tr>
+<tr>
+<td style="text-align:left">Per-key, atomic insertion. (e.g. <code>get_with</code> method)</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">✅</td>
+</tr>
+<tr>
+<td style="text-align:left">Cache-level expiration policies (time-to-live and time-to-idle)</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">❌</td>
+</tr>
+<tr>
+<td style="text-align:left">Per-entry variable expiration</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">❌</td>
+</tr>
+<tr>
+<td style="text-align:left">Eviction listener</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">✅ (via lifecycle hook)</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock-free, concurrent iterator</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">❌</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock-per-shard, concurrent iterator</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Performance, etc.</th>
+<th style="text-align:left">Moka v0.12</th>
+<th style="text-align:left">Mini Moka v0.10</th>
+<th style="text-align:left">Quick Cache v0.6</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Small overhead compared to a concurrent hash table</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">✅</td>
+</tr>
+<tr>
+<td style="text-align:left">Does not use background threads</td>
+<td style="text-align:left">❌ → ✅ Removed from v0.12</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+</tr>
+<tr>
+<td style="text-align:left">Small dependency tree</td>
+<td style="text-align:left">❌</td>
+<td style="text-align:left">✅</td>
+<td style="text-align:left">✅</td>
+</tr>
+</tbody>
+</table>
+<h4>Moka in Production</h4>
+<p>Moka is powering production services as well as embedded Linux devices like home
+routers. Here are some highlights:</p>
+<ul>
+<li><a href="https://crates.io/">crates.io</a>: The official crate registry has been using Moka in
+its API service to reduce the loads on PostgreSQL. Moka is maintaining
+<a href="https://github.com/moka-rs/moka/discussions/51">cache hit rates of ~85%</a> for the high-traffic download endpoint.
+(Moka used: Nov 2021 — present)</li>
+<li><a href="https://github.com/messense/aliyundrive-webdav">aliyundrive-webdav</a>: This WebDAV gateway for a cloud drive
+may have been deployed in hundreds of home Wi-Fi routers, including inexpensive
+models with 32-bit MIPS or ARMv5TE-based SoCs. Moka is used to cache the metadata
+of remote files. (Moka used: Aug 2021 — present)</li>
+</ul>
+<h4>Recent Changes</h4>
+<blockquote>
+<p>[!NOTE]
+<code>v0.12.0</code> had major breaking changes on the API and internal behavior. Please read
+the <a href="https://github.com/moka-rs/moka/blob/main/MIGRATION-GUIDE.md">MIGRATION-GUIDE.md</a> for the details.</p>
+</blockquote>
+<ul>
+<li><a href="https://github.com/moka-rs/moka/blob/main/MIGRATION-GUIDE.md">MIGRATION-GUIDE.md</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/main/CHANGELOG.md">CHANGELOG.md</a></li>
+</ul>
+<h4>Table of Contents</h4>
+<ul>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#features">Features</a>
+<ul>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#choosing-the-right-cache-for-your-use-case">Choosing the right cache for your use case</a></li>
+</ul>
+</li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#moka-in-production">Moka in Production</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#change-log">Change Log</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#supported-platforms">Supported Platforms</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#usage">Usage</a></li>
+<li>Examples (Part 1)
+<ul>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#example-synchronous-cache">Synchronous Cache</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#example-asynchronous-cache">Asynchronous Cache</a></li>
+</ul>
+</li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#avoiding-to-clone-the-value-at-get">Avoiding to clone the value at <code>get</code></a></li>
+<li>Example (Part 2)
+<ul>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#example-size-aware-eviction">Size Aware Eviction</a></li>
+</ul>
+</li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#expiration-policies">Expiration Policies</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#minimum-supported-rust-versions">Minimum Supported Rust Versions</a></li>
+<li>Troubleshooting
+<ul>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#compile-errors-on-some-32-bit-platforms">Compile Errors on Some 32-bit Platforms</a></li>
+</ul>
+</li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#developing-moka">Developing Moka</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#road-map">Road Map</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#about-the-name">About the Name</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#credits">Credits</a></li>
+<li><a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#license">License</a></li>
+</ul>
+<h4>Supported Platforms</h4>
+<p>Moka should work on most 64-bit and 32-bit platforms if Rust <code>std</code> library is
+available with threading support. However, WebAssembly (Wasm) and WASI targets are
+not supported.</p>
+<p>The following platforms are tested on CI:</p>
+<ul>
+<li>Linux 64-bit (x86_64, arm aarch64)</li>
+<li>Linux 32-bit (i646, armv7, armv5, mips)
+<ul>
+<li>If you get compile errors on 32-bit platforms, see
+<a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#compile-errors-on-some-32-bit-platforms">troubleshooting</a>.</li>
+</ul>
+</li>
+</ul>
+<p>The following platforms are not tested on CI but should work:</p>
+<ul>
+<li>macOS (arm64)</li>
+<li>Windows (x86_64 msvc and gnu)</li>
+<li>iOS (arm64)</li>
+</ul>
+<p>The following platforms are <em>not</em> supported:</p>
+<ul>
+<li>WebAssembly (Wasm) and WASI targets are not supported.
+(See <a href="https://github.com/orgs/moka-rs/projects/1?pane=issue&amp;amp;itemId=49877487">this project task</a>)</li>
+<li><code>nostd</code> environment (platforms without <code>std</code> library) are not supported.</li>
+<li>16-bit platforms are not supported.</li>
+</ul>
+<h4>Usage</h4>
+<p>To add Moka to your dependencies, run <code>cargo add</code> as the followings:</p>
+<pre><code># To use the synchronous cache:
+cargo add moka --features sync
+
+# To use the asynchronous cache:
+cargo add moka --features future
+</code></pre>
+<p>If you want to use the cache under an async runtime such as <code>tokio</code> or <code>async-std</code>, you should specify the <code>future</code> feature. Otherwise, specify the <code>sync</code> feature.</p>
+<h4>Example: Synchronous Cache</h4>
+<p>The thread-safe, synchronous caches are defined in the <code>sync</code> module.</p>
+<p>Cache entries are manually added using <code>insert</code> or <code>get_with</code> method, and
+are stored in the cache until either evicted or manually invalidated.</p>
+<p>Here's an example of reading and updating a cache by using multiple threads:</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// Use the synchronous cache.</span>
+<span class="k">use</span><span class="w"> </span><span class="n">moka</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">Cache</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="n">n</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;value {n}&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">NUM_THREADS</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">16</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">NUM_KEYS_PER_THREAD</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Create a cache that can store up to 10,000 entries.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Cache</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">10_000</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Spawn threads and read and update the cache simultaneously.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">threads</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">NUM_THREADS</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">i</span><span class="o">|</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// To share the same cache across the threads, clone it.</span>
+<span class="w">            </span><span class="c1">// This is a cheap operation.</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">my_cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cache</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">NUM_KEYS_PER_THREAD</span><span class="p">;</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">NUM_KEYS_PER_THREAD</span><span class="p">;</span>
+
+<span class="w">            </span><span class="n">thread</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="k">move</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// Insert 64 entries. (NUM_KEYS_PER_THREAD = 64)</span>
+<span class="w">                </span><span class="k">for</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">start</span><span class="o">..</span><span class="n">end</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="n">my_cache</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">(</span><span class="n">key</span><span class="p">));</span>
+<span class="w">                    </span><span class="c1">// get() returns Option&lt;String&gt;, a clone of the stored value.</span>
+<span class="w">                    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">my_cache</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">),</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">key</span><span class="p">)));</span>
+<span class="w">                </span><span class="p">}</span>
+
+<span class="w">                </span><span class="c1">// Invalidate every 4 element of the inserted entries.</span>
+<span class="w">                </span><span class="k">for</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="n">start</span><span class="o">..</span><span class="n">end</span><span class="p">).</span><span class="n">step_by</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="n">my_cache</span><span class="p">.</span><span class="n">invalidate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">);</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="p">})</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="p">.</span><span class="n">collect</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Wait for all threads to complete.</span>
+<span class="w">    </span><span class="n">threads</span><span class="p">.</span><span class="n">into_iter</span><span class="p">().</span><span class="n">for_each</span><span class="p">(</span><span class="o">|</span><span class="n">t</span><span class="o">|</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">join</span><span class="p">().</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;Failed&quot;</span><span class="p">));</span>
+
+<span class="w">    </span><span class="c1">// Verify the result.</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="o">..</span><span class="p">(</span><span class="n">NUM_THREADS</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">NUM_KEYS_PER_THREAD</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">cache</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">),</span><span class="w"> </span><span class="nb">None</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">cache</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">),</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">key</span><span class="p">)));</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>You can try the synchronous example by cloning the repository and running the
+following cargo instruction:</p>
+<pre><code>$ cargo run --example sync_example
+</code></pre>
+<p>If you want to atomically initialize and insert a value when the key is not present,
+you might want to check <a href="https://docs.rs/moka/*/moka/sync/struct.Cache.html#method.get_with">the document</a> for other insertion methods
+<code>get_with</code> and <code>try_get_with</code>.</p>
+<h4>Example: Asynchronous Cache</h4>
+<p>The asynchronous (futures aware) cache is defined in the <code>future</code> module.
+It works with asynchronous runtime such as <a href="https://crates.io/crates/tokio">Tokio</a>,
+<a href="https://crates.io/crates/async-std">async-std</a> or <a href="https://crates.io/crates/actix-rt">actix-rt</a>.
+To use the asynchronous cache, <a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/README.md#usage">enable a crate feature called &quot;future&quot;</a>.</p>
+<p>Cache entries are manually added using an insert method, and are stored in the cache
+until either evicted or manually invalidated:</p>
+<ul>
+<li>Inside an async context (<code>async fn</code> or <code>async</code> block), use <code>insert</code> or <code>invalidate</code>
+method for updating the cache and <code>await</code> them.</li>
+<li>Outside any async context, use <code>blocking</code> method to access blocking version of
+<code>insert</code> or <code>invalidate</code> methods.</li>
+</ul>
+<p>Here is a similar program to the previous example, but using asynchronous cache with
+<a href="https://crates.io/crates/tokio">Tokio</a> runtime:</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// Cargo.toml</span>
+<span class="c1">//</span>
+<span class="c1">// [dependencies]</span>
+<span class="c1">// moka = { version = &quot;0.12&quot;, features = [&quot;future&quot;] }</span>
+<span class="c1">// tokio = { version = &quot;1&quot;, features = [&quot;rt-multi-thread&quot;, &quot;macros&quot; ] }</span>
+<span class="c1">// futures-util = &quot;0.3&quot;</span>
+
+<span class="c1">// Use the asynchronous cache.</span>
+<span class="k">use</span><span class="w"> </span><span class="n">moka</span><span class="p">::</span><span class="n">future</span><span class="p">::</span><span class="n">Cache</span><span class="p">;</span>
+
+<span class="cp">#[tokio::main]</span>
+<span class="k">async</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">NUM_TASKS</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">16</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">NUM_KEYS_PER_TASK</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="n">n</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;value {n}&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Create a cache that can store up to 10,000 entries.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Cache</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">10_000</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Spawn async tasks and write to and read from the cache.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">tasks</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">NUM_TASKS</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">i</span><span class="o">|</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// To share the same cache across the async tasks, clone it.</span>
+<span class="w">            </span><span class="c1">// This is a cheap operation.</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">my_cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cache</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">NUM_KEYS_PER_TASK</span><span class="p">;</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">NUM_KEYS_PER_TASK</span><span class="p">;</span>
+
+<span class="w">            </span><span class="n">tokio</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="k">move</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// Insert 64 entries. (NUM_KEYS_PER_TASK = 64)</span>
+<span class="w">                </span><span class="k">for</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">start</span><span class="o">..</span><span class="n">end</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="c1">// insert() is an async method, so await it.</span>
+<span class="w">                    </span><span class="n">my_cache</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">(</span><span class="n">key</span><span class="p">)).</span><span class="k">await</span><span class="p">;</span>
+<span class="w">                    </span><span class="c1">// get() returns Option&lt;String&gt;, a clone of the stored value.</span>
+<span class="w">                    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">my_cache</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">).</span><span class="k">await</span><span class="p">,</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">key</span><span class="p">)));</span>
+<span class="w">                </span><span class="p">}</span>
+
+<span class="w">                </span><span class="c1">// Invalidate every 4 element of the inserted entries.</span>
+<span class="w">                </span><span class="k">for</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="n">start</span><span class="o">..</span><span class="n">end</span><span class="p">).</span><span class="n">step_by</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="c1">// invalidate() is an async method, so await it.</span>
+<span class="w">                    </span><span class="n">my_cache</span><span class="p">.</span><span class="n">invalidate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">).</span><span class="k">await</span><span class="p">;</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="p">})</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="p">.</span><span class="n">collect</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Wait for all tasks to complete.</span>
+<span class="w">    </span><span class="n">futures_util</span><span class="p">::</span><span class="n">future</span><span class="p">::</span><span class="n">join_all</span><span class="p">(</span><span class="n">tasks</span><span class="p">).</span><span class="k">await</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Verify the result.</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="o">..</span><span class="p">(</span><span class="n">NUM_TASKS</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">NUM_KEYS_PER_TASK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">cache</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">).</span><span class="k">await</span><span class="p">,</span><span class="w"> </span><span class="nb">None</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">cache</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">).</span><span class="k">await</span><span class="p">,</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">value</span><span class="p">(</span><span class="n">key</span><span class="p">)));</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>You can try the asynchronous example by cloning the repository and running the
+following cargo instruction:</p>
+<pre><code>$ cargo run --example async_example --features future
+</code></pre>
+<p>If you want to atomically initialize and insert a value when the key is not present,
+you might want to check <a href="https://docs.rs/moka/*/moka/future/struct.Cache.html#method.get_with">the document</a> for other insertion methods
+<code>get_with</code> and <code>try_get_with</code>.</p>
+<h4>Avoiding to clone the value at <code>get</code></h4>
+<p>For the concurrent caches (<code>sync</code> and <code>future</code> caches), the return type of <code>get</code>
+method is <code>Option&lt;V&gt;</code> instead of <code>Option&lt;&amp;V&gt;</code>, where <code>V</code> is the value type. Every
+time <code>get</code> is called for an existing key, it creates a clone of the stored value <code>V</code>
+and returns it. This is because the <code>Cache</code> allows concurrent updates from threads so
+a value stored in the cache can be dropped or replaced at any time by any other
+thread. <code>get</code> cannot return a reference <code>&amp;V</code> as it is impossible to guarantee the
+value outlives the reference.</p>
+<p>If you want to store values that will be expensive to clone, wrap them by
+<code>std::sync::Arc</code> before storing in a cache. <a href="https://doc.rust-lang.org/stable/std/sync/struct.Arc.html"><code>Arc</code></a> is a thread-safe
+reference-counted pointer and its <code>clone()</code> method is cheap.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">Arc</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">..</span><span class="p">.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">large_value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">0</span><span class="k">u8</span><span class="p">;</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">];</span><span class="w"> </span><span class="c1">// 2 MiB</span>
+
+<span class="c1">// When insert, wrap the large_value by Arc.</span>
+<span class="n">cache</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span><span class="w"> </span><span class="n">Arc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">large_value</span><span class="p">));</span>
+
+<span class="c1">// get() will call Arc::clone() on the stored value, which is cheap.</span>
+<span class="n">cache</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">);</span>
+</code></pre>
+<h4>Example: Size Aware Eviction</h4>
+<p>If different cache entries have different &quot;weights&quot; — e.g. each entry has
+different memory footprints — you can specify a <code>weigher</code> closure at the cache
+creation time. The closure should return a weighted size (relative size) of an entry
+in <code>u32</code>, and the cache will evict entries when the total weighted size exceeds its
+<code>max_capacity</code>.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">moka</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">Cache</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Cache</span><span class="p">::</span><span class="n">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="c1">// A weigher closure takes &amp;K and &amp;V and returns a u32 representing the</span>
+<span class="w">        </span><span class="c1">// relative size of the entry. Here, we use the byte length of the value</span>
+<span class="w">        </span><span class="c1">// String as the size.</span>
+<span class="w">        </span><span class="p">.</span><span class="n">weigher</span><span class="p">(</span><span class="o">|</span><span class="n">_key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nb">String</span><span class="o">|</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">value</span><span class="p">.</span><span class="n">len</span><span class="p">().</span><span class="n">try_into</span><span class="p">().</span><span class="n">unwrap_or</span><span class="p">(</span><span class="kt">u32</span><span class="p">::</span><span class="n">MAX</span><span class="p">)</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="c1">// This cache will hold up to 32MiB of values.</span>
+<span class="w">        </span><span class="p">.</span><span class="n">max_capacity</span><span class="p">(</span><span class="mi">32</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">build</span><span class="p">();</span>
+<span class="w">    </span><span class="n">cache</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;zero&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre>
+<p>Note that weighted sizes are not used when making eviction selections.</p>
+<p>You can try the size aware eviction example by cloning the repository and running the
+following cargo instruction:</p>
+<pre><code>$ cargo run --example size_aware_eviction
+</code></pre>
+<h4>Expiration Policies</h4>
+<p>Moka supports the following expiration policies:</p>
+<ul>
+<li><strong>Cache-level expiration policies:</strong>
+<ul>
+<li>Cache-level policies are applied to all entries in the cache.</li>
+<li><strong>Time to live (TTL)</strong>: A cached entry will be expired after the specified
+duration past from <code>insert</code>.</li>
+<li><strong>Time to idle (TTI)</strong>: A cached entry will be expired after the specified
+duration past from <code>get</code> or <code>insert</code>.</li>
+</ul>
+</li>
+<li><strong>Per-entry expiration policy:</strong>
+<ul>
+<li>The per-entry expiration lets you sets a different expiration time for each
+entry.</li>
+</ul>
+</li>
+</ul>
+<p>For details and examples of above policies, see the &quot;Example: Time-based Expiration&quot;
+section (<a href="https://docs.rs/moka/latest/moka/sync/struct.Cache.html#example-time-based-expirations"><code>sync::Cache</code></a>,
+<a href="https://docs.rs/moka/latest/moka/future/struct.Cache.html#example-time-based-expirations"><code>future::Cache</code></a>) of the document.</p>
+<h4>Minimum Supported Rust Versions</h4>
+<p>Moka's minimum supported Rust versions (MSRV) are the followings:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Feature</th>
+<th style="text-align:center">MSRV</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>future</code></td>
+<td style="text-align:center">Rust 1.71.1 (August 3, 2023)</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>sync</code></td>
+<td style="text-align:center">Rust 1.71.1 (August 3, 2023)</td>
+</tr>
+</tbody>
+</table>
+<p>It will keep a rolling MSRV policy of at least 6 months. If the default features with
+a mandatory features (<code>future</code> or <code>sync</code>) are enabled, MSRV will be updated
+conservatively. When using other features, MSRV might be updated more frequently, up
+to the latest stable.</p>
+<p>In both cases, increasing MSRV is <em>not</em> considered a semver-breaking change.</p>
+<p></p>
+<h4>Troubleshooting</h4>
+<h5>Compile Errors on Some 32-bit Platforms</h5>
+<h6>Symptoms</h6>
+<p>When using Moka v0.12.9 or earlier on some 32-bit platforms, you may get compile
+errors:</p>
+<pre><code>error[E0432]: unresolved import `std::sync::atomic::AtomicU64`
+  --&gt; ... /moka-0.5.3/src/sync.rs:10:30
+   |
+10 |         atomic::{AtomicBool, AtomicU64, Ordering},
+   |                              ^^^^^^^^^
+   |                              |
+   |                              no `AtomicU64` in `sync::atomic`
+</code></pre>
+<p>or</p>
+<pre><code>error[E0583]: file not found for module `atomic_time`
+  --&gt; ... /moka-0.12.9/src/common/concurrent.rs:23:1
+   |
+23 | pub(crate) mod atomic_time;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+</code></pre>
+<h6>How to Fix</h6>
+<p>You can fix these compilation errors by one of the following:</p>
+<ol>
+<li>(Recommended) Upgrade Moka to v0.12.10 or later. (<code>cargo update -p moka</code>)</li>
+<li>Or, keep using Moka v0.12.9 or earlier but disable the default features in
+<code>Cargo.toml</code>. (<code>default-features = false</code>)
+<ul>
+<li>The default features include the <code>atomic64</code> feature, which need to be disabled.</li>
+</ul>
+</li>
+</ol>
+<p>These error messages are caused by the absence of <code>std::sync::atomic::AtomicU64</code> on
+some 32-bit platforms. Moka v0.12.10 and later will automatically use a fallback
+implementation when <code>AtomicU64</code> is not available. With v0.12.9 and earlier, you must
+manually disable the <code>atomic64</code> feature to use the fallback implementation.</p>
+<h4>Developing Moka</h4>
+<p><strong>Running All Tests</strong></p>
+<p>To run all tests including <code>future</code> feature and doc tests on the README, use the
+following command:</p>
+<pre><code>$ RUSTFLAGS='--cfg trybuild' cargo test --all-features
+</code></pre>
+<p><strong>Running All Tests without Default Features</strong></p>
+<pre><code>$ RUSTFLAGS='--cfg trybuild' cargo test \
+    --no-default-features --features 'future, sync'
+</code></pre>
+<p><strong>Generating the Doc</strong></p>
+<pre><code>$ cargo +nightly -Z unstable-options --config 'build.rustdocflags="--cfg docsrs"' \
+    doc --no-deps --features 'future, sync'
+</code></pre>
+<h4>Roadmap</h4>
+<p>See the <a href="https://github.com/orgs/moka-rs/projects/1/views/1">project roadmap</a> for the updated and detailed plans.</p>
+<p>But here are some highlights:</p>
+<ul>
+<li>[x] Size-aware eviction. (<code>v0.7.0</code> via <a href="https://github.com/moka-rs/moka/pull/24">#24</a>)</li>
+<li>[x] API stabilization. (Smaller core API, shorter names for frequently used
+methods) (<code>v0.8.0</code> via <a href="https://github.com/moka-rs/moka/pull/105">#105</a>)
+<ul>
+<li>e.g.</li>
+<li><code>get_or_insert_with(K, F)</code> → <code>get_with(K, F)</code></li>
+<li><code>get_or_try_insert_with(K, F)</code> → <code>try_get_with(K, F)</code></li>
+<li><code>time_to_live()</code> → <code>policy().time_to_live()</code></li>
+</ul>
+</li>
+<li>[x] Notifications on eviction. (<code>v0.9.0</code> via <a href="https://github.com/moka-rs/moka/pull/145">#145</a>)</li>
+<li>[x] Variable (per-entry) expiration, using hierarchical timer wheels.
+(<code>v0.11.0</code> via <a href="https://github.com/moka-rs/moka/pull/248">#248</a>)</li>
+<li>[x] Remove background threads. (<code>v0.12.0</code> via <a href="https://github.com/moka-rs/moka/pull/294">#294</a> and
+<a href="https://github.com/moka-rs/moka/pull/316">#316</a>)</li>
+<li>[x] Add upsert and compute methods. (<code>v0.12.3</code> via <a href="https://github.com/moka-rs/moka/pull/370">#370</a>)</li>
+<li>[ ] Cache statistics (Hit rate, etc.). (<a href="https://github.com/moka-rs/moka/issues/234">details</a>)</li>
+<li>[ ] Upgrade TinyLFU to Window-TinyLFU. (<a href="https://github.com/moka-rs/moka/wiki#admission-and-eviction-policies">details</a>)</li>
+<li>[ ] Restore cache from a snapshot. (<a href="https://github.com/moka-rs/moka/issues/314">details</a>)</li>
+</ul>
+<h4>About the Name</h4>
+<p>Moka is named after the <a href="https://en.wikipedia.org/wiki/Moka_pot">moka pot</a>, a stove-top coffee maker that
+brews espresso-like coffee using boiling water pressurized by steam.</p>
+<p>This name would imply the following facts and hopes:</p>
+<ul>
+<li>Moka is a part of the Java Caffeine cache family.</li>
+<li>It is written in Rust. (Many moka pots are made of aluminum alloy or stainless
+steel. We know they don't rust though)</li>
+<li>It should be fast. (&quot;Espresso&quot; in Italian means express)</li>
+<li>It should be easy to use, like a moka pot.</li>
+</ul>
+<h4>Credits</h4>
+<h5>Caffeine</h5>
+<p>Moka's architecture is heavily inspired by the <a href="https://github.com/ben-manes/caffeine">Caffeine</a> library for
+Java. Thanks go to Ben Manes and all contributors of Caffeine.</p>
+<h5>cht</h5>
+<p>The source files of the concurrent hash table under <code>moka::cht</code> module were copied
+from the <a href="https://github.com/Gregory-Meyer/cht/tree/v0.4.1">cht crate v0.4.1</a> and modified by us. We did so for better
+integration. cht v0.4.1 and earlier are licensed under the MIT license.</p>
+<p>Thanks go to Gregory Meyer.</p>
+<h4>License</h4>
+<p>Moka is distributed under either of</p>
+<ul>
+<li>The MIT license</li>
+<li>The Apache License 2.0</li>
+</ul>
+<p>at your option.</p>
+<p>See <a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/LICENSE-MIT">LICENSE-MIT</a> and <a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/LICENSE-APACHE">LICENSE-APACHE</a> for details.</p>
+<p><strong>Note on Licensing:</strong></p>
+<p>Certain components, specifically
+<a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/src/common/frequency_sketch.rs"><code>src/common/frequency_sketch.rs</code></a> and
+<a href="https://github.com/moka-rs/moka/blob/a616ec19e8d4ed938caf8b2c88090331d778d5da/src/common/timer_wheel.rs"><code>src/common/timer_wheel.rs</code></a>, are distributed solely
+under the Apache License 2.0. These files were ported from the <a href="https://github.com/ben-manes/caffeine">Caffeine</a>
+library and are not dual-licensed.</p>
+<p></p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>atomic64</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>future</code></th><td>No</td><td><ul class="effects"><li><code>dep:async-lock</code></li><li><code>dep:event-listener</code></li><li><code>dep:futures-util</code></li></ul></td></tr><tr><th scope="row"><code>logging</code></th><td>No</td><td><ul class="effects"><li><code>dep:log</code></li></ul></td></tr><tr><th scope="row"><code>quanta</code></th><td>No</td><td><ul class="effects"><li><code>dep:quanta</code></li></ul></td></tr><tr><th scope="row"><code>sync</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>unstable-debug-counters</code></th><td>No</td><td><ul class="effects"><li><code>future</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/async-lock/"><code>crates-io/async-lock</code></a><small>Alias: async-lock</small></th><td><code>^3.3</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/crossbeam-channel/"><code>crates-io/crossbeam-channel</code></a><small>Alias: crossbeam-channel</small></th><td><code>^0.5.15</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/crossbeam-epoch/"><code>crates-io/crossbeam-epoch</code></a><small>Alias: crossbeam-epoch</small></th><td><code>^0.9.20</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/crossbeam-utils/"><code>crates-io/crossbeam-utils</code></a><small>Alias: crossbeam-utils</small></th><td><code>^0.8.21</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/equivalent/"><code>crates-io/equivalent</code></a><small>Alias: equivalent</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/event-listener/"><code>crates-io/event-listener</code></a><small>Alias: event-listener</small></th><td><code>^5.3</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/futures-util/"><code>crates-io/futures-util</code></a><small>Alias: futures-util</small></th><td><code>^0.3.17</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/log/"><code>crates-io/log</code></a><small>Alias: log</small></th><td><code>^0.4</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/parking_lot/"><code>crates-io/parking_lot</code></a><small>Alias: parking_lot</small></th><td><code>^0.12</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/portable-atomic/"><code>crates-io/portable-atomic</code></a><small>Alias: portable-atomic</small></th><td><code>^1.6</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/quanta/"><code>crates-io/quanta</code></a><small>Alias: quanta</small></th><td><code>^0.12.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/smallvec/"><code>crates-io/smallvec</code></a><small>Alias: smallvec</small></th><td><code>^1.8</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/tagptr/"><code>crates-io/tagptr</code></a><small>Alias: tagptr</small></th><td><code>^0.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/uuid/"><code>crates-io/uuid</code></a><small>Alias: uuid</small></th><td><code>^1.1</code><small>Default features: enabled</small><small>Requests: v4</small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/hickory-resolver/versions/0.26.3/">crates-io/hickory-resolver 0.26.3</a><span>Requires ^0.12 · alias moka · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, future, sync</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:c7c8fcdab16029bc55146a969570eb154b1bd9fa9860c41a8c50aa2f549eb5dc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53978430">Attestation reference</a><small>Archive: sha256:c3899faa9382fda6b6d957a4cfabbd5b7fab9da3f1d414a9b6bf51312396ed29</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, future, sync</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:203cd501fe7addbf85e35ca06946a06259a616e6a5828571b19d151b89c3aa62</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:b0eed5d6fb98f152ddd80d065259342d80ade760ba6365225ec2f07ad852dca7</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, future, sync</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5a397efbeeed53a5a392102e37da6ff0c56dcad5607f324cb8fdf28c85bfa07f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53973063">Attestation reference</a><small>Archive: sha256:5871caf57eebe5499f88342a73e56f8591f59c2ec2383f589fb561a3631dcf16</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, sync</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7a220eb393d845be105f1e82a2cb37d65a7df050bc799ebf8facb300728ba7a2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:523870296ef27425f8383f160f27c7d1dfade2564c93bb1961aed4b3a3dfdf35</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, future, sync</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:23f1ce20558f6776bc4cae37eb45677e918452091f9c71be05cd649784492b52</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:6d0b179cffbbd600e540e9f36fd6dc30d0089fceebbf3f6f460187c56396de54</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, sync</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a245e110183a0b2606b14ca49608e9ee39d0f93f07085772269ad81fd1fc48cb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:d98ca66781f43ff64dd674e60d7472e8ff9b1e4d8df7e20ae4a7294e28c0a1e8</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/moka/versions/0.12.16/">0.12.16</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/moka/0.12.16">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>(MIT OR Apache-2.0) AND Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright 2020 - 2026 Tatsuya Kawano
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+</code></pre></div><p class="table-note">sha256:021f4a01e58372b826203064fac216e15d51e07f7739b8ca33d4b746ec8abb3b</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2020 - 2026 Tatsuya Kawano
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:7fe7e5e13e445074314ba0aa12ec2e71132931632876ba27b98a1020cf24eb57</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:dc3c82306ad4584348cbff62801c7abead3cac3a0ec3ab27d7ea18d2346cd8ac</code></dd><dt>Upstream checksum</dt><dd><code>sha256:4293f18e7567a1caf3c584855554377025c65e0aa445344d04171f5ad63d19b9</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/moka&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.12.16&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">atomic64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">future</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:async-lock&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:event-listener&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:futures-util&quot;</span><span class="p">]</span>
+<span class="n">logging</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:log&quot;</span><span class="p">]</span>
+<span class="n">quanta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:quanta&quot;</span><span class="p">]</span>
+<span class="n">sync</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">unstable-debug-counters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;future&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;moka&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">async-lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-lock&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^3.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">crossbeam-channel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/crossbeam-channel&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.5.15&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">crossbeam-epoch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/crossbeam-epoch&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.9.20&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">crossbeam-utils</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/crossbeam-utils&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8.21&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">equivalent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/equivalent&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">event-listener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/event-listener&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^5.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">futures-util</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/futures-util&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.17&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">log</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/log&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">parking_lot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/parking_lot&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.12&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">portable-atomic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/portable-atomic&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.6&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">quanta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/quanta&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.12.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">smallvec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/smallvec&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.8&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tagptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tagptr&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">uuid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/uuid&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;v4&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.71.1</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/moka/0.12.16">crates.io package</a></li><li><a href="https://github.com/moka-rs/moka">Source repository</a></li><li><a href="https://docs.rs/moka/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">moka</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/moka"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.12.16"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

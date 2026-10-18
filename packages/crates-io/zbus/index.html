@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>zbus 5.19.0 · Incan.pub</title><meta name="description" content="API for D-Bus communication"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/zbus</p><div class="title-row"><h1>zbus</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/zbus/versions/5.19.0/" selected>5.19.0</option></select></label></div><p class="description">API for D-Bus communication</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>zbus</h3>
+<p><a href="https://docs.rs/zbus/"></a> <a href="https://crates.io/crates/zbus"></a></p>
+<p>This is the main subcrate of the <a href="https://github.com/z-galaxy/zbus#readme">zbus</a> project, that provides the API to interact with D-Bus. It
+takes care of the establishment of a connection, the creation, sending and receiving of different
+kind of D-Bus messages (method calls, signals etc) for you.</p>
+<p><strong>Status:</strong> Stable.</p>
+<h4>Getting Started</h4>
+<p>The best way to get started with zbus is the <a href="https://z-galaxy.github.io/zbus/">book</a>, where we start
+with basic D-Bus concepts and explain with code samples, how zbus makes D-Bus easy.</p>
+<h4>Example code</h4>
+<p>We'll create a simple D-Bus service and client to demonstrate the usage of zbus. Note that these
+examples assume that a D-Bus broker is setup on your machine and you've a session bus running
+(<code>DBUS_SESSION_BUS_ADDRESS</code> environment variable must be set). This is guaranteed to be the case on
+a typical Linux desktop session.</p>
+<h5>Service</h5>
+<p>A simple service that politely greets whoever calls its <code>SayHello</code> method:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::{</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="p">,</span><span class="w"> </span><span class="n">future</span><span class="p">::</span><span class="n">pending</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">zbus</span><span class="p">::{</span><span class="n">connection</span><span class="p">,</span><span class="w"> </span><span class="n">interface</span><span class="p">};</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">Greeter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">count</span><span class="p">:</span><span class="w"> </span><span class="kt">u64</span>
+<span class="p">}</span>
+
+<span class="cp">#[interface(name = </span><span class="s">&quot;org.zbus.MyGreeter1&quot;</span><span class="cp">)]</span>
+<span class="k">impl</span><span class="w"> </span><span class="n">Greeter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Can be `async` as well.</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">say_hello</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">count</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;Hello {}! I have been called {} times.&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">count</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Although we use `tokio` here, you can use any async runtime of choice.</span>
+<span class="cp">#[tokio::main]</span>
+<span class="k">async</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Error</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">greeter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Greeter</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">count</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_conn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">connection</span><span class="p">::</span><span class="n">Builder</span><span class="p">::</span><span class="n">session</span><span class="p">()</span><span class="o">?</span>
+<span class="w">        </span><span class="p">.</span><span class="n">name</span><span class="p">(</span><span class="s">&quot;org.zbus.MyGreeter&quot;</span><span class="p">)</span><span class="o">?</span>
+<span class="w">        </span><span class="p">.</span><span class="n">serve_at</span><span class="p">(</span><span class="s">&quot;/org/zbus/MyGreeter&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">greeter</span><span class="p">)</span><span class="o">?</span>
+<span class="w">        </span><span class="p">.</span><span class="n">build</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="k">await</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Do other things or go to wait forever</span>
+<span class="w">    </span><span class="n">pending</span><span class="p">::</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="p">().</span><span class="k">await</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<p>You can use the following command to test it:</p>
+<pre><code>$ busctl --user call org.zbus.MyGreeter /org/zbus/MyGreeter org.zbus.MyGreeter1 SayHello s "Maria"
+s "Hello Maria! I have been called 1 times."
+</code></pre>
+<h5>Client</h5>
+<p>Now let's write the client-side code for <code>MyGreeter</code> service:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">zbus</span><span class="p">::{</span><span class="n">Connection</span><span class="p">,</span><span class="w"> </span><span class="nb">Result</span><span class="p">,</span><span class="w"> </span><span class="n">proxy</span><span class="p">};</span>
+
+<span class="cp">#[proxy(</span>
+<span class="cp">    interface = </span><span class="s">&quot;org.zbus.MyGreeter1&quot;</span><span class="cp">,</span>
+<span class="cp">    default_service = </span><span class="s">&quot;org.zbus.MyGreeter&quot;</span><span class="cp">,</span>
+<span class="cp">    default_path = </span><span class="s">&quot;/org/zbus/MyGreeter&quot;</span>
+<span class="cp">)]</span>
+<span class="k">trait</span><span class="w"> </span><span class="n">MyGreeter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">async</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">say_hello</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// Although we use `tokio` here, you can use any async runtime of choice.</span>
+<span class="cp">#[tokio::main]</span>
+<span class="k">async</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">connection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Connection</span><span class="p">::</span><span class="n">session</span><span class="p">().</span><span class="k">await</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// `proxy` macro creates `MyGreaterProxy` based on `MyGreeter` trait.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyGreeterProxy</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">connection</span><span class="p">).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">reply</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">proxy</span><span class="p">.</span><span class="n">say_hello</span><span class="p">(</span><span class="s">&quot;Maria&quot;</span><span class="p">).</span><span class="k">await</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{reply}&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Blocking API</h4>
+<p>While zbus is primarily asynchronous (since 2.0), <a href="https://docs.rs/zbus/latest/zbus/blocking/index.html">blocking wrappers</a> are provided for
+convenience. Since zbus 5.0, blocking API can be disabled by disabling the <code>blocking-api</code> cargo
+feature.</p>
+<h4>Compatibility with async runtimes</h4>
+<p>zbus is runtime-agnostic and should work out of the box with different Rust async runtimes. However,
+in order to achieve that, zbus spawns a thread per connection to handle various internal tasks. If
+that is something you would like to avoid, you need to:</p>
+<ul>
+<li>Use <a href="https://docs.rs/zbus/latest/zbus/connection/struct.ConnectionBuilder.html"><code>connection::Builder</code></a> and disable the <code>internal_executor</code> flag.</li>
+<li>Ensure the <a href="https://docs.rs/zbus/latest/zbus/connection/struct.Connection.html#examples-1">internal executor keeps ticking continuously</a>.</li>
+</ul>
+<p>Moreover, by default zbus makes use of <a href="https://crates.io/crates/async-io"><code>async-io</code></a> for all I/O, which also launches its own thread
+to run its own internal executor.</p>
+<h5>Special tokio support</h5>
+<p>Since <a href="https://crates.io/crates/tokio"><code>tokio</code></a> is the most popular async runtime, zbus provides an easy way to enable tight
+integration with it without you having to worry about any of the above: Enabling the <code>tokio</code> feature:</p>
+<pre><code class="syntax-highlight language-toml"><span class="c1"># Sample Cargo.toml snippet.</span>
+<span class="k">[dependencies]</span>
+<span class="c1"># Also disable the default `async-io` feature to avoid unused dependencies.</span>
+<span class="n">zbus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;5&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;tokio&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<p>That's it! No threads launched behind your back by zbus (directly or indirectly) now and no need to
+tick any executors etc. 😼</p>
+<p>The <code>tokio</code> and <code>async-io</code> features are additive: when both are enabled (for example, because
+another crate in your dependency tree enables <code>tokio</code>), zbus selects the runtime at run time — using
+tokio when a tokio runtime is driving the current thread, and <code>async-io</code> otherwise. With only the
+<code>tokio</code> feature enabled (i.e. <code>async-io</code> disabled), zbus must be used from a thread running a tokio
+runtime, as there is no <code>async-io</code> fallback to drive its I/O.</p>
+<p>This run-time selection applies to the async API. The blocking API (<code>zbus::blocking</code>) drives its
+connections through its own <code>block_on</code>, which uses tokio whenever the <code>tokio</code> feature is enabled, so
+those connections always run on tokio when that feature is on.</p>
+<p><strong>Note</strong>: On Windows, the <code>async-io</code> feature is currently required for UNIX domain socket support,
+see <a href="https://github.com/tokio-rs/tokio/issues/2201">the corresponding tokio issue on GitHub</a>.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>async-executor</code></th><td>Yes<small>default → async-io → async-executor</small></td><td><ul class="effects"><li><code>dep:async-executor</code></li></ul></td></tr><tr><th scope="row"><code>async-fs</code></th><td>Yes<small>default → async-io → async-fs</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>async-io</code></th><td>Yes<small>default → async-io</small></td><td><ul class="effects"><li><code>dep:async-io</code></li><li><code>async-executor</code></li><li><code>async-fs</code></li><li><code>async-task</code></li><li><code>async-lock</code></li><li><code>async-process</code></li><li><code>blocking</code></li></ul></td></tr><tr><th scope="row"><code>async-lock</code></th><td>Yes<small>default → async-io → async-lock</small></td><td><ul class="effects"><li><code>dep:async-lock</code></li></ul></td></tr><tr><th scope="row"><code>async-process</code></th><td>Yes<small>default → async-io → async-process</small></td><td><ul class="effects"><li><code>dep:async-process</code></li></ul></td></tr><tr><th scope="row"><code>async-task</code></th><td>Yes<small>default → async-io → async-task</small></td><td><ul class="effects"><li><code>dep:async-task</code></li></ul></td></tr><tr><th scope="row"><code>blocking</code></th><td>Yes<small>default → async-io → blocking</small></td><td><ul class="effects"><li><code>dep:blocking</code></li></ul></td></tr><tr><th scope="row"><code>blocking-api</code></th><td>Yes<small>default → blocking-api</small></td><td><ul class="effects"><li><code>zbus_macros/blocking-api</code></li></ul></td></tr><tr><th scope="row"><code>bus-impl</code></th><td>No</td><td><ul class="effects"><li><code>p2p</code></li></ul></td></tr><tr><th scope="row"><code>camino</code></th><td>No</td><td><ul class="effects"><li><code>zvariant/camino</code></li></ul></td></tr><tr><th scope="row"><code>chrono</code></th><td>No</td><td><ul class="effects"><li><code>zvariant/chrono</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>async-io</code></li><li><code>blocking-api</code></li></ul></td></tr><tr><th scope="row"><code>heapless</code></th><td>No</td><td><ul class="effects"><li><code>zvariant/heapless</code></li></ul></td></tr><tr><th scope="row"><code>option-as-array</code></th><td>No</td><td><ul class="effects"><li><code>zvariant/option-as-array</code></li></ul></td></tr><tr><th scope="row"><code>p2p</code></th><td>No</td><td><ul class="effects"><li><code>uuid/v4</code></li></ul></td></tr><tr><th scope="row"><code>serde_bytes</code></th><td>No</td><td><ul class="effects"><li><code>zvariant/serde_bytes</code></li></ul></td></tr><tr><th scope="row"><code>time</code></th><td>No</td><td><ul class="effects"><li><code>zvariant/time</code></li></ul></td></tr><tr><th scope="row"><code>tokio</code></th><td>No</td><td><ul class="effects"><li><code>dep:tokio</code></li></ul></td></tr><tr><th scope="row"><code>tokio-vsock</code></th><td>No</td><td><ul class="effects"><li><code>dep:tokio-vsock</code></li><li><code>tokio</code></li></ul></td></tr><tr><th scope="row"><code>url</code></th><td>No</td><td><ul class="effects"><li><code>zvariant/url</code></li></ul></td></tr><tr><th scope="row"><code>uuid</code></th><td>No</td><td><ul class="effects"><li><code>zvariant/uuid</code></li></ul></td></tr><tr><th scope="row"><code>vsock</code></th><td>No</td><td><ul class="effects"><li><code>dep:vsock</code></li><li><code>async-io</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/async-broadcast/"><code>crates-io/async-broadcast</code></a><small>Alias: async-broadcast</small></th><td><code>^0.7.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/async-executor/"><code>crates-io/async-executor</code></a><small>Alias: async-executor</small></th><td><code>^1.11.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → async-io → async-executor</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/async-io/"><code>crates-io/async-io</code></a><small>Alias: async-io</small></th><td><code>^2.3.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → async-io</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/async-lock/"><code>crates-io/async-lock</code></a><small>Alias: async-lock</small></th><td><code>^3.3.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → async-io → async-lock</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/async-process/"><code>crates-io/async-process</code></a><small>Alias: async-process</small></th><td><code>^2.2.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → async-io → async-process</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/async-recursion/"><code>crates-io/async-recursion</code></a><small>Alias: async-recursion</small></th><td><code>^1.1.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(unix)</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/async-recursion/"><code>crates-io/async-recursion</code></a><small>Alias: async-recursion</small></th><td><code>^1.1.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(windows)</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/async-task/"><code>crates-io/async-task</code></a><small>Alias: async-task</small></th><td><code>^4.7.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → async-io → async-task</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/async-trait/"><code>crates-io/async-trait</code></a><small>Alias: async-trait</small></th><td><code>^0.1.80</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/blocking/"><code>crates-io/blocking</code></a><small>Alias: blocking</small></th><td><code>^1.6.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → async-io → blocking</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/enumflags2/"><code>crates-io/enumflags2</code></a><small>Alias: enumflags2</small></th><td><code>^0.7.9</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/event-listener/"><code>crates-io/event-listener</code></a><small>Alias: event-listener</small></th><td><code>^5.3.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/futures-core/"><code>crates-io/futures-core</code></a><small>Alias: futures-core</small></th><td><code>^0.3.30</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/futures-lite/"><code>crates-io/futures-lite</code></a><small>Alias: futures-lite</small></th><td><code>^2.6.0</code><small>Default features: disabled</small><small>Requests: std</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/hex/"><code>crates-io/hex</code></a><small>Alias: hex</small></th><td><code>^0.4.3</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/libc/"><code>crates-io/libc</code></a><small>Alias: libc</small></th><td><code>^0.2</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required · when cfg(unix)</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/ordered-stream/"><code>crates-io/ordered-stream</code></a><small>Alias: ordered-stream</small></th><td><code>^0.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/rustix/"><code>crates-io/rustix</code></a><small>Alias: rustix</small></th><td><code>^1.1.2</code><small>Default features: disabled</small><small>Requests: net, process, std</small></td><td>Required · when cfg(unix)</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0.200</code><small>Default features: enabled</small><small>Requests: derive</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/serde_repr/"><code>crates-io/serde_repr</code></a><small>Alias: serde_repr</small></th><td><code>^0.1.19</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/tokio/"><code>crates-io/tokio</code></a><small>Alias: tokio</small></th><td><code>^1.37.0</code><small>Default features: enabled</small><small>Requests: fs, io-util, net, process, rt, rt-multi-thread, sync, time, tracing</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/tokio-vsock</code><small>Alias: tokio-vsock</small></th><td><code>^0.7</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(target_os = &quot;linux&quot;)</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/tracing/"><code>crates-io/tracing</code></a><small>Alias: tracing</small></th><td><code>^0.1.40</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/uds_windows/"><code>crates-io/uds_windows</code></a><small>Alias: uds_windows</small></th><td><code>^1.1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(windows)</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/uuid/"><code>crates-io/uuid</code></a><small>Alias: uuid</small></th><td><code>^1.8.0</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Required</td></tr><tr><th scope="row"><code>crates-io/vsock</code><small>Alias: vsock</small></th><td><code>^0.5.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(target_os = &quot;linux&quot;)</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/windows-sys/"><code>crates-io/windows-sys</code></a><small>Alias: windows-sys</small></th><td><code>^0.61</code><small>Default features: enabled</small><small>Requests: Win32_Foundation, Win32_NetworkManagement, Win32_NetworkManagement_IpHelper, Win32_Networking, Win32_Networking_WinSock, Win32_Security_Authorization, Win32_System_IO, Win32_System_Memory, Win32_System_Threading, Win32_System_WindowsProgramming</small></td><td>Required · when cfg(windows)</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/winnow/"><code>crates-io/winnow</code></a><small>Alias: winnow</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zbus_macros/"><code>crates-io/zbus_macros</code></a><small>Alias: zbus_macros</small></th><td><code>^5.19.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zbus_names/"><code>crates-io/zbus_names</code></a><small>Alias: zbus_names</small></th><td><code>^4.3.4</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zvariant/"><code>crates-io/zvariant</code></a><small>Alias: zvariant</small></th><td><code>^5.14.0</code><small>Default features: enabled</small><small>Requests: enumflags2</small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><p>No declared dependents in this checkpoint.</p></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>async-executor, async-fs, async-io, async-lock, async-process, async-task, blocking, blocking-api, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:90e8c4d087e135f7cb2f91bfadfda99b141154aa9b3ff7059623c49bab48174e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:f6b1b71832730ada65ff5051aed9b912ef1097d9d644b5b766eb1fbb566f3b05</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>async-executor, async-fs, async-io, async-lock, async-process, async-task, blocking, blocking-api, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:fb6bdfa5000a5164e22421267daf5deda7e9f102a6da1b3dd0f51571a020f087</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:041993736662630e56bfd5379cadbc4d7171d1b802df6a590651b09f979225bc</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>async-executor, async-fs, async-io, async-lock, async-process, async-task, blocking, blocking-api, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:83cdf099dabab33f94a45962290a51135a266f8af3b88be275eb2f606a3f9fcb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:50b839e0a7c5f78c93f23651e86b63627428f89138326ffe67b364cfcdf59c7a</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>async-executor, async-fs, async-io, async-lock, async-process, async-task, blocking, blocking-api, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2d3b3ed4ba9f3e100ef65b30a53c0ffbcff000ba116a157a4e8508ee0d85277a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:d2e52907cd5b34c90365af87d892955fcb45671372604c954a126855bc4aa534</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/zbus/versions/5.19.0/">5.19.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/zbus/5.19.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>5.19.0 - 2026-08-09</h4>
+<h5>Added</h5>
+<ul>
+<li>✨ Add Builder::async_io_unix_stream and async_io_tcp_stream.</li>
+<li>✨ Make the tokio and async-io features additive.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>♻️ Remove unnecessary clones.</li>
+</ul>
+<h5>Deprecated</h5>
+<ul>
+<li>🗑️ Deprecate unix_stream/tcp_stream when tokio is disabled.</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>📝 Document the tokio and async-io runtime selection.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🥅 throw Error::Connection on connection failure.</li>
+<li>🥅 Add new error variant Error::Connection.</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>✏️ Fix a typo in the executor docs.</li>
+</ul>
+<h5>Testing</h5>
+<ul>
+<li>✅ Test runtime selection with both backends enabled.</li>
+<li>✅ add tests for Error::Connection.</li>
+</ul>
+<h4>5.18.0 - 2026-07-17</h4>
+<h5>Added</h5>
+<ul>
+<li>✨ Add Connection::closed() and is_closed() API.</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>📝 Document ObjectManager-ancestor deadlock in ObjectServer::at.</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>🚨 Replace manual match-and-return with the ? operator.</li>
+</ul>
+<h5>Testing</h5>
+<ul>
+<li>✅ Test registering an interface from a &amp;mut self callback.</li>
+</ul>
+<h4>5.17.0 - 2026-07-07</h4>
+<h5>Changed</h5>
+<ul>
+<li>♻️ Move pending method call to separate module.</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>🧐 Add concurrent method-call benchmark.</li>
+</ul>
+<h5>Performance</h5>
+<ul>
+<li>⚡️ Route method replies directly by serial.</li>
+</ul>
+<h4>5.16.0 - 2026-05-27</h4>
+<h5>Changed</h5>
+<ul>
+<li>🔧 Restrict vsock features to Linux targets.</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>📝 Replace docs.rs all-features with explicit feature list.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🚑️ Fix sendmsg for iOS and other apple OS.</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>🔊 warn on GetAll error during property cache init. #1325</li>
+</ul>
+<h4>5.15.0 - 2026-04-26</h4>
+<h5>Added</h5>
+<ul>
+<li>✨ Introduce DispatchResult2 with fdo::Result for dispatch futures.</li>
+<li>✨ Add Builder::build_message_stream.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>♻️ Port Interface and dispatch sites to DispatchResult2.</li>
+</ul>
+<h5>Deprecated</h5>
+<ul>
+<li>🗑️ Deprecate DispatchResult in favour of DispatchResult2.</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>📝 Configure docs.rs to build for all supported targets.</li>
+</ul>
+<h5>Testing</h5>
+<ul>
+<li>✅ Cover D-Bus error name preservation on property setters.</li>
+<li>✅ Explicitly choose host endianess in a test.</li>
+</ul>
+<h4>5.14.0 - 2026-02-22</h4>
+<h5>Added</h5>
+<ul>
+<li>✨ Add helper for IBus connection creation. #964</li>
+<li>🚸 Add Display trait to D-Bus name request reply types.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>🔧 Extend process module run() to all Unix platforms.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🐛 Do not use SendFlags::NOSIGNAL on Redox.</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>📦️ Add async-recursion for Unix targets.</li>
+<li>🚨 silence unused import on windows.</li>
+<li>🚨 silence unused warning on windows test.</li>
+</ul>
+<h4>5.13.2 - 2026-01-19</h4>
+<h5>Fixed</h5>
+<ul>
+<li>🐛 fix regression on windows build. #1686</li>
+<li>🐛 Correct Peer interface to work on any arbitrary object path.</li>
+</ul>
+<h4>5.13.1 - 2026-01-11</h4>
+<h5>Fixed</h5>
+<ul>
+<li>🐛 Implement <code>get_machine_id()</code> for *BSD platforms.</li>
+</ul>
+<h4>5.13.0 - 2026-01-09</h4>
+<h5>Added</h5>
+<ul>
+<li>✨ Add crate attribute for custom crate paths.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>🎨 Format all files (rust 1.85).</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🚑️ Send on unix sockets w/ <code>MSG_NOSIGNAL</code> flag enabled. #1657</li>
+<li>🐛 Fix <code>get_machine_id</code> for macOS.</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>🧱 Fix all clippy warnings (rust 1.85).</li>
+<li>🧑‍💻 Bump rust version to 1.85.</li>
+<li>🔊 lower trace/instrument verbosity.</li>
+</ul>
+<h5>Testing</h5>
+<ul>
+<li>✅ Add introspection test for out_args with single output.</li>
+<li>✅ Remove unused imports from tests.</li>
+</ul>
+</div><p class="table-note">sha256:ceae30677c88349539abd9a2eb3211942c5c862333d7a38812c0df8465a77bef</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2024 Zeeshan Ali Khan &amp; zbus contributors
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:260e4ff3fc493695880c90774283eb1e3d018f898fabe655bbd52dd2cbd2fcad</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:2bbecbcb06659f0228e5f71141116bdd2f52883b87db41f0ffe1c270e15ef157</code></dd><dt>Upstream checksum</dt><dd><code>sha256:5db4be7c075cb421e4b7ee645541604239bd243ba7c357511f4ff3a74b555907</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zbus&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;5.19.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">async-executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:async-executor&quot;</span><span class="p">]</span>
+<span class="n">async-fs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">async-io</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:async-io&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;async-executor&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;async-fs&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;async-task&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;async-lock&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;async-process&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;blocking&quot;</span><span class="p">]</span>
+<span class="n">async-lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:async-lock&quot;</span><span class="p">]</span>
+<span class="n">async-process</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:async-process&quot;</span><span class="p">]</span>
+<span class="n">async-task</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:async-task&quot;</span><span class="p">]</span>
+<span class="n">blocking</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:blocking&quot;</span><span class="p">]</span>
+<span class="n">blocking-api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zbus_macros/blocking-api&quot;</span><span class="p">]</span>
+<span class="n">bus-impl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;p2p&quot;</span><span class="p">]</span>
+<span class="n">camino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zvariant/camino&quot;</span><span class="p">]</span>
+<span class="n">chrono</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zvariant/chrono&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;async-io&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;blocking-api&quot;</span><span class="p">]</span>
+<span class="n">heapless</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zvariant/heapless&quot;</span><span class="p">]</span>
+<span class="n">option-as-array</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zvariant/option-as-array&quot;</span><span class="p">]</span>
+<span class="n">p2p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;uuid/v4&quot;</span><span class="p">]</span>
+<span class="n">serde_bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zvariant/serde_bytes&quot;</span><span class="p">]</span>
+<span class="n">time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zvariant/time&quot;</span><span class="p">]</span>
+<span class="n">tokio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tokio&quot;</span><span class="p">]</span>
+<span class="n">tokio-vsock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tokio-vsock&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tokio&quot;</span><span class="p">]</span>
+<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zvariant/url&quot;</span><span class="p">]</span>
+<span class="n">uuid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zvariant/uuid&quot;</span><span class="p">]</span>
+<span class="n">vsock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:vsock&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;async-io&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;zbus&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">async-broadcast</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-broadcast&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.7.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">async-executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-executor&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.11.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">async-io</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-io&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.3.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">async-lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-lock&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^3.3.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">async-process</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-process&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.2.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">async-recursion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-recursion&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.1.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(unix)&quot;</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-recursion&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.1.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(windows)&quot;</span><span class="w"> </span><span class="p">}]</span>
+<span class="n">async-task</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-task&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^4.7.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">async-trait</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-trait&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.80&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">blocking</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/blocking&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.6.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">enumflags2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/enumflags2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.7.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">event-listener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/event-listener&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^5.3.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">futures-core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/futures-core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.30&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">futures-lite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/futures-lite&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.6.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">hex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/hex&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4.3&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">libc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/libc&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(unix)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">ordered-stream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/ordered-stream&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rustix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustix&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.1.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;net&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;process&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(unix)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.200&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde_repr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_repr&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.19&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tokio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tokio&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.37.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fs&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;io-util&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;net&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;process&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rt&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rt-multi-thread&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;sync&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;time&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tracing&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tokio-vsock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tokio-vsock&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.7&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_os = </span><span class="se">\&quot;</span><span class="s2">linux</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tracing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tracing&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.40&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">uds_windows</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/uds_windows&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(windows)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">uuid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/uuid&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.8.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">vsock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/vsock&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.5.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_os = </span><span class="se">\&quot;</span><span class="s2">linux</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">windows-sys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/windows-sys&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.61&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Win32_Foundation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_NetworkManagement&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_NetworkManagement_IpHelper&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Networking&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Networking_WinSock&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Security_Authorization&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_System_IO&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_System_Memory&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_System_Threading&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_System_WindowsProgramming&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(windows)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">winnow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/winnow&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zbus_macros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zbus_macros&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^5.19.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zbus_names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zbus_names&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^4.3.4&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zvariant</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zvariant&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^5.14.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;enumflags2&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Zeeshan Ali Khan &lt;zeeshanak@gnome.org&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.87</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/zbus/5.19.0">crates.io package</a></li><li><a href="https://github.com/z-galaxy/zbus/">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">zbus</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/zbus"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=5.19.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

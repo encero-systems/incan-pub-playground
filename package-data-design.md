@@ -1,3 +1,5 @@
+> Implementation update, October 18, 2026: the website now consumes the registry's catalog and retained content directly. Features, dependencies, author metadata, taxonomy, VCS and document descriptors are present in the pinned feed. [Current implementation and coverage](docs/registry-site.md). The six-package observations below describe the original prototype; Clove requirements remain prospective until the index contains C publications.
+
 # Deterministic package pages
 
 Design/data contract for the playground, October 7, 2026. This document records the website data contract. The playground now implements a frozen-input static renderer; see tools/site/README.md for its verified scope. No LLM is required at collection, rendering or serving time.

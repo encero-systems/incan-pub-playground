@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>x25519-dalek 3.0.0 · Incan.pub</title><meta name="description" content="X25519 elliptic curve Diffie-Hellman key exchange in pure-Rust, using curve25519-dalek."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/x25519-dalek</p><div class="title-row"><h1>x25519-dalek</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/x25519-dalek/versions/3.0.0/" selected>3.0.0</option></select></label></div><p class="description">X25519 elliptic curve Diffie-Hellman key exchange in pure-Rust, using curve25519-dalek.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>BSD-3-Clause</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>x25519-dalek  <a href="https://crates.io/crates/x25519-dalek"></a> <a href="https://docs.rs/x25519-dalek"></a> <a href="https://github.com/dalek-cryptography/curve25519-dalek/actions/workflows/x25519-dalek.yml">CI</a></h3>
+<p>A pure-Rust implementation of x25519 elliptic curve Diffie-Hellman key exchange,
+with curve operations provided by
+<a href="https://github.com/dalek-cryptography/curve25519-dalek">curve25519-dalek</a>.</p>
+<p>This crate provides two levels of API: a bare byte-oriented <code>x25519</code>
+function which matches the function specified in <a href="https://tools.ietf.org/html/rfc7748">RFC7748</a>, as
+well as a higher-level Rust API for static and ephemeral Diffie-Hellman.</p>
+<h4>Examples</h4>
+<p>&lt;a href=&quot;https://shop.bubblesort.io&quot;&gt;
+&lt;img
+style=&quot;float: right; width: auto; height: 300px;&quot;
+src=&quot;https://raw.githubusercontent.com/dalek-cryptography/x25519-dalek/master/res/bubblesort-zines-secret-messages-cover.jpeg&quot;/&gt;
+&lt;/a&gt;</p>
+<p>Alice and Bob are two adorable kittens who have lost their mittens, and they
+wish to be able to send secret messages to each other to coordinate finding
+them, otherwise—if their caretaker cat finds out—they will surely be called
+naughty kittens and be given no pie!</p>
+<p>But the two kittens are quite clever.  Even though their paws are still too big
+and the rest of them is 90% fuzziness, these clever kittens have been studying
+up on modern public key cryptography and have learned a nifty trick called
+<em>elliptic curve Diffie-Hellman key exchange</em>.  With the right incantations, the
+kittens will be able to secretly organise to find their mittens, and then spend
+the rest of the afternoon nomming some yummy pie!</p>
+<p>First, Alice uses <code>EphemeralSecret::random()</code> and then
+<code>PublicKey::from()</code> to produce her secret and public keys:</p>
+<pre><code>use x25519_dalek::{EphemeralSecret, PublicKey};
+
+let alice_secret = EphemeralSecret::random();
+let alice_public = PublicKey::from(&amp;alice_secret);
+</code></pre>
+<p>Bob does the same:</p>
+<pre><code># use x25519_dalek::{EphemeralSecret, PublicKey};
+let bob_secret = EphemeralSecret::random();
+let bob_public = PublicKey::from(&amp;bob_secret);
+</code></pre>
+<p>Alice meows across the room, telling <code>alice_public</code> to Bob, and Bob
+loudly meows <code>bob_public</code> back to Alice.  Alice now computes her
+shared secret with Bob by doing:</p>
+<pre><code class="syntax-highlight language-rust"><span class="p">#</span><span class="w"> </span><span class="k">use</span><span class="w"> </span><span class="n">getrandom</span><span class="p">::{</span><span class="n">SysRng</span><span class="p">,</span><span class="w"> </span><span class="n">rand_core</span><span class="p">::</span><span class="n">UnwrapErr</span><span class="p">};</span>
+<span class="p">#</span><span class="w"> </span><span class="k">use</span><span class="w"> </span><span class="n">x25519_dalek</span><span class="p">::{</span><span class="n">EphemeralSecret</span><span class="p">,</span><span class="w"> </span><span class="n">PublicKey</span><span class="p">};</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">rng</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UnwrapErr</span><span class="p">(</span><span class="n">SysRng</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">alice_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EphemeralSecret</span><span class="p">::</span><span class="n">random_from_rng</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">rng</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">alice_public</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PublicKey</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="o">&amp;</span><span class="n">alice_secret</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">bob_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EphemeralSecret</span><span class="p">::</span><span class="n">random_from_rng</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">rng</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">bob_public</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PublicKey</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bob_secret</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">alice_shared_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">alice_secret</span><span class="p">.</span><span class="n">diffie_hellman</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bob_public</span><span class="p">);</span>
+</code></pre>
+<p>Similarly, Bob computes a shared secret by doing:</p>
+<pre><code class="syntax-highlight language-rust"><span class="p">#</span><span class="w"> </span><span class="k">use</span><span class="w"> </span><span class="n">getrandom</span><span class="p">::{</span><span class="n">SysRng</span><span class="p">,</span><span class="w"> </span><span class="n">rand_core</span><span class="p">::</span><span class="n">UnwrapErr</span><span class="p">};</span>
+<span class="p">#</span><span class="w"> </span><span class="k">use</span><span class="w"> </span><span class="n">x25519_dalek</span><span class="p">::{</span><span class="n">EphemeralSecret</span><span class="p">,</span><span class="w"> </span><span class="n">PublicKey</span><span class="p">};</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">rng</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UnwrapErr</span><span class="p">(</span><span class="n">SysRng</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">alice_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EphemeralSecret</span><span class="p">::</span><span class="n">random_from_rng</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">rng</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">alice_public</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PublicKey</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="o">&amp;</span><span class="n">alice_secret</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">bob_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EphemeralSecret</span><span class="p">::</span><span class="n">random_from_rng</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">rng</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">bob_public</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PublicKey</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bob_secret</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">bob_shared_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bob_secret</span><span class="p">.</span><span class="n">diffie_hellman</span><span class="p">(</span><span class="o">&amp;</span><span class="n">alice_public</span><span class="p">);</span>
+</code></pre>
+<p>These secrets are the same:</p>
+<pre><code class="syntax-highlight language-rust"><span class="p">#</span><span class="w"> </span><span class="k">use</span><span class="w"> </span><span class="n">getrandom</span><span class="p">::{</span><span class="n">SysRng</span><span class="p">,</span><span class="w"> </span><span class="n">rand_core</span><span class="p">::</span><span class="n">UnwrapErr</span><span class="p">};</span>
+<span class="p">#</span><span class="w"> </span><span class="k">use</span><span class="w"> </span><span class="n">x25519_dalek</span><span class="p">::{</span><span class="n">EphemeralSecret</span><span class="p">,</span><span class="w"> </span><span class="n">PublicKey</span><span class="p">};</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">rng</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UnwrapErr</span><span class="p">(</span><span class="n">SysRng</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">alice_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EphemeralSecret</span><span class="p">::</span><span class="n">random_from_rng</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">rng</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">alice_public</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PublicKey</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="o">&amp;</span><span class="n">alice_secret</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">bob_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EphemeralSecret</span><span class="p">::</span><span class="n">random_from_rng</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">rng</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">bob_public</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PublicKey</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bob_secret</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">alice_shared_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">alice_secret</span><span class="p">.</span><span class="n">diffie_hellman</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bob_public</span><span class="p">);</span>
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">bob_shared_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bob_secret</span><span class="p">.</span><span class="n">diffie_hellman</span><span class="p">(</span><span class="o">&amp;</span><span class="n">alice_public</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">alice_shared_secret</span><span class="p">.</span><span class="n">as_bytes</span><span class="p">(),</span><span class="w"> </span><span class="n">bob_shared_secret</span><span class="p">.</span><span class="n">as_bytes</span><span class="p">());</span>
+</code></pre>
+<p>Voilà!  Alice and Bob can now use their shared secret to encrypt their
+meows, for example, by using it to generate a key and nonce for an
+authenticated-encryption cipher.</p>
+<p>This example used the ephemeral DH API, which ensures that secret keys
+cannot be reused; Alice and Bob could instead use the static DH API
+and load a long-term secret key.</p>
+<h3>Use</h3>
+<p>To import <code>x25519-dalek</code>, add the following to your project's <code>Cargo.toml</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">x25519-dalek</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;3.0.0&quot;</span>
+</code></pre>
+<h3>Feature Flags</h3>
+<p>This crate is <code>#[no_std]</code> compatible with <code>default-features = false</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Feature</th>
+<th style="text-align:left">Default?</th>
+<th style="text-align:left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>zeroize</code></td>
+<td style="text-align:left">✓</td>
+<td style="text-align:left">Implements <code>Zeroize</code> and <code>ZeroizeOnDrop</code> for <code>EphemeralSecret</code>, <code>ReusableSecret</code>, and <code>StaticSecret</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><code>precomputed-tables</code></td>
+<td style="text-align:left">✓</td>
+<td style="text-align:left">Includes precomputed basepoint multiplication tables. This speeds up <code>PublicKey::from</code> by ~3x, at the cost of ~400KB added to the code size.</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>getrandom</code></td>
+<td style="text-align:left"></td>
+<td style="text-align:left">Exposes the <code>random()</code> constructor for <code>EphemeralSecret</code>, <code>ReusableSecret</code>, and <code>StaticSecret</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><code>reusable_secrets</code></td>
+<td style="text-align:left"></td>
+<td style="text-align:left">Exposes the <code>ReusableSecret</code> struct</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>static_secrets</code></td>
+<td style="text-align:left"></td>
+<td style="text-align:left">Exposes the <code>StaticSecret</code> struct</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>serde</code></td>
+<td style="text-align:left"></td>
+<td style="text-align:left">Enables <code>serde</code> serialization/deserialization for <code>PublicKey</code> and <code>StaticSecret</code></td>
+</tr>
+</tbody>
+</table>
+<h3>Major Changes</h3>
+<p>See <a href="https://github.com/dalek-cryptography/curve25519-dalek/blob/07bef73ff85998a206cd2cea7f2605c801d0d1c9/x25519-dalek/CHANGELOG.md">CHANGELOG.md</a> for a list of changes made in past versions of this crate.</p>
+<h4>Important Breaking Changes in 3.0.0</h4>
+<ul>
+<li>Update edition to 2024</li>
+<li>Update the MSRV from 1.60 to 1.85</li>
+<li>Remove <code>Zeroize</code> impl for <code>x25519::{EphemeralSecret, ReusableSecret, SharedSecret, StaticSecret}</code> to prevent misuse. These are now only zeroized on drop. (<a href="https://github.com/dalek-cryptography/curve25519-dalek/pull/782">#782</a>)</li>
+<li>Remove <code>alloc</code> feature flag, which was doing nothing (<a href="https://github.com/dalek-cryptography/curve25519-dalek/pull/857">#857</a>)</li>
+<li>Remove deprecated functions <code>{Ephemeral,Reusable,Static}Secret::new()</code> (<a href="https://github.com/dalek-cryptography/curve25519-dalek/pull/778">#778</a>)</li>
+</ul>
+<h3>MSRV</h3>
+<p>Current MSRV is 1.85.</p>
+<h3>Documentation</h3>
+<p>Documentation is available <a href="https://docs.rs/x25519-dalek">here</a>.</p>
+<h3>Performance and backend selection</h3>
+<p>Performance is a secondary goal behind correctness, safety, and clarity, but we aim to be competitive with other implementations. To this end, we allow users to choose their <em>backend</em>, i.e., the underlying implementation of elliptic curve and scalar arithmetic. Different backends have different use cases. For example, if you demand formally verified code, you want to use the <code>fiat</code> backend (as it was generated from <a href="https://github.com/mit-plv/fiat-crypto">Fiat Crypto</a>).</p>
+<p>Further instructions and details regarding backends can be found in the <a href="https://github.com/dalek-cryptography/curve25519-dalek#backends">curve25519-dalek docs</a>.</p>
+<h3>Note</h3>
+<p>This code matches the <a href="https://tools.ietf.org/html/rfc7748">RFC7748</a> test vectors.
+The elliptic curve
+operations are provided by <code>curve25519-dalek</code>, which makes a best-effort
+attempt to prevent software side-channels.</p>
+<p>&quot;Secret Messages&quot; cover image and <a href="https://shop.bubblesort.io/products/secret-messages-zine">zine</a>
+copyright © Amy Wibowo (<a href="https://twitter.com/sailorhg">@sailorhg</a>)</p>
+<h3>See also</h3>
+<ul>
+<li><a href="https://github.com/RustCrypto/nacl-compat/tree/master/crypto_box">crypto_box</a>: pure Rust public-key authenticated encryption compatible with
+the NaCl family of encryption libraries (libsodium, TweetNaCl) which uses
+<code>x25519-dalek</code> for key agreement</li>
+</ul>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>precomputed-tables</code></li><li><code>zeroize</code></li></ul></td></tr><tr><th scope="row"><code>getrandom</code></th><td>No</td><td><ul class="effects"><li><code>dep:getrandom</code></li></ul></td></tr><tr><th scope="row"><code>precomputed-tables</code></th><td>Yes<small>default → precomputed-tables</small></td><td><ul class="effects"><li><code>curve25519-dalek/precomputed-tables</code></li></ul></td></tr><tr><th scope="row"><code>reusable_secrets</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li><li><code>curve25519-dalek/serde</code></li></ul></td></tr><tr><th scope="row"><code>static_secrets</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>zeroize</code></th><td>Yes<small>default → zeroize</small></td><td><ul class="effects"><li><code>dep:zeroize</code></li><li><code>curve25519-dalek/zeroize</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/curve25519-dalek/"><code>crates-io/curve25519-dalek</code></a><small>Alias: curve25519-dalek</small></th><td><code>^5.0.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/getrandom/"><code>crates-io/getrandom</code></a><small>Alias: getrandom</small></th><td><code>^0.4</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/rand_core/"><code>crates-io/rand_core</code></a><small>Alias: rand_core</small></th><td><code>^0.10</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1</code><small>Default features: disabled</small><small>Requests: derive</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zeroize/"><code>crates-io/zeroize</code></a><small>Alias: zeroize</small></th><td><code>^1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Enabled through default → zeroize</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><p>No declared dependents in this checkpoint.</p></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, precomputed-tables, zeroize</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:fe765c970e692e88c6246b808d13c6a9857a495fec02bd760b34beabd9341382</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:274791eb6e385c9c8e1fc2892c58e8d0ef44a21129e562f778a19569ccfb72d5</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, precomputed-tables, zeroize</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:03496f7d7c0d6a45cf9c398ee2d86664b5ec25616d5148de879474e2360c1651</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:7cc6e4aed019a26dd900328f2e017da42e1daf54f1749fa5c4c3adee2e2599c5</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, precomputed-tables, zeroize</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ede37bdb6d42a51ab184aea6cf3527bc25c585954826238725d1d0a07676b8e9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:bb19f86057f30f3b71a46b6d4fc2fe3400feb419bfc1cca65b5407ced9c83157</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, precomputed-tables, zeroize</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2d3ef352757ae9400cb77942a306853dc2d2011bc3fedc48e6da11eed10d9bac</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:53271f24bdd0e7a0e719d01f05d82bf49addf26c66331c00a8c7b624abec0431</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/x25519-dalek/versions/3.0.0/">3.0.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/x25519-dalek/3.0.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>Entries are listed in reverse chronological order.</p>
+<h3>3.x Series</h3>
+<h4>3.0.0 - 2026-07-06</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>Update edition to 2024</li>
+<li>Update the MSRV from 1.60 to 1.85</li>
+<li>Remove <code>Zeroize</code> impl for <code>x25519::{EphemeralSecret, ReusableSecret, SharedSecret, StaticSecret}</code> to prevent misuse. These are now only zeroized on drop. (<a href="https://github.com/dalek-cryptography/curve25519-dalek/pull/782">#782</a>)</li>
+<li>Remove <code>alloc</code> feature flag, which was doing nothing (<a href="https://github.com/dalek-cryptography/curve25519-dalek/pull/857">#857</a>)</li>
+<li>Remove deprecated functions <code>{Ephemeral,Reusable,Static}Secret::new()</code> (<a href="https://github.com/dalek-cryptography/curve25519-dalek/pull/778">#778</a>)</li>
+<li>Upgrade <code>rand_core</code> dependency to v0.10.0</li>
+</ul>
+<h5>Other Changes</h5>
+<ul>
+<li>Re-export <code>rand_core</code> (<a href="https://github.com/dalek-cryptography/curve25519-dalek/pull/908">#908</a>)</li>
+</ul>
+<h3>2.x Series</h3>
+<ul>
+<li>Note: All <code>x255919-dalek</code> 2.x releases are in sync with the underlying <code>curve25519-dalek</code> 4.x releases.</li>
+</ul>
+<h4>2.0.1 - 2024-02-06</h4>
+<ul>
+<li>Fix nightly SIMD build</li>
+</ul>
+<h4>2.0.0-rc.3</h4>
+<ul>
+<li><code>StaticSecret</code> serialization and <code>to_bytes()</code> no longer returns clamped integers. Clamping is still always done during scalar-point multiplication.</li>
+<li>Update underlying <code>curve25519_dalek</code> library to <code>4.0.0-rc.3</code>. Notable changes:
+<ul>
+<li><a href="https://github.com/dalek-cryptography/curve25519-dalek/#backends">curve25519-dalek backend</a> now by default auto selects <code>simd</code> backend over <code>serial</code> where supported.</li>
+</ul>
+</li>
+</ul>
+<h4>2.0.0-rc.2</h4>
+<ul>
+<li>Update MSRV to 1.60.</li>
+<li>Update edition to 2021</li>
+<li>Add <code>.as_bytes()</code> and <code>AsRef&lt;[u8]&gt;</code> for <code>Shared/StaticSecret</code></li>
+<li>Add <code>getrandom</code> feature to provide <code>random_from_rng</code> constructors</li>
+<li>Make <code>StaticSecrets</code> optional via feature <code>static_secrets</code></li>
+<li>Update underlying <code>curve25519_dalek</code> library to <code>4.0.0-rc.2</code>. Notable changes:
+<ul>
+<li><a href="https://github.com/dalek-cryptography/curve25519-dalek/#backends">curve25519-dalek backend</a> additive features have been removed in favor of cfg based selection.</li>
+<li><a href="https://github.com/dalek-cryptography/curve25519-dalek/#backends">curve25519-dalek backend</a> now by default auto selects the appropriate word size over the previous default <code>32</code>.</li>
+</ul>
+</li>
+</ul>
+<h4>2.0.0-pre.1</h4>
+<ul>
+<li>Loosen restriction on zeroize dependency version from =1.3 to 1.</li>
+<li>Update MSRV to 1.51.</li>
+</ul>
+<h4>2.0.0-pre.0</h4>
+<ul>
+<li>Update <code>rand_core</code> dependency to <code>0.6</code>.</li>
+</ul>
+<h3>1.x Series</h3>
+<h4>1.2</h4>
+<ul>
+<li>Add module documentation for using the bytes-oriented <code>x25519()</code> API.</li>
+<li>Add implementation of <code>zeroize::Zeroize</code> for <code>PublicKey</code>.</li>
+<li>Move unittests to a separate directory.</li>
+<li>Add cargo feature flags <code>&quot;fiat_u32_backend&quot;</code> and <code>&quot;fiat_u64_backend&quot;</code> for
+activating the Fiat crypto field element implementations.</li>
+<li>Fix issue with removed <code>feature(external_doc)</code> on nightly compilers.</li>
+<li>Pin <code>zeroize</code> to version 1.3 to support a wider range of MSRVs.</li>
+<li>Add CI via Github actions.</li>
+<li>Fix breakage in the serde unittests.</li>
+<li>MSRV is now 1.41 for production and 1.48 for development.</li>
+<li>Add an optional check to <code>SharedSecret</code> for contibutory behaviour.</li>
+<li>Add implementation of <code>ReusableSecret</code> keys which are non-ephemeral, but which
+cannot be serialised to discourage long-term use.</li>
+</ul>
+<h4>1.1.1</h4>
+<ul>
+<li>Fix a typo in the README.</li>
+</ul>
+<h4>1.1.0</h4>
+<ul>
+<li>Add impls of <code>PartialEq</code>, <code>Eq</code>, and <code>Hash</code> for <code>PublicKey</code> (by @jack-michaud)</li>
+</ul>
+<h4>1.0.1</h4>
+<ul>
+<li>Update underlying <code>curve25519_dalek</code> library to <code>3.0</code>.</li>
+</ul>
+<h4>1.0.0</h4>
+<ul>
+<li>Widen generic bound on <code>EphemeralSecret::new</code> and <code>StaticSecret::new</code> to
+allow owned as well as borrowed RNGs.</li>
+<li>Add <code>PublicKey::to_bytes</code> and <code>SharedSecret::to_bytes</code>, returning owned byte
+arrays, complementing the existing <code>as_bytes</code> methods returning references.</li>
+<li>Remove mention of deprecated <code>rand_os</code> crate from examples.</li>
+<li>Clarify <code>EphemeralSecret</code>/<code>StaticSecret</code> distinction in documentation.</li>
+</ul>
+<h3>Pre-1.0.0</h3>
+<h4>0.6.0</h4>
+<ul>
+<li>Updates <code>rand_core</code> version to <code>0.5</code>.</li>
+<li>Adds <code>serde</code> support.</li>
+<li>Replaces <code>clear_on_drop</code> with <code>zeroize</code>.</li>
+<li>Use Rust 2018.</li>
+</ul>
+<h4>0.5.2</h4>
+<ul>
+<li>Implement <code>Clone</code> for <code>StaticSecret</code>.</li>
+</ul>
+<h4>0.5.1</h4>
+<ul>
+<li>Implement <code>Copy, Clone, Debug</code> for <code>PublicKey</code>.</li>
+<li>Remove doctests.</li>
+</ul>
+<h4>0.5.0</h4>
+<ul>
+<li>Adds support for static and ephemeral keys.</li>
+</ul>
+</div><p class="table-note">sha256:e86eccf0faa46f7c53cb8ddede4b003991d6cc814e7c5dbdb15bb49c3f179092</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>BSD-3-Clause</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2017-2021 isis agora lovecruft. All rights reserved.
+Copyright (c) 2019-2021 DebugSteven. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+</code></pre></div><p class="table-note">sha256:bebc725b8cb1ba1ed1798cb505cf31bf9bce4cbe942baf358b642666ba8186bd</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:5e3420bd9fe8fde485963a42df7be007ca4e559c0976a3781d8da1a573a3ebe3</code></dd><dt>Upstream checksum</dt><dd><code>sha256:e7e8131a03190127fb2263afc72b322ecadae46b6ff8c6f399ff5d02f5559af6</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/x25519-dalek&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;3.0.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;precomputed-tables&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;zeroize&quot;</span><span class="p">]</span>
+<span class="n">getrandom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:getrandom&quot;</span><span class="p">]</span>
+<span class="n">precomputed-tables</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;curve25519-dalek/precomputed-tables&quot;</span><span class="p">]</span>
+<span class="n">reusable_secrets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;curve25519-dalek/serde&quot;</span><span class="p">]</span>
+<span class="n">static_secrets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">zeroize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:zeroize&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;curve25519-dalek/zeroize&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x25519_dalek&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">curve25519-dalek</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/curve25519-dalek&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^5.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">getrandom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rand_core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rand_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.10&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zeroize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zeroize&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Isis Lovecruft &lt;isis@patternsinthevoid.net&gt;, DebugSteven &lt;debugsteven@gmail.com&gt;, Henry de Valence &lt;hdevalence@hdevalence.ca&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/x25519-dalek/3.0.0">crates.io package</a></li><li><a href="https://github.com/dalek-cryptography/curve25519-dalek/tree/main/x25519-dalek">Source repository</a></li><li><a href="https://docs.rs/x25519-dalek">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">x25519-dalek</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/x25519-dalek"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=3.0.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

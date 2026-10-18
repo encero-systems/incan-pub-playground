@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>zune-inflate 0.2.54 · Incan.pub</title><meta name="description" content="A heavily optimized deflate decompressor in Pure Rust"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/zune-inflate</p><div class="title-row"><h1>zune-inflate</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/zune-inflate/versions/0.2.54/" selected>0.2.54</option></select></label></div><p class="description">A heavily optimized deflate decompressor in Pure Rust</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0 OR Zlib</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>zune-inflate</h3>
+<p>This crate features an optimized inflate algorithm supporting
+whole buffer decompression.</p>
+<p>Supported formats are</p>
+<ul>
+<li>raw deflate</li>
+<li>zlib (deflate with a zlib wrapper on)</li>
+<li>gzip</li>
+</ul>
+<p>The implementation is heavily based on Eric Biggers <a href="https://github.com/ebiggers/libdeflate">libdeflate</a> and hence
+has similar characteristics.</p>
+<p>Specifically, we do not support streaming decompression but prefer whole buffer decompression.</p>
+<h4>Installation</h4>
+<p>To use in your crate, simply add the following in your
+Cargo.toml</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="c1">#other amazing crates from other amazing people</span>
+<span class="n">zune-inflate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.2.0&quot;</span>
+</code></pre>
+<h4>Features</h4>
+<p>One can enable or disable a specific format using
+cargo features.</p>
+<p>Specifically, the following can be enabled</p>
+<ul>
+<li><code>gzip</code>: Enable decompressing of gzip encoded data</li>
+<li><code>zlib</code>: Enable decompressing of zlib encoded data</li>
+</ul>
+<p>To enable one feature, modify <code>Cargo.toml</code> entry to be</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">zune-inflate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;#ADD_SPECIFIC_FEATURE&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<h4>Usage.</h4>
+<p>The library exposes a simple API for decompressing
+data, and depending on what type of data you have, you typically choose
+one of the <code>decode[_suffix]</code> function to decode your data</p>
+<p>The decompressor expects the whole buffer handed upfront</p>
+<h5>Decoding raw deflate</h5>
+<p>To decode raw deflate data, the following code should get you
+started.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">zune_inflate</span><span class="p">::</span><span class="n">DeflateDecoder</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">totally_valid_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="mi">23</span><span class="p">];</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">decoder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DeflateDecoder</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">totally_valid_data</span><span class="p">);</span>
+<span class="c1">// panic on errors, because that&#39;s the cool way to go</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">decompressed_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">decoder</span><span class="p">.</span><span class="n">decode_deflate</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+</code></pre>
+<h5>Decoding zlib</h5>
+<p>To decode deflate data wrapped in zlib, the following code should get you
+started.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">zune_inflate</span><span class="p">::</span><span class="n">DeflateDecoder</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">totally_valid_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="mi">23</span><span class="p">];</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">decoder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DeflateDecoder</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">totally_valid_data</span><span class="p">);</span>
+<span class="c1">// panic on errors, because that&#39;s the cool way to go</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">decompressed_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">decoder</span><span class="p">.</span><span class="n">decode_zlib</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+</code></pre>
+<h5>Advanced usage</h5>
+<p>There are advanced options specified by <code>DeflateOptions</code> which can change
+decompression settings.</p>
+<h4>Comparisions.</h4>
+<p>I'll compare this with <code>flate2</code> with <code>miniz-oxide</code> backend.</p>
+<table>
+<thead>
+<tr>
+<th>feature</th>
+<th><code>zune-inflate</code></th>
+<th><code>flate2</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>zlib decompression</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>delfate decompression</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>gzip</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>compression</td>
+<td>soon</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>streaming decompression</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><strong>unsafe</strong></td>
+<td>no</td>
+<td>yes&lt;sup&gt;[1]&lt;/sup&gt;</td>
+</tr>
+</tbody>
+</table>
+<p>&lt;sup&gt;[1]&lt;/sup&gt; Flate writes to an uninitialized buffer</p>
+<p>As you can see, there are some concrete features we currently lack when compared to
+flate2/miniz-oxide.</p>
+<p>There's actually nothing riding in for us, except...it's wickedly fast...</p>
+<h5>Benchmarks</h5>
+<p>Up-to date benchmarks are done using criterion and hosted online at <a href="https://etemesi254.github.io/posts/Zune-Benchmarks/">zune-benchmarks</a> site,
+benchmarks for this library have the <code>inflate: </code> prefix.</p>
+<h4>Fuzzing</h4>
+<p>The decoder is currently fuzzed for correctness by both <code>miniz-oxide</code> and <code>zlib-ng</code>, see the fuzz/src directory</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>zlib</code></li><li><code>gzip</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>gzip</code></th><td>Yes<small>default → gzip</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>simd-adler32</code></th><td>Yes<small>default → zlib → simd-adler32</small></td><td><ul class="effects"><li><code>dep:simd-adler32</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>dep:simd-adler32</code></li><li><code>simd-adler32/std</code></li></ul></td></tr><tr><th scope="row"><code>zlib</code></th><td>Yes<small>default → zlib</small></td><td><ul class="effects"><li><code>simd-adler32</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/simd-adler32/"><code>crates-io/simd-adler32</code></a><small>Alias: simd-adler32</small></th><td><code>^0.3.4</code><small>Default features: disabled</small><small>Requests: </small></td><td>Enabled through default → zlib → simd-adler32</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/exr/versions/1.74.2/">crates-io/exr 1.74.2</a><span>Requires ^0.2.3 · alias zune-inflate · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>simd-adler32, zlib</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5f4777f8c8c1b8e718c31fe1410064b42e59c3cd05806370236844971ffd126a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53954876">Attestation reference</a><small>Archive: sha256:8a1986ef2fd7b595174aa69fa8f52e00af092a4769fb8ee7cdac3ebaed6cdc24</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>simd-adler32, zlib</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0d0cdff77bb6998156fef4a9eb2c6ff6558cbc991dd4447639f94fe3bc5c84b2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:cc59f2a75a7d6785d35f5d296a7a20614e09ca68c97ac64736c2dc63d7bec069</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>simd-adler32, zlib</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1c84b46f226485966c462fc589656bedd2cddbb9437f5e9182ee10eb065e10a4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53950367">Attestation reference</a><small>Archive: sha256:bba08f2625d3156856a0632f621b517ef113906eeb6442839dc201f82950c132</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>simd-adler32, zlib</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d9ca57c80f45807064b1d8e5250e29dca98c562aaf36f629a9619e6ddc4bf979</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:6c955e097b065fed687b923726a0d0557ffce12232421fdd6c038643edf74db7</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/zune-inflate/versions/0.2.54/">0.2.54</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/zune-inflate/0.2.54">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h4>Version 0.2.54</h4>
+<ul>
+<li>Add simple encoder</li>
+<li>Fix no_std compilation</li>
+</ul>
+<h4>Version 0.2.52</h4>
+<ul>
+<li>Add small fix for refilling where the decoder lacked bits</li>
+</ul>
+<h4>Version 0.2.51</h4>
+<ul>
+<li>Correctly check for limits in the inner loop</li>
+</ul>
+<h4>Version 0.2.0</h4>
+<ul>
+<li>Initial release</li>
+</ul>
+<h4>Version 0.2.1</h4>
+<ul>
+<li>Fix bug where raw deflate outputs would cause errors.</li>
+</ul>
+<h4>Version 0.2.2</h4>
+<ul>
+<li>Fix bug in which some paths would cause the stream not to refill</li>
+</ul>
+<h4>Version 0.2.3</h4>
+<ul>
+<li>Small performance improvements, especially on files with a lot of RLE redundant data</li>
+</ul>
+<h4>Version 0.2.4</h4>
+<ul>
+<li>Fix bug with some gzip that would cause errors during decoding</li>
+<li>Small performance improvement</li>
+</ul>
+<h4>Version 0.2.41</h4>
+<ul>
+<li>Improve documentation of exposed values</li>
+</ul>
+<h4>Version 0.2.42</h4>
+<ul>
+<li>Remove broken links in README.</li>
+</ul>
+<h4>Version 0.2.50</h4>
+<ul>
+<li>Mark library as <code>#[no_std]</code></li>
+<li>Impl <code>std::error::Error</code> for library</li>
+</ul>
+</div><p class="table-note">sha256:e82df64959cb3ecd8c54555ff2296157455a52f9c19027a051b6c04b02ca2b6a</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0 OR Zlib</strong></p><details class="document-file"><summary>LICENSE · Registry-generated</summary><div class="readme"><pre><code>zune-inflate 0.2.54, as published on crates.io, carries no license file. Its manifest declares the license `MIT OR Apache-2.0 OR Zlib` (an SPDX expression; each identifier's text is at https://spdx.org/licenses/). See https://crates.io/crates/zune-inflate/0.2.54.
+
+incan.pub wrote this file when it adopted the package as the Loaf `crates-io/zune-inflate`.
+</code></pre></div><p class="table-note">sha256:9fb3bf7b02c65f13b65d17257f6256b329233b19c8dd0e3debe4fceb204592b9</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:f55ab9378b1d12f330a87c885e4fc3b0ffeb37e687249af0e5a298f56113e9b1</code></dd><dt>Upstream checksum</dt><dd><code>sha256:73ab332fe2f6680068f3582b16a24f90ad7096d5d39b974d1c0aff0125116f02</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zune-inflate&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.2.54&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zlib&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gzip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">gzip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">simd-adler32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:simd-adler32&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:simd-adler32&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;simd-adler32/std&quot;</span><span class="p">]</span>
+<span class="n">zlib</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;simd-adler32&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;zune_inflate&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">simd-adler32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/simd-adler32&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/zune-inflate/0.2.54">crates.io package</a></li><li>Source repository</li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">zune-inflate</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/zune-inflate"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.2.54"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>darling 0.20.11 · Incan.pub</title><meta name="description" content="A proc-macro library for reading attributes into structs when
+implementing custom derives."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/darling</p><div class="title-row"><h1>darling</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/darling/versions/0.24.1/">0.24.1</option><option value="../../../../../packages/crates-io/darling/versions/0.20.11/" selected>0.20.11</option></select></label></div><p class="description">A proc-macro library for reading attributes into structs when
+implementing custom derives.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><p class="version-warning">Viewing an older indexed version. <a href="../../../../../packages/crates-io/darling/">View latest indexed version 0.24.1 →</a></p><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Darling</h3>
+<p><a href="https://github.com/TedDriggs/darling/actions">Build Status</a>
+<a href="https://crates.io/crates/darling">Latest Version</a>
+Rustc Version 1.56+</p>
+<p><code>darling</code> is a crate for proc macro authors, which enables parsing attributes into structs. It is heavily inspired by <code>serde</code> both in its internals and in its API.</p>
+<h3>Benefits</h3>
+<ul>
+<li>Easy and declarative parsing of macro input - make your proc-macros highly controllable with minimal time investment.</li>
+<li>Great validation and errors, no work required. When users of your proc-macro make a mistake, <code>darling</code> makes sure they get error markers at the right place in their source, and provides &quot;did you mean&quot; suggestions for misspelled fields.</li>
+</ul>
+<h3>Usage</h3>
+<p><code>darling</code> provides a set of traits which can be derived or manually implemented.</p>
+<ol>
+<li><code>FromMeta</code> is used to extract values from a meta-item in an attribute. Implementations are likely reusable for many libraries, much like <code>FromStr</code> or <code>serde::Deserialize</code>. Trait implementations are provided for primitives, some std types, and some <code>syn</code> types.</li>
+<li><code>FromDeriveInput</code> is implemented or derived by each proc-macro crate which depends on <code>darling</code>. This is the root for input parsing; it gets access to the identity, generics, and visibility of the target type, and can specify which attribute names should be parsed or forwarded from the input AST.</li>
+<li><code>FromField</code> is implemented or derived by each proc-macro crate which depends on <code>darling</code>. Structs deriving this trait will get access to the identity (if it exists), type, and visibility of the field.</li>
+<li><code>FromVariant</code> is implemented or derived by each proc-macro crate which depends on <code>darling</code>. Structs deriving this trait will get access to the identity and contents of the variant, which can be transformed the same as any other <code>darling</code> input.</li>
+<li><code>FromAttributes</code> is a lower-level version of the more-specific <code>FromDeriveInput</code>, <code>FromField</code>, and <code>FromVariant</code> traits. Structs deriving this trait get a meta-item extractor and error collection which works for any syntax element, including traits, trait items, and functions. This is useful for non-derive proc macros.</li>
+</ol>
+<h4>Additional Modules</h4>
+<ul>
+<li><code>darling::ast</code> provides generic types for representing the AST.</li>
+<li><code>darling::usage</code> provides traits and functions for determining where type parameters and lifetimes are used in a struct or enum.</li>
+<li><code>darling::util</code> provides helper types with special <code>FromMeta</code> implementations, such as <code>PathList</code>.</li>
+</ul>
+<h3>Example</h3>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">darling</span><span class="p">::{</span><span class="n">FromDeriveInput</span><span class="p">,</span><span class="w"> </span><span class="n">FromMeta</span><span class="p">};</span>
+
+<span class="cp">#[derive(Default, FromMeta)]</span>
+<span class="cp">#[darling(default)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Lorem</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[darling(rename = </span><span class="s">&quot;sit&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">ipsum</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="p">,</span>
+<span class="w">    </span><span class="n">dolor</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(FromDeriveInput)]</span>
+<span class="cp">#[darling(attributes(my_crate), forward_attrs(allow, doc, cfg))]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">MyTraitOpts</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">ident</span><span class="p">:</span><span class="w"> </span><span class="nc">syn</span><span class="p">::</span><span class="n">Ident</span><span class="p">,</span>
+<span class="w">    </span><span class="n">attrs</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">syn</span><span class="p">::</span><span class="n">Attribute</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">lorem</span><span class="p">:</span><span class="w"> </span><span class="nc">Lorem</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>The above code will then be able to parse this input:</p>
+<pre><code class="syntax-highlight language-rust"><span class="sd">/// A doc comment which will be available in `MyTraitOpts::attrs`.</span>
+<span class="cp">#[derive(MyTrait)]</span>
+<span class="cp">#[my_crate(lorem(dolor = </span><span class="s">&quot;Hello&quot;</span><span class="cp">, sit))]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">ConsumingType</span><span class="p">;</span>
+</code></pre>
+<h3>Attribute Macros</h3>
+<p>Non-derive attribute macros are supported.
+To parse arguments for attribute macros, derive <code>FromMeta</code> on the argument receiver type, then use <code>darling::ast::NestedMeta::parse_meta_list</code> to convert the arguments <code>TokenStream</code> to a <code>Vec&lt;NestedMeta&gt;</code>, then pass that to the derived <code>from_list</code> method on your argument receiver type.
+This will produce a normal <code>darling::Result&lt;T&gt;</code> that can be used the same as a result from parsing a <code>DeriveInput</code>.</p>
+<h4>Macro Code</h4>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">darling</span><span class="p">::{</span><span class="n">Error</span><span class="p">,</span><span class="w"> </span><span class="n">FromMeta</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">darling</span><span class="p">::</span><span class="n">ast</span><span class="p">::</span><span class="n">NestedMeta</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">syn</span><span class="p">::</span><span class="n">ItemFn</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">proc_macro</span><span class="p">::</span><span class="n">TokenStream</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, FromMeta)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">MacroArgs</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[darling(default)]</span>
+<span class="w">    </span><span class="n">timeout_ms</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="kt">u16</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">path</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[proc_macro_attribute]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">your_attr</span><span class="p">(</span><span class="n">args</span><span class="p">:</span><span class="w"> </span><span class="nc">TokenStream</span><span class="p">,</span><span class="w"> </span><span class="n">input</span><span class="p">:</span><span class="w"> </span><span class="nc">TokenStream</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">TokenStream</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">attr_args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">NestedMeta</span><span class="p">::</span><span class="n">parse_meta_list</span><span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">into</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">v</span><span class="p">,</span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">TokenStream</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="n">Error</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="n">e</span><span class="p">).</span><span class="n">write_errors</span><span class="p">());</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">syn</span><span class="p">::</span><span class="n">parse_macro_input</span><span class="o">!</span><span class="p">(</span><span class="n">input</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">ItemFn</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">MacroArgs</span><span class="p">::</span><span class="n">from_list</span><span class="p">(</span><span class="o">&amp;</span><span class="n">attr_args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">v</span><span class="p">,</span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">TokenStream</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">write_errors</span><span class="p">());</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
+
+<span class="w">    </span><span class="c1">// do things with `args`</span>
+<span class="w">    </span><span class="fm">unimplemented!</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Consuming Code</h4>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">your_crate</span><span class="p">::</span><span class="n">your_attr</span><span class="p">;</span>
+
+<span class="cp">#[your_attr(path = </span><span class="s">&quot;hello&quot;</span><span class="cp">, timeout_ms = 15)]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">do_stuff</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Hello&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h3>Features</h3>
+<p>Darling's features are built to work well for real-world projects.</p>
+<ul>
+<li><strong>Defaults</strong>: Supports struct- and field-level defaults, using the same path syntax as <code>serde</code>.
+Additionally, <code>Option&lt;T&gt;</code> and <code>darling::util::Flag</code> fields are innately optional; you don't need to declare <code>#[darling(default)]</code> for those.</li>
+<li><strong>Field Renaming</strong>: Fields can have different names in usage vs. the backing code.</li>
+<li><strong>Auto-populated fields</strong>: Structs deriving <code>FromDeriveInput</code> and <code>FromField</code> can declare properties named <code>ident</code>, <code>vis</code>, <code>ty</code>, <code>attrs</code>, and <code>generics</code> to automatically get copies of the matching values from the input AST. <code>FromDeriveInput</code> additionally exposes <code>data</code> to get access to the body of the deriving type, and <code>FromVariant</code> exposes <code>fields</code>.
+<ul>
+<li><strong>Transformation of forwarded attributes</strong>: You can add <code>#[darling(with=path)]</code> to the <code>attrs</code> field to use a custom function to transform the forwarded attributes before they're provided to your struct. The function signature is <code>fn(Vec&lt;Attribute&gt;) -&gt; darling::Result&lt;T&gt;</code>, where <code>T</code> is the type you declared for the <code>attrs</code> field. Returning an error from this function will propagate with all other parsing errors.</li>
+</ul>
+</li>
+<li><strong>Mapping function</strong>: Use <code>#[darling(map=&quot;path&quot;)]</code> or <code>#[darling(and_then=&quot;path&quot;)]</code> to specify a function that runs on the result of parsing a meta-item field. This can change the return type, which enables you to parse to an intermediate form and convert that to the type you need in your struct.</li>
+<li><strong>Skip fields</strong>: Use <code>#[darling(skip)]</code> to mark a field that shouldn't be read from attribute meta-items.</li>
+<li><strong>Multiple-occurrence fields</strong>: Use <code>#[darling(multiple)]</code> on a <code>Vec</code> field to allow that field to appear multiple times in the meta-item. Each occurrence will be pushed into the <code>Vec</code>.</li>
+<li><strong>Span access</strong>: Use <code>darling::util::SpannedValue</code> in a struct to get access to that meta item's source code span. This can be used to emit warnings that point at a specific field from your proc macro. In addition, you can use <code>darling::Error::write_errors</code> to automatically get precise error location details in most cases.</li>
+<li><strong>&quot;Did you mean&quot; suggestions</strong>: Compile errors from derived darling trait impls include suggestions for misspelled fields.</li>
+<li><strong>Struct flattening</strong>: Use <code>#[darling(flatten)]</code> to remove one level of structure when presenting your meta item to users. Fields that are not known to the parent struct will be forwarded to the <code>flatten</code> field.</li>
+<li><strong>Custom shorthand</strong>: Use <code>#[darling(from_word = ...)]</code> on a struct or enum to override how a simple word is interpreted. By default, it is an error for your macro's user to fail to specify the fields of your struct, but with this you can choose to instead produce a set of default values. This takes either a path or a closure whose signature matches <code>FromMeta::from_word</code>.</li>
+<li><strong>Custom handling for missing fields</strong>: When a field is not present and <code>#[darling(default)]</code> is not used, derived impls will call <code>FromMeta::from_none</code> on that field's type to try and get the fallback value for the field. Usually, there is not a fallback value, so a missing field error is generated. <code>Option&lt;T: FromMeta&gt;</code> uses this to make options optional without requiring <code>#[darling(default)]</code> declarations, and structs and enums can use this themselves with <code>#[darling(from_none = ...)]</code>. This takes either a path or a closure whose signature matches <code>FromMeta::from_none</code>.</li>
+</ul>
+<h4>Shape Validation</h4>
+<p>Some proc-macros only work on structs, while others need enums whose variants are either unit or newtype variants.
+Darling makes this sort of validation extremely simple.
+On the receiver that derives <code>FromDeriveInput</code>, add <code>#[darling(supports(...))]</code> and then list the shapes that your macro should accept.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>any</code></td>
+<td>Accept anything</td>
+</tr>
+<tr>
+<td><code>struct_any</code></td>
+<td>Accept any struct</td>
+</tr>
+<tr>
+<td><code>struct_named</code></td>
+<td>Accept structs with named fields, e.g. <code>struct Example { field: String }</code></td>
+</tr>
+<tr>
+<td><code>struct_newtype</code></td>
+<td>Accept newtype structs, e.g. <code>struct Example(String)</code></td>
+</tr>
+<tr>
+<td><code>struct_tuple</code></td>
+<td>Accept tuple structs, e.g. <code>struct Example(String, String)</code></td>
+</tr>
+<tr>
+<td><code>struct_unit</code></td>
+<td>Accept unit structs, e.g. <code>struct Example;</code></td>
+</tr>
+<tr>
+<td><code>enum_any</code></td>
+<td>Accept any enum</td>
+</tr>
+<tr>
+<td><code>enum_named</code></td>
+<td>Accept enum variants with named fields</td>
+</tr>
+<tr>
+<td><code>enum_newtype</code></td>
+<td>Accept newtype enum variants</td>
+</tr>
+<tr>
+<td><code>enum_tuple</code></td>
+<td>Accept tuple enum variants</td>
+</tr>
+<tr>
+<td><code>enum_unit</code></td>
+<td>Accept unit enum variants</td>
+</tr>
+</tbody>
+</table>
+<p>Each one is additive, so listing <code>#[darling(supports(struct_any, enum_newtype))]</code> would accept all structs and any enum where every variant is a newtype variant.</p>
+<p>This can also be used when deriving <code>FromVariant</code>, without the <code>enum_</code> prefix.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>suggestions</code></li></ul></td></tr><tr><th scope="row"><code>diagnostics</code></th><td>No</td><td><ul class="effects"><li><code>darling_core/diagnostics</code></li></ul></td></tr><tr><th scope="row"><code>suggestions</code></th><td>Yes<small>default → suggestions</small></td><td><ul class="effects"><li><code>darling_core/suggestions</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/darling_core/"><code>crates-io/darling_core</code></a><small>Alias: darling_core</small></th><td><code>=0.20.11</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/darling_macro/"><code>crates-io/darling_macro</code></a><small>Alias: darling_macro</small></th><td><code>=0.20.11</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/bon-macros/versions/3.10.2/">crates-io/bon-macros 3.10.2</a><span>Requires &gt;=0.24.1, &lt;0.25.0 · alias darling · </span></li><li><a href="../../../../../packages/crates-io/derive_builder_core/versions/0.20.2/">crates-io/derive_builder_core 0.20.2</a><span>Requires ^0.20.10 · alias darling · </span></li><li><a href="../../../../../packages/crates-io/instability/versions/0.3.14/">crates-io/instability 0.3.14</a><span>Requires ^0.24 · alias darling · </span></li><li><a href="../../../../../packages/crates-io/serde_with_macros/versions/3.24.0/">crates-io/serde_with_macros 3.24.0</a><span>Requires ^0.24.0 · alias darling · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, suggestions</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:222e343082ef5e0f7c61e286e7b2307ca51f8d45f6d2b8069af6302df978f1c4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:816b8b5179c2066ff599f8f1d9590ded56592aa4fe7a000ff95e00de719d3410</small></li><li><code>sha256:8caf1e84b2be3be94a0ba9820e84b58738aa58dfb0e382471c69650d58e93404</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:fb662b9c2835de6188aee2c92eae8b1a6e80c4e691bf5c952ea908a40668074c</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, suggestions</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:252171ca34492a25f1727875206cda62a48bfbd395699a3b1caaff8fc25a30b9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:0b574fcd02ae0d42990b6c57f77c23a5431222beb8b5dfb435f47c7cba0be073</small></li><li><code>sha256:4d4d7588f56d2e859cd92c67c4cba74d69fefff8d0f14a46bf2c53c93c97e673</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:ccb4aaa7e41befab69d0a0b687de63f5eb558f1e32fd56dc30ac5ecbac066211</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, suggestions</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7d8d00c4e0a2833cd59dd5ee56b0614d924bbb019c68dea4ad12b10f76360e67</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:3cf54baa87c3d770d631a63c51b008245f156cf67bd1fa9b149a76a0e9f392c1</small></li><li><code>sha256:8345f955f0033bf60883897c7b2954a868737600abe6bf1d30a21692ac0c7da7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:535020505713f2453283be3cc795c43a725205fe77dd8847bcd3805740e8bfb3</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, suggestions</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:03b48c256c87ceba6fecffcb1b0a6ba9dd9bf27fcff4f1061e33b1565b2ce32a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:44c1755c51ad6a47edaa8ce3394de32b6d11d94afc2bbdd211d65170ed9fc2fe</small></li><li><code>sha256:859f56c8a6e016b51c59e389373ccc15af8e254159bbceda1e1c399b88486372</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:bc0f80de7fef22e97010396220b5f787c439e44ae014ca3e24e1599f80a6f7e5</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/darling/versions/0.24.1/">0.24.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/darling/0.24.1">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/darling/versions/0.20.11/">0.20.11</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/darling/0.20.11">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<h4>v0.20.11 (March 28, 2025)</h4>
+<ul>
+<li>Support <code>#[darling(with = ...)]</code> on the <code>data</code> field when deriving <code>FromDeriveInput</code>. This allows the use of simpler receiver types, such as a <code>Vec</code> of enum variants.</li>
+<li>Bump version of <code>proc-macro2</code> to 1.0.86.</li>
+<li>Accept closures for <code>#[darling(with = ...)]</code> on fields in <code>FromDeriveInput</code>, <code>FromMeta</code>, <code>FromField</code>, etc. <a href="https://github.com/TedDriggs/darling/issues/309">#309</a></li>
+<li>Add <code>darling::util::Callable</code> to accept a path or closure as a meta-item expression</li>
+<li>Add <code>#[darling(from_word = ...)]</code> and <code>#[darling(from_none = ...)]</code> to control shorthand and fallback behaviors for structs and enums deriving <code>FromMeta</code> <a href="https://github.com/TedDriggs/darling/issues/320">#320</a></li>
+<li>Add <code>FromMeta</code> impl for <code>syn::ExprRange</code> <a href="https://github.com/TedDriggs/issues/329">#329</a></li>
+</ul>
+<h4>v0.20.10 (July 9, 2024)</h4>
+<ul>
+<li>Add <code>#[allow(clippy::manual_unwrap_or_default)]</code> to all generated impls to avoid causing clippy fails in crates using <code>darling</code> <a href="https://github.com/TedDriggs/darling/pull/296">#296</a></li>
+<li>Properly initialize <code>attrs</code> magic field in derived <code>FromAttributes</code> impls <a href="https://github.com/TedDriggs/darling/pull/297">#297</a></li>
+</ul>
+<h4>v0.20.9 (May 15, 2024)</h4>
+<ul>
+<li>Allow word-form for newtype enum variants whose only field produces a value when <code>from_none</code> is called on their type <a href="https://github.com/TedDriggs/darling/issues/249">#249</a></li>
+<li>Add <code>FromMeta</code> impls for the <code>std::num::NonZero*</code> types <a href="https://github.com/TedDriggs/darling/pull/288">#288</a></li>
+<li>Fix panic in number <code>FromMeta</code> impls when the parsed value is too large for the receiver type <a href="https://github.com/TedDriggs/darling/issues/289">#289</a></li>
+</ul>
+<h4>v0.20.8 (February 23, 2024)</h4>
+<ul>
+<li>Add <code>#[darling(with = ...)]</code> support to <code>attrs</code> magic field to allow using custom receiver types for <code>attrs</code> <a href="https://github.com/TedDriggs/darling/issues/273">#273</a></li>
+</ul>
+<h4>v0.20.7 (February 22, 2024)</h4>
+<ul>
+<li>Add <code>#[darling(flatten)]</code> to allow forwarding unknown fields to another struct <a href="https://github.com/TedDriggs/darling/issues/146">#146</a></li>
+<li>Don't suggest names of skipped fields in derived impls <a href="https://github.com/TedDriggs/darling/issues/268">#268</a></li>
+</ul>
+<h4>v0.20.6 (February 14, 2024)</h4>
+<ul>
+<li>Fix some missing syn invisible group handling in <code>FromMeta</code> impls <a href="https://github.com/TedDriggs/darling/pull/263">#263</a></li>
+<li>Fix misleading error message on <code>Error::unexpected_type</code> so it no longer implies the type was a literal <a href="https://github.com/TedDriggs/darling/pull/264">#264</a></li>
+<li>Impl <code>FromMeta</code> <code>Vec</code> of literals, e.g. <code>LitStr</code> <a href="https://github.com/TedDriggs/pull/265">#265</a></li>
+</ul>
+<h4>v0.20.5 (January 30, 2024)</h4>
+<ul>
+<li>Add <code>Flag::span</code> inherent method, as <code>Flag</code> can no longer impl <code>syn::spanned::Spanned</code> <a href="https://github.com/TedDriggs/darling/issues/242">#242</a></li>
+</ul>
+<h4>v0.20.4 (January 29, 2024)</h4>
+<ul>
+<li>Accept bare paths in <code>#[darling(default = ...)]</code> <a href="https://github.com/TedDriggs/darling/pull/258">#258</a></li>
+<li>Add <code>FromMeta</code> impl for <code>PathBuf</code> <a href="https://github.com/TedDriggs/darling/pull/259">#259</a></li>
+<li>Improve <code>FromMeta</code> implementation for enums <a href="https://github.com/TedDriggs/darling/pull/260">#260</a>
+<ul>
+<li>Properly implement unit arms in <code>FromMeta::from_list</code> to provide a consistent API for heterogeneous enums that include a mix of unit, newtype and struct variants</li>
+<li>Add <code>#[darling(word)]</code> attribute for unit enum variants (See <a href="https://github.com/TedDriggs/darling/issues/63">#63</a> for details)</li>
+</ul>
+</li>
+</ul>
+<h4>v0.20.3 (July 12, 2023)</h4>
+<ul>
+<li>Add <code>FromMeta</code> impl for <code>u128</code> and <code>i128</code> <a href="https://github.com/TedDriggs/darling/pull/243">#243</a></li>
+</ul>
+<h4>v0.20.2 (May 25, 2023)</h4>
+<ul>
+<li>Allow darling users to omit quotation marks for paths and idents <a href="https://github.com/TedDriggs/darling/pull/236">#236</a></li>
+<li>Add new util functions for controlling how quotation marks are handled when reading into <code>Expr</code> fields <a href="https://github.com/TedDriggs/darling/pull/235">#235</a></li>
+</ul>
+<h4>v0.20.1 (May 2, 2023)</h4>
+<ul>
+<li>Add <code>Clone</code> impl for <code>NestedMeta</code> <a href="https://github.com/TedDriggs/darling/pull/230">#230</a></li>
+</ul>
+<h4>v0.20.0 (April 27, 2023)</h4>
+<ul>
+<li>Bump syn to version 2, courtesy of @jonasbb <a href="https://github.com/TedDriggs/darling/issues/227">#227</a></li>
+</ul>
+<h5>Breaking Changes</h5>
+<ul>
+<li>
+<p>Replace all occurrences of syn::NestedMeta with darling::ast::NestedMeta.</p>
+</li>
+<li>
+<p>Replacement for the deprecated AttributeArgs:</p>
+</li>
+</ul>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// Before</span>
+
+<span class="n">parse_macro_input</span><span class="o">!</span><span class="p">(</span><span class="n">args</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">AttributeArgs</span><span class="p">);</span>
+
+<span class="c1">// After</span>
+
+<span class="k">match</span><span class="w"> </span><span class="n">NestedMeta</span><span class="p">::</span><span class="n">parse_meta_list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">v</span><span class="p">,</span>
+<span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">TokenStream</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="n">Error</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="n">e</span><span class="p">).</span><span class="n">write_errors</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre>
+<ul>
+<li>In GenericParamExt, <code>LifetimeDef</code> is now <code>LifetimeParam</code>.</li>
+<li>In GenericParamExt, <code>as_lifetime_def</code> is renamed to <code>as_lifetime_param</code>.</li>
+<li>Flag and SpannedValue no longer implement <code>syn::spanned::Spanned</code>.</li>
+<li>The MSRV (minimum supported Rust version) is now 1.56, because of syn.</li>
+</ul>
+<h5>Deprecation Warnings</h5>
+<p>In previous versions of <code>darling</code>, arbitrary expressions were passed in attributes by wrapping them in quotation marks.
+v0.20.0 preserves this behavior for <code>syn::Expr</code>, but as a result a field expecting a <code>syn::Expr</code> cannot accept a string literal - it will incorrectly attempt to parse the contents. If this is an issue for you, please add a comment to <a href="https://github.com/TedDriggs/darling/issues/229">#229</a>.</p>
+<h4>v0.14.4 (March 9, 2023)</h4>
+<ul>
+<li>Add support for child diagnostics when <code>diagnostics</code> feature enabled <a href="https://github.com/TedDriggs/darling/issues/224">#224</a></li>
+</ul>
+<h4>v0.14.3 (February 3, 2023)</h4>
+<ul>
+<li>Re-export <code>syn</code> from <code>darling</code> to avoid requiring that consuming crates have a <code>syn</code> dependency.</li>
+<li>Change <code>&lt;SpannedValue&lt;T&gt; as FromMeta&gt;</code> impl to more precisely capture the <em>value</em> span, as opposed to the span of the entire item.</li>
+<li>Add <code>darling::util::{AsShape, Shape, ShapeSet}</code> to improve &quot;shape&quot; validation for structs and variants. <a href="https://github.com/TedDriggs/issues/222">#222</a></li>
+</ul>
+<h4>v0.14.2 (October 26, 2022)</h4>
+<ul>
+<li>Derived impls of <code>FromMeta</code> will now error on literals, rather than silently ignoring them. <a href="https://github.com/TedDriggs/darling/pull/193">#193</a></li>
+<li>Don't include property paths in compile errors when spans are available. <a href="https://github.com/TedDriggs/darling/pull/203">#203</a></li>
+</ul>
+<h4>v0.14.1 (April 28, 2022)</h4>
+<ul>
+<li>Fix a bug where using a trait that accepts <code>#[darling(attributes(...))]</code> without specifying any attributes would emit code that did not compile. <a href="https://github.com/TedDriggs/darling/issues/183">#183</a></li>
+<li>Impl <code>Clone</code> for <code>darling::Error</code> <a href="https://github.com/TedDriggs/darling/pull/184">#184</a></li>
+<li>Impl <code>From&lt;darling::Error&gt; for syn::Error</code> <a href="https://github.com/TedDriggs/darling/pull/184">#184</a></li>
+<li>Add <code>Error::span</code> and <code>Error::explicit_span</code> methods <a href="https://github.com/TedDriggs/darling/pull/184">#184</a></li>
+</ul>
+<h4>v0.14.0 (April 13, 2022)</h4>
+<ul>
+<li><strong>BREAKING CHANGE:</strong> Remove many trait impls from <code>util::Flag</code>.
+This type had a number of deref and operator impls that made it usable as sort-of-a-boolean.
+Real-world usage showed this type is more useful if it's able to carry a span for good errors,
+and that most of those impls were unnecessary. <a href="https://github.com/TedDriggs/darling/pull/179">#179</a></li>
+<li>Remove need for <code>#[darling(default)]</code> on <code>Option&lt;T&gt;</code> and <code>Flag</code> fields <a href="https://github.com/TedDriggs/darling/issues/161">#161</a></li>
+<li>Improve validation of enum shapes <a href="https://github.com/TedDriggs/darling/pull/178">#178</a></li>
+<li>Bump <code>proc-macro2</code> dependency to 1.0.37 <a href="https://github.com/TedDriggs/darling/pull/180">#180</a></li>
+<li>Bump <code>quote</code> dependency to 1.0.18 <a href="https://github.com/TedDriggs/darling/pull/180">#180</a></li>
+<li>Bump <code>syn</code> dependency to 1.0.91 <a href="https://github.com/TedDriggs/darling/pull/180">#180</a></li>
+</ul>
+<h4>v0.13.4 (April 6, 2022)</h4>
+<ul>
+<li>Impl <code>FromMeta</code> for <code>syn::Visibility</code> <a href="https://github.com/TedDriggs/darling/pull/173">#173</a></li>
+</ul>
+<h4>v0.13.3 (April 5, 2022)</h4>
+<ul>
+<li>Add <code>error::Accumulator</code> for dealing with multiple errors <a href="https://github.com/TedDriggs/darling/pull/164">#164</a></li>
+<li>Impl <code>FromMeta</code> for <code>syn::Type</code> and its variants <a href="https://github.com/TedDriggs/darling/pulls/172">#172</a></li>
+</ul>
+<h4>v0.13.2 (March 30, 2022)</h4>
+<ul>
+<li>Impl <code>FromMeta</code> for <code>syn::ExprPath</code> <a href="https://github.com/TedDriggs/darling/issues/169">#169</a></li>
+</ul>
+<h4>v0.13.1 (December 7, 2021)</h4>
+<ul>
+<li>Add <code>FromAttributes</code> trait and macro <a href="https://github.com/TedDriggs/darling/issues/151">#151</a></li>
+</ul>
+<h4>v0.13.0 (May 20, 2021)</h4>
+<ul>
+<li>Update darling to 2018 edition <a href="https://github.com/TedDriggs/darling/pull/129">#129</a></li>
+<li>Error on duplicate fields in <code>#[darling(...)]</code> attributes <a href="https://github.com/TedDriggs/darling/pull/130">#130</a></li>
+<li>Impl <code>Copy</code> for <code>SpannedValue&lt;T: Copy&gt;</code></li>
+<li>Add <code>SpannedValue::map_ref</code></li>
+</ul>
+<h4>v0.13.0-beta (April 20, 2021)</h4>
+<ul>
+<li>Update darling to 2018 edition <a href="https://github.com/TedDriggs/darling/pull/129">#129</a></li>
+<li>Error on duplicate fields in <code>#[darling(...)]</code> attributes <a href="https://github.com/TedDriggs/darling/pull/130">#130</a></li>
+</ul>
+<h4>v0.12.4 (April 20, 2021)</h4>
+<ul>
+<li>Add <code>and_then</code> to derive macros for <code>darling</code></li>
+</ul>
+<h4>v0.12.3 (April 8, 2021)</h4>
+<ul>
+<li>Fix <code>FromMeta</code> impl for <code>char</code> not to panic <a href="https://github.com/TedDriggs/darling/pull/126">#126</a></li>
+</ul>
+<h4>v0.12.2 (February 23, 2021)</h4>
+<ul>
+<li>Impl <code>FromMeta</code> for <code>HashMap&lt;Ident, V&gt;</code> and <code>HashMap&lt;Path, V&gt;</code></li>
+</ul>
+<h4>v0.12.1 (February 22, 2021)</h4>
+<ul>
+<li>Impl <code>FromMeta</code> for <code>syn::ExprArray</code> <a href="https://github.com/TedDriggs/darling/pull/122">#122</a></li>
+<li>Remove use of <code>unreachable</code> from <code>darling::ast::Data</code> <a href="https://github.com/TedDriggs/darling/pull/123">#123</a></li>
+<li>Add <code>darling::ast::Data::try_empty_from</code> to avoid panics when trying to read a union body <a href="https://github.com/TedDriggs/darling/pull/123">#123</a></li>
+</ul>
+<h4>v0.12.0 (January 5, 2021)</h4>
+<ul>
+<li>POSSIBLY BREAKING: Derived impls of <code>FromDeriveInput</code>, <code>FromField</code>, <code>FromVariant</code>, and <code>FromTypeParam</code> will now error when encountering an attribute <code>darling</code> has been asked to parse that isn't a supported shape.
+Any crates using <code>darling</code> that relied on those attributes being silently ignored could see new errors reported in their dependent crates. <a href="https://github.com/TedDriggs/darling/pull/113">#113</a></li>
+<li>Impl <code>syn::spanned::Spanned</code> for <code>darling::util::SpannedValue</code> <a href="https://github.com/TedDriggs/darling/pull/113">#113</a></li>
+<li>Add <code>darling::util::parse_attribute_to_meta_list</code> to provide useful errors during attribute parsing <a href="https://github.com/TedDriggs/darling/pull/113">#113</a></li>
+<li>Add <code>impl From&lt;syn::Error&gt; for Error</code> to losslessly propagate <code>syn</code> errors <a href="https://github.com/TedDriggs/darling/pull/116">#116</a></li>
+</ul>
+<h4>v0.11.0 (December 14, 2020)</h4>
+<ul>
+<li>Bump minor version due to unexpected breaking change <a href="https://github.com/TedDriggs/darling/issues/107">#107</a></li>
+</ul>
+<h4>v0.10.3 (December 10, 2020)</h4>
+<ul>
+<li>Add <code>discriminant</code> magic field when deriving <code>FromVariant</code> <a href="https://github.com/TedDriggs/darling/pull/105">#105</a></li>
+</ul>
+<h4>v0.10.2 (October 30, 2019)</h4>
+<ul>
+<li>Bump syn dependency to 1.0.1 <a href="https://github.com/TedDriggs/darling/pull/83">#83</a></li>
+</ul>
+<h4>v0.10.1 (September 25, 2019)</h4>
+<ul>
+<li>Fix test compilation errors <a href="https://github.com/TedDriggs/darling/pull/81">#81</a></li>
+</ul>
+<h4>v0.10.0 (August 15, 2019)</h4>
+<ul>
+<li>Bump syn and quote to 1.0 <a href="https://github.com/TedDriggs/darling/pull/79">#79</a></li>
+<li>Increase rust version to 1.31</li>
+</ul>
+<h4>v0.9.0 (March 20, 2019)</h4>
+<ul>
+<li>Enable &quot;did you mean&quot; suggestions by default</li>
+<li>Make <code>darling_core::{codegen, options}</code> private <a href="https://github.com/TedDriggs/darling/issues/58">#58</a></li>
+<li>Fix <code>Override::as_mut</code>: <a href="https://github.com/TedDriggs/darling/issues/66">#66</a></li>
+</ul>
+<h4>v0.8.6 (March 18, 2019)</h4>
+<ul>
+<li>Added &quot;did you mean&quot; suggestions for unknown fields behind the <code>suggestions</code> flag <a href="https://github.com/TedDriggs/issues/60">#60</a></li>
+<li>Added <code>Error::unknown_field_with_alts</code> to support the suggestion use-case.</li>
+<li>Added <code>ast::Fields::len</code> and <code>ast::Fields::is_empty</code> methods.</li>
+</ul>
+<h4>v0.8.5 (February 4, 2019)</h4>
+<ul>
+<li>Accept unquoted positive numeric literals <a href="https://github.com/TedDriggs/issues/52">#52</a></li>
+<li>Add <code>FromMeta</code> to the <code>syn::Lit</code> enum and its variants</li>
+<li>Improve error message for unexpected literal formats to not say &quot;other&quot;</li>
+</ul>
+<h4>v0.8.4 (February 4, 2019)</h4>
+<ul>
+<li>Use <code>syn::Error</code> to provide precise errors before <code>proc_macro::Diagnostic</code> is available</li>
+<li>Add <code>diagnostics</code> feature flag to toggle between stable and unstable error backends</li>
+<li>Attach error information in more contexts</li>
+<li>Add <code>allow_unknown_fields</code> to support parsing the same attribute multiple times for different macros <a href="https://github.com/darling/issues/51">#51</a></li>
+<li>Proc-macro authors will now see better errors in <code>darling</code> attributes</li>
+</ul>
+<h4>v0.8.3 (January 21, 2019)</h4>
+<ul>
+<li>Attach spans to errors in generated trait impls <a href="https://github.com/darling/issues/37">#37</a></li>
+<li>Attach spans to errors for types with provided bespoke implementations</li>
+<li>Deprecate <code>set_span</code> from 0.8.2, as spans should never be broadened after being initially set</li>
+</ul>
+<h4>v0.8.2 (January 17, 2019)</h4>
+<ul>
+<li>Add spans to errors to make quality warnings and errors easy in darling. This is blocked on diagnostics stabilizing.</li>
+<li>Add <code>darling::util::SpannedValue</code> so proc-macro authors can remember position information alongside parsed values.</li>
+</ul>
+<h4>v0.8.0</h4>
+<ul>
+<li>Update dependency on <code>syn</code> to 0.15 <a href="https://github.com/darling/pull/44">#44</a>. Thanks to @hcpl</li>
+</ul>
+<h4>v0.7.0 (July 24, 2018)</h4>
+<ul>
+<li>Update dependencies on <code>syn</code> and <code>proc-macro2</code></li>
+<li>Add <code>util::IdentString</code>, which acts as an Ident or its string equivalent</li>
+</ul>
+<h4>v0.6.3 (May 22, 2018)</h4>
+<ul>
+<li>Add support for <code>Uses*</code> traits in where predicates</li>
+</ul>
+<h4>v0.6.2 (May 22, 2018)</h4>
+<ul>
+<li>Add <code>usage</code> module for tracking type param and lifetime usage in generic declarations
+<ul>
+<li>Add <code>UsesTypeParams</code> and <code>CollectsTypeParams</code> traits <a href="https://github.com/darling/issues/37">#37</a></li>
+<li>Add <code>UsesLifetimes</code> and <code>CollectLifetimes</code> traits <a href="https://github.com/darling/pull/41">#41</a></li>
+</ul>
+</li>
+<li>Don't add <code>FromMeta</code> bounds to type parameters only used by skipped fields <a href="https://github.com/darling/pull/40">#40</a></li>
+</ul>
+<h4>v0.6.1 (May 17, 2018)</h4>
+<ul>
+<li>Fix an issue where the <code>syn</code> update broke shape validation <a href="https://github.com/TedDriggs/darling/issues/36">#36</a></li>
+</ul>
+<h4>v0.6.0 (May 15, 2018)</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>Renamed <code>FromMetaItem</code> to <code>FromMeta</code>, and renamed <code>from_meta_item</code> method to <code>from_meta</code></li>
+<li>Added dedicated <code>derive(FromMetaItem)</code> which panics and redirects users to <code>FromMeta</code></li>
+</ul>
+<h4>v0.5.0 (May 10, 2018)</h4>
+<ul>
+<li>Add <code>ast::Generics</code> and <code>ast::GenericParam</code> to work with generics in a manner similar to <code>ast::Data</code></li>
+<li>Add <code>ast::GenericParamExt</code> to support alternate representations of generic parameters</li>
+<li>Add <code>util::WithOriginal</code> to get a parsed representation and syn's own struct for a syntax block</li>
+<li>Add <code>FromGenerics</code> and <code>FromGenericParam</code> traits (without derive support)</li>
+<li>Change generated code for <code>generics</code> magic field to invoke <code>FromGenerics</code> trait during parsing</li>
+<li>Add <code>FromTypeParam</code> trait <a href="https://github.com/TedDriggs/darling/pull/30">#30</a>. Thanks to @upsuper</li>
+</ul>
+<h4>v0.4.0 (April 5, 2018)</h4>
+<ul>
+<li>Update dependencies on <code>proc-macro</code>, <code>quote</code>, and <code>syn</code> <a href="https://github.com/TedDriggs/darling/pull/26">#26</a>. Thanks to @hcpl</li>
+</ul>
+<h4>v0.3.3 (April 2, 2018)</h4>
+<p><strong>YANKED</strong></p>
+<h4>v0.3.2 (March 13, 2018)</h4>
+<ul>
+<li>Derive <code>Default</code> on <code>darling::Ignored</code> (fixes <a href="https://github.com/TedDriggs/darling/issues/25">#25</a>).</li>
+</ul>
+<h4>v0.3.1 (March 7, 2018)</h4>
+<ul>
+<li>Support proc-macro2/nightly <a href="https://github.com/TedDriggs/darling/pull/24">#24</a>. Thanks to @kdy1</li>
+</ul>
+<h4>v0.3.0 (January 26, 2018)</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>Update <code>syn</code> to 0.12 <a href="https://github.com/TedDriggs/darling/pull/20">#20</a>. Thanks to @Eijebong</li>
+<li>Update <code>quote</code> to 0.4 <a href="https://github.com/TedDriggs/darling/pull/20">#20</a>. Thanks to @Eijebong</li>
+<li>Rename magic field <code>body</code> in derived <code>FromDeriveInput</code> structs to <code>data</code> to stay in sync with <code>syn</code></li>
+<li>Rename magic field <code>data</code> in derived <code>FromVariant</code> structs to <code>fields</code> to stay in sync with <code>syn</code></li>
+</ul>
+<h4>v0.2.2 (December 5, 2017)</h4>
+<ul>
+<li>Update <code>lazy_static</code> to 1.0 <a href="https://github.com/TedDriggs/darling/pull/16">#15</a>. Thanks to @Eijebong</li>
+</ul>
+<h4>v0.2.1 (November 28, 2017)</h4>
+<ul>
+<li>Add <code>impl FromMetaItem</code> for integer types <a href="https://github.com/TedDriggs/darling/pull/15">#15</a></li>
+</ul>
+<h4>v0.2.0 (June 18, 2017)</h4>
+<ul>
+<li>Added support for returning multiple errors from parsing <a href="https://github.com/TedDriggs/darling/pull/5">#5</a></li>
+<li>Derived impls no longer return on first error <a href="https://github.com/TedDriggs/darling/pull/5">#5</a></li>
+<li>Removed default types for <code>V</code> and <code>F</code> from <code>ast::Body</code></li>
+<li>Enum variants are automatically converted to snake_case <a href="https://github.com/TedDriggs/darling/pull/12">#12</a></li>
+</ul>
+</div><p class="table-note">sha256:68ae3c104dd3a90dd279f0d5515cdc432cfa6d48a3219a67d4e180baa8741a5e</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2017 Ted Driggs
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:8ea93490d74a5a1b1af3ff71d786271b3f1e5f0bea79ac16e02ec533cef040d6</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:8f5cdcf2ef96dc9a11b717a4f5b41536d6d6cb51a13ff7203acf4b720037baa6</code></dd><dt>Upstream checksum</dt><dd><code>sha256:fc7f46116c46ff9ab3eb1597a45688b6715c6e628b5c133e288e709a29bcb4ee</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/darling&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.20.11&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;suggestions&quot;</span><span class="p">]</span>
+<span class="n">diagnostics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;darling_core/diagnostics&quot;</span><span class="p">]</span>
+<span class="n">suggestions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;darling_core/suggestions&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;darling&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">darling_core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/darling_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;=0.20.11&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">darling_macro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/darling_macro&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;=0.20.11&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Ted Driggs &lt;ted.driggs@outlook.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.56</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/darling/0.20.11">crates.io package</a></li><li><a href="https://github.com/TedDriggs/darling">Source repository</a></li><li><a href="https://docs.rs/darling/0.20.11">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">darling</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/darling"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.20.11"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

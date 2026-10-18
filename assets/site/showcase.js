@@ -1,5 +1,5 @@
 'use strict';
-// Rotate already-rendered, escaped records; no package or statistics requests.
+// Static starters remain readable; the random group lazily loads the compact catalog summary.
 const showcase = document.querySelector('.landing-starters');
 if (showcase) {
   const grid = document.getElementById('showcase-grid');
@@ -10,9 +10,9 @@ if (showcase) {
   const pauseButton = controls.querySelector('[data-showcase="pause"]');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const groups = [
-    {label: 'Popular on crates.io · 30-day downloads · snapshot October 7, 2026', metric: 'upstream'},
-    {label: 'Random loaves · a fresh pick from this six-package snapshot'},
-    {label: 'Popular in the Incan registry · all-time GitHub Packages downloads · snapshot October 7, 2026', metric: 'registry'}
+    {label: 'Popular among six measured packages · crates.io · snapshot October 7, 2026', metric: 'upstream'},
+    {label: 'Random loaves · from the indexed catalog'},
+    {label: 'Registry pulls among six measured packages · snapshot October 7, 2026', metric: 'registry'}
   ];
   let current = 0;
   const compact = matchMedia('(max-width: 940px)');
@@ -23,10 +23,33 @@ if (showcase) {
     pauseButton.setAttribute('aria-pressed', String(paused));
     pauseButton.setAttribute('aria-label', paused ? 'Play package rotation' : 'Pause package rotation');
   }
-  function rotate(direction, manual = false) {
+  let rotationSerial = 0;
+  let indexPromise;
+  async function rotate(direction, manual = false) {
+    const serial = ++rotationSerial;
     current = (current + direction + groups.length) % groups.length;
     const group = groups[current];
-    const cards = [...pool];
+    let cards = pool.filter(card => !group.metric || card.hasAttribute(`data-${group.metric}`));
+    let label = group.label;
+    if (!group.metric && showcase.dataset.indexPin) {
+      try {
+        indexPromise ||= fetch('assets/registry/search.json?v=' + showcase.dataset.indexPin).then(response => {if (!response.ok) throw Error('Catalog unavailable'); return response.json();});
+        const summaries = await indexPromise;
+        if (serial !== rotationSerial) return;
+        const selection = [...summaries];
+        for (let i = selection.length - 1; i > 0; i--) {const j = Math.floor(Math.random() * (i + 1)); [selection[i], selection[j]] = [selection[j], selection[i]];}
+        cards = selection.slice(0, 3).map(p => {
+          const card = pool[0].cloneNode(true);
+          card.href = 'packages/' + p.name + '/';
+          delete card.dataset.upstream; delete card.dataset.registry;
+          card.querySelector('h3').textContent = p.name.split('/')[1];
+          card.querySelector('.version').textContent = p.latest;
+          card.querySelector('.starter-description').textContent = p.description;
+          const facts = card.querySelectorAll('dd'); facts[0].textContent = p.name; facts[1].textContent = p.license;
+          return card;
+        });
+      } catch {indexPromise = undefined; label = 'A selection of indexed loaves · full catalog unavailable';}
+    }
     if (group.metric) cards.sort((a, b) => Number(b.dataset[group.metric]) - Number(a.dataset[group.metric]));
     else {
       for (let i = cards.length - 1; i > 0; i--) {
@@ -35,8 +58,8 @@ if (showcase) {
       }
     }
     grid.replaceChildren(...cards.slice(0, 3).map(card => card.cloneNode(true)));
-    caption.textContent = group.label;
-    if (manual) announcement.textContent = group.label;
+    caption.textContent = label;
+    if (manual) announcement.textContent = label;
     if (!motion.matches) grid.animate([{opacity: 0.35, transform: 'translateY(4px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 220, easing: 'ease-out'});
   }
   if (pool.length > 1) {

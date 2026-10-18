@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>arcstr 1.2.0 · Incan.pub</title><meta name="description" content="A better reference-counted string type, with zero-cost (allocation-free) support for string literals, and reference counted substrings."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/arcstr</p><div class="title-row"><h1>arcstr</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/arcstr/versions/1.2.0/" selected>1.2.0</option></select></label></div><p class="description">A better reference-counted string type, with zero-cost (allocation-free) support for string literals, and reference counted substrings.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0 OR MIT OR Zlib</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3><code>arcstr</code>: Better reference-counted strings.</h3>
+<p><a href="https://github.com/thomcc/arcstr/actions">Build Status</a>
+<a href="https://codecov.io/gh/thomcc/arcstr">codecov</a>
+<a href="https://docs.rs/arcstr">Docs</a>
+<a href="https://crates.io/crates/arcstr">Latest Version</a>
+Minimum Rust Version</p>
+<p>This crate defines <code>ArcStr</code>, a reference counted string type. It's essentially trying to be a better <code>Arc&lt;str&gt;</code> or <code>Arc&lt;String&gt;</code>, at least for most use cases.</p>
+<p>ArcStr intentionally gives up some of the features of <code>Arc</code> which are rarely-used for <code>Arc&lt;str&gt;</code> (<code>Weak</code>, <code>Arc::make_mut</code>, ...). And in exchange, it gets a number of features that are very useful, especially for strings. Notably robust support for cheap/zero-cost <code>ArcStr</code>s holding static data (for example, string literals).</p>
+<p>(Aside from this, it's also a single pointer, which can be good for performance and FFI)</p>
+<p>Additionally, if the <code>substr</code> feature is enabled (and it is by default) we provide a <code>Substr</code> type which is essentially a <code>(ArcStr, Range&lt;usize&gt;)</code> with better ergonomics and more functionality, which represents a shared slice of a &quot;parent&quot; <code>ArcStr</code> (Note that in reality, <code>u32</code> is used for the index type, but this is not exposed in the API, and can be transparently changed via a cargo feature).</p>
+<h4>Feature overview</h4>
+<p>A quick tour of the distinguishing features (note that there's a list of <a href="https://docs.rs/arcstr/%2a/arcstr/struct.ArcStr.html#benefits-of-arcstr-over-arcstr">benefits</a> in the <code>ArcStr</code> documentation which covers some of the reasons you might want to use it over other alternatives). Note that it offers essentially the full set of functionality string-like functionality you probably would expect from an immutable string type — these are just the unique selling points:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">arcstr</span><span class="p">::</span><span class="n">ArcStr</span><span class="p">;</span>
+<span class="c1">// Works in const:</span>
+<span class="k">const</span><span class="w"> </span><span class="n">AMAZING</span><span class="p">:</span><span class="w"> </span><span class="nc">ArcStr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arcstr</span><span class="p">::</span><span class="n">literal</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;amazing constant&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">AMAZING</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;amazing constant&quot;</span><span class="p">);</span>
+
+<span class="c1">// `arcstr::literal!` input can come from `include_str!` too:</span>
+<span class="k">const</span><span class="w"> </span><span class="n">MY_BEST_FILES</span><span class="p">:</span><span class="w"> </span><span class="nc">ArcStr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arcstr</span><span class="p">::</span><span class="n">literal</span><span class="o">!</span><span class="p">(</span><span class="fm">include_str!</span><span class="p">(</span><span class="s">&quot;my-best-files.txt&quot;</span><span class="p">));</span>
+</code></pre>
+<p>Or, you can define the literals in normal expressions. Note that these literals are essentially <a href="https://docs.rs/arcstr/%2a/arcstr/struct.ArcStr.html#what-does-zero-cost-literals-mean">&quot;Zero Cost&quot;</a>. Specifically, below we not only don't allocate any heap memory to instantiate <code>wow</code> or any of the clones, we also don't have to perform any atomic reads or writes when cloning, or dropping them (or during any other operations on them).</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">wow</span><span class="p">:</span><span class="w"> </span><span class="nc">ArcStr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arcstr</span><span class="p">::</span><span class="n">literal</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Wow!&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;Wow!&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">wow</span><span class="p">);</span>
+<span class="c1">// This line is probably not something you want to do regularly,</span>
+<span class="c1">// but as mentioned, causes no extra allocations, nor performs any</span>
+<span class="c1">// atomic loads, stores, rmws, etc.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">wowzers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">wow</span><span class="p">.</span><span class="n">clone</span><span class="p">().</span><span class="n">clone</span><span class="p">().</span><span class="n">clone</span><span class="p">().</span><span class="n">clone</span><span class="p">();</span>
+
+<span class="c1">// At some point in the future, we can get a `&amp;&#39;static str` out of one</span>
+<span class="c1">// of the literal `ArcStr`s too.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">static_str</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ArcStr</span><span class="p">::</span><span class="n">as_static</span><span class="p">(</span><span class="o">&amp;</span><span class="n">wowzers</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">static_str</span><span class="p">,</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="s">&quot;Wow!&quot;</span><span class="p">));</span>
+
+<span class="c1">// Note that this returns `None` for dynamically allocated `ArcStr`:</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">dynamic_arc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ArcStr</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;cool {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">123</span><span class="p">));</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">ArcStr</span><span class="p">::</span><span class="n">as_static</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dynamic_arc</span><span class="p">),</span><span class="w"> </span><span class="nb">None</span><span class="p">);</span>
+</code></pre>
+<p>Open TODO: Include <code>Substr</code> usage here, as it has some compelling use cases too!</p>
+<h4>Usage</h4>
+<p>It's a normal rust crate, drop it in your <code>Cargo.toml</code>'s dependencies section. In the somewhat unlikely case that you're here and don't know how:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="c1"># ...</span>
+<span class="n">arcstr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;...&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<p>The following cargo features are available. Only <code>substr</code> is on by default currently.</p>
+<ul>
+<li>
+<p><code>std</code> (off by default): Turn on to use <code>std::process</code>'s aborting, instead of triggering an abort using the &quot;double-panic trick&quot;.</p>
+<p>Essentially, there's one case we need to abort, and that's during a catastrophic error where you leak the same (dynamic) <code>ArcStr</code> 2^31 on 32-bit systems, or 2^63 in 64-bit systems. If this happens, we follow <code>libstd</code>'s lead and just abort because we're hosed anyway. If <code>std</code> is enabled, we use the real <code>std::process::abort</code>. If <code>std</code> is not enabled, we trigger an <code>abort</code> by triggering a panic while another panic is unwinding, which is either defined to cause an abort, or causes one in practice.</p>
+<p>In pratice you will never hit this edge case, and it still works in no_std, so no_std is the default. If you have to turn this on, because you hit this ridiculous case and found our handling bad, let me know.</p>
+<p>Concretely, the difference here is that without this, this case becomes a call to <code>core::intrinsics::abort</code>, and not <code>std::process::abort</code>. It's a ridiculously unlikely edge case to hit, but if you are to hit it, <code>std::process::abort</code> results in a <code>SIGABRT</code> whereas <code>core::intrinsics::abort</code> results in a <code>SIGILL</code>, and the former has meaningfully better UX. That said, it's extraordinarially unlikely that you manage to leak <code>2^31</code> or <code>2^63</code> copies of the same <code>ArcStr</code>, so it's not really worth depending on <code>std</code> by default for in our opinion.</p>
+</li>
+<li>
+<p><code>serde</code> (off by default): enable serde serialization of <code>ArcStr</code>. Note that this doesn't do any fancy deduping or whatever.</p>
+</li>
+<li>
+<p><code>substr</code> (<strong>on by default</strong>): implement the <code>Substr</code> type and related functions.</p>
+</li>
+<li>
+<p><code>substr-usize-indices</code> (off by default, implies <code>substr</code>): Use <code>usize</code> under the hood for the boundaries, instead of <code>u32</code>.</p>
+<p>Without this, if you use <code>Substr</code> and an index would overflow a <code>u32</code> we unceremoniously panic.</p>
+</li>
+</ul>
+<h4>Use of <code>unsafe</code> and testing strategy</h4>
+<p>While this crate does contain a decent amount of unsafe code, we justify this in the following ways:</p>
+<ol>
+<li>We have a very high test coverage ratio (essentially the only uncovered functions are the out-of-memory handler (which just calls <code>alloc::handle_alloc_error</code>), and an extremely pathological integer overflow where we just abort).</li>
+<li>All tests pass under various sanitizers: <code>asan</code>, <code>msan</code>, <code>tsan</code>, and <code>miri</code>.</li>
+<li>We have a few <a href="https://crates.io/crates/loom"><code>loom</code></a> models although I'd love to have more.</li>
+<li>Our tests pass on a ton of different targets (thanks to <a href="https://github.com/rust-embedded/cross/"><code>cross</code></a> for many of these possible — easy even):
+<ul>
+<li>Linux x86, x86_64, armv7 (arm32), aarch64 (arm64), riscv64, mips32, and mips64 (the mips32 and mips64 targets allow us to check both big-endian 32bit and 64bit. Although we don't have any endian-specific code at the moment).</li>
+<li>Windows 32-bit and 64-bit, on both GNU and MSVC toolchains.</li>
+<li>MacOS on x86_64.</li>
+</ul>
+</li>
+</ol>
+<p>Additionally, we test on Rust stable, beta, nightly, and our MSRV (see badge above for MSRV).</p>
+<h6>Supported platforms</h6>
+<p>Note that the above is <em>not</em> a list of supported platforms. In general I expect <code>arcstr</code> to support all platform's Rust supports, except for ones with <code>target_pointer_width=&quot;16&quot;</code>, which <em>should</em> work if you turn off the <code>substr</code> feature. That said, if you'd like me to add a platform to the CI coverage to ensure it doesn't break, just ask* (although, if it's harder than adding a line for another <code>cross</code> target, I'll probably need you to justify why it's likely to not be covered by the existing platform tests).</p>
+<p>* This is why there are riscv64.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>substr</code></li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>substr</code></th><td>Yes<small>default → substr</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>substr-usize-indices</code></th><td>No</td><td><ul class="effects"><li><code>substr</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/redis/versions/1.7.1/">crates-io/redis 1.7.1</a><span>Requires ^1.2.0 · alias arcstr · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, substr</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:35cf780fd7f18e85bf0822d5b0ef9a55bd753a12486b1ddaab961874cbf0ab63</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:117f9c2f726118cad17ad68f508c1b069d774c246d5dc2dc86b191aed36ed075</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, substr</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:03b300ba206d067d35d855cfac9a91d05970a0e4d2787c766ca121889f2a15a7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:d922dec72e8efa6bbdab8cef0a2fe8c3402b96d90817b07fac132b4397c7bfcb</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, substr</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:cff2c88e5112c1356766a9c176a109c281866e65c2e0152415c5886dfbb0564f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:5405f56ef67b5f9fb532f96c3dd8dcd2b88dd787752d3ef9a3006282668890ef</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, substr</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a5444c1a14fd62e82d0a8cf659f477a442387588a60d3035f25b28be08616c32</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:2dcf2755bb9a2669586d39e0fbb556b5e6fc99c6c38c2b7a23cd84daed27c7e6</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/arcstr/versions/1.2.0/">1.2.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/arcstr/1.2.0">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0 OR MIT OR Zlib</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright 2016 The Miri Developers
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a8a76b5fd1f1e53246d8d12dac4e6bed981f93b1f94d63f4edbf9a367b83cfc4</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2020 Thom Chiovoloni
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.</code></pre></div><p class="table-note">sha256:fda9772d7c51b4770fe0d031547f8bf60f4fd7435e558f9cb989545a2b5abd78</p></details><details class="document-file"><summary>LICENSE-ZLIB · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2020 Thom Chiovoloni
+
+This software is provided 'as-is', without any express or implied warranty. In
+no event will the authors be held liable for any damages arising from the use of
+this software.
+
+Permission is granted to anyone to use this software for any purpose, including
+commercial applications, and to alter it and redistribute it freely, subject to
+the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not claim
+   that you wrote the original software. If you use this software in a product, an
+   acknowledgment in the product documentation would be appreciated but is not
+   required.
+
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source distribution.
+</code></pre></div><p class="table-note">sha256:96a5cd9c7eaa78e5dc5a0a6145b173551fedb863a73fc98246020a2591d21224</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:cced27e3a273a30f5210b07b75654b9710046f025893cbe44e8b70138fca4f95</code></dd><dt>Upstream checksum</dt><dd><code>sha256:03918c3dbd7701a85c6b9887732e2921175f26c350b4563841d0958c21d57e6d</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/arcstr&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.2.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;substr&quot;</span><span class="p">]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">substr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">substr-usize-indices</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;substr&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arcstr&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Thom Chiovoloni &lt;chiovolonit@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.57.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/arcstr/1.2.0">crates.io package</a></li><li><a href="https://github.com/thomcc/arcstr">Source repository</a></li><li><a href="https://docs.rs/arcstr">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">arcstr</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/arcstr"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.2.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

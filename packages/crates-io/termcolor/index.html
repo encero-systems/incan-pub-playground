@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>termcolor 1.4.1 · Incan.pub</title><meta name="description" content="A simple cross platform library for writing colored text to a terminal."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/termcolor</p><div class="title-row"><h1>termcolor</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/termcolor/versions/1.4.1/" selected>1.4.1</option></select></label></div><p class="description">A simple cross platform library for writing colored text to a terminal.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Unlicense OR MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>termcolor</h3>
+<p>A simple cross platform library for writing colored text to a terminal. This
+library writes colored text either using standard ANSI escape sequences or by
+interacting with the Windows console. Several convenient abstractions are
+provided for use in single-threaded or multi-threaded command line
+applications.</p>
+<p><a href="https://github.com/BurntSushi/termcolor/actions">Build status</a>
+<a href="https://crates.io/crates/termcolor">crates.io</a></p>
+<p>Dual-licensed under MIT or the <a href="https://unlicense.org/">UNLICENSE</a>.</p>
+<h5>Documentation</h5>
+<p><a href="https://docs.rs/termcolor">https://docs.rs/termcolor</a></p>
+<h5>Usage</h5>
+<p>Run <code>cargo add termcolor</code> to add this dependency to your <code>Cargo.toml</code> file.</p>
+<h5>Organization</h5>
+<p>The <code>WriteColor</code> trait extends the <code>io::Write</code> trait with methods for setting
+colors or resetting them.</p>
+<p><code>StandardStream</code> and <code>StandardStreamLock</code> both satisfy <code>WriteColor</code> and are
+analogous to <code>std::io::Stdout</code> and <code>std::io::StdoutLock</code>, or <code>std::io::Stderr</code>
+and <code>std::io::StderrLock</code>.</p>
+<p><code>Buffer</code> is an in memory buffer that supports colored text. In a parallel
+program, each thread might write to its own buffer. A buffer can be printed to
+stdout or stderr using a <code>BufferWriter</code>. The advantage of this design is that
+each thread can work in parallel on a buffer without having to synchronize
+access to global resources such as the Windows console. Moreover, this design
+also prevents interleaving of buffer output.</p>
+<p><code>Ansi</code> and <code>NoColor</code> both satisfy <code>WriteColor</code> for arbitrary implementors of
+<code>io::Write</code>. These types are useful when you know exactly what you need. An
+analogous type for the Windows console is not provided since it cannot exist.</p>
+<h5>Example: using <code>StandardStream</code></h5>
+<p>The <code>StandardStream</code> type in this crate works similarly to <code>std::io::Stdout</code>,
+except it is augmented with methods for coloring by the <code>WriteColor</code> trait. For
+example, to write some green text:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::{</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">Write</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">termcolor</span><span class="p">::{</span><span class="n">Color</span><span class="p">,</span><span class="w"> </span><span class="n">ColorChoice</span><span class="p">,</span><span class="w"> </span><span class="n">ColorSpec</span><span class="p">,</span><span class="w"> </span><span class="n">StandardStream</span><span class="p">,</span><span class="w"> </span><span class="n">WriteColor</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">write_green</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">io</span><span class="p">::</span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">StandardStream</span><span class="p">::</span><span class="n">stdout</span><span class="p">(</span><span class="n">ColorChoice</span><span class="p">::</span><span class="n">Always</span><span class="p">);</span>
+<span class="w">    </span><span class="n">stdout</span><span class="p">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">ColorSpec</span><span class="p">::</span><span class="n">new</span><span class="p">().</span><span class="n">set_fg</span><span class="p">(</span><span class="nb">Some</span><span class="p">(</span><span class="n">Color</span><span class="p">::</span><span class="n">Green</span><span class="p">)))</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">writeln!</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;green text!&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Example: using <code>BufferWriter</code></h5>
+<p>A <code>BufferWriter</code> can create buffers and write buffers to stdout or stderr. It
+does <em>not</em> implement <code>io::Write</code> or <code>WriteColor</code> itself. Instead, <code>Buffer</code>
+implements <code>io::Write</code> and <code>termcolor::WriteColor</code>.</p>
+<p>This example shows how to print some green text to stderr.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::{</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">Write</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">termcolor</span><span class="p">::{</span><span class="n">BufferWriter</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">,</span><span class="w"> </span><span class="n">ColorChoice</span><span class="p">,</span><span class="w"> </span><span class="n">ColorSpec</span><span class="p">,</span><span class="w"> </span><span class="n">WriteColor</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">write_green</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">io</span><span class="p">::</span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">bufwtr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BufferWriter</span><span class="p">::</span><span class="n">stderr</span><span class="p">(</span><span class="n">ColorChoice</span><span class="p">::</span><span class="n">Always</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bufwtr</span><span class="p">.</span><span class="n">buffer</span><span class="p">();</span>
+<span class="w">    </span><span class="n">buffer</span><span class="p">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">ColorSpec</span><span class="p">::</span><span class="n">new</span><span class="p">().</span><span class="n">set_fg</span><span class="p">(</span><span class="nb">Some</span><span class="p">(</span><span class="n">Color</span><span class="p">::</span><span class="n">Green</span><span class="p">)))</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">writeln!</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;green text!&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="n">bufwtr</span><span class="p">.</span><span class="n">print</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Automatic color selection</h5>
+<p>When building a writer with termcolor, the caller must provide a
+<a href="https://docs.rs/termcolor/1.*/termcolor/enum.ColorChoice.html"><code>ColorChoice</code></a>
+selection. When the color choice is <code>Auto</code>, termcolor will attempt to determine
+whether colors should be enabled by inspecting the environment. Currently,
+termcolor will inspect the <code>TERM</code> and <code>NO_COLOR</code> environment variables:</p>
+<ul>
+<li>If <code>NO_COLOR</code> is set to any value, then colors will be suppressed.</li>
+<li>If <code>TERM</code> is set to <code>dumb</code>, then colors will be suppressed.</li>
+<li>In non-Windows environments, if <code>TERM</code> is not set, then colors will be
+suppressed.</li>
+</ul>
+<p>This decision procedure may change over time.</p>
+<p>Currently, <code>termcolor</code> does not attempt to detect whether a tty is present or
+not. To achieve that, please use
+<a href="https://doc.rust-lang.org/std/io/trait.IsTerminal.html"><code>std::io::IsTerminal</code></a>.</p>
+<h5>Minimum Rust version policy</h5>
+<p>This crate's minimum supported <code>rustc</code> version is <code>1.34.0</code>.</p>
+<p>The current policy is that the minimum Rust version required to use this crate
+can be increased in minor version updates. For example, if <code>crate 1.0</code> requires
+Rust 1.20.0, then <code>crate 1.0.z</code> for all values of <code>z</code> will also require Rust
+1.20.0 or newer. However, <code>crate 1.y</code> for <code>y &gt; 0</code> may require a newer minimum
+version of Rust.</p>
+<p>In general, this crate will be conservative with respect to the minimum
+supported version of Rust.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p>No feature declarations recorded.</p></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/winapi-util/"><code>crates-io/winapi-util</code></a><small>Alias: winapi-util</small></th><td><code>^0.1.3</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(windows)</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/codespan-reporting/versions/0.13.1/">crates-io/codespan-reporting 0.13.1</a><span>Requires ^1.0.4 · alias termcolor · </span></li><li><a href="../../../packages/crates-io/wasmprinter/versions/0.236.1/">crates-io/wasmprinter 0.236.1</a><span>Requires ^1.2.0 · alias termcolor · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0a0419651878971fa1a1db5713c9404ce5fc77d7276d3bf420450284200822ec</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:cea4a05dd89cba89e622aa21a721ad9ec4d61b84a2e7c16f3b912de5ec2de636</small></li><li><code>sha256:380e8898279977d4a65713398684234a365d3f5f1365024334033e5a9cd9361e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636611">Attestation reference</a><small>Archive: sha256:aa2d36d7700097ece6ad902496fe31500c1857a954c86b0066a2ac06d3991b4e</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:53353b28e039abb79f4f675123a8bc8802cd2550049d987380450be00a2067f5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:8ef35ebb666f537175e9b635e8f53135f290ecf2f83aa61e489647156eddd09f</small></li><li><code>sha256:ae207f780bde4266c8df3bb49f18bcf4b767c0fa267e77754517f1d2197f2030</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:120f9d8e8d20a2accaa254afd75086a5751b313af8af663c478369844c65590f</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:55a4a8ba9b8a04da0ed36744ed79e0df284b6a28d3e311e00f70388142517fee</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:c9c494fe276a8bb660b478495c26d25703242b60762750acfdabdc109687b1c7</small></li><li><code>sha256:83c9dc8950135df23fac551bdfc5d6eb25c195b57e40ce5b8da9496b49de124d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:9e774a2c78d70297b9a7ab6f4cdc8ba6553707ce577433799aaf51336c3c3727</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5a745732bfd4aaa1c404b5c41f24cb5221abe6aed023181d05ac9664a7204bdb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:b23fc166e04fcb4ec70f5649f765ecbbbdd083452fad89c8f58ccc4c7bb88169</small></li><li><code>sha256:ef18233d64a1507ec63f4418037978e869506824a6300464fd012db24bdd1c50</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:26a62fe2b587a25986851cbe9572b738a6c5357b40c8ade327e2eba47d134997</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/termcolor/versions/1.4.1/">1.4.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/termcolor/1.4.1">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Unlicense OR MIT</strong></p><details class="document-file"><summary>COPYING · Author-provided</summary><div class="readme"><pre><code>This project is dual-licensed under the Unlicense and MIT licenses.
+
+You may use this code under the terms of either license.
+</code></pre></div><p class="table-note">sha256:01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>The MIT License (MIT)
+
+Copyright (c) 2015 Andrew Gallant
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f</p></details><details class="document-file"><summary>UNLICENSE · Author-provided</summary><div class="readme"><pre><code>This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to &lt;http://unlicense.org/&gt;
+</code></pre></div><p class="table-note">sha256:7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:8605f627f62fe0aeeaf5df89102b37358d973df9c8462405973d051b1b022955</code></dd><dt>Upstream checksum</dt><dd><code>sha256:06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/termcolor&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.4.1&quot;</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;termcolor&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">winapi-util</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/winapi-util&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(windows)&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Andrew Gallant &lt;jamslam@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/termcolor/1.4.1">crates.io package</a></li><li><a href="https://github.com/BurntSushi/termcolor">Source repository</a></li><li><a href="https://docs.rs/termcolor">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">termcolor</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/termcolor"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.4.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

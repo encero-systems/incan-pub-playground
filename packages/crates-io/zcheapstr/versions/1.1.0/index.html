@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>zcheapstr 1.1.0 · Incan.pub</title><meta name="description" content="An immutable, cheaply cloneable string type with borrowed, static and shared variants"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/zcheapstr</p><div class="title-row"><h1>zcheapstr</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/zcheapstr/versions/1.1.0/" selected>1.1.0</option></select></label></div><p class="description">An immutable, cheaply cloneable string type with borrowed, static and shared variants</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>zcheapstr</h3>
+<p><a href="https://docs.rs/zcheapstr/"></a> <a href="https://crates.io/crates/zcheapstr"></a></p>
+<p>This crate provides a single type, <code>CheapStr</code>: a string wrapper that is similar to the
+<a href="https://doc.rust-lang.org/std/borrow/enum.Cow.html"><code>Cow&lt;'_, str&gt;</code></a> type, but it:</p>
+<ul>
+<li>is specialized for strings.</li>
+<li>treats <code>&amp;'static str</code> as a separate type. This allows you to avoid allocations and copying when
+turning a <code>CheapStr</code> instance created from a <code>&amp;'static str</code> into an owned version in generic code
+that doesn't/can't assume the inner lifetime of the source <code>CheapStr</code> instance.</li>
+<li>stores owned strings in an <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc</code></a>, so <code>Clone</code> never copies or allocates: it either copies a
+reference or increments a reference count.</li>
+<li>is immutable. Consequently, unlike <a href="https://doc.rust-lang.org/std/borrow/enum.Cow.html"><code>Cow</code></a>, it is <em>not</em> a copy-on-write type: there is no way to
+get a mutable reference to the underlying string.</li>
+</ul>
+<p>API is provided to convert from, and to a <a href="https://doc.rust-lang.org/std/str/index.html"><code>&amp;str</code></a> and <a href="https://doc.rust-lang.org/std/string/struct.String.html"><code>String</code></a>.</p>
+<p>The crate is <code>no_std</code>: it only requires <a href="https://doc.rust-lang.org/alloc/"><code>alloc</code></a>, not <code>std</code> (this includes the <code>serde</code>
+feature).</p>
+<p><strong>Status:</strong> Stable. This code was extracted from (and is battle-tested in) the <a href="https://crates.io/crates/zvariant">zvariant</a> crate,
+where the type was originally named <code>Str</code>.</p>
+<h4>Example code</h4>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">zcheapstr</span><span class="p">::</span><span class="n">CheapStr</span><span class="p">;</span>
+
+<span class="c1">// Borrowed data: no allocation, and `Clone` is cheap.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">borrowed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CheapStr</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;hello&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">borrowed</span><span class="p">.</span><span class="n">as_str</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">borrowed</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">);</span>
+
+<span class="c1">// `&amp;&#39;static str` is kept as-is, even in a `const` context.</span>
+<span class="k">const</span><span class="w"> </span><span class="n">GREETING</span><span class="p">:</span><span class="w"> </span><span class="nc">CheapStr</span><span class="o">&lt;&#39;</span><span class="nb">static</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CheapStr</span><span class="p">::</span><span class="n">from_static</span><span class="p">(</span><span class="s">&quot;hi&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">GREETING</span><span class="p">.</span><span class="n">as_str</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;hi&quot;</span><span class="p">);</span>
+<span class="c1">// Turning it into an owned instance is free.</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">GREETING</span><span class="p">.</span><span class="n">to_owned</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;hi&quot;</span><span class="p">);</span>
+
+<span class="c1">// Borrowed data is only copied when an owned instance is actually needed.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">owned</span><span class="p">:</span><span class="w"> </span><span class="nc">CheapStr</span><span class="o">&lt;&#39;</span><span class="nb">static</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">borrowed</span><span class="p">.</span><span class="n">to_owned</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">owned</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">);</span>
+
+<span class="c1">// Owned data is reference-counted, so neither `into_owned` nor `Clone` copies it.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">from_string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CheapStr</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;world&quot;</span><span class="p">));</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">owned</span><span class="p">:</span><span class="w"> </span><span class="nc">CheapStr</span><span class="o">&lt;&#39;</span><span class="nb">static</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from_string</span><span class="p">.</span><span class="n">into_owned</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">cheap_clone</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">owned</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span><span class="w"> </span><span class="c1">// Just increments a reference count.</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="n">owned</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;world&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">cheap_clone</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;world&quot;</span><span class="p">);</span>
+</code></pre>
+<h4>Features</h4>
+<p>All features are disabled by default.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>serde</td>
+<td>Implement <a href="https://crates.io/crates/serde">serde</a>'s <code>Serialize</code> and <code>Deserialize</code> for <code>CheapStr</code></td>
+</tr>
+</tbody>
+</table>
+<p>With the <code>serde</code> feature enabled, <code>CheapStr</code> is serialized as a plain string. Deserialization always
+borrows from the input data: <code>CheapStr&lt;'de&gt;</code> implements <code>Deserialize&lt;'de&gt;</code> but <em>not</em>
+<code>DeserializeOwned</code>, so deserialization fails when the deserializer cannot provide a borrowed
+<code>&amp;str</code> (for example, JSON strings containing escape sequences, or reader-based deserialization).
+If you need owned deserialization, deserialize into a <code>String</code> (or <code>Cow&lt;'_, str&gt;</code>) and convert it
+via <code>CheapStr::from</code>.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: derive</small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/zvariant/versions/5.15.0/">crates-io/zvariant 5.15.0</a><span>Requires ^1.0.0 · alias zcheapstr · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, serde</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:4b6a9c454a457a1e079c4b25385c37a071e7f255bcf1bb9b2ca2209f74a0fa2a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:ff9e692c04bf8d01497db0ca79dd501202c74756afcd94568aa48cc947852c12</small></li><li><code>sha256:4f8eca220cc2e9ef6dc038f160398f33671868222ec6ef8d75604e39d79da743</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:4d819b78c8bd6fc9c2092da947929261697e75fa5bfe7fa4b6d27c6e714a475a</small></li><li><code>sha256:6e1136ee6067a0acb93d3b5f855ebf461204ec05bd80b276b8b8f7058f4c97c4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:7a223e4f2b864f6b0a5c90afa474cb3c075ee1379fd496f636622de70aa1b147</small></li><li><code>sha256:87ca027be66f5b154199aef6bee5095d885296c2eab63835c1f3f8d47194ed93</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:777ef5429da1ca3dbbaf42d0d86df6b063a7f3f0b6903987d884329d6f016d82</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, serde</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:24a9cda455ac7c64e053dff8ab331a2ebb235d5b146984a0ea7fb3b9563acad5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:382c05a2c70f0eb34835faf50ec50ba16cef8385a2f5ece3165115058c9ebe9f</small></li><li><code>sha256:3b2496f80236eccd36231d7562d51843cfbb9d7dcade3853f32b28b0cc8c0e0a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:fb31cece0e9a963a1b8890d96ec41df0f5cfc1e926f180a98f3da52bbd730e42</small></li><li><code>sha256:3c29ea10b519b31278b024ff8316880d7502bb3692bb9f7ae4607e63f08744b4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:b286307c9f17b81350c62048ffbb1da4c23af3a515ea33e55ee4de5e9af4749a</small></li><li><code>sha256:debf408a9631848bb24c7705476cccc6f23bc15279403c5a379a476a6f144fd8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:5cad16276d280361c689311ae47720f138ca6a0bd83e6b2b5b600535c278cbfd</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, serde</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0e52747106ce5837502c99da4bd86d7f5b9c1222c3f09659d92ebc0a5e9577fa</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:c49cc292c0472b165b0cc22f00b649480ff995bf43094332b5b0c4939acda57e</small></li><li><code>sha256:3172284dd4cc2edd7c57335127003667560e08791ea4d4d3e088e6ce4f9b2022</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:2445491728d086161b4430aada97c8e8a67b78846c5e118bb79d4cc9670bc427</small></li><li><code>sha256:af0c59acb39cbb3ada15eee54722e3cc4033f0fd4ca0e40f63e92727591cb7b3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:aa309a7b045f7081dba5f8212be1bf712642a68c6393d970a5a569686e731949</small></li><li><code>sha256:d1e22974a557bc5b9ddcb411725eda95972e917f1ab3a0570d02b8567f0a8d71</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:42c49923b164b375790ac684c2ebdcf49f283f3f89b03a3852ef5985078f84da</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, serde</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:10b9701294340c8a23a5df112a0ed265054f294402956d1a94ffd03958520a13</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:145794a5e65fb62ccc349bd5fd9e89da0d10ac64124658eaf76624168c94ef6f</small></li><li><code>sha256:221dd01708fa14448d6954f72ecf1541b25c73f6e7daa034509edfbd21f17f44</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:7a8b00cf93e83919a6264e67a0768eb6d14022c56cd55f1a8c5db5ef3d9ca02a</small></li><li><code>sha256:3da92e3d76ecf37ab71a7530e51e67210eca321ab5e27f6af525bf70b8050335</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:b7f200592de7e8d2889e1636aad9ba22dbd1fe3ecb35a4d49b36d67977a49741</small></li><li><code>sha256:74a8c684d4207fc6bc8b88dea681394b4a068c133ff20534abf6f6e4c5fa65f3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:64d495f2fc4fb723d1294822eb1e1793026602914d8e57b36006ab710145636d</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/zcheapstr/versions/1.1.0/">1.1.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/zcheapstr/1.1.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>1.1.0 - 2026-08-10</h4>
+<h5>Added</h5>
+<ul>
+<li>✨ Add no_std support.</li>
+<li>👷 Check no_std build in CI.</li>
+</ul>
+<h4>1.0.0 - 2026-08-09</h4>
+<ul>
+<li>🔖 First stable release. No changes over 0.1.0 — only a commitment to the
+current API. This matters especially because zvariant exposes <code>CheapStr</code> in
+its public API, and public dependencies of 1.0+ crates should themselves be
+1.0+.</li>
+</ul>
+<h4>0.1.0 - 2026-08-09</h4>
+<ul>
+<li>🎉 First release.</li>
+</ul>
+</div><p class="table-note">sha256:bed18e8b7c5392361d93ef50ed07b8fdc16a022a2aa517ee073e1e2d91915c73</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2026 Zeeshan Ali Khan &amp; zcheapstr contributors
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:59871bb1612f8a0569655c10b995636827eceab42c6578cebdc45ad2922e0142</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:0337c64a0a3113a7852e1f763f0d71fef8e538d7360deb73bc1d9a094d58f13d</code></dd><dt>Upstream checksum</dt><dd><code>sha256:d1afec51604565183aeb5c54c20aeab286120d4e4460f7f76e3e8bb8c0d99473</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zcheapstr&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.1.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;zcheapstr&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Zeeshan Ali Khan &lt;zeeshanak@gnome.org&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.87</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/zcheapstr/1.1.0">crates.io package</a></li><li><a href="https://github.com/z-galaxy/zcheapstr/">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">zcheapstr</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/zcheapstr"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.1.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

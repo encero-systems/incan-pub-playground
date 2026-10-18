@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>matrixmultiply 0.3.11 · Incan.pub</title><meta name="description" content="General matrix multiplication for f32 and f64 matrices. Operates on matrices with general layout (they can use arbitrary row and column stride). Detects and uses SIMD features on x86/x86-64 and AArch64 transparently for higher performance. Uses a microkernel strategy, so that the implementation is easy to parallelize and optimize.
+
+Supports multithreading."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/matrixmultiply</p><div class="title-row"><h1>matrixmultiply</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/matrixmultiply/versions/0.3.11/" selected>0.3.11</option></select></label></div><p class="description">General matrix multiplication for f32 and f64 matrices. Operates on matrices with general layout (they can use arbitrary row and column stride). Detects and uses SIMD features on x86/x86-64 and AArch64 transparently for higher performance. Uses a microkernel strategy, so that the implementation is easy to parallelize and optimize.
+
+Supports multithreading.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT/Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.rst · Author-provided</p><div class="readme"><pre><code>matrixmultiply
+==============
+
+General matrix multiplication for f32, f64, and complex matrices. Operates on
+matrices with general layout (they can use arbitrary row and column stride).
+
+Please read the `API documentation here`__
+
+__ https://docs.rs/matrixmultiply/
+
+
+We presently provide a few good microkernels, portable and for x86-64 and
+AArch64 NEON, and only one operation: the general matrix-matrix multiplication
+(“gemm”).
+
+This crate was inspired by the macro/microkernel approach to matrix
+multiplication that is used by the BLIS_ project.
+
+.. _BLIS: https://github.com/flame/blis
+
+|crates|_
+
+.. |crates| image:: https://img.shields.io/crates/v/matrixmultiply.svg
+.. _crates: https://crates.io/crates/matrixmultiply
+
+Development Goals
+-----------------
+
+- Code clarity and maintainability
+- Portability and stable Rust
+- Performance: provide target-specific microkernels when it is beneficial
+- Testing: Test diverse inputs and test and benchmark all microkernels
+- Small code footprint and fast compilation
+- We are not reimplementing BLAS.
+
+Benchmarks
+----------
+
+- ``cargo bench`` is useful for special cases and small matrices
+- The best gemm and threading benchmark is is ``examples/benchmarks.rs`` which supports custom sizes,
+  some configuration, and csv output.
+  Use the script ``benches/benchloop.py`` to run benchmarks over parameter ranges.
+
+Blog Posts About This Crate
+---------------------------
+
++ `gemm: a rabbit hole`__
+
+__ https://bluss.github.io/rust/2016/03/28/a-gemmed-rabbit-hole/
+
+Recent Changes
+--------------
+
+- 0.3.11
+
+  - Add AVX-512 microkernels for sgemm, dgemm, cgemm and zgemm, a significant performance improvement when it is available.
+    By `@SomeB1oody &lt;https://github.com/SomeB1oody&gt;`_ `#100 &lt;https://github.com/bluss/matrixmultiply/pull/100&gt;`_
+  - Add sgemm kernel for wasm32 SIMD128 by `@byeongjee &lt;https://github.com/byeongjee&gt;`_ `#99 &lt;https://github.com/bluss/matrixmultiply/pull/99&gt;`_
+  - Use MaybeUninit for uninitialized packing buffer memory by `@bluss &lt;https://github.com/bluss&gt;`_ `#103 &lt;https://github.com/bluss/matrixmultiply/pull/103&gt;`_
+  - Reduce shuffle overhead in AVX sgemm by `@SongXiaoXi &lt;https://github.com/SongXiaoXi&gt;`_ `#91 &lt;https://github.com/bluss/matrixmultiply/pull/91&gt;`_
+  - Remove separate sse2 and fma kernels by `@bluss &lt;https://github.com/bluss&gt;`_ `#107 &lt;https://github.com/bluss/matrixmultiply/pull/107&gt;`_
+  - We now require Rust 1.75 as the minimal version (MSRV) by `@bluss &lt;https://github.com/bluss&gt;`_ `#106 &lt;https://github.com/bluss/matrixmultiply/pull/106&gt;`_
+
+  Maintainer tasks and test changes
+
+  - Fix typo in comment by `@leopardracer &lt;https://github.com/leopardracer&gt;`_ `#92 &lt;https://github.com/bluss/matrixmultiply/pull/92&gt;`_
+  - Wasm32 benchmark support by `@bluss &lt;https://github.com/bluss&gt;`_ `#101 &lt;https://github.com/bluss/matrixmultiply/pull/101&gt;`_
+  - Remove unused files and strip scripts and unused files from published crate by `@bluss &lt;https://github.com/bluss&gt;`_ `#96 &lt;https://github.com/bluss/matrixmultiply/pull/96&gt;`_
+  - Smaller edits on AVX-512 functionality and kernels by `@bluss &lt;https://github.com/bluss&gt;`_ `#105 &lt;https://github.com/bluss/matrixmultiply/pull/105&gt;`_
+  - Use associated constants (internal change) by `@bluss &lt;https://github.com/bluss&gt;`_ `#108 &lt;https://github.com/bluss/matrixmultiply/pull/108&gt;`_
+  - Update to dev-dependency itertools to 0.15 by `@bluss &lt;https://github.com/bluss&gt;`_ `#109 &lt;https://github.com/bluss/matrixmultiply/pull/109&gt;`_
+
+- 0.3.10
+
+  - sgemm: Reduce unnecessary AVX register permutations by `@SongXiaoXi &lt;https://github.com/SongXiaoXi&gt;`_ `#88 &lt;https://github.com/bluss/matrixmultiply/pull/88&gt;`_
+  - Exclude alignment for MaskBuffer for i686-win7-windows-msvc by `@drewkett &lt;https://github.com/drewkett&gt;`_ `#87 &lt;https://github.com/bluss/matrixmultiply/pull/87&gt;`_
+  - Fix cross builder CI and fix a few warnings by `@bluss &lt;https://github.com/bluss&gt;`_ `#89 &lt;https://github.com/bluss/matrixmultiply/pull/89&gt;`_
+
+- 0.3.9
+
+  - Fix debug assertion for alignment on s390x, involving alignment of the mask buffer;
+    the change lowered the static alignment request to (16) in thread local storage
+    on all platforms (except macos was unchanged).
+  - Test with cargo-careful
+
+- 0.3.8
+
+  - Lower alignment requirement for thread local storage value on macos, since
+    it's was not respected and caused a debug assertion. (Previous issue #55)
+
+- 0.3.7
+
+  - Rename a directory, avoiding spaces in filenames, to be compatible with
+    Bazel. By @xander-zitara
+
+- 0.3.6
+
+  - Fix the build for the combination of cgemm and no_std (#76)
+
+- 0.3.5
+
+  - Significant improvements to complex matrix packing and kernels (#75)
+
+  - Use a specialized AVX2 matrix packing function for sgemm, dgemm when this
+    feature is detected on x86-64
+
+- 0.3.4
+
+  - Sgemm, dgemm microkernel implementations for AArch64 NEON (ARM)
+
+    Matrixmultiply now uses autocfg to detect rust version to enable these kernels
+    when AArch64 intrinsics are available from Rust 1.61.
+
+  - Small change to matrix packing functions so that they in some cases optimize
+    better due to improvements to pointer alias information.
+
+- 0.3.3
+
+  - Attempt to fix macos bug #55 again (manifesting as a debug assertion, only
+    in debug builds.)
+
+  - Updated comments for x86 kernels by @Tastaturtaste
+
+  - Updates to MIRI/CI by @jturner314
+
+  - Silenced Send/Sync future compatibility warnings for a raw pointer wrapper
+
+- 0.3.2
+
+  - Add optional feature ``cgemm`` for complex matmult functions ``cgemm`` and
+    ``zgemm``
+
+  - Add optional feature ``constconf`` for compile-time configuration of matrix
+    kernel parameters for chunking. Improved scripts for benchmarking over ranges
+    of different settings. With thanks to @DutchGhost for the const-time
+    parsing functions.
+
+  - Improved benchmarking and testing.
+
+  - Threading is now slightly more eager to threads (depending on matrix element count).
+
+- 0.3.1
+
+  - Attempt to fix bug #55 were the mask buffer in TLS did not seem to
+    get its requested alignment on macos. The mask buffer pointer is now
+    aligned manually (again, like it was in 0.2.x).
+
+  - Fix a minor issue where we were passing a buffer pointer as ``&amp;T``
+    when it should have been ``&amp;[T]``.
+
+- 0.3.0
+
+  - Implement initial support for threading using a bespoke thread pool with
+    little contention.
+    To use, enable feature ``threading`` (and configure number of threads with the
+    variable ``MATMUL_NUM_THREADS``).
+
+    Initial support is for up to 4 threads - will be updated with more
+    experience in coming versions.
+
+  - Added a better benchmarking program for arbitrary size and layout, see
+    ``examples/benchmark.rs`` for this; it supports csv output for better
+    recording of measurements
+
+  - Minimum supported rust version is 1.41.1 and the version update policy
+    has been updated.
+
+  - Updated to Rust 2018 edition
+
+  - Moved CI to github actions (so long travis and thanks for all the fish).
+
+- 0.2.4
+
+  - Support no-std mode by @vadixidav and @jturner314
+    New (default) feature flag "std"; use default-features = false to disable
+    and use no-std.
+    Note that runtime CPU feature detection requires std.
+
+  - Fix tests so that they build correctly on non-x86 #49 platforms, and manage
+    the release by @bluss
+
+- 0.2.3
+
+  - Update rawpointer dependency to 0.2
+  - Minor changes to inlining for ``-Ctarget-cpu=native`` use (not recommended -
+    use automatic runtime feature detection.
+  - Minor improvements to kernel masking (#42, #41) by @bluss and @SuperFluffy
+
+- 0.2.2
+
+  - New dgemm avx and fma kernels implemented by R. Janis Goldschmidt
+    (@SuperFluffy). With fast cases for both row and column major output.
+
+    Benchmark improvements: Using fma instructions reduces execution time on
+    dgemm benchmarks by 25-35% compared with the avx kernel, see issue `#35`_
+
+    Using the avx dgemm kernel reduces execution time on dgemm benchmarks by
+    5-7% compared with the previous version's autovectorized kernel.
+
+  - New fma adaption of the sgemm avx kernel by R. Janis Goldschmidt
+    (@SuperFluffy).
+
+    Benchmark improvement: Using fma instructions reduces execution time on
+    sgemm benchmarks by 10-15% compared with the avx kernel, see issue `#35`_
+
+  - More flexible kernel selection allows kernels to individually set all
+    their parameters, ensures the fallback (plain Rust) kernels can be tuned
+    for performance as well, and moves feature detection out of the gemm loop.
+
+    Benchmark improvement: Reduces execution time on various benchmarks
+    by 1-2% in the avx kernels, see `#37`_.
+
+  - Improved testing to cover input/output strides of more diversity.
+
+.. _#35: https://github.com/bluss/matrixmultiply/issues/35
+.. _#37: https://github.com/bluss/matrixmultiply/issues/37
+
+- 0.2.1
+
+  - Improve matrix packing by taking better advantage of contiguous inputs.
+
+    Benchmark improvement: execution time for 64×64 problem where inputs are either
+    both row major or both column major changed by -5% sgemm and -1% for dgemm.
+    (#26)
+
+  - In the sgemm avx kernel, handle column major output arrays just like
+    it does row major arrays.
+
+    Benchmark improvement: execution time for 32×32 problem where output is column
+    major changed by -11%. (#27)
+
+- 0.2.0
+
+  - Use runtime feature detection on x86 and x86-64 platforms, to enable
+    AVX-specific microkernels at runtime if available on the currently
+    executing configuration.
+
+    This means no special compiler flags are needed to enable native
+    instruction performance!
+
+  - Implement a specialized 8×8 sgemm (f32) AVX microkernel, this speeds up
+    matrix multiplication by another 25%.
+
+  - Use ``std::alloc`` for allocation of aligned packing buffers
+
+  - We now require Rust 1.28 as the minimal version
+
+- 0.1.15
+
+  - Fix bug where the result matrix C was not updated in the case of a M × K by
+    K × N matrix multiplication where K was zero. (This resulted in the output
+    C potentially being left uninitialized or with incorrect values in this
+    specific scenario.) By @jturner314 (PR #21)
+
+- 0.1.14
+
+  - Avoid an unused code warning
+
+- 0.1.13
+
+  - Pick 8x8 sgemm (f32) kernel when AVX target feature is enabled
+    (with Rust 1.14 or later, no effect otherwise).
+  - Use ``rawpointer``, a µcrate with raw pointer methods taken from this
+    project.
+
+- 0.1.12
+
+  - Internal cleanup with retained performance
+
+- 0.1.11
+
+  - Adjust sgemm (f32) kernel to optimize better on recent Rust.
+
+- 0.1.10
+
+  - Update doc links to docs.rs
+
+- 0.1.9
+
+  - Workaround optimization regression in rust nightly (1.12-ish) (#9)
+
+- 0.1.8
+
+  - Improved docs
+
+- 0.1.7
+
+  - Reduce overhead slightly for small matrix multiplication problems by using
+    only one allocation call for both packing buffers.
+
+- 0.1.6
+
+  - Disable manual loop unrolling in debug mode (quicker debug builds)
+
+- 0.1.5
+
+  - Update sgemm to use a 4x8 microkernel (“still in simplistic rust”),
+    which improves throughput by 10%.
+
+- 0.1.4
+
+  - Prepare support for aligned packed buffers
+  - Update dgemm to use a 8x4 microkernel, still in simplistic rust,
+    which improves throughput by 10-20% when using AVX.
+
+- 0.1.3
+
+  - Silence some debug prints
+
+- 0.1.2
+
+  - Major performance improvement for sgemm and dgemm (20-30% when using AVX).
+    Since it all depends on what the optimizer does, I'd love to get
+    issue reports that report good or bad performance.
+  - Made the kernel masking generic, which is a cleaner design
+
+- 0.1.1
+
+  - Minor improvement in the kernel
+</code></pre></div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>avx512</code></th><td>Yes<small>default → avx512</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>cgemm</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>constconf</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>avx512</code></li></ul></td></tr><tr><th scope="row"><code>num_cpus</code></th><td>No</td><td><ul class="effects"><li><code>dep:num_cpus</code></li></ul></td></tr><tr><th scope="row"><code>once_cell</code></th><td>No</td><td><ul class="effects"><li><code>dep:once_cell</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>thread-tree</code></th><td>No</td><td><ul class="effects"><li><code>dep:thread-tree</code></li></ul></td></tr><tr><th scope="row"><code>threading</code></th><td>No</td><td><ul class="effects"><li><code>thread-tree</code></li><li><code>std</code></li><li><code>once_cell</code></li><li><code>num_cpus</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/num_cpus/"><code>crates-io/num_cpus</code></a><small>Alias: num_cpus</small></th><td><code>^1.13</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/once_cell/"><code>crates-io/once_cell</code></a><small>Alias: once_cell</small></th><td><code>^1.7</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/rawpointer/"><code>crates-io/rawpointer</code></a><small>Alias: rawpointer</small></th><td><code>^0.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><code>crates-io/thread-tree</code><small>Alias: thread-tree</small></th><td><code>^0.3.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/ndarray/versions/0.17.2/">crates-io/ndarray 0.17.2</a><span>Requires ^0.3.2 · alias matrixmultiply · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>avx512, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e0dc0bd0a8ff3102112c6e435139b0aa61a986c262b5fad2a174a84e52ebaee1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:3ec88bb158189cd5755632e72d783762a12531121f5c334cd1e1e54e3c9a414b</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cgemm, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d1ed6cc646ccb6cf627ca8b8c8c6634b1970c8e78c843dec5882430a7d1319f0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:59ac5e5bb79e5b1de68e83a363da8b38135a83f633d2a302c5059ed392bc6f9f</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>avx512, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:21e51ebccd42e1ba7f46742af7bf1643a256d2f277de84c55f9aa46fa04342de</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:29896120ccf466e78704757ae24dca4ee71fc3b39786ccb21b8163106a5d025d</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cgemm, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ad5ff47b68fe125cbe016a88e3f5ec959d849d3e72a2fff0d1b3eb532e49dd55</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:14cf8109688e49378b3c0d108cafa9ae09d5e6640d2ea654327cfa1af7928714</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>avx512, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:aea9371d1337ba95b86a8f15d783ed277ce4a07b383b1584adc96b0681d506c1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:014f2b913b1e0cc25629b94e25a3630dae3c1a54f5ddc60fa6216fea2f3130f0</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cgemm, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7ae0db7e65c3d0c7ae79b6f8f16ac715d87f51c404cf4ef0159c8e448a4e76c4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:2d31387bb08ace3c122853e09013930e5fb113a7583af0fe24f48dbde78d0df8</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>avx512, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ee731681560cb80327e050e763e8af5bd069cce7ad1e38ab7aa15976e2ac1e0d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:3f4527c21aa3847ff9eebf1f3dca238136d95b340faa77f41059fd54e4cd289a</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cgemm, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:6772cbf4981b6a9ffbee7f1671627fe3abcd05249d94c3da3e1d090dc764bb27</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:436ec8bf11a79a7fb15b9c4c252327dadd08b339d2cceafad736e06e16e6c4d7</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>avx512, default, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>cgemm, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>avx512, default, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>cgemm, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>avx512, default, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>cgemm, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>avx512, default, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>cgemm, std</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/matrixmultiply/versions/0.3.11/">0.3.11</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/matrixmultiply/0.3.11">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT/Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2016 - 2023 Ulrik Sverdrup "bluss"
+Copyirhgt (c) 2018 R. Janis Goldschmidt
+Copyright (c) 2021 DutchGhost [constparse.rs]
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:792d075c7bad6dac258a44e799eb64cbf465e24d9932d27669be08c5ec957e27</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:7f0ed3edb89cae05046a5e47546588a0c0a6daba428fd2d16f7422bb59d28ed1</code></dd><dt>Upstream checksum</dt><dd><code>sha256:3f607c237553f086e7043417a51df26b2eb899d3caff94e6a67592ff992fedc7</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/matrixmultiply&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.3.11&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">avx512</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cgemm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">constconf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;avx512&quot;</span><span class="p">]</span>
+<span class="n">num_cpus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:num_cpus&quot;</span><span class="p">]</span>
+<span class="n">once_cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:once_cell&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">thread-tree</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:thread-tree&quot;</span><span class="p">]</span>
+<span class="n">threading</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;thread-tree&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;once_cell&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;num_cpus&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;matrixmultiply&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">num_cpus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/num_cpus&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.13&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">once_cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/once_cell&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.7&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rawpointer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rawpointer&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">thread-tree</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/thread-tree&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;avx512&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cgemm&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;avx512&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cgemm&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;avx512&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;has_avx512&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cgemm&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;avx512&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;has_avx512&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cgemm&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>bluss, R. Janis Goldschmidt</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.75.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/matrixmultiply/0.3.11">crates.io package</a></li><li><a href="https://github.com/bluss/matrixmultiply/">Source repository</a></li><li><a href="https://docs.rs/matrixmultiply/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">matrixmultiply</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/matrixmultiply"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.3.11"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

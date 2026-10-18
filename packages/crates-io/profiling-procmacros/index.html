@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>profiling-procmacros 1.0.18 · Incan.pub</title><meta name="description" content="This crate provides a very thin abstraction over other profiler crates."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/profiling-procmacros</p><div class="title-row"><h1>profiling-procmacros</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/profiling-procmacros/versions/1.0.18/" selected>1.0.18</option></select></label></div><p class="description">This crate provides a very thin abstraction over other profiler crates.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>profiling</h3>
+<p>Provides a very thin abstraction over instrumented profiling crates like <code>puffin</code>, <code>optick</code>, <code>tracy</code>, and <code>superluminal-perf</code>.</p>
+<p>Mark up your code like this:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[profiling::function]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">some_function</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">burn_time</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="o">..</span><span class="mi">5</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">profiling</span><span class="p">::</span><span class="n">scope</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Looped Operation&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>See below for resulting visualization and more details on the exposed API.</p>
+<p><strong>Friendly Warning:</strong> Some profiler backends implicitly listen on network ports immediately when the host app is
+launched. If this is a concern, please review the enabled profiler(s) documentation for details!</p>
+<h4>Puffin</h4>
+<ul>
+<li>https://github.com/EmbarkStudios/puffin</li>
+<li>Cross-platform</li>
+<li>You need to call <code>profiling::finish_frame!()</code> at least once per frame</li>
+<li>To show the flamegraph, you either need to use <a href="%60https://github.com/EmbarkStudios/puffin/tree/main/puffin_http%60"><code>puffin_http</code></a> and <a href="%60https://github.com/EmbarkStudios/puffin/tree/main/puffin_viewer%60"><code>puffin_viewer</code></a>, or if you're writing an <a href="https://github.com/emilk/egui"><code>egui</code></a> app, use <a href="%60https://github.com/EmbarkStudios/puffin/tree/main/puffin_egui%60"><code>puffin_egui</code></a>.</li>
+</ul>
+<p><a href="https://github.com/aclysma/profiling/blob/8271551172eb6fa4cba47369aedd93790c623df9/profiling-procmacros/screenshots/puffin.png">Puffin</a></p>
+<h4>Optick</h4>
+<ul>
+<li>https://github.com/bombomby/optick</li>
+<li>The upstream crate only provides binaries for windows. However it could probably be made to work by building
+optick capture code and linking against it manually. The UI is windows only.</li>
+</ul>
+<p><a href="https://github.com/aclysma/profiling/blob/8271551172eb6fa4cba47369aedd93790c623df9/profiling-procmacros/screenshots/optick.jpeg">Optick</a></p>
+<h4>Superluminal</h4>
+<ul>
+<li>https://superluminal.eu</li>
+<li>Windows only</li>
+</ul>
+<p><a href="https://github.com/aclysma/profiling/blob/8271551172eb6fa4cba47369aedd93790c623df9/profiling-procmacros/screenshots/superluminal.jpeg">Superluminal</a></p>
+<h4>Tracing</h4>
+<ul>
+<li>https://crates.io/crates/tracing</li>
+<li>Cross-platform</li>
+<li>The tracing backend injects tracing <code>span!()</code> macros that match the lifetime of the profiling macros.
+Tracing uses callbacks rather than inlining specific pre-determined code,
+so it is more flexible than profiling
+(at the cost of more lines of code and potentially higher overhead).
+This allows existing and new tracing-compatible handlers to work with profiling.</li>
+</ul>
+<p>Tracing</p>
+<h4>Tracy</h4>
+<ul>
+<li>https://github.com/wolfpld/tracy</li>
+<li>Cross-platform (windows, macOS, linux)</li>
+</ul>
+<p><a href="https://github.com/aclysma/profiling/blob/8271551172eb6fa4cba47369aedd93790c623df9/profiling-procmacros/screenshots/tracy.jpeg">Tracy</a></p>
+<h4>Usage</h4>
+<p>Currently, there's just six macros:</p>
+<ul>
+<li><code>profiling::scope!(name: &amp;str, [tag: &amp;str])</code>
+<ul>
+<li>name: scopes will appear in the profiler under this name</li>
+<li>tag: optional extra data</li>
+<li>For maximum compatibility, you are <strong>strongly</strong> recommended to use literal strings for the name. Some backends require
+static lifetime string references and some require literal strings.</li>
+</ul>
+</li>
+<li><code>#[profiling::function]</code>
+<ul>
+<li>procmacro placed on a function to quickly wrap it in a scope using the function name</li>
+</ul>
+</li>
+<li><code>#[profiling::all_functions]</code>
+<ul>
+<li>procmacro placed on a struct impl block to apply <code>#[profiling::function]</code> on each function under that struct impl block</li>
+</ul>
+</li>
+<li><code>#[profiling::skip]</code>
+<ul>
+<li>use with <code>#[profiling::all_functions]</code>, placed this procmacro on a function to avoid the  action that <code>#[profiling::all_functions]</code> apply</li>
+</ul>
+</li>
+<li><code>profiling::register_thread!([name: &amp;str])</code>
+<ul>
+<li>name: optional, defaults to <code>std::thread::current().name</code>, or <code>.id</code> if it's unnamed</li>
+</ul>
+</li>
+<li><code>profiling::finish_frame!()</code>
+<ul>
+<li>Many profilers have the concept of a &quot;frame&quot; as a unit of work. Use this to indicate where one frame ends and the
+next one begins.</li>
+</ul>
+</li>
+<li><code>profiling::function_scope!([tag: &amp;str])</code>
+<ul>
+<li>Macro that can be placed within a function to create a scope with the function name</li>
+<li>tag: optional extra data</li>
+</ul>
+</li>
+</ul>
+<p>Support for individual profilers can be turned on/off with feature flags. By default, they're all off, resulting in
+no dependencies or runtime code.</p>
+<h4>Who is this for?</h4>
+<ul>
+<li>Authors of binaries that want to have multiple options for profiling their code, but don't want to duplicate their
+instrumentation once per each profiler's individual API.</li>
+<li>Authors of libraries that would like to instrument their crate for their end-users.</li>
+</ul>
+<p>This crate is intended to be <strong>TINY</strong>. It won't support every possible usage, just the basics. I'm open to adding
+more things but I plan to be very selective to maintain a slim size.</p>
+<p>When enabled, using a macro produces identical code as if you used the wrapped profiling API directly. So it is
+completely fine to directly use a profiler's API when this abstraction doesn't support something you want to do.</p>
+<h4>Alternatives</h4>
+<p><strong>tracing</strong>: <code>tracing</code> is more flexible than <code>profiling</code> but is significantly larger and has
+some potential runtime cost. <code>profiling</code> is only useful for instrumented profiling. Instrumentation is inserted directly
+into your code inline via macros as if you were using the profiler's crate directly. This results in smaller code with
+no additional overhead.</p>
+<p>Using profiling crates (i.e. puffin/optick/etc.) directly:</p>
+<ul>
+<li>For authors of binaries, you may still need to use APIs on those crates to get started. But when instrumenting your
+code, <code>profiling::scope!(&quot;Scope Name&quot;)</code> inside a function or <code>#[profiling::function]</code> on a function will instrument
+it for all the supported profiler-specific crates. You can still use those crates directly if you want to take
+advantage of custom APIs they provide to surface additional data.</li>
+<li>For authors of upstream libraries, this crate lets you implement simple instrumentation once. Hopefully this will
+allow the community to benefit from instrumented profiling, even if a significant amount of a codebase is made
+of upstream crates.</li>
+</ul>
+<h4>Using from a Binary</h4>
+<p>It's up to you to initialize the profiling crate of your choice (although some do not need explicit initialization
+and will immediately work). The examples demonstrate this for all the supported crates, but it's worth looking
+at the docs for the profiler you're interested in using! <code>profiling</code> re-exports the profiler crates if they are
+enabled, simplifying the modifications you would need to make to your Cargo.toml.</p>
+<p>Once initialized, you can mix/match the macros provided by your profiler of choice and the generic ones in this
+crate. For example:</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// This may map to something like:</span>
+<span class="c1">// - puffin::profile_scope!(&quot;Scope Name&quot;)</span>
+<span class="c1">// - optick::event!(&quot;Scope Name&quot;)</span>
+<span class="c1">// - tracing::span!(tracing::Level::INFO, &quot;Scope Name&quot;)</span>
+<span class="c1">// - superluminal_perf::begin_event(&quot;Scope Name&quot;)</span>
+<span class="n">profiling</span><span class="p">::</span><span class="n">scope</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Scope Name&quot;</span><span class="p">);</span>
+
+<span class="c1">// This may map to something like:</span>
+<span class="c1">// - puffin::profile_scope_data!(&quot;Scope Name&quot;, &quot;extra data&quot;)</span>
+<span class="c1">// - optick::event!(&quot;Scope Name&quot;); optick::tag!(&quot;tag&quot;, &quot;extra data&quot;);</span>
+<span class="c1">// - tracing::span!(tracing::Level::INFO, &quot;Scope Name&quot;, tag = &quot;extra data&quot;)</span>
+<span class="c1">// - superluminal_perf::begin_event_with_data(&quot;Scope Name&quot;, &quot;extra data&quot;, 0)</span>
+<span class="n">profiling</span><span class="p">::</span><span class="n">scope</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Scope Name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;extra data&quot;</span><span class="p">);</span>
+</code></pre>
+<p>There is also a proc macro to decorate functions:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[profiling::function]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">my_function</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>Take a look at the code for the helpful macros <code>register_thread!()</code> and <code>finish_frame!()</code>.</p>
+<p>I recommend adding features for each backend you want to use to your binary crate. This allows you to optionally compile
+in code to setup and configure a backend.</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">profiling</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span>
+
+<span class="k">[features]</span>
+<span class="n">profile-with-puffin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;profiling/profile-with-puffin&quot;</span><span class="p">]</span>
+<span class="n">profile-with-optick</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;profiling/profile-with-optick&quot;</span><span class="p">]</span>
+<span class="n">profile-with-superluminal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;profiling/profile-with-superluminal&quot;</span><span class="p">]</span>
+<span class="n">profile-with-tracing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;profiling/profile-with-tracing&quot;</span><span class="p">]</span>
+<span class="n">profile-with-tracy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;profiling/profile-with-tracy&quot;</span><span class="p">]</span>
+</code></pre>
+<ul>
+<li>You can use the default feature to quickly/temporarily turn something on: <code>default = [&quot;profile-with-optick&quot;]</code></li>
+<li><code>cargo run --features=profile-with-optick</code> works too!</li>
+</ul>
+<h4>Using from a Library</h4>
+<p>Add the profiling crate to Cargo.toml:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">profiling</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span>
+</code></pre>
+<p>Now you can instrument your library using the API exposed via the <code>profiling</code> crate.</p>
+<p>If the end-user of your library doesn't use profiling, the macros in this crate will emit no code at all.</p>
+<h4>Feature Flags</h4>
+<ul>
+<li>profile-with-puffin: Enable the <code>puffin</code> crate</li>
+<li>profile-with-optick: Enable the <code>optick</code> crate</li>
+<li>profile-with-superluminal: Enable the <code>superluminal-perf</code> crate</li>
+<li>profile-with-tracing: Enable the <code>tracing</code> crate. (This is just an abstraction layer - you'd want to hook it to do something!)</li>
+<li>profile-with-tracy: Enable the <code>tracy-client</code> crate.</li>
+</ul>
+<p><strong>Only one backend can be enabled at a time!</strong></p>
+<h4>Examples</h4>
+<ul>
+<li>simple: Shows a bare minimum requirements to do some simple instrumented profiling. Once it's running, you
+can connect to the process using optick/tracy/superluminal. Some of these are windows only!</li>
+</ul>
+<pre><code>run --example simple --features="profile-with-optick"
+run --example simple --features="profile-with-tracy"
+run --example simple --features="profile-with-puffin"
+run --example simple --features="profile-with-superluminal"
+</code></pre>
+<ul>
+<li>puffin: Launches a basic app with imgui integration showing the puffin UI. This one should run everywhere
+that supports imgui.</li>
+</ul>
+<pre><code>cargo run --example puffin --features="profile-with-puffin"
+</code></pre>
+<h4>MSRV</h4>
+<p>This project will strive to keep a conservative MSRV, but some backends will support a lower MSRV than others.
+The MSRV set in this project only represents the MSRV for compiling the profiling crate with no backends
+enabled.</p>
+<p>As a point of reference, currently the most popular crate relying on profiling is wgpu, and their
+MSRV is constrained to Firefox nightly build MSRV. So the MSRV of this crate (ignoring backends)
+should not move faster than wgpu and firefox nightly. (See <code>MINIMUM_RUST_VERSION</code> in
+<a href="https://searchfox.org/mozilla-central/source/python/mozboot/mozboot/util.py"><code>python/mozboot/mozboot/util.py</code></a>)</p>
+<h4>License</h4>
+<p>Licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0, (<a href="https://github.com/aclysma/profiling/blob/8271551172eb6fa4cba47369aedd93790c623df9/profiling-procmacros/LICENSE-APACHE">LICENSE-APACHE</a> or http://www.apache.org/licenses/LICENSE-2.0)</li>
+<li>MIT license (<a href="https://github.com/aclysma/profiling/blob/8271551172eb6fa4cba47369aedd93790c623df9/profiling-procmacros/LICENSE-MIT">LICENSE-MIT</a> or http://opensource.org/licenses/MIT)</li>
+</ul>
+<p>at your option.</p>
+<p>The examples directory contains <a href="https://www.google.com/get/noto/"><code>NotoSans-Medium.ttf</code></a>, available under SIL Open Font
+License (OFL).</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally
+submitted for inclusion in the work by you, as defined in the Apache-2.0
+license, shall be dual licensed as above, without any additional terms or
+conditions.</p>
+<p>See <a href="https://github.com/aclysma/profiling/blob/8271551172eb6fa4cba47369aedd93790c623df9/profiling-procmacros/LICENSE-APACHE">LICENSE-APACHE</a> and <a href="https://github.com/aclysma/profiling/blob/8271551172eb6fa4cba47369aedd93790c623df9/profiling-procmacros/LICENSE-MIT">LICENSE-MIT</a>.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>profile-with-optick</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>profile-with-puffin</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>profile-with-superluminal</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>profile-with-tracing</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>profile-with-tracy</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/quote/"><code>crates-io/quote</code></a><small>Alias: quote</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/syn/"><code>crates-io/syn</code></a><small>Alias: syn</small></th><td><code>^2.0</code><small>Default features: enabled</small><small>Requests: full</small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/profiling/versions/1.0.18/">crates-io/profiling 1.0.18</a><span>Requires ^1.0.18 · alias profiling-procmacros · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0342f88b3406be08af4516233e5f15e196cd5224b748f88f91040853332fc1c1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53954876">Attestation reference</a><small>Archive: sha256:5c8172ae22720070d7d376ef589ed5eb65206d11d70b5cf386b38eeb8c7c94ce</small></li><li><code>sha256:551fa85aadec4faabaf1d4592f104288e7ad722c0943c92480e2679fe097688d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:b658295750435a6d3efcc46b6b3836ca6da1ebf44c6276924e77fa9d2ec74d25</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:3c6a41798e750c1a6e7c8b6d7bc90789db1c8b9e6b832ce7288615f877bff181</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:6ec32dd6c80925a149f156dfce9c8439f195836d5e413365e383778b0ae33ed4</small></li><li><code>sha256:9ad15ca1829f34f967b354baffb96ab42689166eec2265eb3922401131bc4b5c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:32e04bd7b63403b3a69055b9421116158a9f3065e74ba89fd4e2b0b91bdb14c7</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0199a5fab2071208fc32b34ca4a107ddd17b52986bb59721e7f4f624c656e3cc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53950367">Attestation reference</a><small>Archive: sha256:71f50f855e33257100ba184f2c2eb7e065aad1a38d81c6eb9ee6160b2cebaf7d</small></li><li><code>sha256:9e7f1c08c2fa4d5fd999f505b54c2c288a37c308949c67e1d775e528de889ce9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:7139f2ed0c04a7198e25446baa39a9d9b6b4c4b0afc99f5295f27ab0f8fe1e43</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0a28fdf6d85c779ef91b24a58ed39037577320cb391e2dbc94e15f41b4cc6c0b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:a898b4c4801ea37509a2a6203be466583b8fe976d579c8fb3b51f556f6282969</small></li><li><code>sha256:2c308a1a5058b15e2b4343520d30640590ab11ab1206f518d527357aea46be9c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:2824f0201e7362044fd97bfc71db4af1035ad90308972cd4a222ac46741aa4e1</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/profiling-procmacros/versions/1.0.18/">1.0.18</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/profiling-procmacros/1.0.18">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE · Registry-generated</summary><div class="readme"><pre><code>profiling-procmacros 1.0.18, as published on crates.io, carries no license file. Its manifest declares the license `MIT OR Apache-2.0` (an SPDX expression; each identifier's text is at https://spdx.org/licenses/). See https://crates.io/crates/profiling-procmacros/1.0.18.
+
+incan.pub wrote this file when it adopted the package as the Loaf `crates-io/profiling-procmacros`.
+</code></pre></div><p class="table-note">sha256:dcab844d8771c3221e91fbd118aa968599289a57f03dfce7495b59b4f5ddb81f</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:fc1b98202c7777c671033af35010ed18aea575c75df6a4e85669899759bce6f4</code></dd><dt>Upstream checksum</dt><dd><code>sha256:4488a4a36b9a4ba6b9334a32a39971f77c1436ec82c38707bce707699cc3bbcb</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/profiling-procmacros&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.0.18&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">profile-with-optick</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">profile-with-puffin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">profile-with-superluminal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">profile-with-tracing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">profile-with-tracy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;profiling_procmacros&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;proc-macro&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">quote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/quote&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syn&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;full&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Philip Degarmo &lt;aclysma@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.65</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/profiling-procmacros/1.0.18">crates.io package</a></li><li><a href="https://github.com/aclysma/profiling">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">profiling-procmacros</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/profiling-procmacros"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.0.18"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>parking_lot 0.12.5 · Incan.pub</title><meta name="description" content="More compact and efficient implementations of the standard synchronization primitives."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/parking_lot</p><div class="title-row"><h1>parking_lot</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/parking_lot/versions/0.12.5/" selected>0.12.5</option></select></label></div><p class="description">More compact and efficient implementations of the standard synchronization primitives.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>parking_lot</h3>
+<p><a href="https://github.com/Amanieu/parking_lot/actions">Rust</a>
+<a href="https://crates.io/crates/parking_lot">Crates.io</a></p>
+<p><a href="https://docs.rs/parking_lot/">Documentation (synchronization primitives)</a></p>
+<p><a href="https://docs.rs/parking_lot_core/">Documentation (core parking lot API)</a></p>
+<p><a href="https://docs.rs/lock_api/">Documentation (type-safe lock API)</a></p>
+<p>This library provides implementations of <code>Mutex</code>, <code>RwLock</code>, <code>Condvar</code> and
+<code>Once</code> that are smaller, faster and more flexible than those in the Rust
+standard library, as well as a <code>ReentrantMutex</code> type which supports recursive
+locking. It also exposes a low-level API for creating your own efficient
+synchronization primitives.</p>
+<p>When tested on x86_64 Linux, <code>parking_lot::Mutex</code> was found to be 1.5x
+faster than <code>std::sync::Mutex</code> when uncontended, and up to 5x faster when
+contended from multiple threads. The numbers for <code>RwLock</code> vary depending on
+the number of reader and writer threads, but are almost always faster than
+the standard library <code>RwLock</code>, and even up to 50x faster in some cases.</p>
+<h4>Features</h4>
+<p>The primitives provided by this library have several advantages over those
+in the Rust standard library:</p>
+<ol>
+<li><code>Mutex</code> and <code>Once</code> only require 1 byte of storage space, while <code>Condvar</code>
+and <code>RwLock</code> only require 1 word of storage space. On the other hand on
+some platforms (macOS and a few others) the standard library primitives
+require a dynamically allocated <code>Box</code> to hold OS-specific synchronization
+primitives. The small size of <code>Mutex</code> in particular encourages the use
+of fine-grained locks to increase parallelism.</li>
+<li>Uncontended lock acquisition and release is done through fast inline
+paths which only require a single atomic operation.</li>
+<li>Microcontention (a contended lock with a short critical section) is
+efficiently handled by spinning a few times while trying to acquire a
+lock.</li>
+<li>The locks are adaptive and will suspend a thread after a few failed spin
+attempts. This makes the locks suitable for both long and short critical
+sections.</li>
+<li><code>Condvar</code>, <code>RwLock</code> and <code>Once</code> work on Windows XP, unlike the standard
+library versions of those types.</li>
+<li><code>RwLock</code> takes advantage of hardware lock elision on processors that
+support it, which can lead to huge performance wins with many readers.
+This must be enabled with the <code>hardware-lock-elision</code> feature.</li>
+<li><code>RwLock</code> uses a task-fair locking policy, which avoids reader and writer
+starvation, whereas the standard library version makes no guarantees.</li>
+<li><code>Condvar</code> is guaranteed not to produce spurious wakeups. A thread will
+only be woken up if it timed out or it was woken up by a notification.</li>
+<li><code>Condvar::notify_all</code> will only wake up a single thread and requeue the
+rest to wait on the associated <code>Mutex</code>. This avoids a thundering herd
+problem where all threads try to acquire the lock at the same time.</li>
+<li><code>RwLock</code> supports atomically downgrading a write lock into a read lock.</li>
+<li><code>Mutex</code> and <code>RwLock</code> allow raw unlocking without a RAII guard object.</li>
+<li><code>Mutex&lt;()&gt;</code> and <code>RwLock&lt;()&gt;</code> allow raw locking without a RAII guard
+object.</li>
+<li><code>Mutex</code> and <code>RwLock</code> support <a href="https://trac.webkit.org/changeset/203350">eventual fairness</a>
+which allows them to be fair on average without sacrificing performance.</li>
+<li>A <code>ReentrantMutex</code> type which supports recursive locking.</li>
+<li>An <em>experimental</em> deadlock detector that works for <code>Mutex</code>,
+<code>RwLock</code> and <code>ReentrantMutex</code>. This feature is disabled by default and
+can be enabled via the <code>deadlock_detection</code> feature.</li>
+<li><code>RwLock</code> supports atomically upgrading an &quot;upgradable&quot; read lock into a
+write lock.</li>
+<li>Optional support for <a href="https://docs.serde.rs/serde/">serde</a>.  Enable via the
+feature <code>serde</code>.  <strong>NOTE!</strong> this support is for <code>Mutex</code>, <code>ReentrantMutex</code>,
+and <code>RwLock</code> only; <code>Condvar</code> and <code>Once</code> are not currently supported.</li>
+<li>Lock guards can be sent to other threads when the <code>send_guard</code> feature is
+enabled.</li>
+</ol>
+<h4>The parking lot</h4>
+<p>To keep these primitives small, all thread queuing and suspending
+functionality is offloaded to the <em>parking lot</em>. The idea behind this is
+based on the Webkit <a href="https://webkit.org/blog/6161/locking-in-webkit/"><code>WTF::ParkingLot</code></a>
+class, which essentially consists of a hash table mapping of lock addresses
+to queues of parked (sleeping) threads. The Webkit parking lot was itself
+inspired by Linux <a href="https://man7.org/linux/man-pages/man2/futex.2.html">futexes</a>,
+but it is more powerful since it allows invoking callbacks while holding a queue
+lock.</p>
+<h4>Nightly vs stable</h4>
+<p>There are a few restrictions when using this library on stable Rust:</p>
+<ul>
+<li>The <code>wasm32-unknown-unknown</code> target is only fully supported on nightly with
+<code>-C target-feature=+atomics</code> in <code>RUSTFLAGS</code> and <code>-Zbuild-std=panic_abort,std</code>
+passed to cargo. parking_lot will work mostly fine on stable, the only
+difference is it will panic instead of block forever if you hit a deadlock.
+Just make sure not to enable <code>-C target-feature=+atomics</code> on stable as that
+will allow wasm to run with multiple threads which will completely break
+parking_lot's concurrency guarantees.</li>
+</ul>
+<p>To enable nightly-only functionality, you need to enable the <code>nightly</code> feature
+in Cargo (see below).</p>
+<h4>Usage</h4>
+<p>Add this to your <code>Cargo.toml</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">parking_lot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.12&quot;</span>
+</code></pre>
+<p>To enable nightly-only features, add this to your <code>Cargo.toml</code> instead:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">parking_lot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.12&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;nightly&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<p>The experimental deadlock detector can be enabled with the
+<code>deadlock_detection</code> Cargo feature.</p>
+<p>To allow sending <code>MutexGuard</code>s and <code>RwLock*Guard</code>s to other threads, enable the
+<code>send_guard</code> option.</p>
+<p>Note that the <code>deadlock_detection</code> and <code>send_guard</code> features are incompatible
+and cannot be used together.</p>
+<p>Hardware lock elision support for x86 can be enabled with the
+<code>hardware-lock-elision</code> feature. This requires Rust 1.59 due to the use of
+inline assembly.</p>
+<p>The core parking lot API is provided by the <code>parking_lot_core</code> crate. It is
+separate from the synchronization primitives in the <code>parking_lot</code> crate so that
+changes to the core API do not cause breaking changes for users of <code>parking_lot</code>.</p>
+<h4>Minimum Rust version</h4>
+<p>The current minimum required Rust version is 1.71, but this may change at any time.</p>
+<h4>License</h4>
+<p>Licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0, (<a href="https://github.com/Amanieu/parking_lot/blob/d7828fff7b5d6327ae608e82db45f888b344449a/LICENSE-APACHE">LICENSE-APACHE</a> or https://www.apache.org/licenses/LICENSE-2.0)</li>
+<li>MIT license (<a href="https://github.com/Amanieu/parking_lot/blob/d7828fff7b5d6327ae608e82db45f888b344449a/LICENSE-MIT">LICENSE-MIT</a> or https://opensource.org/licenses/MIT)</li>
+</ul>
+<p>at your option.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
+additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>arc_lock</code></th><td>No</td><td><ul class="effects"><li><code>lock_api/arc_lock</code></li></ul></td></tr><tr><th scope="row"><code>deadlock_detection</code></th><td>No</td><td><ul class="effects"><li><code>parking_lot_core/deadlock_detection</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>hardware-lock-elision</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>nightly</code></th><td>No</td><td><ul class="effects"><li><code>parking_lot_core/nightly</code></li><li><code>lock_api/nightly</code></li></ul></td></tr><tr><th scope="row"><code>owning_ref</code></th><td>No</td><td><ul class="effects"><li><code>lock_api/owning_ref</code></li></ul></td></tr><tr><th scope="row"><code>send_guard</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>lock_api/serde</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/lock_api/"><code>crates-io/lock_api</code></a><small>Alias: lock_api</small></th><td><code>^0.4.14</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/parking_lot_core/"><code>crates-io/parking_lot_core</code></a><small>Alias: parking_lot_core</small></th><td><code>^0.9.12</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/crossterm/versions/0.29.0/">crates-io/crossterm 0.29.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/datafusion/versions/53.1.0/">crates-io/datafusion 53.1.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/datafusion-catalog/versions/53.1.0/">crates-io/datafusion-catalog 53.1.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/datafusion-datasource-parquet/versions/53.1.0/">crates-io/datafusion-datasource-parquet 53.1.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/datafusion-execution/versions/53.1.0/">crates-io/datafusion-execution 53.1.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/datafusion-functions-table/versions/53.1.0/">crates-io/datafusion-functions-table 53.1.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/datafusion-physical-expr/versions/53.1.0/">crates-io/datafusion-physical-expr 53.1.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/datafusion-physical-expr-common/versions/53.1.0/">crates-io/datafusion-physical-expr-common 53.1.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/datafusion-physical-plan/versions/53.1.0/">crates-io/datafusion-physical-plan 53.1.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/datafusion-session/versions/53.1.0/">crates-io/datafusion-session 53.1.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/futures-intrusive/versions/0.5.0/">crates-io/futures-intrusive 0.5.0</a><span>Requires ^0.12.0 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/hickory-net/versions/0.26.3/">crates-io/hickory-net 0.26.3</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/hickory-resolver/versions/0.26.3/">crates-io/hickory-resolver 0.26.3</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/moka/versions/0.12.16/">crates-io/moka 0.12.16</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/object_store/versions/0.14.2/">crates-io/object_store 0.14.2</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/object_store/versions/0.13.2/">crates-io/object_store 0.13.2</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/prometheus/versions/0.14.0/">crates-io/prometheus 0.14.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/pyo3/versions/0.29.3/">crates-io/pyo3 0.29.3</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/referencing/versions/0.58.6/">crates-io/referencing 0.58.6</a><span>Requires ^0.12.3 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/salsa/versions/0.25.2/">crates-io/salsa 0.25.2</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/serial_test/versions/4.0.1/">crates-io/serial_test 4.0.1</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/string_cache/versions/0.11.0/">crates-io/string_cache 0.11.0</a><span>Requires ^0.12 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/tokio/versions/1.53.2/">crates-io/tokio 1.53.2</a><span>Requires ^0.12.0 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/tokio/versions/1.53.1/">crates-io/tokio 1.53.1</a><span>Requires ^0.12.0 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/tokio/versions/1.52.3/">crates-io/tokio 1.52.3</a><span>Requires ^0.12.0 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/tracing-appender/versions/0.2.5/">crates-io/tracing-appender 0.2.5</a><span>Requires ^0.12.1 · alias parking_lot · </span></li><li><a href="../../../packages/crates-io/tracing-subscriber/versions/0.3.23/">crates-io/tracing-subscriber 0.3.23</a><span>Requires ^0.12.1 · alias parking_lot · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5929b4c2e700d9ffef2c6d211595465542f807d631b7b725ddebe947cba89a67</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:b6aaa12bd9b5397bce9ecb4f93c693e8fc7bd8ef76d5714d3fb807c790adca74</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:10091b50fa52c210d8fc5e07e6eb53ebe389b31159cdb95b4f5b8087a63164f3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:d9cbb9ed4db36545a8616bf3349c5b9de96dd7dcb19e17f02c69a8181f431432</small></li><li><code>sha256:1a88d4c36b50dc4c0407d947f5fce5af5cf9293aa98707e16df8f1123b283e6c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53449647">Attestation reference</a><small>Archive: sha256:c98126e77d39ef6a378f9a3c31100e59c67cc391f30ca398219f4c07e292e954</small></li><li><code>sha256:6e747505d7f20f96aced23feb5d1b5b4e3ee599f8350abbf561840da94908b1b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53510791">Attestation reference</a><small>Archive: sha256:669de8453a516db4461ccd8d7b911beca4cd1a55f2a88bb913de3e84ebf0ca93</small></li><li><code>sha256:6fff19ad4f17c7381241695d671a524abfcae7fe3418ba07402c0f8dbfc556bb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:ddff3cdd03c278f125e3907aa316d40903fc02c854afbe7779619edc2eba4eaa</small></li><li><code>sha256:7947ecf4d2e42b1547dea73ed715fb5d729d9ec2e29c2423cff41ed9d6dd1530</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:53a26411f7c2d97245c66256a47085eb73151bc51d44bf4d6674022e6bd4397d</small></li><li><code>sha256:9d55f35f630611e6fbcf6b37d5f916b803775231dae95a40fc0d81115bd71006</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:f32ea671f0c27a7a5aadb00e85c1858d0b51f6b075033985731d3cbc59dfedc4</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8fcab04b0f166732b815866ff671942cd05ad0088890e6c07c92bc020b80ee92</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:627adcfe510d43356d925bb17fb070e9ed18a063d6176c1b9fe080001d5e0d46</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:07fe037856ca8cd1102d78868e7a3b0a882b0a1f92ba222327eda2be1b6e4129</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54020554">Attestation reference</a><small>Archive: sha256:6cb65e980b1d5114c9b01456254484432e4cbe9b98a91ed8a0c1b66e7f55cf9f</small></li><li><code>sha256:519d4c149f98768c62cce91d408e0140c3b2278e6eb89e51a4a6c78b216c75cc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:aa5084a98157afd7e8221b68ee1d880ef0aa5e14ba8f4809f82d4b0a1275e629</small></li><li><code>sha256:8e9ffa94c0649b8537a1f6866fec179886da19f8cc1f642eb59ad1cf01dd524d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:c9e695da6e0715db929f1a31931197b03d5b99a34589ba913390dc8d6e23f459</small></li><li><code>sha256:9856109244bf17068ee32ba872288331df2b69bf64efed62d7d2de158bb2b98c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:a7f6db6ed01dbd1883f27005fd2eca21e9be8e14822bd8baae293c5f3a2239b9</small></li><li><code>sha256:9bb5706f8aaf1d3972e259cf25c5df26f35a517d23bc220b28dcf1a3d1077841</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:dbeba740ce0f39341df5295bd9cd69a22dd3078845e154b5e0395f425d0f78c4</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:12a483afe296f42a7bf6e0f8f824d4b4295c8edf39d31954dceb2bb7cda3736f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:29d989422267dd1bbb9929d6c74d6cb474a3dbf96e1e7bd664e64f2087f61578</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:06cb89b84ca1089fde79839f2e5ac50a0c95f6529c81ec1c321ca300b3ccbcdf</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53493685">Attestation reference</a><small>Archive: sha256:240f75e2ca7be206409dc2473587f794ca53d026e3f570f5937063b13b073e54</small></li><li><code>sha256:43737fdf949d3ca1c138c0ea76285975ce7d9b3cc68ae8af426f56c1858979d6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:d2edbc68cc0881f68c22d4c534e4815e6a016ebee53fff6d4b7ccd1b14e45924</small></li><li><code>sha256:57ffbc898a3407bd3b99193fcffec08bb1ba0f377e59312793f854e56fcd0600</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:f7f2a784907942e36a34e90455339df8018722f80f026db3f919bb86c0012ba7</small></li><li><code>sha256:5b782fbb021f77b971958748a850f7e6d88a6700c82c9f198a8a190dcdba5497</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:9189fc87831e4ed8e87d2445709e000996426d1085518c03ed52a8143b302c28</small></li><li><code>sha256:afb847789292671b123810090a774a0fd7027cd35d69cacb648b186f290e9b51</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674109">Attestation reference</a><small>Archive: sha256:8cdb72b017ae804114166970a946e737e375b44186f247ee158919e80b5d7713</small></li><li><code>sha256:ee54db36080bba84ce9cc979b41038b7aab80d18b3332f78c43ef936872c6240</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:1de14feeddc64cba4c7ef7ac7d569a06b9c82abbfae703f70920697dc2b0066b</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7bf1129d19484ed84b6009fc13f1fa5d62d3e50737b910031f7d9c7df3f66b38</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:dbed538025f1abb0dfb96d748a26aed1f14c1c75da850b777a9cb70c5ca74460</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1644e24e6c3a61d037471cb328a36f9607c040fed9adf2a106c6676ae930d1ab</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:d926d70b3447215006932482fd0ac1b501259af66553564f234ca5b3760ae861</small></li><li><code>sha256:45c1f225f0f57e745f5fd166b9c19e47ff9b79597f93e6b486b8d1936cf7c6a6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54075092">Attestation reference</a><small>Archive: sha256:d43ffe889c3f8afe4e45cf00a76ed3ab07fe86bdf3542ec76de26bfee279376b</small></li><li><code>sha256:56b1f21a413fd8cab59e1abe597a8ef77331f3064cf76367bf5f180239a000fd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:2a9c7e38173cbfce7387db673e3568c7b71b886018b88e6780b4046f02b22f78</small></li><li><code>sha256:b4e5b8d707c5c22bd3aab39432095684483d9448eef977803b44a5d62da8e85f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:3789c795f7ef91dd2346dd6302f6bb75fcf8500507759344ef7d497358beeb11</small></li><li><code>sha256:bde8595d1f892c9b6583a3879fac1f4d621870a0dcc1411efaf22846f2ea34fe</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:15529a79a5b3833ed89f83ea716269d73f5640e1558ad9c88e27a22525c6d8aa</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/parking_lot/versions/0.12.5/">0.12.5</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/parking_lot/0.12.5">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>[Unreleased]</h4>
+<h4><code>parking_lot</code> - <a href="https://github.com/Amanieu/parking_lot/compare/parking_lot-v0.12.4...parking_lot-v0.12.5">0.12.5</a> - 2025-09-30</h4>
+<ul>
+<li>Bumped MSRV to 1.71</li>
+<li>Fixed Miri when the <code>hardware-lock-elision</code> feature is enabled (#491)</li>
+<li>Added missing <code>into_arc(_fair)</code> methods (#472)</li>
+<li>Fixed <code>RawRwLock::bump_*()</code> not releasing lock when there are multiple readers (#471)</li>
+</ul>
+<h4><code>parking_lot_core</code> - <a href="https://github.com/Amanieu/parking_lot/compare/parking_lot_core-v0.9.11...parking_lot_core-v0.9.12">0.9.12</a> - 2025-09-30</h4>
+<ul>
+<li>Bumped MSRV to 1.71</li>
+<li>Switched from <code>windows-targets</code> to <code>windows-link</code>. (#493)</li>
+<li>Replaced <code>thread-id</code> dependency with <code>std::thread::ThreadId</code> (#483)</li>
+<li>Added SGX implementation for <code>ThreadParker.park_until</code> (#481)</li>
+</ul>
+<h4><code>lock_api</code> - <a href="https://github.com/Amanieu/parking_lot/compare/lock_api-v0.4.13...lock_api-v0.4.14">0.4.14</a> - 2025-09-30</h4>
+<ul>
+<li>Fixed use of <code>doc_cfg</code> when building on docs.rs.</li>
+<li>Bumped MSRV to 1.71</li>
+<li>Added <code>#[track_caller]</code> where locking implementations could feasibly need to panic</li>
+<li>Added <code>try_map_or_err</code> to various mutex guards (#480)</li>
+<li>Removed unnecessary build script and <code>autocfg</code> dependency (#474)</li>
+<li>Added missing <code>into_arc(_fair)</code> methods (#472)</li>
+</ul>
+<h4><code>parking_lot</code> - <a href="https://github.com/Amanieu/parking_lot/compare/parking_lot-v0.12.3...parking_lot-v0.12.4">0.12.4</a> - 2025-05-29</h4>
+<ul>
+<li>Fix parked upgraders potentially not being woken up after a write lock</li>
+<li>Fix clearing <code>PARKED_WRITER_BIT</code> after a timeout</li>
+</ul>
+<h4><code>parking_lot_core</code> - <a href="https://github.com/Amanieu/parking_lot/compare/parking_lot_core-v0.9.10...parking_lot_core-v0.9.11">0.9.11</a> - 2025-05-29</h4>
+<ul>
+<li>Use Release/Acquire ordering in thread_parker::windows::Backend::create</li>
+<li>Remove warnings due to new lint on unknown cfgs</li>
+</ul>
+<h4><code>lock_api</code> - <a href="https://github.com/Amanieu/parking_lot/compare/lock_api-v0.4.12...lock_api-v0.4.13">0.4.13</a> - 2025-05-29</h4>
+<ul>
+<li>Remove warnings due to new lint on unknown cfgs</li>
+</ul>
+<h4>parking_lot 0.12.3 (2024-05-24)</h4>
+<ul>
+<li>Export types provided by arc_lock feature (#442)</li>
+</ul>
+<h4>parking_lot 0.12.2, parking_lot_core 0.9.10, lock_api 0.4.12 (2024-04-15)</h4>
+<ul>
+<li>Fixed panic when calling <code>with_upgraded</code> twice on a <code>ArcRwLockUpgradableReadGuard</code> (#431)</li>
+<li>Fixed <code>RwLockUpgradeableReadGuard::with_upgraded</code></li>
+<li>Added lock_api::{Mutex, ReentrantMutex, RwLock}::from_raw methods (#429)</li>
+<li>Added Apple visionOS support (#433)</li>
+</ul>
+<h4>parking_lot_core 0.9.9, lock_api 0.4.11 (2023-10-18)</h4>
+<ul>
+<li>Fixed <code>RwLockUpgradeableReadGuard::with_upgraded</code>. (#393)</li>
+<li>Fixed <code>ReentrantMutex::bump</code> lock count. (#390)</li>
+<li>Added methods to unsafely create a lock guard out of thin air. (#403)</li>
+<li>Added support for Apple tvOS. (#405)</li>
+</ul>
+<h4>parking_lot_core 0.9.8, lock_api 0.4.10 (2023-06-05)</h4>
+<ul>
+<li>Mark guards with <code>#[clippy::has_significant_drop]</code> (#369, #371)</li>
+<li>Removed windows-sys dependency (#374, #378)</li>
+<li>Add <code>atomic_usize</code> default feature to support platforms without atomics. (#380)</li>
+<li>Add with_upgraded API to upgradable read locks (#386)</li>
+<li>Make RwLock guards Sync again (#370)</li>
+</ul>
+<h4>parking_lot_core 0.9.7 (2023-02-01)</h4>
+<ul>
+<li>Update windows-sys dependency to 0.45. (#368)</li>
+</ul>
+<h4>parking_lot_core 0.9.6 (2023-01-11)</h4>
+<ul>
+<li>Add support for watchOS. (#367)</li>
+</ul>
+<h4>parking_lot_core 0.9.5 (2022-11-29)</h4>
+<ul>
+<li>Update use of <code>libc::timespec</code> to prepare for future libc version (#363)</li>
+</ul>
+<h4>parking_lot_core 0.9.4 (2022-10-18)</h4>
+<ul>
+<li>Bump windows-sys dependency to 0.42. (#356)</li>
+</ul>
+<h4>lock_api 0.4.9 (2022-09-20)</h4>
+<ul>
+<li>Fixed <code>ReentrantMutexGuard::try_map</code> signature (#355)</li>
+</ul>
+<h4>lock_api 0.4.8 (2022-08-28)</h4>
+<ul>
+<li>Fixed unsound <code>Sync</code>/<code>Send</code> impls for <code>ArcMutexGuard</code>. (#349)</li>
+<li>Added <code>ArcMutexGuard::into_arc</code>. (#350)</li>
+</ul>
+<h4>parking_lot 0.12.1 (2022-05-31)</h4>
+<ul>
+<li>Fixed incorrect memory ordering in <code>RwLock</code>. (#344)</li>
+<li>Added <code>Condvar::wait_while</code> convenience methods (#343)</li>
+</ul>
+<h4>parking_lot_core 0.9.3 (2022-04-30)</h4>
+<ul>
+<li>Bump windows-sys dependency to 0.36. (#339)</li>
+</ul>
+<h4>parking_lot_core 0.9.2, lock_api 0.4.7 (2022-03-25)</h4>
+<ul>
+<li>Enable const new() on lock types on stable. (#325)</li>
+<li>Added <code>MutexGuard::leak</code> function. (#333)</li>
+<li>Bump windows-sys dependency to 0.34. (#331)</li>
+<li>Bump petgraph dependency to 0.6. (#326)</li>
+<li>Don't use pthread attributes on the espidf platform. (#319)</li>
+</ul>
+<h4>parking_lot_core 0.9.1 (2022-02-06)</h4>
+<ul>
+<li>Bump windows-sys dependency to 0.32. (#316)</li>
+</ul>
+<h4>parking_lot 0.12.0, parking_lot_core 0.9.0, lock_api 0.4.6 (2022-01-28)</h4>
+<ul>
+<li>The MSRV is bumped to 1.49.0.</li>
+<li>Disabled eventual fairness on wasm32-unknown-unknown. (#302)</li>
+<li>Added a rwlock method to report if lock is held exclusively. (#303)</li>
+<li>Use new <code>asm!</code> macro. (#304)</li>
+<li>Use windows-rs instead of winapi for faster builds. (#311)</li>
+<li>Moved hardware lock elision support to a separate Cargo feature. (#313)</li>
+<li>Removed used of deprecated <code>spin_loop_hint</code>. (#314)</li>
+</ul>
+<h4>parking_lot 0.11.2, parking_lot_core 0.8.4, lock_api 0.4.5 (2021-08-28)</h4>
+<ul>
+<li>Fixed incorrect memory orderings on <code>RwLock</code> and <code>WordLock</code>. (#294, #292)</li>
+<li>Added <code>Arc</code>-based lock guards. (#291)</li>
+<li>Added workaround for TSan's lack of support for <code>fence</code>. (#292)</li>
+</ul>
+<h4>lock_api 0.4.4 (2021-05-01)</h4>
+<ul>
+<li>Update for latest nightly. (#281)</li>
+</ul>
+<h4>lock_api 0.4.3 (2021-04-03)</h4>
+<ul>
+<li>Added <code>[Raw]ReentrantMutex::is_owned</code>. (#280)</li>
+</ul>
+<h4>parking_lot_core 0.8.3 (2021-02-12)</h4>
+<ul>
+<li>Updated smallvec to 1.6. (#276)</li>
+</ul>
+<h4>parking_lot_core 0.8.2 (2020-12-21)</h4>
+<ul>
+<li>Fixed assertion failure on OpenBSD. (#270)</li>
+</ul>
+<h4>parking_lot_core 0.8.1 (2020-12-04)</h4>
+<ul>
+<li>Removed deprecated CloudABI support. (#263)</li>
+<li>Fixed build on wasm32-unknown-unknown. (#265)</li>
+<li>Relaxed dependency on <code>smallvec</code>. (#266)</li>
+</ul>
+<h4>parking_lot 0.11.1, lock_api 0.4.2 (2020-11-18)</h4>
+<ul>
+<li>Fix bounds on Send and Sync impls for lock guards. (#262)</li>
+<li>Fix incorrect memory ordering in <code>RwLock</code>. (#260)</li>
+</ul>
+<h4>lock_api 0.4.1 (2020-07-06)</h4>
+<ul>
+<li>Add <code>data_ptr</code> method to lock types to allow unsafely accessing the inner data
+without a guard. (#247)</li>
+</ul>
+<h4>parking_lot 0.11.0, parking_lot_core 0.8.0, lock_api 0.4.0 (2020-06-23)</h4>
+<ul>
+<li>Add <code>is_locked</code> method to mutex types. (#235)</li>
+<li>Make <code>RawReentrantMutex</code> public. (#233)</li>
+<li>Allow lock guard to be sent to another thread with the <code>send_guard</code> feature. (#240)</li>
+<li>Use <code>Instant</code> type from the <code>instant</code> crate on wasm32-unknown-unknown. (#231)</li>
+<li>Remove deprecated and unsound <code>MappedRwLockWriteGuard::downgrade</code>. (#244)</li>
+<li>Most methods on the <code>Raw*</code> traits have been made unsafe since they assume
+the current thread holds the lock. (#243)</li>
+</ul>
+<h4>parking_lot_core 0.7.2 (2020-04-21)</h4>
+<ul>
+<li>Add support for <code>wasm32-unknown-unknown</code> under the &quot;nightly&quot; feature. (#226)</li>
+</ul>
+<h4>parking_lot 0.10.2 (2020-04-10)</h4>
+<ul>
+<li>Update minimum version of <code>lock_api</code>.</li>
+</ul>
+<h4>parking_lot 0.10.1, parking_lot_core 0.7.1, lock_api 0.3.4 (2020-04-10)</h4>
+<ul>
+<li>Add methods to construct <code>Mutex</code>, <code>RwLock</code>, etc in a <code>const</code> context. (#217)</li>
+<li>Add <code>FairMutex</code> which always uses fair unlocking. (#204)</li>
+<li>Fixed panic with deadlock detection on macOS. (#203)</li>
+<li>Fixed incorrect synchronization in <code>create_hashtable</code>. (#210)</li>
+<li>Use <code>llvm_asm!</code> instead of the deprecated <code>asm!</code>. (#223)</li>
+</ul>
+<h4>lock_api 0.3.3 (2020-01-04)</h4>
+<ul>
+<li>Deprecate unsound <code>MappedRwLockWriteGuard::downgrade</code> (#198)</li>
+</ul>
+<h4>parking_lot 0.10.0, parking_lot_core 0.7.0, lock_api 0.3.2 (2019-11-25)</h4>
+<ul>
+<li>Upgrade smallvec dependency to 1.0 in parking_lot_core.</li>
+<li>Replace all usage of <code>mem::uninitialized</code> with <code>mem::MaybeUninit</code>.</li>
+<li>The minimum required Rust version is bumped to 1.36. Because of the above two changes.</li>
+<li>Make methods on <code>WaitTimeoutResult</code> and <code>OnceState</code> take <code>self</code> by value instead of reference.</li>
+</ul>
+<h4>parking_lot_core 0.6.2 (2019-07-22)</h4>
+<ul>
+<li>Fixed compile error on Windows with old cfg_if version. (#164)</li>
+</ul>
+<h4>parking_lot_core 0.6.1 (2019-07-17)</h4>
+<ul>
+<li>Fixed Android build. (#163)</li>
+</ul>
+<h4>parking_lot 0.9.0, parking_lot_core 0.6.0, lock_api 0.3.1 (2019-07-14)</h4>
+<ul>
+<li>Re-export lock_api (0.3.1) from parking_lot (#150)</li>
+<li>Removed (non-dev) dependency on rand crate for fairness mechanism, by
+including a simple xorshift PRNG in core (#144)</li>
+<li>Android now uses the futex-based ThreadParker. (#140)</li>
+<li>Fixed CloudABI ThreadParker. (#140)</li>
+<li>Fix race condition in lock_api::ReentrantMutex (da16c2c7)</li>
+</ul>
+<h4>lock_api 0.3.0 (2019-07-03, <em>yanked</em>)</h4>
+<ul>
+<li>Use NonZeroUsize in GetThreadId::nonzero_thread_id (#148)</li>
+<li>Debug assert lock_count in ReentrantMutex (#148)</li>
+<li>Tag as <code>unsafe</code> and document some internal methods (#148)</li>
+<li>This release was <em>yanked</em> due to a regression in ReentrantMutex (da16c2c7)</li>
+</ul>
+<h4>parking_lot 0.8.1 (2019-07-03, <em>yanked</em>)</h4>
+<ul>
+<li>Re-export lock_api (0.3.0) from parking_lot (#150)</li>
+<li>This release was <em>yanked</em> from crates.io due to unexpected breakage (#156)</li>
+</ul>
+<h4>parking_lot 0.8.0, parking_lot_core 0.5.0, lock_api 0.2.0 (2019-05-04)</h4>
+<ul>
+<li>Fix race conditions in deadlock detection.</li>
+<li>Support for more platforms by adding ThreadParker implementations for
+Wasm, Redox, SGX and CloudABI.</li>
+<li>Drop support for older Rust. parking_lot now requires 1.31 and is a
+Rust 2018 edition crate (#122).</li>
+<li>Disable the owning_ref feature by default.</li>
+<li>Fix was_last_thread value in the timeout callback of park() (#129).</li>
+<li>Support single byte Mutex/Once on stable Rust when compiler is at least
+version 1.34.</li>
+<li>Make Condvar::new and Once::new const fns on stable Rust and remove
+ONCE_INIT (#134).</li>
+<li>Add optional Serde support (#135).</li>
+</ul>
+<h4>parking_lot 0.7.1 (2019-01-01)</h4>
+<ul>
+<li>Fixed potential deadlock when upgrading a RwLock.</li>
+<li>Fixed overflow panic on very long timeouts (#111).</li>
+</ul>
+<h4>parking_lot 0.7.0, parking_lot_core 0.4.0 (2018-11-26)</h4>
+<ul>
+<li>Return if or how many threads were notified from <code>Condvar::notify_*</code></li>
+</ul>
+<h4>parking_lot 0.6.3 (2018-07-18)</h4>
+<ul>
+<li>Export <code>RawMutex</code>, <code>RawRwLock</code> and <code>RawThreadId</code>.</li>
+</ul>
+<h4>parking_lot 0.6.2 (2018-06-18)</h4>
+<ul>
+<li>Enable <code>lock_api/nightly</code> feature from <code>parking_lot/nightly</code> (#79)</li>
+</ul>
+<h4>parking_lot 0.6.1 (2018-06-08)</h4>
+<p>Added missing typedefs for mapped lock guards:</p>
+<ul>
+<li><code>MappedMutexGuard</code></li>
+<li><code>MappedReentrantMutexGuard</code></li>
+<li><code>MappedRwLockReadGuard</code></li>
+<li><code>MappedRwLockWriteGuard</code></li>
+</ul>
+<h4>parking_lot 0.6.0 (2018-06-08)</h4>
+<p>This release moves most of the code for type-safe <code>Mutex</code> and <code>RwLock</code> types
+into a separate crate called <code>lock_api</code>. This new crate is compatible with
+<code>no_std</code> and provides <code>Mutex</code> and <code>RwLock</code> type-safe wrapper types from a raw
+mutex type which implements the <code>RawMutex</code> or <code>RawRwLock</code> trait. The API
+provided by the wrapper types can be extended by implementing more traits on
+the raw mutex type which provide more functionality (e.g. <code>RawMutexTimed</code>). See
+the crate documentation for more details.</p>
+<p>There are also several major changes:</p>
+<ul>
+<li>The minimum required Rust version is bumped to 1.26.</li>
+<li>All methods on <code>MutexGuard</code> (and other guard types) are no longer inherent
+methods and must be called as <code>MutexGuard::method(self)</code>. This avoids
+conflicts with methods from the inner type.</li>
+<li><code>MutexGuard</code> (and other guard types) add the <code>unlocked</code> method which
+temporarily unlocks a mutex, runs the given closure, and then re-locks the
+mutex.</li>
+<li><code>MutexGuard</code> (and other guard types) add the <code>bump</code> method which gives a
+chance for other threads to acquire the mutex by temporarily unlocking it and
+re-locking it. However this is optimized for the common case where there are
+no threads waiting on the lock, in which case no unlocking is performed.</li>
+<li><code>MutexGuard</code> (and other guard types) add the <code>map</code> method which returns a
+<code>MappedMutexGuard</code> which holds only a subset of the original locked type. The
+<code>MappedMutexGuard</code> type is identical to <code>MutexGuard</code> except that it does not
+support the <code>unlocked</code> and <code>bump</code> methods, and can't be used with <code>CondVar</code>.</li>
+</ul>
+</div><p class="table-note">sha256:d6f5cd986599e8dff728b31810d6a2365f60debd54e46ac0367a0315dcfffaeb</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2016 The Rust Project Developers
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:c9a75f18b9ab2927829a208fc6aa2cf4e63b8420887ba29cdb265d6619ae82d5</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:b4b0b75f4345ee967d1b200266ca8ab2aa34559d5799594b789ea26798949db2</code></dd><dt>Upstream checksum</dt><dd><code>sha256:93857453250e3077bd71ff98b6a65ea6621a19bb0f559a85248955ac12c45a1a</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/parking_lot&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.12.5&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">arc_lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;lock_api/arc_lock&quot;</span><span class="p">]</span>
+<span class="n">deadlock_detection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;parking_lot_core/deadlock_detection&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">hardware-lock-elision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">nightly</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;parking_lot_core/nightly&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;lock_api/nightly&quot;</span><span class="p">]</span>
+<span class="n">owning_ref</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;lock_api/owning_ref&quot;</span><span class="p">]</span>
+<span class="n">send_guard</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;lock_api/serde&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;parking_lot&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">lock_api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/lock_api&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4.14&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">parking_lot_core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/parking_lot_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.9.12&quot;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Amanieu d&#39;Antras &lt;amanieu@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.71</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/parking_lot/0.12.5">crates.io package</a></li><li><a href="https://github.com/Amanieu/parking_lot">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">parking_lot</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/parking_lot"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.12.5"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

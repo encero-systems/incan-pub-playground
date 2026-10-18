@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>prettyplease 0.3.0 · Incan.pub</title><meta name="description" content="A minimal `syn` syntax tree pretty-printer"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/prettyplease</p><div class="title-row"><h1>prettyplease</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/prettyplease/versions/0.3.0/" selected>0.3.0</option><option value="../../../packages/crates-io/prettyplease/versions/0.2.37/">0.2.37</option></select></label></div><p class="description">A minimal `syn` syntax tree pretty-printer</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>prettyplease::unparse</h3>
+<p><a href="https://github.com/dtolnay/prettyplease">&lt;img alt=&quot;github&quot; src=&quot;https://img.shields.io/badge/github-dtolnay/prettyplease-8da0cb?style=for-the-badge&amp;labelColor=555555&amp;logo=github&quot; height=&quot;20&quot;&gt;</a>
+<a href="https://crates.io/crates/prettyplease">&lt;img alt=&quot;crates.io&quot; src=&quot;https://img.shields.io/crates/v/prettyplease.svg?style=for-the-badge&amp;color=fc8d62&amp;logo=rust&quot; height=&quot;20&quot;&gt;</a>
+<a href="https://docs.rs/prettyplease">&lt;img alt=&quot;docs.rs&quot; src=&quot;https://img.shields.io/badge/docs.rs-prettyplease-66c2a5?style=for-the-badge&amp;labelColor=555555&amp;logo=docs.rs&quot; height=&quot;20&quot;&gt;</a>
+<a href="https://github.com/dtolnay/prettyplease/actions?query=branch%3Amaster">&lt;img alt=&quot;build status&quot; src=&quot;https://img.shields.io/github/actions/workflow/status/dtolnay/prettyplease/ci.yml?branch=master&amp;style=for-the-badge&quot; height=&quot;20&quot;&gt;</a></p>
+<p>A minimal <code>syn</code> syntax tree pretty-printer.</p>
+<p>&lt;br&gt;</p>
+<h4>Overview</h4>
+<p>This is a pretty-printer to turn a <code>syn</code> syntax tree into a <code>String</code> of
+well-formatted source code. In contrast to rustfmt, this library is intended to
+be suitable for arbitrary generated code.</p>
+<p>Rustfmt prioritizes high-quality output that is impeccable enough that you'd be
+comfortable spending your career staring at its output — but that means
+some heavyweight algorithms, and it has a tendency to bail out on code that is
+hard to format (for example <a href="https://github.com/rust-lang/rustfmt/issues/3697">rustfmt#3697</a>, and there are dozens more issues
+like it). That's not necessarily a big deal for human-generated code because
+when code gets highly nested, the human will naturally be inclined to refactor
+into more easily formattable code. But for generated code, having the formatter
+just give up leaves it totally unreadable.</p>
+<p>This library is designed using the simplest possible algorithm and data
+structures that can deliver about 95% of the quality of rustfmt-formatted
+output. In my experience testing real-world code, approximately 97-98% of output
+lines come out identical between rustfmt's formatting and this crate's. The rest
+have slightly different linebreak decisions, but still clearly follow the
+dominant modern Rust style.</p>
+<p>The tradeoffs made by this crate are a good fit for generated code that you will
+<em>not</em> spend your career staring at. For example, the output of <code>bindgen</code>, or the
+output of <code>cargo-expand</code>. In those cases it's more important that the whole
+thing be formattable without the formatter giving up, than that it be flawless.</p>
+<p>&lt;br&gt;</p>
+<h4>Feature matrix</h4>
+<p>Here are a few superficial comparisons of this crate against the AST
+pretty-printer built into rustc, and rustfmt. The sections below go into more
+detail comparing the output of each of these libraries.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left"></th>
+<th style="text-align:center">prettyplease</th>
+<th style="text-align:center">rustc</th>
+<th style="text-align:center">rustfmt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">non-pathological behavior on big or generated code</td>
+<td style="text-align:center">💚</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:left">idiomatic modern formatting (&quot;locally indistinguishable from rustfmt&quot;)</td>
+<td style="text-align:center">💚</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">💚</td>
+</tr>
+<tr>
+<td style="text-align:left">throughput</td>
+<td style="text-align:center">60 MB/s</td>
+<td style="text-align:center">39 MB/s</td>
+<td style="text-align:center">2.8 MB/s</td>
+</tr>
+<tr>
+<td style="text-align:left">number of dependencies</td>
+<td style="text-align:center">3</td>
+<td style="text-align:center">72</td>
+<td style="text-align:center">66</td>
+</tr>
+<tr>
+<td style="text-align:left">compile time including dependencies</td>
+<td style="text-align:center">2.4 sec</td>
+<td style="text-align:center">23.1 sec</td>
+<td style="text-align:center">29.8 sec</td>
+</tr>
+<tr>
+<td style="text-align:left">buildable using a stable Rust compiler</td>
+<td style="text-align:center">💚</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:left">published to crates.io</td>
+<td style="text-align:center">💚</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:left">extensively configurable output</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">💚</td>
+</tr>
+<tr>
+<td style="text-align:left">intended to accommodate hand-maintained source code</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">💚</td>
+</tr>
+</tbody>
+</table>
+<p>&lt;br&gt;</p>
+<h4>Comparison to rustfmt</h4>
+<ul>
+<li><a href="https://github.com/dtolnay/prettyplease/blob/0.1.0/examples/input.rs">input.rs</a></li>
+<li><a href="https://github.com/dtolnay/prettyplease/blob/0.1.0/examples/output.prettyplease.rs">output.prettyplease.rs</a></li>
+<li><a href="https://github.com/dtolnay/prettyplease/blob/0.1.0/examples/output.rustfmt.rs">output.rustfmt.rs</a></li>
+</ul>
+<p>If you weren't told which output file is which, it would be practically
+impossible to tell — <strong>except</strong> for line 435 in the rustfmt output, which
+is more than 1000 characters long because rustfmt just gave up formatting that
+part of the file:</p>
+<pre><code class="syntax-highlight language-rust"><span class="w">            </span><span class="k">match</span><span class="w"> </span><span class="n">segments</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="mi">0</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;::{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ipv4</span><span class="p">),</span>
+<span class="w">                </span><span class="mh">0xffff</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;::ffff:{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ipv4</span><span class="p">),</span>
+<span class="w">                </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">unreachable!</span><span class="p">(),</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">#</span><span class="w"> </span><span class="p">[</span><span class="n">derive</span><span class="w"> </span><span class="p">(</span><span class="nb">Copy</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="nb">Clone</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="nb">Default</span><span class="p">)]</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Span</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">zeroes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">longest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Span</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="nc">default</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Span</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="nc">default</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">segment</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">segments</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">enumerate</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">segment</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">longest</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">longest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Span</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="nc">default</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="n">longest</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="p">#</span><span class="w"> </span><span class="p">[</span><span class="n">doc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot; Write a colon-separated part of the address&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">#</span><span class="w"> </span><span class="p">[</span><span class="n">inline</span><span class="p">]</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">fmt_subslice</span><span class="w"> </span><span class="p">(</span><span class="n">f</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="w"> </span><span class="nc">mut</span><span class="w"> </span><span class="n">fmt</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="nc">Formatter</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="o">&#39;</span><span class="nb">_</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">chunk</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="w"> </span><span class="p">[</span><span class="kt">u16</span><span class="p">])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">fmt</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="nb">Result</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="w"> </span><span class="p">((</span><span class="n">first</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">tail</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">chunk</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">split_first</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">write</span><span class="w"> </span><span class="o">!</span><span class="w"> </span><span class="p">(</span><span class="n">f</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="s">&quot;{:x}&quot;</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">first</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">segment</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">tail</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">write_char</span><span class="w"> </span><span class="p">(</span><span class="sc">&#39;:&#39;</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">write</span><span class="w"> </span><span class="o">!</span><span class="w"> </span><span class="p">(</span><span class="n">f</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="s">&quot;{:x}&quot;</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="n">segment</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nb">Ok</span><span class="w"> </span><span class="p">(())</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">zeroes</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">fmt_subslice</span><span class="w"> </span><span class="p">(</span><span class="n">f</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">segments</span><span class="w"> </span><span class="p">[</span><span class="o">..</span><span class="w"> </span><span class="n">zeroes</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">start</span><span class="p">])</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">write_str</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;::&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">fmt_subslice</span><span class="w"> </span><span class="p">(</span><span class="n">f</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">segments</span><span class="w"> </span><span class="p">[</span><span class="n">zeroes</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">zeroes</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">..</span><span class="p">])</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">fmt_subslice</span><span class="w"> </span><span class="p">(</span><span class="n">f</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">segments</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="n">IPV6_BUF_LEN</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">8</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">7</span><span class="p">;</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="k">u8</span><span class="p">;</span><span class="w"> </span><span class="n">IPV6_BUF_LEN</span><span class="p">];</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buf_slice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">];</span>
+</code></pre>
+<p>This is a pretty typical manifestation of rustfmt bailing out in generated code
+— a chunk of the input ends up on one line. The other manifestation is
+that you're working on some code, running rustfmt on save like a conscientious
+developer, but after a while notice it isn't doing anything. You introduce an
+intentional formatting issue, like a stray indent or semicolon, and run rustfmt
+to check your suspicion. Nope, it doesn't get cleaned up — rustfmt is just
+not formatting the part of the file you are working on.</p>
+<p>The prettyplease library is designed to have no pathological cases that force a
+bail out; the entire input you give it will get formatted in some &quot;good enough&quot;
+form.</p>
+<p>Separately, rustfmt can be problematic to integrate into projects. It's written
+using rustc's internal syntax tree, so it can't be built by a stable compiler.
+Its releases are not regularly published to crates.io, so in Cargo builds you'd
+need to depend on it as a git dependency, which precludes publishing your crate
+to crates.io also. You can shell out to a <code>rustfmt</code> binary, but that'll be
+whatever rustfmt version is installed on each developer's system (if any), which
+can lead to spurious diffs in checked-in generated code formatted by different
+versions. In contrast prettyplease is designed to be easy to pull in as a
+library, and compiles fast.</p>
+<p>&lt;br&gt;</p>
+<h4>Comparison to rustc_ast_pretty</h4>
+<ul>
+<li><a href="https://github.com/dtolnay/prettyplease/blob/0.1.0/examples/input.rs">input.rs</a></li>
+<li><a href="https://github.com/dtolnay/prettyplease/blob/0.1.0/examples/output.prettyplease.rs">output.prettyplease.rs</a></li>
+<li><a href="https://github.com/dtolnay/prettyplease/blob/0.1.0/examples/output.rustc.rs">output.rustc.rs</a></li>
+</ul>
+<p>This is the pretty-printer that gets used when rustc prints source code, such as
+<code>rustc -Zunpretty=expanded</code>. It's used also by the standard library's
+<code>stringify!</code> when stringifying an interpolated macro_rules AST fragment, like an
+$:expr, and transitively by <code>dbg!</code> and many macros in the ecosystem.</p>
+<p>Rustc's formatting is mostly okay, but does not hew closely to the dominant
+contemporary style of Rust formatting. Some things wouldn't ever be written on
+one line, like this <code>match</code> expression, and certainly not with a comma in front
+of the closing brace:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">fn</span><span class="w"> </span><span class="nf">eq</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">other</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">IpAddr</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">other</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">IpAddr</span><span class="p">::</span><span class="n">V4</span><span class="p">(</span><span class="n">v4</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="bp">self</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">v4</span><span class="p">,</span><span class="w"> </span><span class="n">IpAddr</span><span class="p">::</span><span class="n">V6</span><span class="p">(</span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>Some places use non-multiple-of-4 indentation, which is definitely not the norm:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">pub</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">to_ipv6_mapped</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Ipv6Addr</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">octets</span><span class="p">();</span>
+<span class="w">    </span><span class="n">Ipv6Addr</span><span class="p">{</span><span class="n">inner</span><span class="p">:</span>
+<span class="w">                 </span><span class="nc">c</span><span class="p">::</span><span class="n">in6_addr</span><span class="p">{</span><span class="n">s6_addr</span><span class="p">:</span>
+<span class="w">                                 </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mh">0xFF</span><span class="p">,</span>
+<span class="w">                                  </span><span class="mh">0xFF</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">],},}</span>
+<span class="p">}</span>
+</code></pre>
+<p>And although there isn't an egregious example of it in the link because the
+input code is pretty tame, in general rustc_ast_pretty has pathological behavior
+on generated code. It has a tendency to use excessive horizontal indentation and
+rapidly run out of width:</p>
+<pre><code class="syntax-highlight language-rust"><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::</span><span class="n">_print</span><span class="p">(::</span><span class="n">core</span><span class="p">::</span><span class="n">fmt</span><span class="p">::</span><span class="n">Arguments</span><span class="p">::</span><span class="n">new_v1</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="s">&quot;&quot;</span><span class="p">],</span>
+<span class="w">                                                 </span><span class="o">&amp;</span><span class="k">match</span><span class="w"> </span><span class="p">(</span><span class="o">&amp;</span><span class="n">msg</span><span class="p">,)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                                      </span><span class="n">_args</span><span class="w"> </span><span class="o">=&gt;</span>
+<span class="w">                                                      </span><span class="p">[::</span><span class="n">core</span><span class="p">::</span><span class="n">fmt</span><span class="p">::</span><span class="n">ArgumentV1</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">_args</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span>
+<span class="w">                                                                                    </span><span class="p">::</span><span class="n">core</span><span class="p">::</span><span class="n">fmt</span><span class="p">::</span><span class="n">Display</span><span class="p">::</span><span class="n">fmt</span><span class="p">)],</span>
+<span class="w">                                                  </span><span class="p">}));</span>
+</code></pre>
+<p>The snippets above are clearly different from modern rustfmt style. In contrast,
+prettyplease is designed to have output that is practically indistinguishable
+from rustfmt-formatted code.</p>
+<p>&lt;br&gt;</p>
+<h4>Example</h4>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// [dependencies]</span>
+<span class="c1">// prettyplease = &quot;0.3&quot;</span>
+<span class="c1">// syn = { version = &quot;3&quot;, default-features = false, features = [&quot;full&quot;, &quot;parsing&quot;] }</span>
+
+<span class="k">const</span><span class="w"> </span><span class="n">INPUT</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">stringify!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::{</span>
+<span class="w">          </span><span class="n">lazy</span><span class="p">::{</span><span class="n">Lazy</span><span class="p">,</span><span class="w"> </span><span class="n">SyncLazy</span><span class="p">,</span><span class="w"> </span><span class="n">SyncOnceCell</span><span class="p">},</span><span class="w"> </span><span class="n">panic</span><span class="p">,</span>
+<span class="w">        </span><span class="n">sync</span><span class="p">::{</span><span class="w"> </span><span class="n">atomic</span><span class="p">::{</span><span class="n">AtomicUsize</span><span class="p">,</span><span class="w"> </span><span class="n">Ordering</span><span class="p">::</span><span class="n">SeqCst</span><span class="p">},</span>
+<span class="w">            </span><span class="n">mpsc</span><span class="p">::</span><span class="n">channel</span><span class="p">,</span><span class="w"> </span><span class="n">Mutex</span><span class="p">,</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="n">thread</span><span class="p">,</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">    </span><span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="o">&gt;</span><span class="w"> </span><span class="nb">Into</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">U</span><span class="p">:</span><span class="w"> </span><span class="nb">From</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">fn</span><span class="w"> </span><span class="nf">into</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">U</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">U</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">syntax_tree</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">syn</span><span class="p">::</span><span class="n">parse_file</span><span class="p">(</span><span class="n">INPUT</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">formatted</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">prettyplease</span><span class="p">::</span><span class="n">unparse</span><span class="p">(</span><span class="o">&amp;</span><span class="n">syntax_tree</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">print!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">formatted</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>&lt;br&gt;</p>
+<h4>Algorithm notes</h4>
+<p>The approach and terminology used in the implementation are derived from <a href="http://i.stanford.edu/pub/cstr/reports/cs/tr/79/770/CS-TR-79-770.pdf"><em>Derek
+C. Oppen, &quot;Pretty Printing&quot; (1979)</em></a>, on which rustc_ast_pretty is also
+based, and from rustc_ast_pretty's implementation written by Graydon Hoare in
+2011 (and modernized over the years by dozens of volunteer maintainers).</p>
+<p>The paper describes two language-agnostic interacting procedures <code>Scan()</code> and
+<code>Print()</code>. Language-specific code decomposes an input data structure into a
+stream of <code>string</code> and <code>break</code> tokens, and <code>begin</code> and <code>end</code> tokens for
+grouping. Each <code>begin</code>–<code>end</code> range may be identified as either &quot;consistent
+breaking&quot; or &quot;inconsistent breaking&quot;. If a group is consistently breaking, then
+if the whole contents do not fit on the line, <em>every</em> <code>break</code> token in the group
+will receive a linebreak. This is appropriate, for example, for Rust struct
+literals, or arguments of a function call. If a group is inconsistently
+breaking, then the <code>string</code> tokens in the group are greedily placed on the line
+until out of space, and linebroken only at those <code>break</code> tokens for which the
+next string would not fit. For example, this is appropriate for the contents of
+a braced <code>use</code> statement in Rust.</p>
+<p>Scan's job is to efficiently accumulate sizing information about groups and
+breaks. For every <code>begin</code> token we compute the distance to the matched <code>end</code>
+token, and for every <code>break</code> we compute the distance to the next <code>break</code>. The
+algorithm uses a ringbuffer to hold tokens whose size is not yet ascertained.
+The maximum size of the ringbuffer is bounded by the target line length and does
+not grow indefinitely, regardless of deep nesting in the input stream. That's
+because once a group is sufficiently big, the precise size can no longer make a
+difference to linebreak decisions and we can effectively treat it as &quot;infinity&quot;.</p>
+<p>Print's job is to use the sizing information to efficiently assign a &quot;broken&quot; or
+&quot;not broken&quot; status to every <code>begin</code> token. At that point the output is easily
+constructed by concatenating <code>string</code> tokens and breaking at <code>break</code> tokens
+contained within a broken group.</p>
+<p>Leveraging these primitives (i.e. cleverly placing the all-or-nothing consistent
+breaks and greedy inconsistent breaks) to yield rustfmt-compatible formatting
+for all of Rust's syntax tree nodes is a fun challenge.</p>
+<p>Here is a visualization of some Rust tokens fed into the pretty printing
+algorithm. Consistently breaking <code>begin</code>—<code>end</code> pairs are represented by
+<code>«</code>⁠<code>»</code>, inconsistently breaking by <code>‹</code>⁠<code>›</code>, <code>break</code> by <code>·</code>, and the
+rest of the non-whitespace are <code>string</code>.</p>
+<pre><code>use crate::«{·
+‹    lazy::«{·‹Lazy,· SyncLazy,· SyncOnceCell›·}»,·
+    panic,·
+    sync::«{·
+‹        atomic::«{·‹AtomicUsize,· Ordering::SeqCst›·}»,·
+        mpsc::channel,· Mutex›,·
+    }»,·
+    thread›,·
+}»;·
+«‹«impl&lt;«·T‹›,· U‹›·»&gt;» Into&lt;«·U·»&gt;· for T›·
+where·
+    U:‹ From&lt;«·T·»&gt;›,·
+{·
+«    fn into(·«·self·») -&gt; U {·
+‹        U::from(«·self·»)›·
+»    }·
+»}·
+</code></pre>
+<p>The algorithm described in the paper is not quite sufficient for producing
+well-formatted Rust code that is locally indistinguishable from rustfmt's style.
+The reason is that in the paper, the complete non-whitespace contents are
+assumed to be independent of linebreak decisions, with Scan and Print being only
+in control of the whitespace (spaces and line breaks). In Rust as idiomatically
+formatted by rustfmt, that is not the case. Trailing commas are one example; the
+punctuation is only known <em>after</em> the broken vs non-broken status of the
+surrounding group is known:</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Struct</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="nc">true</span><span class="w"> </span><span class="p">};</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="nc">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span><span class="p">,</span>
+<span class="w">    </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="nc">yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy</span><span class="p">,</span><span class="w">   </span><span class="c1">//&lt;- trailing comma if the expression wrapped</span>
+<span class="p">};</span>
+</code></pre>
+<p>The formatting of <code>match</code> expressions is another case; we want small arms on the
+same line as the pattern, and big arms wrapped in a brace. The presence of the
+brace punctuation, comma, and semicolon are all dependent on whether the arm
+fits on the line:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">match</span><span class="w"> </span><span class="n">total_nanos</span><span class="p">.</span><span class="n">checked_add</span><span class="p">(</span><span class="n">entry</span><span class="p">.</span><span class="n">nanos</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u64</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nb">Some</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">tmp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w">   </span><span class="c1">//&lt;- small arm, inline with comma</span>
+<span class="w">    </span><span class="nb">None</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">total_secs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">total_secs</span>
+<span class="w">            </span><span class="p">.</span><span class="n">checked_add</span><span class="p">(</span><span class="n">total_nanos</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">NANOS_PER_SEC</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u64</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;overflow in iter::sum over durations&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span><span class="w">   </span><span class="c1">//&lt;- big arm, needs brace added, and also semicolon^</span>
+<span class="p">}</span>
+</code></pre>
+<p>The printing algorithm implementation in this crate accommodates all of these
+situations with conditional punctuation tokens whose selection can be deferred
+and populated after it's known that the group is or is not broken.</p>
+<p>&lt;br&gt;</p>
+<h6>License</h6>
+<p>&lt;sup&gt;
+Licensed under either of &lt;a href=&quot;LICENSE-APACHE&quot;&gt;Apache License, Version
+2.0&lt;/a&gt; or &lt;a href=&quot;LICENSE-MIT&quot;&gt;MIT license&lt;/a&gt; at your option.
+&lt;/sup&gt;</p>
+<p>&lt;br&gt;</p>
+<p>&lt;sub&gt;
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this crate by you, as defined in the Apache-2.0 license, shall
+be dual licensed as above, without any additional terms or conditions.
+&lt;/sub&gt;</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>verbatim</code></th><td>No</td><td><ul class="effects"><li><code>syn/parsing</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/proc-macro2/"><code>crates-io/proc-macro2</code></a><small>Alias: proc-macro2</small></th><td><code>^1.0.80</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/syn/"><code>crates-io/syn</code></a><small>Alias: syn</small></th><td><code>^3</code><small>Default features: disabled</small><small>Requests: full</small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/bindgen/versions/0.73.2/">crates-io/bindgen 0.73.2</a><span>Requires &gt;=0.2.7, &lt;0.4 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/bon-macros/versions/3.10.2/">crates-io/bon-macros 3.10.2</a><span>Requires ^0.3 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/prost-build/versions/0.14.4/">crates-io/prost-build 0.14.4</a><span>Requires ^0.2 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/tonic-build/versions/0.14.6/">crates-io/tonic-build 0.14.6</a><span>Requires ^0.2 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/tonic-prost-build/versions/0.14.6/">crates-io/tonic-prost-build 0.14.6</a><span>Requires ^0.2 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/wit-bindgen-rust/versions/0.62.0/">crates-io/wit-bindgen-rust 0.62.0</a><span>Requires ^0.3.0 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/wit-bindgen-rust/versions/0.57.1/">crates-io/wit-bindgen-rust 0.57.1</a><span>Requires ^0.2.20 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/wit-bindgen-rust/versions/0.51.0/">crates-io/wit-bindgen-rust 0.51.0</a><span>Requires ^0.2.20 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/wit-bindgen-rust-macro/versions/0.62.0/">crates-io/wit-bindgen-rust-macro 0.62.0</a><span>Requires ^0.3.0 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/wit-bindgen-rust-macro/versions/0.57.1/">crates-io/wit-bindgen-rust-macro 0.57.1</a><span>Requires ^0.2.20 · alias prettyplease · </span></li><li><a href="../../../packages/crates-io/wit-bindgen-rust-macro/versions/0.51.0/">crates-io/wit-bindgen-rust-macro 0.51.0</a><span>Requires ^0.2.20 · alias prettyplease · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:3d3cba139e0a5de0694e626e6dece85226d3f38f86d66f04a9b59d1c6579150e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:df54f2f8561474cb4bcd11d8f87c3ded93150ca845bdb92fced42b5e18754c1d</small></li><li><code>sha256:4c3f5ba3dda7b47b9d63d7055b8ae80c59c0a2cad8ebdf2140cc18c32f20f6ed</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:fae5c65487dba5e7ce8bf054743eb6017edd41980dfb367fa2ccdd4012da7c79</small></li><li><code>sha256:8a0ce198619a29a7275cf2f2a3feefa05e777050823e44964d408d38ca6e68bc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:86b7cda6329564c326f22f9902f7945cc35a9f5b253fa884f4376e70af10bd85</small></li><li><code>sha256:fea5ebb9aea59bff9430ccd334f06ad2e639b4e4620b2d4fe9c14fb716199246</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53954876">Attestation reference</a><small>Archive: sha256:623ba2c7fa8ee8485c35fa25e2f699a9d092cb8512c60f9eac8f8255238eb9ef</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>verbatim</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:18ad5f52fb2fd9ae4014441ae0378fadf8b5700e91f33821826e2afa90927101</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:7f10a2b0940817fde9328c9e59afe2cc6b46aaeb88c748ce5253848ff55d34de</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:6e9717145f41caa9814ae4b32a8d6c516dc3bfd3d71bbf2bc24fe3644c88549b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:b9eaea889091c8916098ef136e1405d285096be055be2963fdb1aeab8ec4c6c7</small></li><li><code>sha256:8d3e8b4603a9e34e4c296881ce290637f261976cb9ff0eb4ed6811eb1e258aa7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:974601cc7d216426ab5894e5e50073ef1e725e32ebe5b1efb1beac2e7cd27b4c</small></li><li><code>sha256:d377400062d35a74e1a32eae1bf85d172c771323d1c1df13dcd9842729b75da2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:521db82159612bb7c3cfdc947da29e9b770d12299d68e3cabe4f2cc93e327043</small></li><li><code>sha256:f0b5f71d644e5446ce439e973e955c26e9d4bcd13941050ef65227099d632b9e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:dcffbd117ea60237764c7cede82a2aae9238ac3348a12ab4af0597a10bf20f3b</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>verbatim</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5c55e76612b36a5c6aad5d2ae8ac7117080d09ffa77bbcc7dcf740c2919a70cb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:2d1c00910380c8a1b4ae8df91193a683af7fe951ab55c31732c591b204c19d2b</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:76a1118f8ac48eefb20702b82b843b55007fd48169d43a6a0c7503adf67fd4e3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:560f61f62a6c3d905c70cac6cdceaa656791611ac7616fec58571a0407e7cdb1</small></li><li><code>sha256:c448ca4509dfbbd666a0e6af91946996dd7f1637117401a6a4817d71b3408433</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:d795435344091c79845022f55c793164835db6ddd23d58f7da681ad19f93d3dc</small></li><li><code>sha256:fe6aeea39865d3564f2ec69aa58b9a527b23e64d916a02444945fb133889b642</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:4827c83a8f9d9166fb80b8d65193c1c3ae5902f5495159e00239ac8b6653090d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1ddac17d671c76aa2845a72d25d9a8273cc7d2511b2a0c40209fc222eb709f75</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:2ed91a3c54c4f71f36d020d03b55c0d3414bdd05597c02a9b2e8203088dc7666</small></li><li><code>sha256:20160bda235fb3420ee77793c31b37ae479af1ae95a69023a02675b97cfb4084</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:99e5a53ead3cf2e9115d61f7cf5597b31fc3696d3829e66e28226e11e6d9f7fe</small></li><li><code>sha256:72acedfe43c0c36a52b3f656a401a0d2964620e0c587935a0dbb6d6127512d25</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:cdd87589f224e640e725bae28de0e7dc8eca73d70848b71c83162a2799443d36</small></li><li><code>sha256:b360be4d77d2b686666b3a7d8b5f39b6c4c1693dd84b44ef1cc7ee7a4a566915</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:88847f34c71f7734d951561fdb8e98c02ab793aed3e5a6768da14cdb41ee8447</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td></td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>verbatim</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td></td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>verbatim</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td></td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>verbatim</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td></td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>verbatim</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/prettyplease/versions/0.3.0/">0.3.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/prettyplease/0.3.0">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/prettyplease/versions/0.2.37/">0.2.37</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/prettyplease/0.2.37">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+</code></pre></div><p class="table-note">sha256:62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:7c64094c9c59eb83de365087c79fc7d982b6348330adfaea379261cd17449044</code></dd><dt>Upstream checksum</dt><dd><code>sha256:2bfe0f4c752e450fc2faf62654f1c134747922825d5b04ca717b8874f41a40c0</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/prettyplease&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.3.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">verbatim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;syn/parsing&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;prettyplease&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">proc-macro2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/proc-macro2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.80&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syn&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;full&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;verbatim&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;verbatim&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;verbatim&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;verbatim&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>David Tolnay &lt;dtolnay@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.71</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/prettyplease/0.3.0">crates.io package</a></li><li><a href="https://github.com/dtolnay/prettyplease">Source repository</a></li><li><a href="https://docs.rs/prettyplease">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">prettyplease</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/prettyplease"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.3.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

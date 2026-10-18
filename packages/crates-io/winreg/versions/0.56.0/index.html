@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>winreg 0.56.0 · Incan.pub</title><meta name="description" content="Rust bindings to MS Windows Registry API"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/winreg</p><div class="title-row"><h1>winreg</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/winreg/versions/0.56.0/" selected>0.56.0</option></select></label></div><p class="description">Rust bindings to MS Windows Registry API</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>winreg
+<a href="https://github.com/gentoo90/winreg-rs/actions">Github Actions</a>
+<a href="https://crates.io/crates/winreg">Winreg on crates.io</a>
+<a href="https://docs.rs/winreg">Winreg on docs.rs</a></h3>
+<p>Rust bindings to MS Windows Registry API. Work in progress.</p>
+<p>Current features:</p>
+<ul>
+<li>Basic registry operations:
+<ul>
+<li>open/create/delete/rename keys</li>
+<li>load application hive from a file</li>
+<li>read and write values</li>
+<li>seamless conversion between <code>REG_*</code> types and rust primitives
+<ul>
+<li><code>String</code> and <code>OsString</code> &lt;= <code>REG_SZ</code>, <code>REG_EXPAND_SZ</code> or <code>REG_MULTI_SZ</code></li>
+<li><code>String</code>, <code>&amp;str</code>, <code>OsString</code>, <code>&amp;OsStr</code> =&gt; <code>REG_SZ</code></li>
+<li><code>Vec&lt;String&gt;</code>, <code>Vec&lt;OsString&gt;</code> &lt;= <code>REG_MULTI_SZ</code></li>
+<li><code>Vec&lt;String&gt;</code>, <code>Vec&lt;&amp;str&gt;</code>, <code>Vec&lt;OsString&gt;</code>, <code>Vec&lt;&amp;OsStr&gt;</code> =&gt; <code>REG_MULTI_SZ</code></li>
+<li><code>u32</code> &lt;=&gt; <code>REG_DWORD</code></li>
+<li><code>u64</code> &lt;=&gt; <code>REG_QWORD</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Iteration through key names and through values</li>
+<li>Transactions</li>
+<li>Transacted serialization of rust types into/from registry (only primitives, <code>Option</code>s, structures and maps for now)</li>
+</ul>
+<h4>Usage</h4>
+<h5>Basic usage</h5>
+<pre><code class="syntax-highlight language-toml"><span class="c1"># Cargo.toml</span>
+<span class="k">[dependencies]</span>
+<span class="n">winreg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.56&quot;</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">path</span><span class="p">::</span><span class="n">Path</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">winreg</span><span class="p">::</span><span class="n">enums</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">winreg</span><span class="p">::</span><span class="n">RegKey</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">io</span><span class="p">::</span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Reading some system info...&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">hklm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RegKey</span><span class="p">::</span><span class="n">predef</span><span class="p">(</span><span class="n">HKEY_LOCAL_MACHINE</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">cur_ver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hklm</span><span class="p">.</span><span class="n">open_subkey</span><span class="p">(</span><span class="s">&quot;SOFTWARE</span><span class="se">\\</span><span class="s">Microsoft</span><span class="se">\\</span><span class="s">Windows</span><span class="se">\\</span><span class="s">CurrentVersion&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">pf</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cur_ver</span><span class="p">.</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;ProgramFilesDir&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">dp</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cur_ver</span><span class="p">.</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;DevicePath&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;ProgramFiles = {}</span><span class="se">\n</span><span class="s">DevicePath = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pf</span><span class="p">,</span><span class="w"> </span><span class="n">dp</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cur_ver</span><span class="p">.</span><span class="n">query_info</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;info = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">info</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">mt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">info</span><span class="p">.</span><span class="n">get_last_write_time_system</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;last_write_time as windows_sys::Win32::Foundation::SYSTEMTIME = {}-{:02}-{:02} {:02}:{:02}:{:02}&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">mt</span><span class="p">.</span><span class="n">wYear</span><span class="p">,</span><span class="w"> </span><span class="n">mt</span><span class="p">.</span><span class="n">wMonth</span><span class="p">,</span><span class="w"> </span><span class="n">mt</span><span class="p">.</span><span class="n">wDay</span><span class="p">,</span><span class="w"> </span><span class="n">mt</span><span class="p">.</span><span class="n">wHour</span><span class="p">,</span><span class="w"> </span><span class="n">mt</span><span class="p">.</span><span class="n">wMinute</span><span class="p">,</span><span class="w"> </span><span class="n">mt</span><span class="p">.</span><span class="n">wSecond</span>
+<span class="w">    </span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// enable `chrono` feature on `winreg` to make this work</span>
+<span class="w">    </span><span class="c1">// println!(</span>
+<span class="w">    </span><span class="c1">//     &quot;last_write_time as chrono::NaiveDateTime = {}&quot;,</span>
+<span class="w">    </span><span class="c1">//     info.get_last_write_time_chrono()</span>
+<span class="w">    </span><span class="c1">// );</span>
+
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;And now lets write something...&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">hkcu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RegKey</span><span class="p">::</span><span class="n">predef</span><span class="p">(</span><span class="n">HKEY_CURRENT_USER</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Path</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;Software&quot;</span><span class="p">).</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;WinregRsExample1&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">disp</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hkcu</span><span class="p">.</span><span class="n">create_subkey</span><span class="p">(</span><span class="o">&amp;</span><span class="n">path</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">disp</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">REG_CREATED_NEW_KEY</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;A new key has been created&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="n">REG_OPENED_EXISTING_KEY</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;An existing key has been opened&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">set_value</span><span class="p">(</span><span class="s">&quot;TestSZ&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="s">&quot;written by Rust&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">sz_val</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">key</span><span class="p">.</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;TestSZ&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">delete_value</span><span class="p">(</span><span class="s">&quot;TestSZ&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;TestSZ = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">sz_val</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">set_value</span><span class="p">(</span><span class="s">&quot;TestMultiSZ&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="fm">vec!</span><span class="p">[</span><span class="s">&quot;written&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;by&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Rust&quot;</span><span class="p">])</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">multi_sz_val</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">key</span><span class="p">.</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;TestMultiSZ&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">delete_value</span><span class="p">(</span><span class="s">&quot;TestMultiSZ&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;TestMultiSZ = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">multi_sz_val</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">set_value</span><span class="p">(</span><span class="s">&quot;TestDWORD&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="mi">1234567890</span><span class="k">u32</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">dword_val</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">key</span><span class="p">.</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;TestDWORD&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;TestDWORD = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">dword_val</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">set_value</span><span class="p">(</span><span class="s">&quot;TestQWORD&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="mi">1234567891011121314</span><span class="k">u64</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">qword_val</span><span class="p">:</span><span class="w"> </span><span class="kt">u64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">key</span><span class="p">.</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;TestQWORD&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;TestQWORD = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">qword_val</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">create_subkey</span><span class="p">(</span><span class="s">&quot;sub</span><span class="se">\\</span><span class="s">key&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="n">hkcu</span><span class="p">.</span><span class="n">delete_subkey_all</span><span class="p">(</span><span class="o">&amp;</span><span class="n">path</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Trying to open nonexistent key...&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">hkcu</span><span class="p">.</span><span class="n">open_subkey</span><span class="p">(</span><span class="o">&amp;</span><span class="n">path</span><span class="p">).</span><span class="n">unwrap_or_else</span><span class="p">(</span><span class="o">|</span><span class="n">e</span><span class="o">|</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">kind</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">io</span><span class="p">::</span><span class="n">ErrorKind</span><span class="p">::</span><span class="n">NotFound</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;Key doesn&#39;t exist&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="n">io</span><span class="p">::</span><span class="n">ErrorKind</span><span class="p">::</span><span class="n">PermissionDenied</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;Access denied&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Iterators</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">winreg</span><span class="p">::</span><span class="n">RegKey</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">winreg</span><span class="p">::</span><span class="n">enums</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">io</span><span class="p">::</span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;File extensions, registered in system:&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">RegKey</span><span class="p">::</span><span class="n">predef</span><span class="p">(</span><span class="n">HKEY_CLASSES_ROOT</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">enum_keys</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">x</span><span class="o">|</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">unwrap</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="n">filter</span><span class="p">(</span><span class="o">|</span><span class="n">x</span><span class="o">|</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">starts_with</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">system</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RegKey</span><span class="p">::</span><span class="n">predef</span><span class="p">(</span><span class="n">HKEY_LOCAL_MACHINE</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">open_subkey</span><span class="p">(</span><span class="s">&quot;HARDWARE</span><span class="se">\\</span><span class="s">DESCRIPTION</span><span class="se">\\</span><span class="s">System&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">system</span><span class="p">.</span><span class="n">enum_values</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">x</span><span class="o">|</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">unwrap</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{} = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Transactions</h5>
+<pre><code class="syntax-highlight language-toml"><span class="c1"># Cargo.toml</span>
+<span class="k">[dependencies]</span>
+<span class="n">winreg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.56&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;transactions&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">winreg</span><span class="p">::</span><span class="n">RegKey</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">winreg</span><span class="p">::</span><span class="n">enums</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">winreg</span><span class="p">::</span><span class="n">transaction</span><span class="p">::</span><span class="n">Transaction</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">io</span><span class="p">::</span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Transaction</span><span class="p">::</span><span class="n">new</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">hkcu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RegKey</span><span class="p">::</span><span class="n">predef</span><span class="p">(</span><span class="n">HKEY_CURRENT_USER</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">_disp</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hkcu</span><span class="p">.</span><span class="n">create_subkey_transacted</span><span class="p">(</span><span class="s">&quot;Software</span><span class="se">\\</span><span class="s">RustTransaction&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">set_value</span><span class="p">(</span><span class="s">&quot;TestQWORD&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="mi">1234567891011121314</span><span class="k">u64</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">set_value</span><span class="p">(</span><span class="s">&quot;TestDWORD&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="mi">1234567890</span><span class="k">u32</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Commit transaction? [y/N]:&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="w">    </span><span class="n">io</span><span class="p">::</span><span class="n">stdin</span><span class="p">().</span><span class="n">read_line</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="n">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="n">trim_right</span><span class="p">().</span><span class="n">to_owned</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">input</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;y&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">input</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;Y&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">t</span><span class="p">.</span><span class="n">commit</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Transaction committed.&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// this is optional, if transaction wasn&#39;t committed,</span>
+<span class="w">        </span><span class="c1">// it will be rolled back on disposal</span>
+<span class="w">        </span><span class="n">t</span><span class="p">.</span><span class="n">rollback</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Transaction wasn&#39;t committed, it will be rolled back.&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Serialization</h5>
+<pre><code class="syntax-highlight language-toml"><span class="c1"># Cargo.toml</span>
+<span class="k">[dependencies]</span>
+<span class="n">winreg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.56&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serialization-serde&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1&quot;</span>
+<span class="n">serde_derive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1&quot;</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde_derive</span><span class="p">::{</span><span class="n">Deserialize</span><span class="p">,</span><span class="w"> </span><span class="n">Serialize</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">winreg</span><span class="p">::</span><span class="n">enums</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, Serialize, Deserialize, PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Coords</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
+<span class="w">    </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Debug, Serialize, Deserialize, PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Size</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">w</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
+<span class="w">    </span><span class="n">h</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Debug, Serialize, Deserialize, PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Rectangle</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">coords</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Coords</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">size</span><span class="p">:</span><span class="w"> </span><span class="nc">Size</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Debug, Serialize, Deserialize, PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Test</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">t_bool</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_u8</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_u16</span><span class="p">:</span><span class="w"> </span><span class="kt">u16</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_u32</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_u64</span><span class="p">:</span><span class="w"> </span><span class="kt">u64</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_usize</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_struct</span><span class="p">:</span><span class="w"> </span><span class="nc">Rectangle</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_map</span><span class="p">:</span><span class="w"> </span><span class="nc">HashMap</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_string</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_optional_string</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[serde(rename = </span><span class="s">&quot;&quot;</span><span class="cp">)]</span><span class="w"> </span><span class="c1">// empty name becomes the (Default) value in the registry</span>
+<span class="w">    </span><span class="n">t_char</span><span class="p">:</span><span class="w"> </span><span class="kt">char</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_i8</span><span class="p">:</span><span class="w"> </span><span class="kt">i8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_i16</span><span class="p">:</span><span class="w"> </span><span class="kt">i16</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_i32</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_i64</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_isize</span><span class="p">:</span><span class="w"> </span><span class="kt">isize</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_f64</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">,</span>
+<span class="w">    </span><span class="n">t_f32</span><span class="p">:</span><span class="w"> </span><span class="kt">f32</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Error</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">hkcu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">winreg</span><span class="p">::</span><span class="n">RegKey</span><span class="p">::</span><span class="n">predef</span><span class="p">(</span><span class="n">HKEY_CURRENT_USER</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">_disp</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hkcu</span><span class="p">.</span><span class="n">create_subkey</span><span class="p">(</span><span class="s">&quot;Software</span><span class="se">\\</span><span class="s">RustEncode&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">map</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="w">    </span><span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">.</span><span class="n">to_owned</span><span class="p">(),</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"> </span><span class="c1">// empty name becomes the (Default) value in the registry</span>
+<span class="w">    </span><span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;v1&quot;</span><span class="p">.</span><span class="n">to_owned</span><span class="p">(),</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="w">    </span><span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;v2&quot;</span><span class="p">.</span><span class="n">to_owned</span><span class="p">(),</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span>
+<span class="w">    </span><span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;v3&quot;</span><span class="p">.</span><span class="n">to_owned</span><span class="p">(),</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">v1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Test</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">t_bool</span><span class="p">:</span><span class="w"> </span><span class="nc">false</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_u8</span><span class="p">:</span><span class="w"> </span><span class="mi">127</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_u16</span><span class="p">:</span><span class="w"> </span><span class="mi">32768</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_u32</span><span class="p">:</span><span class="w"> </span><span class="mi">123_456_789</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_u64</span><span class="p">:</span><span class="w"> </span><span class="mi">123_456_789_101_112</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_usize</span><span class="p">:</span><span class="w"> </span><span class="mi">1_234_567_891</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_struct</span><span class="p">:</span><span class="w"> </span><span class="nc">Rectangle</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">coords</span><span class="p">:</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">Coords</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="mi">55</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="mi">77</span><span class="w"> </span><span class="p">}),</span>
+<span class="w">            </span><span class="n">size</span><span class="p">:</span><span class="w"> </span><span class="nc">Size</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">w</span><span class="p">:</span><span class="w"> </span><span class="mi">500</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">:</span><span class="w"> </span><span class="mi">300</span><span class="w"> </span><span class="p">},</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="n">t_map</span><span class="p">:</span><span class="w"> </span><span class="nc">map</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_string</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;test 123!&quot;</span><span class="p">.</span><span class="n">to_owned</span><span class="p">(),</span>
+<span class="w">        </span><span class="n">t_optional_string</span><span class="p">:</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="s">&quot;test 456!&quot;</span><span class="p">.</span><span class="n">to_owned</span><span class="p">()),</span>
+<span class="w">        </span><span class="n">t_char</span><span class="p">:</span><span class="w"> </span><span class="o">&#39;</span><span class="na">a</span><span class="o">&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_i8</span><span class="p">:</span><span class="w"> </span><span class="o">-</span><span class="mi">123</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_i16</span><span class="p">:</span><span class="w"> </span><span class="o">-</span><span class="mi">2049</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_i32</span><span class="p">:</span><span class="w"> </span><span class="mi">20100</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_i64</span><span class="p">:</span><span class="w"> </span><span class="o">-</span><span class="mi">12_345_678_910</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_isize</span><span class="p">:</span><span class="w"> </span><span class="o">-</span><span class="mi">1_234_567_890</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_f64</span><span class="p">:</span><span class="w"> </span><span class="o">-</span><span class="mf">0.01</span><span class="p">,</span>
+<span class="w">        </span><span class="n">t_f32</span><span class="p">:</span><span class="w"> </span><span class="mf">3.15</span><span class="p">,</span>
+<span class="w">    </span><span class="p">};</span>
+
+<span class="w">    </span><span class="c1">// to just write the data from structure without touching other</span>
+<span class="w">    </span><span class="c1">// subkeys/values in the target key:</span>
+<span class="w">    </span><span class="n">key</span><span class="p">.</span><span class="n">encode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">v1</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// or</span>
+<span class="w">    </span><span class="c1">// to wipe out everything under the target key:</span>
+<span class="w">    </span><span class="c1">// key.encode_destructive(&amp;v1)?;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">v2</span><span class="p">:</span><span class="w"> </span><span class="nc">Test</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">key</span><span class="p">.</span><span class="n">decode</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Decoded {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">v2</span><span class="p">);</span>
+
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Equal to encoded: {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">v1</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">v2</span><span class="p">);</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>chrono</code></th><td>No</td><td><ul class="effects"><li><code>dep:chrono</code></li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>serialization-serde</code></th><td>No</td><td><ul class="effects"><li><code>transactions</code></li><li><code>serde</code></li></ul></td></tr><tr><th scope="row"><code>transactions</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/cfg-if/"><code>crates-io/cfg-if</code></a><small>Alias: cfg-if</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/chrono/"><code>crates-io/chrono</code></a><small>Alias: chrono</small></th><td><code>^0.4.6</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/windows-sys/"><code>crates-io/windows-sys</code></a><small>Alias: windows-sys</small></th><td><code>&gt;=0.59, &lt;=0.61</code><small>Default features: enabled</small><small>Requests: Win32_Foundation, Win32_Security, Win32_Storage_FileSystem, Win32_System_Diagnostics_Debug, Win32_System_Registry, Win32_System_Time</small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/ureq/versions/3.4.2/">crates-io/ureq 3.4.2</a><span>Requires ^0.56 · alias winreg · cfg(windows)</span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="notice">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/winreg/versions/0.56.0/">0.56.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/winreg/0.56.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<h4>0.56</h4>
+<ul>
+<li>Set <code>windows-sys</code> version to <code>&gt;=0.59, &lt;=0.61</code> according to its README recomendation.</li>
+</ul>
+<h4>0.16.0, 0.56</h4>
+<ul>
+<li>Breaking change: <code>RegValue.bytes</code> is now <code>Cow&lt;[u8]&gt;</code> and not <code>Vec&lt;u8&gt;</code> which introduces a lifetime to the structure (<a href="https://github.com/gentoo90/winreg-rs/issues/64">#64</a>).</li>
+<li>Breaking change: serialization now opens the key with <code>DELETE</code>, <code>KEY_ENUMERATE_SUB_KEYS</code> and <code>KEY_QUERY_VALUE</code> permissions in addition to <code>KEY_CREATE_SUB_KEY</code> and <code>KEY_SET_VALUE</code> used previously. This is required for:</li>
+<li>New <code>RegKey</code> methods: <code>encode_destructive()</code> and <code>encode_destructive_transacted()</code> that wipe all subkeys/values of a target key before writing to it (<a href="https://github.com/gentoo90/winreg-rs/issues/76">#76</a>).</li>
+<li>New <code>RegKey</code> methods: <code>enum_keys_os_string()</code> and <code>enum_values_os_string()</code> return iterators that use <code>OsString</code> for key/value names (<a href="https://github.com/gentoo90/winreg-rs/issues/80">#80</a>)</li>
+<li>Add <code>const</code>s for predefined registry keys: <code>HKCR</code>, <code>HKCU</code>, <code>HKLM</code>, <code>HKU</code> and <code>HKCC</code></li>
+<li>Implement <code>std</code> traits <a href="https://doc.rust-lang.org/beta/std/os/windows/io/trait.FromRawHandle.html"><code>FromRawHandle</code></a>, <a href="https://doc.rust-lang.org/beta/std/os/windows/io/trait.IntoRawHandle.html"><code>IntoRawHandle</code></a> and <a href="https://doc.rust-lang.org/beta/std/os/windows/io/trait.AsRawHandle.html"><code>AsRawHandle</code></a> for <code>Transaction</code>.</li>
+</ul>
+<h4>0.55.0</h4>
+<ul>
+<li>Breaking change: Increate MSRV to 1.60</li>
+<li>Breaking change: Upgrade <code>windows-sys</code> to version 0.59 (<a href="https://github.com/gentoo90/winreg-rs/pull/77">#77</a>)</li>
+</ul>
+<h4>0.54.0</h4>
+<ul>
+<li>Breaking change: Migrate to the 2021 edition of Rust (MSRV 1.56)</li>
+<li>Breaking change: Upgrade <code>windows-sys</code> to version 0.52 (closes <a href="https://github.com/gentoo90/winreg-rs/pull/63">#63</a>, <a href="https://github.com/gentoo90/winreg-rs/pull/70">#70</a>)</li>
+</ul>
+<h4>0.15.0, 0.53.0</h4>
+<ul>
+<li>Don't stop deserialization of <code>Any</code> due to <code>REG_NONE</code> (pullrequest <a href="https://github.com/gentoo90/winreg-rs/pull/67">#67</a>, fixes <a href="https://github.com/gentoo90/winreg-rs/issues/66">#66</a>)</li>
+<li>Implement (de)serialization of <code>Option</code> (<a href="https://github.com/gentoo90/winreg-rs/issues/56">#56</a>)</li>
+<li>Add <code>RegKey</code> methods for creating/opening subkeys with custom options (<a href="https://github.com/gentoo90/winreg-rs/pull/65">#65</a>)</li>
+</ul>
+<h4>0.52.0</h4>
+<ul>
+<li>Breaking change: <code>.commit()</code> and <code>.rollback()</code> now consume the transaction (<a href="https://github.com/gentoo90/winreg-rs/issues/62">#62</a>)</li>
+<li>Add <code>RegKey::rename_subkey()</code> method (<a href="https://github.com/gentoo90/winreg-rs/issues/58">#58</a>)</li>
+<li>Make serialization modules public (<a href="https://github.com/gentoo90/winreg-rs/issues/59">#59</a>)</li>
+<li>Fix UB in <code>FromRegValue</code> for <code>u32</code> and <code>u64</code> (<a href="https://github.com/gentoo90/winreg-rs/issues/61">#61</a>)</li>
+</ul>
+<h4>0.14.0</h4>
+<ul>
+<li>Breaking change: increase MSRV to 1.34</li>
+<li>Fix UB in <code>FromRegValue</code> for <code>u32</code> and <code>u64</code> (<a href="https://github.com/gentoo90/winreg-rs/issues/61">#61</a>)</li>
+</ul>
+<h4>0.13.0</h4>
+<ul>
+<li>Breaking change: <code>.commit()</code> and <code>.rollback()</code> now consume the transaction (<a href="https://github.com/gentoo90/winreg-rs/issues/62">#62</a>)</li>
+<li>Add <code>RegKey::rename_subkey()</code> method (<a href="https://github.com/gentoo90/winreg-rs/issues/58">#58</a>)</li>
+<li>Make serialization modules public (<a href="https://github.com/gentoo90/winreg-rs/issues/59">#59</a>)</li>
+</ul>
+<h4>0.12.0, 0.51.0</h4>
+<ul>
+<li>Breaking change: fix <code>std::fmt::Display</code> implementation for <code>RegValue</code> (<a href="https://github.com/gentoo90/winreg-rs/issues/52">#52</a>)</li>
+<li>Add <code>RegKey::encode_transacted()</code> method (pullrequest <a href="https://github.com/gentoo90/winreg-rs/pull/55">#55</a>, fixes <a href="https://github.com/gentoo90/winreg-rs/issues/54">#54</a>)</li>
+</ul>
+<h4>0.50.0</h4>
+<ul>
+<li>Breaking change: <a href="https://crates.io/crates/winapi"><code>winapi-rs</code></a> is not maintained any more, so migrate to Microsofts <a href="https://crates.io/crates/windows-sys"><code>windows-sys</code></a> as a backend (<a href="https://github.com/gentoo90/winreg-rs/pull/48">#48</a>, <a href="https://github.com/gentoo90/winreg-rs/pull/51">#51</a>)</li>
+<li>Breaking change: Increase minimum supported Rust version to <code>1.46</code> since <code>windows-sys</code> doesn't compile with older versions</li>
+<li>Replace deprecated methods from <code>chrono</code> (<a href="https://github.com/gentoo90/winreg-rs/pull/48">#48</a>)</li>
+</ul>
+<h4>0.11.0</h4>
+<ul>
+<li>Migrate to the 2018 edition of Rust</li>
+<li>Move the code from <code>lib.rs</code> to separate files</li>
+<li>Use <a href="https://crates.io/crates/cfg-if"><code>cfg-if</code></a> instead of <code>build.rs</code> to fail build on non-windows systems</li>
+<li>Reimplement deserialization logic, implement [de]serialization for byte arrays (<a href="https://github.com/gentoo90/winreg-rs/issues/49">#49</a>)</li>
+<li>Fix some typos and <code>clippy</code> warnings</li>
+</ul>
+<h4>0.10.1</h4>
+<ul>
+<li>Bump the minimal required version of <code>winapi</code> to <code>0.3.9</code> (required for <code>load_app_key</code>)</li>
+<li>Reexport <code>REG_PROCESS_APPKEY</code> and use it in the <code>load_app_key</code> example</li>
+</ul>
+<h4>0.10.0</h4>
+<ul>
+<li>Add <code>RegKey::load_app_key()</code> and <code>RegKey::load_app_key_with_flags()</code> (<a href="https://github.com/gentoo90/winreg-rs/issues/30">#30</a>)</li>
+<li>Update dev dependency <code>rand</code> to <code>0.8</code></li>
+<li>Add Github actions</li>
+<li>Fix some clippy warnings</li>
+</ul>
+<h4>0.9.0</h4>
+<ul>
+<li>Breaking change: <code>OsStr</code> and <code>OsString</code> registry values are not <code>NULL</code>-terminated any more (<a href="https://github.com/gentoo90/winreg-rs/issues/34">#34</a>, <a href="https://github.com/gentoo90/winreg-rs/issues/42">#42</a>)</li>
+<li>Refactoring: use macros for <code>ToRegValue</code> impls and tests for string values</li>
+<li>Fix <code>bare_trait_objects</code> warning in the doctests</li>
+<li>Add <code>impl ToRegValue for OsString</code></li>
+<li>Add conversion between <code>REG_MULTI_SZ</code> and vectors of strings (<a href="https://github.com/gentoo90/winreg-rs/issues/16">#16</a>)</li>
+<li>Fix: set minimal <code>winapi</code> version to 0.3.7 (earlier versions don't have <code>impl-default</code> and <code>impl-debug</code> features which we use)</li>
+<li>Appveyor now checks the crate against <code>rust-1.31.1</code> too</li>
+</ul>
+<h4>0.8.0</h4>
+<ul>
+<li>Implement serialization of <code>char</code> and maps</li>
+<li>Implement <code>std::fmt::Display</code> for <code>RegValue</code></li>
+<li>Make <code>RegKey::{predef,raw_handle,enum_keys,enum_values}</code> functions <code>const</code></li>
+<li>Give a better error message when compiling on platforms other than Windows (<a href="https://github.com/gentoo90/winreg-rs/pull/38">#38</a>)</li>
+<li>Tests are moved from <code>src/lib.rs</code> to <code>tests/reg_key.rs</code></li>
+</ul>
+<h4>0.7.0</h4>
+<ul>
+<li>Breaking change: remove deprecated <code>Error::description</code> (<a href="https://github.com/gentoo90/winreg-rs/pull/28">#28</a>)</li>
+<li>Optimize <code>Iterator::nth()</code> for the <code>Enum*</code> iterators (<a href="https://github.com/gentoo90/winreg-rs/pull/29">#29</a>)</li>
+</ul>
+<h4>0.6.2</h4>
+<ul>
+<li>Add <code>RegKey::delete_subkey_with_flags()</code> (<a href="https://github.com/gentoo90/winreg-rs/pull/27">#27</a>)</li>
+</ul>
+<h4>0.6.1</h4>
+<ul>
+<li>Add <code>last_write_time</code> field to <code>RegKeyMetadata</code> (returned by <code>RegKey::query_info()</code>) (<a href="https://github.com/gentoo90/winreg-rs/pull/25">#25</a>).</li>
+<li>Add <code>get_last_write_time_system()</code> and <code>get_last_write_time_chrono()</code> (under <code>chrono</code> feature) methods to <code>RegKeyMetadata</code>.</li>
+</ul>
+<h4>0.6.0</h4>
+<ul>
+<li>Breaking change: <code>create_subkey</code>, <code>create_subkey_with_flags</code>, <code>create_subkey_transacted</code> and
+<code>create_subkey_transacted_with_flags</code> now return a tuple which contains the subkey and its disposition
+which can be <code>REG_CREATED_NEW_KEY</code> or <code>REG_OPENED_EXISTING_KEY</code> (<a href="https://github.com/gentoo90/winreg-rs/issues/21">#21</a>).</li>
+<li>Examples fixed to not use <code>unwrap</code> according to <a href="https://rust-lang-nursery.github.io/api-guidelines/documentation.html#examples-use--not-try-not-unwrap-c-question-mark">Rust API guidelines</a>.</li>
+</ul>
+<h4>0.5.1</h4>
+<ul>
+<li>Reexport <code>HKEY</code> (<a href="https://github.com/gentoo90/winreg-rs/issues/15">#15</a>).</li>
+<li>Add <code>raw_handle</code> method (<a href="https://github.com/gentoo90/winreg-rs/pull/18">#18</a>).</li>
+</ul>
+<h4>0.5.0</h4>
+<ul>
+<li>Breaking change: <code>open_subkey</code> now opens a key with readonly permissions.
+Use <code>create_subkey</code> or <code>open_subkey_with_flags</code> to open with read-write permissions.</li>
+<li>Breaking change: features <code>transactions</code> and <code>serialization-serde</code> are now disabled by default.</li>
+<li>Breaking change: serialization now uses <code>serde</code> instead of <code>rustc-serialize</code>.</li>
+<li><code>winapi</code> updated to <code>0.3</code>.</li>
+<li>Documentation fixes (<a href="https://github.com/gentoo90/winreg-rs/pull/14">#14</a>)</li>
+</ul>
+<h4>0.4.0</h4>
+<ul>
+<li>Make transactions and serialization otional features</li>
+<li>Update dependencies + minor fixes (<a href="https://github.com/gentoo90/winreg-rs/pull/12">#12</a>)</li>
+</ul>
+<h4>0.3.5</h4>
+<ul>
+<li>Implement <code>FromRegValue</code> for <code>OsString</code> and <code>ToRegValue</code> for <code>OsStr</code> (<a href="https://github.com/gentoo90/winreg-rs/issues/8">#8</a>)</li>
+<li>Minor fixes</li>
+</ul>
+<h4>0.3.4</h4>
+<ul>
+<li>Add <code>copy_tree</code> method to <code>RegKey</code></li>
+<li>Now checked with <a href="https://github.com/Manishearth/rust-clippy">rust-clippy</a>
+<ul>
+<li>no more <code>unwrap</code>s</li>
+<li>replaced <code>to_string</code> with <code>to_owned</code></li>
+</ul>
+</li>
+<li>Fix: reading strings longer than 2048 characters (<a href="https://github.com/gentoo90/winreg-rs/pull/6">#6</a>)</li>
+</ul>
+<h4>0.3.3</h4>
+<ul>
+<li>Fix: now able to read values longer than 2048 bytes (<a href="https://github.com/gentoo90/winreg-rs/pull/3">#3</a>)</li>
+</ul>
+<h4>0.3.2</h4>
+<ul>
+<li>Fix: <code>FromRegValue</code> trait now requires <code>Sized</code> (fixes build with rust 1.4)</li>
+</ul>
+<h4>0.3.1</h4>
+<ul>
+<li>Fix: bump <code>winapi</code> version to fix build</li>
+</ul>
+<h4>0.3.0</h4>
+<ul>
+<li>Add transactions support and make serialization transacted</li>
+<li>Breaking change: use <code>std::io::{Error,Result}</code> instead of own <code>RegError</code> and <code>RegResult</code></li>
+</ul>
+</div><p class="table-note">sha256:22a12c83ef1555dcb67f029aceaf9ab65dd9604f2ed2f6011006706e13c8d734</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2015 Igor Shaula
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:ea021d8c6383c84d19c15ce90d3b1602cf448fdcc0bf3772c98e43c7bf1bf1d1</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:d7f2bf2365b3163089b178e1c948da881a28a730558f92f301f04b8946a7cd0a</code></dd><dt>Upstream checksum</dt><dd><code>sha256:7d6f32a0ff4a9f6f01231eb2059cc85479330739333e0e58cadf03b6af2cca10</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/winreg&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.56.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">chrono</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:chrono&quot;</span><span class="p">]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">serialization-serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;transactions&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde&quot;</span><span class="p">]</span>
+<span class="n">transactions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;winreg&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">cfg-if</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cfg-if&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">chrono</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/chrono&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4.6&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">windows-sys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/windows-sys&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.59, &lt;=0.61&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Win32_Foundation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Security&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Storage_FileSystem&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_System_Diagnostics_Debug&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_System_Registry&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_System_Time&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Igor Shaula &lt;gentoo90@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.60</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/winreg/0.56.0">crates.io package</a></li><li><a href="https://github.com/gentoo90/winreg-rs">Source repository</a></li><li><a href="https://docs.rs/winreg">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">winreg</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/winreg"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.56.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

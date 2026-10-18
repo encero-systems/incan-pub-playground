@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>quick-xml 0.42.0 · Incan.pub</title><meta name="description" content="High performance xml reader and writer"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/quick-xml</p><div class="title-row"><h1>quick-xml</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/quick-xml/versions/0.42.0/" selected>0.42.0</option></select></label></div><p class="description">High performance xml reader and writer</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>quick-xml</h3>
+<p>status
+<a href="https://crates.io/crates/quick-xml">Crate</a>
+<a href="https://docs.rs/quick-xml">docs.rs</a>
+<a href="https://codecov.io/gh/tafia/quick-xml">codecov</a>
+<a href="https://blog.rust-lang.org/2025/04/03/Rust-1.86.0/">MSRV</a></p>
+<p>High performance xml pull reader/writer.</p>
+<p>The reader:</p>
+<ul>
+<li>is almost zero-copy (use of <code>Cow</code> whenever possible)</li>
+<li>is easy on memory allocation (the API provides a way to reuse buffers)</li>
+<li>support various encoding (with <code>encoding</code> feature), namespaces resolution, special characters.</li>
+</ul>
+<p>Syntax is inspired by <a href="https://github.com/netvl/xml-rs">xml-rs</a>.</p>
+<h4>Example</h4>
+<p>The snippets below give a quick taste of the reader and writer. For runnable,
+commented examples — and a guide on <em>which</em> API to reach for (serde, a
+hand-written <code>Reader</code>/<code>Writer</code>, the visitor pattern, ...) — see the
+<a href="https://github.com/tafia/quick-xml/blob/36a2c52a4f6c90878c3f60c3c3b5c62efaef28a9/examples/"><code>examples/</code> directory</a> and its <a href="https://github.com/tafia/quick-xml/blob/36a2c52a4f6c90878c3f60c3c3b5c62efaef28a9/examples/README.md">guide</a>.
+<a href="https://github.com/tafia/quick-xml/blob/36a2c52a4f6c90878c3f60c3c3b5c62efaef28a9/examples/getting_started.rs"><code>examples/getting_started.rs</code></a> is the best place
+to start.</p>
+<h5>Reader</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">quick_xml</span><span class="p">::</span><span class="n">events</span><span class="p">::</span><span class="n">Event</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">quick_xml</span><span class="p">::</span><span class="n">reader</span><span class="p">::</span><span class="n">Reader</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">quick_xml</span><span class="p">::</span><span class="n">XmlVersion</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">xml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;&lt;tag1 att1 = &quot;test&quot;&gt;</span>
+<span class="s">                &lt;tag2&gt;&lt;!--Test comment--&gt;Test&lt;/tag2&gt;</span>
+<span class="s">                &lt;tag2&gt;Test 2&lt;/tag2&gt;</span>
+<span class="s">             &lt;/tag1&gt;&quot;#</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">reader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Reader</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="n">xml</span><span class="p">);</span>
+<span class="n">reader</span><span class="p">.</span><span class="n">config_mut</span><span class="p">().</span><span class="n">trim_text</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">txt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+
+<span class="c1">// Names and text are `&amp;str`, not bytes: quick-xml validates that input is UTF-8.</span>
+<span class="c1">// The `Reader` does not implement `Iterator` because it outputs borrowed data (`Cow`s)</span>
+<span class="k">loop</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// NOTE: this is the generic case when we don&#39;t know about the input BufRead.</span>
+<span class="w">    </span><span class="c1">// when the input is a &amp;str or a &amp;[u8], we don&#39;t actually need to use another</span>
+<span class="w">    </span><span class="c1">// buffer, we could directly call `reader.read_event()`</span>
+<span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">reader</span><span class="p">.</span><span class="n">read_event_into</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;Error at position {}: {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">reader</span><span class="p">.</span><span class="n">error_position</span><span class="p">(),</span><span class="w"> </span><span class="n">e</span><span class="p">),</span>
+<span class="w">        </span><span class="c1">// exits the loop when reaching end of file</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">Event</span><span class="p">::</span><span class="n">Eof</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">break</span><span class="p">,</span>
+
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">Event</span><span class="p">::</span><span class="n">Start</span><span class="p">(</span><span class="n">e</span><span class="p">))</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">match</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">name</span><span class="p">().</span><span class="n">as_ref</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="s">&quot;tag1&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;attributes values: {:?}&quot;</span><span class="p">,</span>
+<span class="w">                                    </span><span class="n">e</span><span class="p">.</span><span class="n">attributes</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">a</span><span class="o">|</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">unwrap</span><span class="p">().</span><span class="n">value</span><span class="p">)</span>
+<span class="w">                                    </span><span class="p">.</span><span class="n">collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()),</span>
+<span class="w">                </span><span class="s">&quot;tag2&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">                </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">(),</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="c1">// `xml_content` unescapes entities; the `XmlVersion` selects the</span>
+<span class="w">        </span><span class="c1">// normalization rules (1.0 vs 1.1). Most documents are 1.0.</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">Event</span><span class="p">::</span><span class="n">Text</span><span class="p">(</span><span class="n">e</span><span class="p">))</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">txt</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">xml_content</span><span class="p">(</span><span class="n">XmlVersion</span><span class="p">::</span><span class="n">Implicit1_0</span><span class="p">).</span><span class="n">into_owned</span><span class="p">()),</span>
+
+<span class="w">        </span><span class="c1">// There are several other `Event`s we do not consider here</span>
+<span class="w">        </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">(),</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// if we don&#39;t keep a borrow elsewhere, we can clear the buffer to keep memory usage low</span>
+<span class="w">    </span><span class="n">buf</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Writer</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">quick_xml</span><span class="p">::</span><span class="n">events</span><span class="p">::{</span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="n">BytesEnd</span><span class="p">,</span><span class="w"> </span><span class="n">BytesStart</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">quick_xml</span><span class="p">::</span><span class="n">reader</span><span class="p">::</span><span class="n">Reader</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">quick_xml</span><span class="p">::</span><span class="n">writer</span><span class="p">::</span><span class="n">Writer</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::</span><span class="n">Cursor</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">xml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;&lt;this_tag k1=&quot;v1&quot; k2=&quot;v2&quot;&gt;&lt;child&gt;text&lt;/child&gt;&lt;/this_tag&gt;&quot;#</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">reader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Reader</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="n">xml</span><span class="p">);</span>
+<span class="n">reader</span><span class="p">.</span><span class="n">config_mut</span><span class="p">().</span><span class="n">trim_text</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Writer</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Cursor</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">()));</span>
+<span class="k">loop</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">reader</span><span class="p">.</span><span class="n">read_event</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">Event</span><span class="p">::</span><span class="n">Start</span><span class="p">(</span><span class="n">e</span><span class="p">))</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">name</span><span class="p">().</span><span class="n">as_ref</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;this_tag&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">            </span><span class="c1">// creates a new element ... alternatively we could reuse `e` by calling</span>
+<span class="w">            </span><span class="c1">// `e.into_owned()`</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">elem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BytesStart</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;my_elem&quot;</span><span class="p">);</span>
+
+<span class="w">            </span><span class="c1">// collect existing attributes</span>
+<span class="w">            </span><span class="n">elem</span><span class="p">.</span><span class="n">extend_attributes</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">attributes</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">attr</span><span class="o">|</span><span class="w"> </span><span class="n">attr</span><span class="p">.</span><span class="n">unwrap</span><span class="p">()));</span>
+
+<span class="w">            </span><span class="c1">// copy existing attributes, adds a new my-key=&quot;some value&quot; attribute</span>
+<span class="w">            </span><span class="n">elem</span><span class="p">.</span><span class="n">push_attribute</span><span class="p">((</span><span class="s">&quot;my-key&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;some value&quot;</span><span class="p">));</span>
+
+<span class="w">            </span><span class="c1">// writes the event to the writer</span>
+<span class="w">            </span><span class="fm">assert!</span><span class="p">(</span><span class="n">writer</span><span class="p">.</span><span class="n">write_event</span><span class="p">(</span><span class="n">Event</span><span class="p">::</span><span class="n">Start</span><span class="p">(</span><span class="n">elem</span><span class="p">)).</span><span class="n">is_ok</span><span class="p">());</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">Event</span><span class="p">::</span><span class="n">End</span><span class="p">(</span><span class="n">e</span><span class="p">))</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">name</span><span class="p">().</span><span class="n">as_ref</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;this_tag&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">assert!</span><span class="p">(</span><span class="n">writer</span><span class="p">.</span><span class="n">write_event</span><span class="p">(</span><span class="n">Event</span><span class="p">::</span><span class="n">End</span><span class="p">(</span><span class="n">BytesEnd</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;my_elem&quot;</span><span class="p">))).</span><span class="n">is_ok</span><span class="p">());</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">Event</span><span class="p">::</span><span class="n">Eof</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">break</span><span class="p">,</span>
+<span class="w">        </span><span class="c1">// we can either move or borrow the event to write, depending on your use-case</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">assert!</span><span class="p">(</span><span class="n">writer</span><span class="p">.</span><span class="n">write_event</span><span class="p">(</span><span class="n">e</span><span class="p">).</span><span class="n">is_ok</span><span class="p">()),</span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;Error at position {}: {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">reader</span><span class="p">.</span><span class="n">error_position</span><span class="p">(),</span><span class="w"> </span><span class="n">e</span><span class="p">),</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">writer</span><span class="p">.</span><span class="n">into_inner</span><span class="p">().</span><span class="n">into_inner</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">expected</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;&lt;my_elem k1=&quot;v1&quot; k2=&quot;v2&quot; my-key=&quot;some value&quot;&gt;&lt;child&gt;text&lt;/child&gt;&lt;/my_elem&gt;&quot;#</span><span class="p">;</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="w"> </span><span class="n">expected</span><span class="p">.</span><span class="n">as_bytes</span><span class="p">());</span>
+</code></pre>
+<h4>Serde</h4>
+<p>When using the <code>serialize</code> feature, quick-xml can be used with serde's <code>Serialize</code>/<code>Deserialize</code> traits.
+The mapping between XML and Rust types, and in particular the syntax that allows you to specify the
+distinction between <em>elements</em> and <em>attributes</em>, is described in detail in the documentation
+for <a href="https://docs.rs/quick-xml/latest/quick_xml/de/">deserialization</a>.</p>
+<h5>Credits</h5>
+<p>This has largely been inspired by <a href="https://github.com/RReverser/serde-xml-rs">serde-xml-rs</a>.
+quick-xml follows its convention for deserialization, including the
+<a href="https://github.com/RReverser/serde-xml-rs#parsing-the-value-of-a-tag"><code>$value</code></a> special name.</p>
+<h5>Parsing the &quot;value&quot; of a tag</h5>
+<p>If you have an input of the form <code>&lt;foo abc=&quot;xyz&quot;&gt;bar&lt;/foo&gt;</code>, and you want to get at the <code>bar</code>,
+you can use either the special name <code>$text</code>, or the special name <code>$value</code>:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">struct</span><span class="w"> </span><span class="nc">Foo</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(rename = </span><span class="s">&quot;@abc&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">abc</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[serde(rename = </span><span class="s">&quot;$text&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">body</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>Read about the difference in the <a href="https://docs.rs/quick-xml/latest/quick_xml/de/index.html#difference-between-text-and-value-special-names">documentation</a>.</p>
+<h5>Performance</h5>
+<p>Note that despite not focusing on performance (there are several unnecessary copies), it remains about 10x faster than serde-xml-rs.</p>
+<h3>Features</h3>
+<ul>
+<li><code>encoding</code>: support non utf8 xmls</li>
+<li><code>serialize</code>: support serde <code>Serialize</code>/<code>Deserialize</code></li>
+</ul>
+<h4>Performance</h4>
+<p>Benchmarking is hard and the results depend on your input file and your machine.</p>
+<p>Here on my particular file, quick-xml is around <strong>50 times faster</strong> than <a href="https://crates.io/crates/xml-rs">xml-rs</a> crate.</p>
+<pre><code>// quick-xml benches
+test bench_quick_xml            ... bench:     198,866 ns/iter (+/- 9,663)
+test bench_quick_xml_escaped    ... bench:     282,740 ns/iter (+/- 61,625)
+test bench_quick_xml_namespaced ... bench:     389,977 ns/iter (+/- 32,045)
+
+// same bench with xml-rs
+test bench_xml_rs               ... bench:  14,468,930 ns/iter (+/- 321,171)
+
+// serde-xml-rs vs serialize feature
+test bench_serde_quick_xml      ... bench:   1,181,198 ns/iter (+/- 138,290)
+test bench_serde_xml_rs         ... bench:  15,039,564 ns/iter (+/- 783,485)
+</code></pre>
+<p>For a feature and performance comparison, you can also have a look at RazrFalcon's <a href="https://github.com/RazrFalcon/roxmltree#parsing">parser comparison table</a>.</p>
+<h4>Contribute</h4>
+<p>Any PR is welcomed!</p>
+<h4>License</h4>
+<p>MIT</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>arbitrary</code></th><td>No</td><td><ul class="effects"><li><code>dep:arbitrary</code></li></ul></td></tr><tr><th scope="row"><code>async-tokio</code></th><td>No</td><td><ul class="effects"><li><code>tokio</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>document-features</code></th><td>No</td><td><ul class="effects"><li><code>dep:document-features</code></li></ul></td></tr><tr><th scope="row"><code>encoding</code></th><td>No</td><td><ul class="effects"><li><code>encoding_rs</code></li></ul></td></tr><tr><th scope="row"><code>encoding_rs</code></th><td>No</td><td><ul class="effects"><li><code>dep:encoding_rs</code></li></ul></td></tr><tr><th scope="row"><code>escape-html</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>overlapped-lists</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>serde-types</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li><li><code>serde/derive</code></li></ul></td></tr><tr><th scope="row"><code>serialize</code></th><td>No</td><td><ul class="effects"><li><code>serde</code></li></ul></td></tr><tr><th scope="row"><code>tokio</code></th><td>No</td><td><ul class="effects"><li><code>dep:tokio</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/arbitrary/"><code>crates-io/arbitrary</code></a><small>Alias: arbitrary</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: derive</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/document-features/"><code>crates-io/document-features</code></a><small>Alias: document-features</small></th><td><code>^0.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/encoding_rs/"><code>crates-io/encoding_rs</code></a><small>Alias: encoding_rs</small></th><td><code>^0.8</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/memchr/"><code>crates-io/memchr</code></a><small>Alias: memchr</small></th><td><code>^2.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>&gt;=1.0.180</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/tokio/"><code>crates-io/tokio</code></a><small>Alias: tokio</small></th><td><code>^1.10</code><small>Default features: disabled</small><small>Requests: io-util</small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/object_store/versions/0.14.2/">crates-io/object_store 0.14.2</a><span>Requires ^0.41.0 · alias quick-xml · </span></li><li><a href="../../../../../packages/crates-io/object_store/versions/0.13.2/">crates-io/object_store 0.13.2</a><span>Requires ^0.39.0 · alias quick-xml · </span></li><li><a href="../../../../../packages/crates-io/plist/versions/1.10.1/">crates-io/plist 1.10.1</a><span>Requires ^0.42.0 · alias quick_xml · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:72838f49caf0a3ba2ff05212a9194ca54a58c0dc72f9a8f3c22a57eacf4a1ef0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:e0f6de3cbba09fcb9c178634df7f0aff70fc4f1188a632eb1c3406e4083b299e</small></li><li><code>sha256:eb292db3cc500fc9f1e7dd8c6d07570d1a64dee88a4164726eb6492985749879</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:5e06c07113c6994277df19339cca4d304eb2d04911cf566e428ba27842c5462e</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2e2501acc624ff5072851afd1de1f7d8cfebff69583c4c65e58b982810655997</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:3838dcbde0ef495bf7c4ecadb633b7e38fe8a6a8eeb603424bb2978bfaf3969b</small></li><li><code>sha256:54dc7d7cba152a6b588604473848d6cd05e1baaf72162b22b280b7b5a4e4f303</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:980a0d174b5d901ef6f5b0e1655df9d658f92d934da916e48839cff803e36b8d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:193f7e78f0b9dc085f6e584bc352e1fa2037f25af6dcce97cab7a36a69d2c763</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:1c849648c1549b8d206b81ea92818930084db28bb60a8724f9a531140b69032d</small></li><li><code>sha256:fd6abbfd502c2a6ed657ffced4af7bcc8a966b6a987d6ededf285df647674ead</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:4851a99146126af47125387555ce75b459448da4e1286e0431a51c285448c0ed</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:672fa3ea0db97f891610181d6b9c931f614cd937ed9ed11a12f4b092925ca71a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:ca5d863e2c8297ca58a600757266439d6905b1c19904fa102bf264aceb74b338</small></li><li><code>sha256:a50d7a53fc29b5d1b1b9e59cdb17ed0200d6aa81e2ea3a604e8a317e921394bd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:bae3f5c840bf941d828e8a2b58a1cf68b00d80a72870de85b96dc72dfd316329</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/quick-xml/versions/0.42.0/">0.42.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/quick-xml/0.42.0">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE-MIT.md · Author-provided</summary><div class="readme"><p>The MIT License (MIT)</p>
+<p>Copyright (c) 2016 Johann Tuffe</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.</p>
+</div><p class="table-note">sha256:f0cf9b1c62bbe3bd3a69f5f79c7158f513f612b4940a0a812d1db39d605318bc</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:c1c04cb8c858b613296ed5107ab15b2252dde996c4755a17ec166a23b03118ee</code></dd><dt>Upstream checksum</dt><dd><code>sha256:41b1177fdf999d2321d3fb46ff47159d9c1fb9ad66a4879f8c50a0b504615e9b</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/quick-xml&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.42.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">arbitrary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:arbitrary&quot;</span><span class="p">]</span>
+<span class="n">async-tokio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;tokio&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">document-features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:document-features&quot;</span><span class="p">]</span>
+<span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;encoding_rs&quot;</span><span class="p">]</span>
+<span class="n">encoding_rs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:encoding_rs&quot;</span><span class="p">]</span>
+<span class="n">escape-html</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">overlapped-lists</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">serde-types</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde/derive&quot;</span><span class="p">]</span>
+<span class="n">serialize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">]</span>
+<span class="n">tokio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tokio&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;quick_xml&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">arbitrary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/arbitrary&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">document-features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/document-features&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">encoding_rs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/encoding_rs&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">memchr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/memchr&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.1&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=1.0.180&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tokio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tokio&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.10&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;io-util&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.86</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/quick-xml/0.42.0">crates.io package</a></li><li><a href="https://github.com/tafia/quick-xml">Source repository</a></li><li><a href="https://docs.rs/quick-xml">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">quick-xml</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/quick-xml"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.42.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

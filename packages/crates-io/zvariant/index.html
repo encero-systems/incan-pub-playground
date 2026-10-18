@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>zvariant 5.15.0 · Incan.pub</title><meta name="description" content="D-Bus &amp; GVariant encoding &amp; decoding"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/zvariant</p><div class="title-row"><h1>zvariant</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/zvariant/versions/5.15.0/" selected>5.15.0</option></select></label></div><p class="description">D-Bus &amp; GVariant encoding &amp; decoding</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>zvariant</h3>
+<p><a href="https://docs.rs/zvariant/"></a> <a href="https://crates.io/crates/zvariant"></a></p>
+<p>This crate provides API for encoding/decoding of data to/from <a href="https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-marshaling">D-Bus wire format</a>. This binary
+wire format is simple and very efficient and hence useful outside of D-Bus context as well. A
+modified form of this format, <a href="https://developer.gnome.org/documentation/specifications/gvariant-specification-1.0.html">GVariant</a> is very commonly used for efficient storage of arbitrary
+data. GVariant support is deprecated and will be removed in 6.0 — use the <a href="https://crates.io/crates/zgvariant">zgvariant</a> crate
+instead.</p>
+<p>Since version 2.0, the API is <a href="https://crates.io/crates/serde">serde</a>-based and hence you'll find it very intuitive if you're
+already familiar with serde. If you're not familiar with serde, you may want to first read its
+<a href="https://serde.rs/">tutorial</a> before learning further about this crate.</p>
+<p><strong>Status:</strong> Stable.</p>
+<h4>Example code</h4>
+<p>Serialization and deserialization is achieved through the <a href="https://docs.rs/zvariant/latest/zvariant/#functions">toplevel functions</a>:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">zvariant</span><span class="p">::{</span><span class="n">serialized</span><span class="p">::</span><span class="n">Context</span><span class="p">,</span><span class="w"> </span><span class="n">to_bytes</span><span class="p">,</span><span class="w"> </span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="n">LE</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::{</span><span class="n">Deserialize</span><span class="p">,</span><span class="w"> </span><span class="n">Serialize</span><span class="p">};</span>
+
+<span class="c1">// All serialization and deserialization API, needs a context.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">ctxt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Context</span><span class="p">::</span><span class="n">new_dbus</span><span class="p">(</span><span class="n">LE</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+<span class="c1">// i16</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">encoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_bytes</span><span class="p">(</span><span class="n">ctxt</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="mi">42</span><span class="k">i16</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">decoded</span><span class="p">:</span><span class="w"> </span><span class="kt">i16</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoded</span><span class="p">.</span><span class="n">deserialize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="mi">0</span><span class="p">;</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">decoded</span><span class="p">,</span><span class="w"> </span><span class="mi">42</span><span class="p">);</span>
+
+<span class="c1">// strings</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">encoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_bytes</span><span class="p">(</span><span class="n">ctxt</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="s">&quot;hello&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">decoded</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoded</span><span class="p">.</span><span class="n">deserialize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="mi">0</span><span class="p">;</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">decoded</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">);</span>
+
+<span class="c1">// tuples</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;hello&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">42</span><span class="k">i32</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">encoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_bytes</span><span class="p">(</span><span class="n">ctxt</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">decoded</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="o">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoded</span><span class="p">.</span><span class="n">deserialize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="mi">0</span><span class="p">;</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">decoded</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">);</span>
+
+<span class="c1">// Vec</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="s">&quot;hello&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;world!&quot;</span><span class="p">];</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">encoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_bytes</span><span class="p">(</span><span class="n">ctxt</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">v</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">decoded</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoded</span><span class="p">.</span><span class="n">deserialize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="mi">0</span><span class="p">;</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">decoded</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">);</span>
+
+<span class="c1">// Dictionary</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">map</span><span class="p">:</span><span class="w"> </span><span class="nc">HashMap</span><span class="o">&lt;</span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;123&quot;</span><span class="p">);</span>
+<span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;456&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">encoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_bytes</span><span class="p">(</span><span class="n">ctxt</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">map</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">decoded</span><span class="p">:</span><span class="w"> </span><span class="nc">HashMap</span><span class="o">&lt;</span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoded</span><span class="p">.</span><span class="n">deserialize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="mi">0</span><span class="p">;</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">decoded</span><span class="p">[</span><span class="o">&amp;</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="s">&quot;123&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">decoded</span><span class="p">[</span><span class="o">&amp;</span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="s">&quot;456&quot;</span><span class="p">);</span>
+
+<span class="c1">// derive macros to handle custom types.</span>
+<span class="cp">#[derive(Deserialize, Serialize, Type, PartialEq, Debug)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="o">&lt;&#39;</span><span class="na">s</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">field1</span><span class="p">:</span><span class="w"> </span><span class="kt">u16</span><span class="p">,</span>
+<span class="w">    </span><span class="n">field2</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span>
+<span class="w">    </span><span class="n">field3</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">s</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">Struct</span><span class="p">::</span><span class="n">SIGNATURE</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;(qxs)&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">field1</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span>
+<span class="w">    </span><span class="n">field2</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">::</span><span class="n">max_value</span><span class="p">(),</span>
+<span class="w">    </span><span class="n">field3</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">,</span>
+<span class="p">};</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">ctxt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Context</span><span class="p">::</span><span class="n">new_dbus</span><span class="p">(</span><span class="n">LE</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">encoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_bytes</span><span class="p">(</span><span class="n">ctxt</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">decoded</span><span class="p">:</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoded</span><span class="p">.</span><span class="n">deserialize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="mi">0</span><span class="p">;</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">decoded</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">);</span>
+
+<span class="c1">// It can handle enums too, just that all variants must have the same number and types of fields.</span>
+<span class="c1">// Names of fields don&#39;t matter though. You can make use of `Value` or `OwnedValue` if you want to</span>
+<span class="c1">// encode different data in different fields.</span>
+<span class="cp">#[derive(Deserialize, Serialize, Type, PartialEq, Debug)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;&#39;</span><span class="na">s</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Variant1</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">field1</span><span class="p">:</span><span class="w"> </span><span class="kt">u16</span><span class="p">,</span><span class="w"> </span><span class="n">field2</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="n">field3</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">s</span><span class="w"> </span><span class="kt">str</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="n">Variant2</span><span class="p">(</span><span class="kt">u16</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;&#39;</span><span class="na">s</span><span class="w"> </span><span class="kt">str</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Variant3</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u16</span><span class="p">,</span><span class="w"> </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="n">f3</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">s</span><span class="w"> </span><span class="kt">str</span><span class="w"> </span><span class="p">},</span>
+<span class="p">}</span>
+
+<span class="c1">// Enum encoding uses a `u32` to denote the variant index. For unit-type enums that&#39;s all that&#39;s</span>
+<span class="c1">// needed so the signature is just `u` but complex enums are encoded as a structure whose first</span>
+<span class="c1">// field is the variant index and the second one is the field(s).</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">Enum</span><span class="p">::</span><span class="n">SIGNATURE</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;(u(qxs))&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Enum</span><span class="p">::</span><span class="n">Variant3</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">::</span><span class="n">max_value</span><span class="p">(),</span>
+<span class="w">    </span><span class="n">f3</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">,</span>
+<span class="p">};</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">encoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_bytes</span><span class="p">(</span><span class="n">ctxt</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">decoded</span><span class="p">:</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoded</span><span class="p">.</span><span class="n">deserialize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="mi">0</span><span class="p">;</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">decoded</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">);</span>
+
+<span class="c1">// Enum encoding can be adjusted by using the `serde_repr` crate</span>
+<span class="c1">// and by annotating the representation of the enum with `repr`.</span>
+<span class="k">use</span><span class="w"> </span><span class="n">serde_repr</span><span class="p">::{</span><span class="n">Serialize_repr</span><span class="p">,</span><span class="w"> </span><span class="n">Deserialize_repr</span><span class="p">};</span>
+
+<span class="cp">#[derive(Deserialize_repr, Serialize_repr, Type, PartialEq, Debug)]</span>
+<span class="cp">#[repr(u8)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">UnitEnum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Variant1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Variant2</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Variant3</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">UnitEnum</span><span class="p">::</span><span class="n">SIGNATURE</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;y&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">encoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_bytes</span><span class="p">(</span><span class="n">ctxt</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">UnitEnum</span><span class="p">::</span><span class="n">Variant2</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">e</span><span class="p">:</span><span class="w"> </span><span class="nc">UnitEnum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoded</span><span class="p">.</span><span class="n">deserialize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="mi">0</span><span class="p">;</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">UnitEnum</span><span class="p">::</span><span class="n">Variant2</span><span class="p">);</span>
+
+<span class="c1">// Unit enums can also be (de)serialized as strings.</span>
+<span class="cp">#[derive(Deserialize, Serialize, Type, PartialEq, Debug)]</span>
+<span class="cp">#[zvariant(signature = </span><span class="s">&quot;s&quot;</span><span class="cp">)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">StrEnum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Variant1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Variant2</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Variant3</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">// Catch-all that preserves the raw value for any variant we don&#39;t know about.</span>
+<span class="w">    </span><span class="cp">#[serde(untagged)]</span>
+<span class="w">    </span><span class="n">Other</span><span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">::</span><span class="n">SIGNATURE</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;s&quot;</span><span class="p">);</span>
+</code></pre>
+<p>Apart from the obvious requirement of <a href="https://docs.rs/zvariant/latest/serialized/struct.Context.html"><code>serialized::Context</code></a> instance by the main serialization and
+deserialization API, the type being serialized or deserialized must also implement <code>Type</code>
+trait in addition to <a href="https://docs.serde.rs/serde/trait.Serialize.html"><code>Serialize</code></a> or <a href="https://docs.serde.rs/serde/de/trait.Deserialize.html"><code>Deserialize</code></a>, respectively. Please refer to <a href="https://docs.rs/zvariant/latest/zvariant/trait.Type.html"><code>Type</code>
+module documentation</a> for more details.</p>
+<p>Most of the <a href="https://dbus.freedesktop.org/doc/dbus-specification.html#basic-types">basic types</a> of D-Bus match 1-1 with all the primitive Rust types. The only two
+exceptions being, <a href="https://docs.rs/zvariant/latest/zvariant/struct.Signature.html"><code>Signature</code></a> and <a href="https://docs.rs/zvariant/latest/zvariant/struct.ObjectPath.html"><code>ObjectPath</code></a>, which are really just strings. These types
+are covered by the <a href="https://docs.rs/zvariant/latest/zvariant/trait.Basic.html"><code>Basic</code></a> trait.</p>
+<p>Similarly, most of the <a href="https://dbus.freedesktop.org/doc/dbus-specification.html#container-types">container types</a> also map nicely to the usual Rust types and
+collections (as can be seen in the example code above). The only note worthy exception being
+ARRAY type. As arrays in Rust are fixed-sized, serde treats them as tuples and so does this
+crate. This means they are encoded as STRUCT type of D-Bus. If you need to serialize to, or
+deserialize from a D-Bus array, you'll need to use a <a href="https://doc.rust-lang.org/std/primitive.slice.html">slice</a> (array can easily be converted to a
+slice), a <a href="https://doc.rust-lang.org/std/vec/struct.Vec.html"><code>Vec</code></a> or an <a href="https://docs.rs/arrayvec/0.7.1/arrayvec/struct.ArrayVec.html"><code>arrayvec::ArrayVec</code></a>.</p>
+<p>D-Bus string types, including <a href="https://docs.rs/zvariant/latest/zvariant/struct.Signature.html"><code>Signature</code></a> and <a href="https://docs.rs/zvariant/latest/zvariant/struct.ObjectPath.html"><code>ObjectPath</code></a>, require one additional
+restriction that strings in Rust do not. They must not contain any interior null bytes (<code>'\0'</code>).
+Encoding/Decoding strings that contain this character will return an error.</p>
+<p>The generic D-Bus type, <code>VARIANT</code> is represented by <code>Value</code>, an enum that holds exactly one
+value of any of the other types. Please refer to <a href="https://docs.rs/zvariant/latest/zvariant/enum.Value.html"><code>Value</code> module documentation</a> for examples.</p>
+<h4>no-std</h4>
+<p>While <code>std</code> is currently a hard requirement, optional <code>no-std</code> support is planned in the future.
+On the other hand, <code>noalloc</code> support is not planned as it will be extremely difficult to
+accomplish. However, community contribution can change that. 😊</p>
+<h4>Optional features</h4>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gvariant</td>
+<td><strong>Deprecated:</strong> GVariant support (moved to <a href="https://crates.io/crates/zgvariant">zgvariant</a>; removed in 6.0)</td>
+</tr>
+<tr>
+<td>arrayvec</td>
+<td>Implement <code>Type</code> for <a href="https://docs.rs/arrayvec/0.7.1/arrayvec/struct.ArrayVec.html"><code>arrayvec::ArrayVec</code></a> and <a href="https://docs.rs/arrayvec/0.7.1/arrayvec/struct.ArrayString.html"><code>arrayvec::ArrayString</code></a></td>
+</tr>
+<tr>
+<td>enumflags2</td>
+<td>Implement <code>Type</code> for <a href="https://docs.rs/enumflags2/latest/enumflags2/struct.BitFlags.html"><code>enumflags2::BitFlags</code></a><code>&lt;F&gt;</code></td>
+</tr>
+<tr>
+<td>option-as-array</td>
+<td>Enable <code>Option&lt;T&gt;</code> (de)serialization using array encoding</td>
+</tr>
+</tbody>
+</table>
+<p><code>gvariant</code> features conflicts with <code>option-as-array</code> and hence should not be enabled together
+(the <code>gvariant</code> feature is deprecated).</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>arrayvec</code></th><td>No</td><td><ul class="effects"><li><code>dep:arrayvec</code></li></ul></td></tr><tr><th scope="row"><code>camino</code></th><td>No</td><td><ul class="effects"><li><code>dep:camino</code></li></ul></td></tr><tr><th scope="row"><code>chrono</code></th><td>No</td><td><ul class="effects"><li><code>dep:chrono</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>enumflags2</code></th><td>No</td><td><ul class="effects"><li><code>dep:enumflags2</code></li></ul></td></tr><tr><th scope="row"><code>gvariant</code></th><td>No</td><td><ul class="effects"><li><code>zvariant_derive/gvariant</code></li><li><code>zvariant_utils/gvariant</code></li></ul></td></tr><tr><th scope="row"><code>heapless</code></th><td>No</td><td><ul class="effects"><li><code>dep:heapless</code></li></ul></td></tr><tr><th scope="row"><code>option-as-array</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>ostree-tests</code></th><td>No</td><td><ul class="effects"><li><code>gvariant</code></li></ul></td></tr><tr><th scope="row"><code>serde_bytes</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde_bytes</code></li></ul></td></tr><tr><th scope="row"><code>time</code></th><td>No</td><td><ul class="effects"><li><code>dep:time</code></li></ul></td></tr><tr><th scope="row"><code>url</code></th><td>No</td><td><ul class="effects"><li><code>dep:url</code></li></ul></td></tr><tr><th scope="row"><code>uuid</code></th><td>No</td><td><ul class="effects"><li><code>dep:uuid</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/arrayvec/"><code>crates-io/arrayvec</code></a><small>Alias: arrayvec</small></th><td><code>^0.7.4</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/camino/"><code>crates-io/camino</code></a><small>Alias: camino</small></th><td><code>^1.1.9</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/chrono/"><code>crates-io/chrono</code></a><small>Alias: chrono</small></th><td><code>^0.4.38</code><small>Default features: disabled</small><small>Requests: serde</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/endi/"><code>crates-io/endi</code></a><small>Alias: endi</small></th><td><code>^1.1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/enumflags2/"><code>crates-io/enumflags2</code></a><small>Alias: enumflags2</small></th><td><code>^0.7.9</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/heapless/"><code>crates-io/heapless</code></a><small>Alias: heapless</small></th><td><code>^0.9.0</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0.200</code><small>Default features: enabled</small><small>Requests: derive</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/serde_bytes/"><code>crates-io/serde_bytes</code></a><small>Alias: serde_bytes</small></th><td><code>^0.11.14</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/time/"><code>crates-io/time</code></a><small>Alias: time</small></th><td><code>^0.3.36</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/url/"><code>crates-io/url</code></a><small>Alias: url</small></th><td><code>^2.5.0</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/uuid/"><code>crates-io/uuid</code></a><small>Alias: uuid</small></th><td><code>^1.8.0</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/winnow/"><code>crates-io/winnow</code></a><small>Alias: winnow</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zcheapstr/"><code>crates-io/zcheapstr</code></a><small>Alias: zcheapstr</small></th><td><code>^1.0.0</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zvariant_derive/"><code>crates-io/zvariant_derive</code></a><small>Alias: zvariant_derive</small></th><td><code>^5.15.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zvariant_utils/"><code>crates-io/zvariant_utils</code></a><small>Alias: zvariant_utils</small></th><td><code>^4.2.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/zbus/versions/5.19.0/">crates-io/zbus 5.19.0</a><span>Requires ^5.14.0 · alias zvariant · </span></li><li><a href="../../../packages/crates-io/zbus_macros/versions/5.19.0/">crates-io/zbus_macros 5.19.0</a><span>Requires ^5.14.0 · alias zvariant · </span></li><li><a href="../../../packages/crates-io/zbus_names/versions/4.3.4/">crates-io/zbus_names 4.3.4</a><span>Requires ^5.13.1 · alias zvariant · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:bf86062173a841a1fc3c08d38b8e60fd4565933a2f1b04c68455ad058c440b8c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:2b4a4aff639aadfcffa15d8775897e2275baf8e4b5f9b6e4af19e425274dba86</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, enumflags2</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2c12a741a1e7bc84cabcfcae17a725d26fe527556d6afa81c93c359bd10a90c3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:c82dc6ac3966da9e67af2d31432f5e49c5524cce47fd95de149811b7f12efc10</small></li><li><code>sha256:3eea8cdab606bc14cfd2bcba01ff12f3557c6c47f06c973844992ce29c2ab029</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:5cb575810d849b8099ba38a3053f4dd9477d371acb64b61de8e86c1487f27d0a</small></li><li><code>sha256:a2db507467b947faf862a953f3ff8512760e5e0a015f96ba9c3a520728794cba</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:4c832bc30b5b6d641fbdd0cb910981f337027354bc3ae9663f6ee50773b39e45</small></li><li><code>sha256:b07697d7ca26a184e6e50f80bc14884b63a97d59d42b7bfbcb4801a923faaadd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:854791bfce8a957e1b6cc15f3eaa54f7f5e1ab30e074d1c83e2d3aef6c8a0a64</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:386866beb32883f2b2bc2e363430fed925336754881bbb458d3de61f403e5e92</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:87576181ab07c7a472bc0c9cfd29b8550e568dedb1d6f024d08d5ec747b68aa9</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, enumflags2</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:6059acf8b8f94e7622aa0a31fdd3d604bb216ce8cc74cabe69002ca6014e79e3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:6ea910724d68e260c9112ad4b4312fb42c0de529d345e57f00167bb4d98a693d</small></li><li><code>sha256:a155ab01837b76d75de05449af3aa7cea9476c076adc16f720895b371883b3cb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:84ad18d90f294b29e46d3a2514e1e0921e7b6909aed946a8fbe2a46cfe57a7d6</small></li><li><code>sha256:b3ed5d335bfdb0da8f01043018930cda079a60c46531fe6bc87b131e30e6a89c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:5cb9e960d1335fa4e99657e1e3082118d0549bfce47d23574b86d702d6a96036</small></li><li><code>sha256:bfd5c20a67f99aa82a3d56eba1dd2c498761e1f2692251b8bcbf1ffcda8d36f6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:f4da7e50e72ca5e704a797249b385802803d91938dda76ddd2eaa34e6fcfe6eb</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1589f6dabb425f097761a673cd17ea56aace8f05687db21481222253d7ecc9c8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:0b39ade8db3dbba37cadd5c9397f48a7af62b2c6a0651b51f99381025a01df1d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, enumflags2</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:022819d1d7b5de8da570c9afedb9c7a0ca5aed89612bc8ee2613eb9b244fee43</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:354dee9c46cbaee6d77126307fc0d2bfceac58aeadecf8b47f5aeefc3cc7ed21</small></li><li><code>sha256:a85dec7986c11fb8c8045b2331489960cc80fde47960297c6362a35d1d7df175</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:64309c5507f5e7c4a47bb5c3ac4d1153d8bbee7ecdb0dc7c03cb7d2c229c1329</small></li><li><code>sha256:d9022f388ae432505412a322d479ed85291b3b30115a173c57dc773ffda2b731</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:3e65dff994ea1e4ef79df634fbf8841e1774641286f1637d1fe08a86ed342147</small></li><li><code>sha256:fbbc806bdf6d905a5cec1044446a86b3dd10e6107065ff2b41a56f4d7cd9f3fa</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:8d09943b52e88bf8fcc3a98ac4491ca5290bb47335d0c48bd63928ac07d71b19</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:c3b0270c5550345d8d987c2dee42ed3306cfdaaec2f27558cfc144b211e4d6be</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:452715b2449e58e17999ea467de9a1a9a95fee931f15562c5df3c52e5e59ff7c</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, enumflags2</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:298adcee47b1cd1824fb69732f49d54fb3c28f738cf8e9600ebb56a46c9aa2c8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:9fa0c99dab1f09f4a58f83ddda19cc31a7801287b06d0212afd7c14490812368</small></li><li><code>sha256:6d9523cc5c9108575a31e731ba9b604762652c6d34cb559b957eccaa9676dc09</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:4a000a7cacf4b5e5d12c8c0b63f941a2f43a12aca9867dd794e3770a3acd75fe</small></li><li><code>sha256:7490fb5ce41c62e3fb5b50179faadab408e46052a950b47fcbc2da2980b8949d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:238595b93ca0864232e58a1aed5b46cc8e9877269e88d71384b217d430d86c0a</small></li><li><code>sha256:79c177258e02cd878b5326f71ed5d3627b97559b646723b375c577fb43c56f05</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:621f9b76d59a3afe18fde6249e4252d7a1ab5dd3f9ef148da9d0a112fe0db601</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/zvariant/versions/5.15.0/">5.15.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/zvariant/5.15.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>5.15.0 - 2026-08-18</h4>
+<h5>CI</h5>
+<ul>
+<li>💚 Work around nightly rustfmt macro mangling.</li>
+</ul>
+<h5>Deprecated</h5>
+<ul>
+<li>🗑️ Deprecate GVariant support in zvariant.</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>📝 Point GVariant users to the zgvariant crate.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🐛 Support zvariant_utils/gvariant being enabled externally. #1910</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>🔥 Remove the gvariant fuzz target.</li>
+<li>🔥 Remove gvariant benches, ostree tests and test data.</li>
+</ul>
+<h4>5.14.0 - 2026-08-09</h4>
+<h5>Changed</h5>
+<ul>
+<li>♻️ Use zcheapstr for the Str type.</li>
+<li>♻️ Remove unnecessary clones.</li>
+</ul>
+<h5>Dependencies</h5>
+<ul>
+<li>➕ Add zcheapstr dependency. It's actually just a split.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🐛 insert tail padding to fixed-sized dictionary entry.</li>
+<li>🐛 insert tail padding to fixed-sized struct.</li>
+</ul>
+<h5>Testing</h5>
+<ul>
+<li>✅ Add test case for <code>a{uy}</code> encoding.</li>
+<li>✅ Add test case for <code>(uy)</code> encoding.</li>
+</ul>
+<h4>5.13.1 - 2026-07-17</h4>
+<h5>Other</h5>
+<ul>
+<li>🚨 Use Option::filter instead of a manual match.</li>
+</ul>
+<h4>5.13.0 - 2026-07-07</h4>
+<h5>Dependencies</h5>
+<ul>
+<li>⬆️ Update libfuzzer-sys to v0.4.13 (#1815).</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🐛 Don't double-wrap variant-typed fields in as_value. #1819</li>
+</ul>
+<h5>Testing</h5>
+<ul>
+<li>✅ Cover nested a{sv}-in-a{sv} in nested_dict_value test.</li>
+<li>✅ Add test case for <code>amb</code> encoding (GVariant only).</li>
+</ul>
+<h4>5.12.0 - 2026-05-27</h4>
+<h5>Dependencies</h5>
+<ul>
+<li>⬆️ Bump zvariant_utils requirement to 3.4.</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>📝 Document D-Bus FD encoding on <code>Fd</code>.</li>
+<li>📝 Show catch-all enum variant in docs.</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>🦺 Add 2 debug asserts.</li>
+</ul>
+<h5>Performance</h5>
+<ul>
+<li>⚡️ Use Fields::get(i) for O(1) field signature lookup.</li>
+</ul>
+<h4>5.11.0 - 2026-05-03</h4>
+<h5>Added</h5>
+<ul>
+<li>✨ Support nested dictionaries in *Dict derives. #312</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🐛 Accept ObjectPath/Signature as map identifier keys.</li>
+</ul>
+<h4>5.10.1 - 2026-04-26</h4>
+<h5>Documentation</h5>
+<ul>
+<li>📝 Configure docs.rs to build for all supported targets.</li>
+</ul>
+<h4>5.10.0 - 2026-02-22</h4>
+<h5>Added</h5>
+<ul>
+<li>✨ Implement Basic for more types. #1681</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>🚚 Rename an internal macro.</li>
+</ul>
+<h5>Dependencies</h5>
+<ul>
+<li>⬆️ Update libfuzzer-sys to v0.4.12 (#1709).</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🐛 Encode bool as single byte in GVariant.</li>
+</ul>
+<h5>Testing</h5>
+<ul>
+<li>✅ Add test case for bool encoding.</li>
+</ul>
+<h4>5.9.2 - 2026-01-18</h4>
+<h5>Other</h5>
+<ul>
+<li>⏪️ Revert &quot;🐛 zv: Don't impl Type for dicts with non-basic keys&quot;.</li>
+</ul>
+<h4>5.9.1 - 2026-01-10</h4>
+<h5>Other</h5>
+<ul>
+<li>🤖 release-plz: Fix formatting of CHANGELOG files.</li>
+<li>🤖 release-plz: Use the default header in changelog.</li>
+</ul>
+<h4>5.9.0 - 2026-01-09</h4>
+<h5>Added</h5>
+<ul>
+<li>✨ Implement <code>TryFrom&lt;&amp;Value&gt;</code> for tuples.</li>
+<li>✨ Add signature! macro for compile-time validation. #984</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>🎨 Format all files (rust 1.85).</li>
+<li>♻️ Use signature! macro in tests.</li>
+</ul>
+<h5>Dependencies</h5>
+<ul>
+<li>⬆️ Update endi to v1.1.1 (#1583).</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>🐛 Don't impl Type for dicts with non-basic keys. #1637</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>🧱 Fix all clippy warnings (rust 1.85).</li>
+<li>🧑‍💻 Bump rust version to 1.85.</li>
+<li>🚸 Implement <code>to_string_lossy</code> for <code>FilePath</code>.</li>
+</ul>
+<h5>Testing</h5>
+<ul>
+<li>✅ Remove unused imports from tests.</li>
+</ul>
+</div><p class="table-note">sha256:5023d53f6a8432d3997e5e0b4016dd79007d694c302a6eaad968e4bb8069c92c</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2024 Zeeshan Ali Khan &amp; zbus contributors
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:260e4ff3fc493695880c90774283eb1e3d018f898fabe655bbd52dd2cbd2fcad</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:42fd57ace367647e5689a3e412d7122f66f489c24292d3200bf3a0e2f0592875</code></dd><dt>Upstream checksum</dt><dd><code>sha256:c1d34c27cc6cdd1f458427519dd6b8612f7b7e3f7b9a0b2355d041dda9869147</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zvariant&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;5.15.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">arrayvec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:arrayvec&quot;</span><span class="p">]</span>
+<span class="n">camino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:camino&quot;</span><span class="p">]</span>
+<span class="n">chrono</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:chrono&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">enumflags2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:enumflags2&quot;</span><span class="p">]</span>
+<span class="n">gvariant</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;zvariant_derive/gvariant&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;zvariant_utils/gvariant&quot;</span><span class="p">]</span>
+<span class="n">heapless</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:heapless&quot;</span><span class="p">]</span>
+<span class="n">option-as-array</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">ostree-tests</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;gvariant&quot;</span><span class="p">]</span>
+<span class="n">serde_bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde_bytes&quot;</span><span class="p">]</span>
+<span class="n">time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:time&quot;</span><span class="p">]</span>
+<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:url&quot;</span><span class="p">]</span>
+<span class="n">uuid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:uuid&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;zvariant&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">arrayvec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/arrayvec&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.7.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">camino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/camino&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.1.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">chrono</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/chrono&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4.38&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">endi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/endi&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">enumflags2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/enumflags2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.7.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">heapless</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/heapless&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.9.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.200&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde_bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_bytes&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.11.14&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/time&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.36&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/url&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.5.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">uuid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/uuid&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.8.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">winnow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/winnow&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zcheapstr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zcheapstr&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zvariant_derive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zvariant_derive&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^5.15.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zvariant_utils</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zvariant_utils&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^4.2.0&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Zeeshan Ali Khan &lt;zeeshanak@gnome.org&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.87</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/zvariant/5.15.0">crates.io package</a></li><li><a href="https://github.com/z-galaxy/zbus/">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">zvariant</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/zvariant"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=5.15.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

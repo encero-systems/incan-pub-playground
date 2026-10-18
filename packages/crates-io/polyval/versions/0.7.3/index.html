@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>polyval 0.7.3 · Incan.pub</title><meta name="description" content="POLYVAL is a GHASH-like universal hash over GF(2^128) useful for constructing
+a Message Authentication Code (MAC)"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/polyval</p><div class="title-row"><h1>polyval</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/polyval/versions/0.7.3/" selected>0.7.3</option></select></label></div><p class="description">POLYVAL is a GHASH-like universal hash over GF(2^128) useful for constructing
+a Message Authentication Code (MAC)</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0 OR MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>RustCrypto: POLYVAL</h3>
+<p><a href="https://crates.io/crates/polyval">crate</a>
+<a href="https://docs.rs/polyval/">Docs</a>
+<a href="https://github.com/RustCrypto/universal-hashes/actions/workflows/polyval.yml?query=branch:master">Build Status</a>
+Apache2/MIT licensed
+Rust Version
+<a href="https://rustcrypto.zulipchat.com/#narrow/channel/260051-universal-hashes">Project Chat</a>
+<a href="https://github.com/RustCrypto/meta/blob/master/HAZMAT.md">HAZMAT</a></p>
+<p><a href="https://en.wikipedia.org/wiki/AES-GCM-SIV#Operation">POLYVAL</a> (<a href="https://tools.ietf.org/html/rfc8452#section-3">RFC 8452</a>) is a <a href="https://en.wikipedia.org/wiki/Universal_hashing">universal hash function</a> which operates
+over GF(2^128) and can be used for constructing a
+<a href="https://en.wikipedia.org/wiki/Message_authentication_code">Message Authentication Code (MAC)</a>.</p>
+<p>Its primary intended use is for implementing <a href="https://en.wikipedia.org/wiki/AES-GCM-SIV">AES-GCM-SIV</a>, however it is
+closely related to <a href="https://en.wikipedia.org/wiki/Galois/Counter_Mode#Mathematical_basis">GHASH</a> and therefore can also be used to implement
+<a href="https://en.wikipedia.org/wiki/Galois/Counter_Mode">AES-GCM</a> at no cost to performance on little endian architectures.</p>
+<p>From <a href="https://tools.ietf.org/html/rfc8452#section-3">RFC 8452 § 3</a> which defines POLYVAL for use in AES-GCM-SIV:</p>
+<blockquote>
+<p>&quot;POLYVAL, like GHASH (the authenticator in AES-GCM; ...), operates in a
+binary field of size 2^128.  The field is defined by the irreducible
+polynomial x^128 + x^127 + x^126 + x^121 + 1.&quot;</p>
+</blockquote>
+<p>By multiplying (in the finite field sense) a sequence of 128-bit blocks of
+input data data by a field element <code>H</code>, POLYVAL can be used to authenticate
+the message sequence as powers (in the finite field sense) of <code>H</code>.</p>
+<h4>Security</h4>
+<h5>⚠️ Warning: <a href="https://github.com/RustCrypto/meta/blob/master/HAZMAT.md">Hazmat!</a></h5>
+<p>Universal hash functions have subtle security properties and are primarily intended as a
+building block for constructions like AEAD algorithms.</p>
+<p>USE AT YOUR OWN RISK!</p>
+<h5>Notes</h5>
+<p>This crate has received one <a href="https://research.nccgroup.com/2020/02/26/public-report-rustcrypto-aes-gcm-and-chacha20poly1305-implementation-review/">security audit by NCC Group</a>, with no significant
+findings. We would like to thank <a href="https://www.mobilecoin.com/">MobileCoin</a> for funding the audit.</p>
+<p>All implementations contained in the crate are designed to execute in constant
+time, either by relying on hardware intrinsics (i.e. AVX2 on x86/x86_64), or
+using a portable implementation which is only constant time on processors which
+implement constant-time multiplication.</p>
+<p>It is not suitable for use on processors with a variable-time multiplication
+operation (e.g. short circuit on multiply-by-zero / multiply-by-one, such as
+certain 32-bit PowerPC CPUs and some non-ARM microcontrollers).</p>
+<h4>Supported backends</h4>
+<p>This crate provides multiple backends including a portable pure Rust
+backend as well as ones based on CPU intrinsics.</p>
+<h5>&quot;soft&quot; portable backend</h5>
+<p>As a baseline implementation, this crate provides a constant-time pure Rust
+implementation based on BearSSL, which is a straightforward and
+compact implementation which uses a clever but simple technique to avoid
+carry-spilling.</p>
+<h5>ARMv8 intrinsics (<code>PMULL</code>)</h5>
+<p>On <code>aarch64</code> targets including <code>aarch64-apple-darwin</code> (Apple M1) and Linux
+targets such as <code>aarch64-unknown-linux-gnu</code> and <code>aarch64-unknown-linux-musl</code>,
+support for using the <code>PMULL</code> instructions in ARMv8's Cryptography Extensions.</p>
+<p>On Linux and macOS, support for <code>PMULL</code> intrinsics is autodetected at runtime.
+On other platforms the <code>crypto</code> target feature must be enabled via RUSTFLAGS.</p>
+<h5><code>x86</code>/<code>x86_64</code> intrinsics (<code>CMLMUL</code>)</h5>
+<p>By default this crate uses runtime detection on <code>i686</code>/<code>x86_64</code> targets
+in order to determine if <code>CLMUL</code> is available, and if it is not, it will
+fallback to using a constant-time software implementation.</p>
+<h4>Relationship to GHASH</h4>
+<p>POLYVAL can be thought of as the little endian equivalent of GHASH, which
+affords it a small performance advantage over GHASH when used on little
+endian architectures.</p>
+<p>It has also been designed so it can also be used to compute GHASH and with
+it GMAC, the Message Authentication Code (MAC) used by AES-GCM.</p>
+<p>From <a href="https://tools.ietf.org/html/rfc8452#appendix-A">RFC 8452 Appendix A</a>:</p>
+<blockquote>
+<p>&quot;GHASH and POLYVAL both operate in GF(2^128), although with different
+irreducible polynomials: POLYVAL works modulo x^128 + x^127 + x^126 +
+x^121 + 1 and GHASH works modulo x^128 + x^7 + x^2 + x + 1.  Note
+that these irreducible polynomials are the 'reverse' of each other.&quot;</p>
+</blockquote>
+<h4>License</h4>
+<p>Licensed under either of:</p>
+<ul>
+<li><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a></li>
+<li><a href="http://opensource.org/licenses/MIT">MIT license</a></li>
+</ul>
+<p>at your option.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>hazmat</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>zeroize</code></th><td>No</td><td><ul class="effects"><li><code>dep:zeroize</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/cpubits/"><code>crates-io/cpubits</code></a><small>Alias: cpubits</small></th><td><code>^0.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/cpufeatures/"><code>crates-io/cpufeatures</code></a><small>Alias: cpufeatures</small></th><td><code>^0.3</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(any(target_arch = &quot;aarch64&quot;, target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/universal-hash/"><code>crates-io/universal-hash</code></a><small>Alias: universal-hash</small></th><td><code>^0.6</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/zeroize/"><code>crates-io/zeroize</code></a><small>Alias: zeroize</small></th><td><code>^1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/ghash/versions/0.6.0/">crates-io/ghash 0.6.0</a><span>Requires ^0.7 · alias polyval · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:4ef46580d4afd00dd597e464c8caf3d1bdd6533f3cde408cb0bc3ff143e5b41a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:fd48cb94a83f20af2753729990d3abc7c507166a4845d28aeeebf82c9b65a14e</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>hazmat</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:61655854697191305fb5c811ab89b76287689ceedabf90c2c94010db2a79c2e7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:a60c0a1a54c56b00204c8ffaab80e4d26d124fca8fb249611d8cea6765ab1dd8</small></li><li><code>sha256:8c48604bfa777f0c5cccdb7c26fe482144320ee085520cb10d82b1bf4122dda6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:fcca9465ed1790447df154ea9c54d2a2a622e7df6424695d4add682389692d64</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:32f067f86a996cab9d7464ca1ffa82793107c5ffbc4e485f63347e8e53bc12c3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:133310d11e8e9e8c0f22475c6aca06bb96a586a7bb1b7def6b97a51c3d43b12f</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>hazmat</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:315fad52e1422af9eb213735654f9c2e73daceea74efe1d5a65131f4d4fa989e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:b3432211fe987448ec842bd6eb9deb1d34beecabfb567242665666509258c63c</small></li><li><code>sha256:c45a81c4ae9ca45f4fe0ea419e8329ca370e3d19190cbe287b1fe1e1705428af</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:febef81611a197647622be4bc77c4246e5f071f8fd7fed6e938630c643030452</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:88e2f296640b1ef700927b0d684b725480e13ddcbf295f529ca427e5716e1de7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:11aef25195ec14acb84fc351379d502efe837049f8c1b5123140531be5ad8506</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>hazmat</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:9919c38b85466ff9164031e003acca0add15bc82cb5b2eef46849909d15a60c5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:bccf99f769e27a5641200948a60c0908a6437f37162337b881d0ffaafb1ba9d3</small></li><li><code>sha256:e6fe1829f3b85ae1f6f3e26e9b577cc4b3713ed3033e0465541b64b2245974f9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:20f2e6f7114d126ef6c380ef69c7679beb845c32997036767571d0dc5d78a030</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0e9006ffafdbc1d3ff0c987e9b3c2cfcbc33c6e456153dbb0113a0ddd89267cd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:f6d77f86b0990cfa171aa513934122b3859845ed4d75988e50349ef72e4a4e79</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>hazmat</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1d5d422c7cdfc0e8155a52e75087c54bf90cc95a3ca5f6e11b13632e11054e8d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:62b18b37b00d6f37f33b723b7b37ffd33f1a70a48cfc54cfa1c8605c46f78ec6</small></li><li><code>sha256:5cee7ea7572b76c9d72864cd2b7f7b3ef2216980b2aa2f08cebeb6f747e3c93d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:921486f1ec2784d1f61b7b45f177642061dd2ab058858058c87edae121344217</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/polyval/versions/0.7.3/">0.7.3</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/polyval/0.7.3">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>0.7.3 (2026-07-16)</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Restore accidentally removed <code>Zeroize</code> impl on <code>FieldElement</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/350">#350</a>)</li>
+</ul>
+<h4>0.7.2 (2026-07-11)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Tweak zeroization (<a href="https://github.com/RustCrypto/universal-hashes/pull/343">#343</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Actually detect <code>avx</code>+<code>pclmulqdq</code> as <a href="https://github.com/RustCrypto/universal-hashes/pull/317">#317</a> actually was detecting 256-bit PCLMULQDQ (<a href="https://github.com/RustCrypto/universal-hashes/pull/347">#347</a>)</li>
+</ul>
+<h4>0.7.1 (2026-02-28)</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Detect <code>avx</code>+<code>pclmulqdq</code> features on <code>x86</code>/<code>x86_64</code> targets (<a href="https://github.com/RustCrypto/universal-hashes/pull/317">#317</a>, <a href="https://github.com/RustCrypto/universal-hashes/pull/318">#318</a>)</li>
+</ul>
+<h4>0.7.0 (2026-02-27) [YANKED]</h4>
+<p>NOTE: yanked due to SIGILL bug which was fixed in <a href="https://github.com/RustCrypto/universal-hashes/pull/317">#317</a>.</p>
+<h5>Added</h5>
+<ul>
+<li><code>hazmat</code> feature that exposes <code>FieldElement</code> type (<a href="https://github.com/RustCrypto/universal-hashes/pull/279">#279</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Edition changed to 2024 and MSRV bumped to 1.85 (<a href="https://github.com/RustCrypto/universal-hashes/pull/228">#228</a>)</li>
+<li>Relax MSRV policy and allow MSRV bumps in patch releases</li>
+<li>Replace <code>polyval_force_soft</code> with <code>polyval_backend=&quot;soft&quot;</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/259">#259</a>)</li>
+<li>Use <code>cpubits</code> crate for <code>soft</code> backend selection (<a href="https://github.com/RustCrypto/universal-hashes/pull/261">#261</a>)</li>
+<li>Bump <code>cpufeatures</code> to v0.3 (<a href="https://github.com/RustCrypto/universal-hashes/pull/292">#292</a>)</li>
+<li>Use <a href="https://eprint.iacr.org/2025/2171">Reduction/Field algorithm</a> for parallel block processing on <code>aarch64</code>/<code>x86(_64)</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/294">#294</a>)</li>
+<li><code>polyval::mulx</code> moved to <code>FieldElement::mulx</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/296">#296</a>)</li>
+<li>Update to <code>universal-hash</code> v0.6 (<a href="https://github.com/RustCrypto/universal-hashes/pull/310">#310</a>)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>cfg(polyval_armv8)</code> - now enabled by default (<a href="https://github.com/RustCrypto/universal-hashes/pull/214">#214</a>)</li>
+</ul>
+<h4>0.6.2 (2022-03-03)</h4>
+<h5>Added</h5>
+<ul>
+<li>add <code>new_with_init_block</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/195">#195</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>implement Karatsuba multiplication for arm64 (<a href="https://github.com/RustCrypto/universal-hashes/pull/181">#181</a>)</li>
+</ul>
+<h4>0.6.1 (2023-06-16)</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for <code>polyval_armv8</code> on Rust 1.61+ (<a href="https://github.com/RustCrypto/universal-hashes/pull/179">#179</a>)</li>
+</ul>
+<h4>0.6.0 (2022-07-31)</h4>
+<h5>Added</h5>
+<ul>
+<li>Impl <code>Reset</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/157">#157</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Remove <code>sse4.1</code> from CPU feature requirements for PCLMUL backend (<a href="https://github.com/RustCrypto/universal-hashes/pull/143">#143</a>)</li>
+<li>Relax <code>zeroize</code> constraints (<a href="https://github.com/RustCrypto/universal-hashes/pull/147">#147</a>)</li>
+<li>Upgrade to Rust 2021 edition (<a href="https://github.com/RustCrypto/universal-hashes/pull/147">#147</a>)</li>
+<li>Use stable <code>aarch64_target_feature</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/154">#154</a>)</li>
+<li>Replace <code>armv8</code>/<code>force-soft</code> features with <code>cfg</code> attributes (<a href="https://github.com/RustCrypto/universal-hashes/pull/159">#159</a>)</li>
+<li>Bump <code>universal-hash</code> to v0.5 (<a href="https://github.com/RustCrypto/universal-hashes/pull/155">#155</a>, <a href="https://github.com/RustCrypto/universal-hashes/pull/162">#162</a>)</li>
+</ul>
+<h4>0.5.3 (2021-08-27)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>cpufeatures</code> dependency to v0.2 (<a href="https://github.com/RustCrypto/universal-hashes/pull/136">#136</a>, <a href="https://github.com/RustCrypto/universal-hashes/pull/138">#138</a>)</li>
+<li>Remove use of ARMv8 <code>crypto</code> feature (<a href="https://github.com/RustCrypto/universal-hashes/pull/137">#137</a>)</li>
+</ul>
+<h4>0.5.2 (2021-07-20)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Pin <code>zeroize</code> dependency to v1.3 (<a href="https://github.com/RustCrypto/universal-hashes/pull/134">#134</a>)</li>
+</ul>
+<h4>0.5.1 (2021-05-31)</h4>
+<h5>Added</h5>
+<ul>
+<li>Nightly-only ARMv8 intrinsics support gated under the <code>armv8</code> feature (<a href="https://github.com/RustCrypto/universal-hashes/pull/126">#126</a>)</li>
+</ul>
+<h4>0.5.0 (2021-04-29)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Use <code>ManuallyDrop</code> unions; MSRV 1.49+ (<a href="https://github.com/RustCrypto/universal-hashes/pull/113">#113</a>, <a href="https://github.com/RustCrypto/universal-hashes/pull/114">#114</a>)</li>
+<li>Replace <code>cpuid-bool</code> with <code>cpufeatures</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/116">#116</a>)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>mulx</code> feature: now always built-in (<a href="https://github.com/RustCrypto/universal-hashes/pull/118">#118</a>)</li>
+</ul>
+<h4>0.4.5 (2020-12-26)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Use <code>u128</code> to impl <code>mulx</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/111">#111</a>)</li>
+</ul>
+<h4>0.4.4 (2020-12-26)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Debug</code> impl using <code>opaque-debug</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/105">#105</a>)</li>
+<li><code>mulx</code> feature (<a href="https://github.com/RustCrypto/universal-hashes/pull/107">#107</a>)</li>
+</ul>
+<h4>0.4.3 (2020-12-08)</h4>
+<h5>Added</h5>
+<ul>
+<li>CLMUL detection (<a href="https://github.com/RustCrypto/universal-hashes/pull/92">#92</a>)</li>
+</ul>
+<h4>0.4.2 (2020-11-25)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>KEY_SIZE</code> constant (<a href="https://github.com/RustCrypto/universal-hashes/pull/82">#82</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>cfg-if</code> from v0.1 to v1.0.0 (<a href="https://github.com/RustCrypto/universal-hashes/pull/86">#86</a>)</li>
+</ul>
+<h4>0.4.1 (2020-09-26)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Performance improvements (<a href="https://github.com/RustCrypto/universal-hashes/pull/75">#75</a>)</li>
+</ul>
+<h4>0.4.0 (2020-06-06)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>universal-hash</code> dependency to v0.4; MSRV 1.41 (<a href="https://github.com/RustCrypto/universal-hashes/pull/52">#52</a>, <a href="https://github.com/RustCrypto/universal-hashes/pull/57">#57</a>)</li>
+<li>Rename <code>result</code> methods to to <code>finalize</code> (<a href="https://github.com/RustCrypto/universal-hashes/pull/56">#56</a>)</li>
+</ul>
+<h4>0.3.3 (2019-12-21)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Match ideal assembly implementation on x86/x86_64 (<a href="https://github.com/RustCrypto/universal-hashes/pull/43">#43</a>, <a href="https://github.com/RustCrypto/universal-hashes/pull/44">#44</a>)</li>
+</ul>
+<h4>0.3.2 (2019-12-05)</h4>
+<h5>Added</h5>
+<ul>
+<li>Constant-time 32-bit software implementation (<a href="https://github.com/RustCrypto/universal-hashes/pull/39">#39</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Use <code>cfg-if</code> crate to reduce duplication (<a href="https://github.com/RustCrypto/universal-hashes/pull/40">#40</a>)</li>
+</ul>
+<h4>0.3.1 (2019-11-14)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Upgrade to <code>zeroize</code> 1.0 (<a href="https://github.com/RustCrypto/universal-hashes/pull/33">#33</a>)</li>
+</ul>
+<h4>0.3.0 (2019-10-05)</h4>
+<h5>Removed</h5>
+<ul>
+<li>Remove <code>pub</code> from <code>field</code> module (<a href="https://github.com/RustCrypto/universal-hashes/pull/28">#28</a>)</li>
+</ul>
+<h4>0.2.0 (2019-10-04)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Upgrade to <code>universal-hash</code> crate v0.3 (<a href="https://github.com/RustCrypto/universal-hashes/pull/22">#22</a>)</li>
+</ul>
+<h4>0.1.1 (2019-10-01)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Upgrade to <code>zeroize</code> v1.0.0-pre (<a href="https://github.com/RustCrypto/universal-hashes/pull/19">#19</a>)</li>
+</ul>
+<h4>0.1.0 (2019-09-19)</h4>
+<h5>Added</h5>
+<ul>
+<li>Constant time software implementation (<a href="https://github.com/RustCrypto/universal-hashes/pull/7">#7</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Update to Rust 2018 edition (<a href="https://github.com/RustCrypto/universal-hashes/pull/3">#3</a>)</li>
+<li>Use <code>UniversalHash</code> trait (<a href="https://github.com/RustCrypto/universal-hashes/pull/6">#6</a>)</li>
+<li>Removed generics/traits from <code>field::Element</code> API (<a href="https://github.com/RustCrypto/universal-hashes/pull/12">#12</a>)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>insecure-soft</code> cargo feature (<a href="https://github.com/RustCrypto/universal-hashes/pull/7">#7</a>)</li>
+</ul>
+<h4>0.0.1 (2019-08-26)</h4>
+<ul>
+<li>Initial release</li>
+</ul>
+</div><p class="table-note">sha256:b54131b1ae8d165aa16d20df68a97b7a9391542bf106c81575e7b1fdf4c64eef</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0 OR MIT</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2019-2026 The RustCrypto Project Developers
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:b8c6939380a400f53e11923d50fcc4dd2fa1ba8339fd9d04cda38a0251b6c9b0</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:ca5569acce47b4cebaa7442f1ee916ee865e8cbb3f83a5deab5db8cc13d1f3f5</code></dd><dt>Upstream checksum</dt><dd><code>sha256:f0fa31d631f2b2cb2a544d0aa321ce847a94764d701ca2becc411138b93d49cd</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/polyval&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.7.3&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">hazmat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">zeroize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:zeroize&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;polyval&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">cpubits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cpubits&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">cpufeatures</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cpufeatures&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(target_arch = </span><span class="se">\&quot;</span><span class="s2">aarch64</span><span class="se">\&quot;</span><span class="s2">, target_arch = </span><span class="se">\&quot;</span><span class="s2">x86</span><span class="se">\&quot;</span><span class="s2">, target_arch = </span><span class="se">\&quot;</span><span class="s2">x86_64</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">universal-hash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/universal-hash&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.6&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zeroize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zeroize&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>RustCrypto Developers</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/polyval/0.7.3">crates.io package</a></li><li><a href="https://github.com/RustCrypto/universal-hashes">Source repository</a></li><li><a href="https://docs.rs/polyval">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">polyval</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/polyval"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.7.3"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>indexmap 2.14.0 · Incan.pub</title><meta name="description" content="A hash table with consistent order and fast iteration."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/indexmap</p><div class="title-row"><h1>indexmap</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/indexmap/versions/2.14.2/">2.14.2</option><option value="../../../../../packages/crates-io/indexmap/versions/2.14.0/" selected>2.14.0</option></select></label></div><p class="description">A hash table with consistent order and fast iteration.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0 OR MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><p class="version-warning">Viewing an older indexed version. <a href="../../../../../packages/crates-io/indexmap/">View latest indexed version 2.14.2 →</a></p><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>indexmap</h3>
+<p><a href="https://github.com/indexmap-rs/indexmap/actions">build status</a>
+<a href="https://crates.io/crates/indexmap">crates.io</a>
+<a href="https://docs.rs/indexmap">docs</a>
+<a href="https://img.shields.io/badge/rust-1.85%2B-orange.svg">rustc</a></p>
+<p>A pure-Rust hash table which preserves (in a limited sense) insertion order.</p>
+<p>This crate implements compact map and set data-structures,
+where the iteration order of the keys is independent from their hash or
+value. It preserves insertion order (except after removals), and it
+allows lookup of entries by either hash table key or numerical index.</p>
+<p>Note: this crate was originally released under the name <code>ordermap</code>,
+but it was renamed to <code>indexmap</code> to better reflect its features.
+The <a href="https://crates.io/crates/ordermap"><code>ordermap</code></a> crate now exists
+as a wrapper over <code>indexmap</code> with stronger ordering properties.</p>
+<h3>Background</h3>
+<p>This was inspired by Python 3.6's new dict implementation (which remembers
+the insertion order and is fast to iterate, and is compact in memory).</p>
+<p>Some of those features were translated to Rust, and some were not. The result
+was indexmap, a hash table that has following properties:</p>
+<ul>
+<li>Order is <strong>independent of hash function</strong> and hash values of keys.</li>
+<li>Fast to iterate.</li>
+<li>Indexed in compact space.</li>
+<li>Preserves insertion order <strong>as long</strong> as you don't call <code>.remove()</code>,
+<code>.swap_remove()</code>, or other methods that explicitly change order.
+The alternate <code>.shift_remove()</code> does preserve relative order.</li>
+<li>Uses hashbrown for the inner table, just like Rust's libstd <code>HashMap</code> does.</li>
+</ul>
+<h4>Performance</h4>
+<p><code>IndexMap</code> derives a couple of performance facts directly from how it is constructed,
+which is roughly:</p>
+<blockquote>
+<p>A raw hash table of key-value indices, and a vector of key-value pairs.</p>
+</blockquote>
+<ul>
+<li>
+<p>Iteration is very fast since it is on the dense key-values.</p>
+</li>
+<li>
+<p>Removal is fast since it moves memory areas only in the table,
+and uses a single swap in the vector.</p>
+</li>
+<li>
+<p>Lookup is fast-ish because the initial 7-bit hash lookup uses SIMD, and indices are
+densely stored. Lookup also is slow-ish since the actual key-value pairs are stored
+separately. (Visible when cpu caches size is limiting.)</p>
+</li>
+<li>
+<p>In practice, <code>IndexMap</code> has been tested out as the hashmap in rustc in <a href="https://github.com/rust-lang/rust/pull/45282">PR45282</a> and
+the performance was roughly on par across the whole workload.</p>
+</li>
+<li>
+<p>If you want the properties of <code>IndexMap</code>, or its strongest performance points
+fits your workload, it might be the best hash table implementation.</p>
+</li>
+</ul>
+<h3>Recent Changes</h3>
+<p>See <a href="https://github.com/indexmap-rs/indexmap/blob/main/RELEASES.md">RELEASES.md</a>.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>arbitrary</code></th><td>No</td><td><ul class="effects"><li><code>dep:arbitrary</code></li></ul></td></tr><tr><th scope="row"><code>borsh</code></th><td>No</td><td><ul class="effects"><li><code>dep:borsh</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>quickcheck</code></th><td>No</td><td><ul class="effects"><li><code>dep:quickcheck</code></li></ul></td></tr><tr><th scope="row"><code>rayon</code></th><td>No</td><td><ul class="effects"><li><code>dep:rayon</code></li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde_core</code></li><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>sval</code></th><td>No</td><td><ul class="effects"><li><code>dep:sval</code></li></ul></td></tr><tr><th scope="row"><code>test_debug</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/arbitrary/"><code>crates-io/arbitrary</code></a><small>Alias: arbitrary</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/borsh/"><code>crates-io/borsh</code></a><small>Alias: borsh</small></th><td><code>^1.2</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/equivalent/"><code>crates-io/equivalent</code></a><small>Alias: equivalent</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/hashbrown/"><code>crates-io/hashbrown</code></a><small>Alias: hashbrown</small></th><td><code>^0.17</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><code>crates-io/quickcheck</code><small>Alias: quickcheck</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rayon/"><code>crates-io/rayon</code></a><small>Alias: rayon</small></th><td><code>^1.9</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0.220</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(any())</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde_core/"><code>crates-io/serde_core</code></a><small>Alias: serde_core</small></th><td><code>^1.0.220</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/sval</code><small>Alias: sval</small></th><td><code>^2</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/arrow-json/versions/60.0.0/">crates-io/arrow-json 60.0.0</a><span>Requires ^2.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/arrow-json/versions/58.4.0/">crates-io/arrow-json 58.4.0</a><span>Requires ^2.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/aws-smithy-http-client/versions/1.5.0/">crates-io/aws-smithy-http-client 1.5.0</a><span>Requires ^2.10.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/borsh/versions/1.8.1/">crates-io/borsh 1.8.1</a><span>Requires ^2 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/cookie_store/versions/0.22.1/">crates-io/cookie_store 0.22.1</a><span>Requires ^2.6.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/datafusion-common/versions/53.1.0/">crates-io/datafusion-common 53.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/datafusion-expr/versions/53.1.0/">crates-io/datafusion-expr 53.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/datafusion-expr-common/versions/53.1.0/">crates-io/datafusion-expr-common 53.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/datafusion-optimizer/versions/53.1.0/">crates-io/datafusion-optimizer 53.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/datafusion-physical-expr/versions/53.1.0/">crates-io/datafusion-physical-expr 53.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/datafusion-physical-expr-common/versions/53.1.0/">crates-io/datafusion-physical-expr-common 53.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/datafusion-physical-plan/versions/53.1.0/">crates-io/datafusion-physical-plan 53.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/datafusion-sql/versions/53.1.0/">crates-io/datafusion-sql 53.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/gimli/versions/0.34.0/">crates-io/gimli 0.34.0</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/gimli/versions/0.32.3/">crates-io/gimli 0.32.3</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/h2/versions/0.4.19/">crates-io/h2 0.4.19</a><span>Requires ^2 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/h2/versions/0.3.27/">crates-io/h2 0.3.27</a><span>Requires ^2 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/object/versions/0.40.0/">crates-io/object 0.40.0</a><span>Requires ^2.14 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/object/versions/0.39.1/">crates-io/object 0.39.1</a><span>Requires ^2.14 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/object/versions/0.37.3/">crates-io/object 0.37.3</a><span>Requires ^2.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/petgraph/versions/0.8.3/">crates-io/petgraph 0.8.3</a><span>Requires ^2.5.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/plist/versions/1.10.1/">crates-io/plist 1.10.1</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/pyo3/versions/0.29.3/">crates-io/pyo3 0.29.3</a><span>Requires &gt;=2.5.0, &lt;3 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/ra-ap-rustc_type_ir/versions/0.143.0/">crates-io/ra-ap-rustc_type_ir 0.143.0</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_base_db/versions/0.0.325/">crates-io/ra_ap_base_db 0.0.325</a><span>Requires ^2.9.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir_def/versions/0.0.325/">crates-io/ra_ap_hir_def 0.0.325</a><span>Requires ^2.9.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir_ty/versions/0.0.325/">crates-io/ra_ap_hir_ty 0.0.325</a><span>Requires ^2.9.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_proc_macro_api/versions/0.0.325/">crates-io/ra_ap_proc_macro_api 0.0.325</a><span>Requires ^2.9.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_tt/versions/0.0.325/">crates-io/ra_ap_tt 0.0.325</a><span>Requires ^2.9.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_vfs/versions/0.0.325/">crates-io/ra_ap_vfs 0.0.325</a><span>Requires ^2.9.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/rkyv/versions/0.8.18/">crates-io/rkyv 0.8.18</a><span>Requires ^2 · alias indexmap-2 · </span></li><li><a href="../../../../../packages/crates-io/ron/versions/0.12.2/">crates-io/ron 0.12.2</a><span>Requires ^2.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/salsa/versions/0.25.2/">crates-io/salsa 0.25.2</a><span>Requires ^2 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/schemars/versions/1.2.2/">crates-io/schemars 1.2.2</a><span>Requires ^2.2.3 · alias indexmap2 · </span></li><li><a href="../../../../../packages/crates-io/schemars/versions/0.8.22/">crates-io/schemars 0.8.22</a><span>Requires ^1.2 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/schemars/versions/0.8.22/">crates-io/schemars 0.8.22</a><span>Requires ^2.0 · alias indexmap2 · </span></li><li><a href="../../../../../packages/crates-io/serde_json/versions/1.0.151/">crates-io/serde_json 1.0.151</a><span>Requires ^2.2.3 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/serde_json/versions/1.0.149/">crates-io/serde_json 1.0.149</a><span>Requires ^2.2.3 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/serde_with/versions/3.24.0/">crates-io/serde_with 3.24.0</a><span>Requires ^1.8 · alias indexmap_1 · </span></li><li><a href="../../../../../packages/crates-io/serde_with/versions/3.24.0/">crates-io/serde_with 3.24.0</a><span>Requires ^2.0 · alias indexmap_2 · </span></li><li><a href="../../../../../packages/crates-io/serde_yaml/versions/0.9.34+deprecated/">crates-io/serde_yaml 0.9.34+deprecated</a><span>Requires ^2.2.1 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/sqlx-core/versions/0.9.0/">crates-io/sqlx-core 0.9.0</a><span>Requires ^2.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/substrait/versions/0.63.0/">crates-io/substrait 0.63.0</a><span>Requires ^2.7.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/toml/versions/1.1.6+spec-1.1.0/">crates-io/toml 1.1.6+spec-1.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/toml/versions/0.9.12+spec-1.1.0/">crates-io/toml 0.9.12+spec-1.1.0</a><span>Requires ^2.11.4 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/toml/versions/0.8.23/">crates-io/toml 0.8.23</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/toml_edit/versions/0.25.15+spec-1.1.0/">crates-io/toml_edit 0.25.15+spec-1.1.0</a><span>Requires ^2.13.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/toml_edit/versions/0.25.5+spec-1.1.0/">crates-io/toml_edit 0.25.5+spec-1.1.0</a><span>Requires ^2.11.4 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/toml_edit/versions/0.22.27/">crates-io/toml_edit 0.22.27</a><span>Requires ^2.3.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/tower/versions/0.5.3/">crates-io/tower 0.5.3</a><span>Requires ^2.0.2 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasm-metadata/versions/0.261.0/">crates-io/wasm-metadata 0.261.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasm-metadata/versions/0.259.0/">crates-io/wasm-metadata 0.259.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasm-metadata/versions/0.247.0/">crates-io/wasm-metadata 0.247.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasm-metadata/versions/0.244.0/">crates-io/wasm-metadata 0.244.0</a><span>Requires ^2.7.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.261.0/">crates-io/wasmparser 0.261.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.259.0/">crates-io/wasmparser 0.259.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.247.0/">crates-io/wasmparser 0.247.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.244.0/">crates-io/wasmparser 0.244.0</a><span>Requires ^2.7.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasmparser/versions/0.236.1/">crates-io/wasmparser 0.236.1</a><span>Requires ^2.7.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasmtime/versions/36.0.17/">crates-io/wasmtime 36.0.17</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasmtime-environ/versions/36.0.17/">crates-io/wasmtime-environ 36.0.17</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wasmtime-internal-wit-bindgen/versions/36.0.17/">crates-io/wasmtime-internal-wit-bindgen 36.0.17</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-bindgen-rust/versions/0.62.0/">crates-io/wit-bindgen-rust 0.62.0</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-bindgen-rust/versions/0.57.1/">crates-io/wit-bindgen-rust 0.57.1</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-bindgen-rust/versions/0.51.0/">crates-io/wit-bindgen-rust 0.51.0</a><span>Requires ^2.0.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-component/versions/0.261.0/">crates-io/wit-component 0.261.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-component/versions/0.259.0/">crates-io/wit-component 0.259.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-component/versions/0.247.0/">crates-io/wit-component 0.247.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-component/versions/0.244.0/">crates-io/wit-component 0.244.0</a><span>Requires ^2.7.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.261.0/">crates-io/wit-parser 0.261.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.259.0/">crates-io/wit-parser 0.259.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.247.0/">crates-io/wit-parser 0.247.0</a><span>Requires ^2.14.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.244.0/">crates-io/wit-parser 0.244.0</a><span>Requires ^2.7.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.236.1/">crates-io/wit-parser 0.236.1</a><span>Requires ^2.7.0 · alias indexmap · </span></li><li><a href="../../../../../packages/crates-io/zip/versions/8.6.0/">crates-io/zip 8.6.0</a><span>Requires ^2 · alias indexmap · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="notice">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, std</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/indexmap/versions/2.14.2/">2.14.2</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/indexmap/2.14.2">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/indexmap/versions/2.14.0/">2.14.0</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/indexmap/2.14.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>RELEASES.md · Author-provided</summary><div class="readme"><h3>Releases</h3>
+<h4>2.14.0 (2026-04-09)</h4>
+<ul>
+<li><strong>MSRV</strong>: Rust 1.85.0 or later is now required.</li>
+<li>Updated the <code>hashbrown</code> dependency to 0.17.</li>
+<li>Made more <code>map::Slice</code> methods <code>const</code>: <code>new_mut</code>, <code>first_mut</code>, <code>last_mut</code>,
+<code>split_at_mut</code>, <code>split_at_mut_checked</code>, <code>split_first_mut</code>, <code>split_last_mut</code></li>
+</ul>
+<h4>2.13.1 (2026-04-02)</h4>
+<ul>
+<li>Made some <code>Slice</code> methods <code>const</code>:
+<ul>
+<li><code>map::Slice::{first,last,split_at,split_at_checked,split_first,split_last}</code></li>
+<li><code>set::Slice::{first,last,split_at,split_at_checked,split_first,split_last}</code></li>
+</ul>
+</li>
+</ul>
+<h4>2.13.0 (2026-01-07)</h4>
+<ul>
+<li>Implemented <code>Clone</code> for <code>IntoKeys</code> and <code>IntoValues</code>.</li>
+<li>Added <code>map::Slice::split_at_checked</code> and <code>split_at_mut_checked</code>.</li>
+<li>Added <code>set::Slice::split_at_checked</code>.</li>
+</ul>
+<h4>2.12.1 (2025-11-20)</h4>
+<ul>
+<li>Simplified a lot of internals using <code>hashbrown</code>'s new bucket API.</li>
+</ul>
+<h4>2.12.0 (2025-10-17)</h4>
+<ul>
+<li><strong>MSRV</strong>: Rust 1.82.0 or later is now required.</li>
+<li>Updated the <code>hashbrown</code> dependency to 0.16 alone.</li>
+<li>Error types now implement <code>core::error::Error</code>.</li>
+<li>Added <code>pop_if</code> methods to <code>IndexMap</code> and <code>IndexSet</code>, similar to the
+method for <code>Vec</code> added in Rust 1.86.</li>
+</ul>
+<h4>2.11.4 (2025-09-18)</h4>
+<ul>
+<li>Updated the <code>hashbrown</code> dependency to a range allowing 0.15 or 0.16.</li>
+</ul>
+<h4>2.11.3 (2025-09-15)</h4>
+<ul>
+<li>Make the minimum <code>serde</code> version only apply when &quot;serde&quot; is enabled.</li>
+</ul>
+<h4>2.11.2 (2025-09-15)</h4>
+<ul>
+<li>Switched the &quot;serde&quot; feature to depend on <code>serde_core</code>, improving build
+parallelism in cases where other dependents have enabled &quot;serde/derive&quot;.</li>
+</ul>
+<h4>2.11.1 (2025-09-08)</h4>
+<ul>
+<li>Added a <code>get_key_value_mut</code> method to <code>IndexMap</code>.</li>
+<li>Removed the unnecessary <code>Ord</code> bound on <code>insert_sorted_by</code> methods.</li>
+</ul>
+<h4>2.11.0 (2025-08-22)</h4>
+<ul>
+<li>Added <code>insert_sorted_by</code> and <code>insert_sorted_by_key</code> methods to <code>IndexMap</code>,
+<code>IndexSet</code>, and <code>VacantEntry</code>, like customizable versions of <code>insert_sorted</code>.</li>
+<li>Added <code>is_sorted</code>, <code>is_sorted_by</code>, and <code>is_sorted_by_key</code> methods to
+<code>IndexMap</code> and <code>IndexSet</code>, as well as their <code>Slice</code> counterparts.</li>
+<li>Added <code>sort_by_key</code> and <code>sort_unstable_by_key</code> methods to <code>IndexMap</code> and
+<code>IndexSet</code>, as well as parallel counterparts.</li>
+<li>Added <code>replace_index</code> methods to <code>IndexMap</code>, <code>IndexSet</code>, and <code>VacantEntry</code>
+to replace the key (or set value) at a given index.</li>
+<li>Added optional <code>sval</code> serialization support.</li>
+</ul>
+<h4>2.10.0 (2025-06-26)</h4>
+<ul>
+<li>Added <code>extract_if</code> methods to <code>IndexMap</code> and <code>IndexSet</code>, similar to the
+methods for <code>HashMap</code> and <code>HashSet</code> with ranges like <code>Vec::extract_if</code>.</li>
+<li>Added more <code>#[track_caller]</code> annotations to functions that may panic.</li>
+</ul>
+<h4>2.9.0 (2025-04-04)</h4>
+<ul>
+<li>Added a <code>get_disjoint_mut</code> method to <code>IndexMap</code>, matching Rust 1.86's
+<code>HashMap</code> method.</li>
+<li>Added a <code>get_disjoint_indices_mut</code> method to <code>IndexMap</code> and <code>map::Slice</code>,
+matching Rust 1.86's <code>get_disjoint_mut</code> method on slices.</li>
+<li>Deprecated the <code>borsh</code> feature in favor of their own <code>indexmap</code> feature,
+solving a cyclic dependency that occurred via <code>borsh-derive</code>.</li>
+</ul>
+<h4>2.8.0 (2025-03-10)</h4>
+<ul>
+<li>Added <code>indexmap_with_default!</code> and <code>indexset_with_default!</code> to be used with
+alternative hashers, especially when using the crate without <code>std</code>.</li>
+<li>Implemented <code>PartialEq</code> between each <code>Slice</code> and <code>[]</code>/arrays.</li>
+<li>Removed the internal <code>rustc-rayon</code> feature and dependency.</li>
+</ul>
+<h4>2.7.1 (2025-01-19)</h4>
+<ul>
+<li>Added <code>#[track_caller]</code> to functions that may panic.</li>
+<li>Improved memory reservation for <code>insert_entry</code>.</li>
+</ul>
+<h4>2.7.0 (2024-11-30)</h4>
+<ul>
+<li>Added methods <code>Entry::insert_entry</code> and <code>VacantEntry::insert_entry</code>, returning
+an <code>OccupiedEntry</code> after insertion.</li>
+</ul>
+<h4>2.6.0 (2024-10-01)</h4>
+<ul>
+<li>Implemented <code>Clone</code> for <code>map::IntoIter</code> and <code>set::IntoIter</code>.</li>
+<li>Updated the <code>hashbrown</code> dependency to version 0.15.</li>
+</ul>
+<h4>2.5.0 (2024-08-30)</h4>
+<ul>
+<li>Added an <code>insert_before</code> method to <code>IndexMap</code> and <code>IndexSet</code>, as an
+alternative to <code>shift_insert</code> with different behavior on existing entries.</li>
+<li>Added <code>first_entry</code> and <code>last_entry</code> methods to <code>IndexMap</code>.</li>
+<li>Added <code>From</code> implementations between <code>IndexedEntry</code> and <code>OccupiedEntry</code>.</li>
+</ul>
+<h4>2.4.0 (2024-08-13)</h4>
+<ul>
+<li>Added methods <code>IndexMap::append</code> and <code>IndexSet::append</code>, moving all items from
+one map or set into another, and leaving the original capacity for reuse.</li>
+</ul>
+<h4>2.3.0 (2024-07-31)</h4>
+<ul>
+<li>Added trait <code>MutableEntryKey</code> for opt-in mutable access to map entry keys.</li>
+<li>Added method <code>MutableKeys::iter_mut2</code> for opt-in mutable iteration of map
+keys and values.</li>
+</ul>
+<h4>2.2.6 (2024-03-22)</h4>
+<ul>
+<li>Added trait <code>MutableValues</code> for opt-in mutable access to set values.</li>
+</ul>
+<h4>2.2.5 (2024-02-29)</h4>
+<ul>
+<li>Added optional <code>borsh</code> serialization support.</li>
+</ul>
+<h4>2.2.4 (2024-02-28)</h4>
+<ul>
+<li>Added an <code>insert_sorted</code> method on <code>IndexMap</code>, <code>IndexSet</code>, and <code>VacantEntry</code>.</li>
+<li>Avoid hashing for lookups in single-entry maps.</li>
+<li>Limit preallocated memory in <code>serde</code> deserializers.</li>
+</ul>
+<h4>2.2.3 (2024-02-11)</h4>
+<ul>
+<li>Added <code>move_index</code> and <code>swap_indices</code> methods to <code>IndexedEntry</code>,
+<code>OccupiedEntry</code>, and <code>RawOccupiedEntryMut</code>, functioning like the existing
+methods on <code>IndexMap</code>.</li>
+<li>Added <code>shift_insert</code> methods on <code>VacantEntry</code> and <code>RawVacantEntryMut</code>, as
+well as <code>shift_insert_hashed_nocheck</code> on the latter, to insert the new entry
+at a particular index.</li>
+<li>Added <code>shift_insert</code> methods on <code>IndexMap</code> and <code>IndexSet</code> to insert a new
+entry at a particular index, or else move an existing entry there.</li>
+</ul>
+<h4>2.2.2 (2024-01-31)</h4>
+<ul>
+<li>Added indexing methods to raw entries: <code>RawEntryBuilder::from_hash_full</code>,
+<code>RawEntryBuilder::index_from_hash</code>, and <code>RawEntryMut::index</code>.</li>
+</ul>
+<h4>2.2.1 (2024-01-28)</h4>
+<ul>
+<li>Corrected the signature of <code>RawOccupiedEntryMut::into_key(self) -&gt; &amp;'a mut K</code>,
+This a breaking change from 2.2.0, but that version was published for less
+than a day and has now been yanked.</li>
+</ul>
+<h4>2.2.0 (2024-01-28)</h4>
+<ul>
+<li>
+<p>The new <code>IndexMap::get_index_entry</code> method finds an entry by its index for
+in-place manipulation.</p>
+</li>
+<li>
+<p>The <code>Keys</code> iterator now implements <code>Index&lt;usize&gt;</code> for quick access to the
+entry's key, compared to indexing the map to get the value.</p>
+</li>
+<li>
+<p>The new <code>IndexMap::splice</code> and <code>IndexSet::splice</code> methods will drain the
+given range as an iterator, and then replace that range with entries from
+an input iterator.</p>
+</li>
+<li>
+<p>The new trait <code>RawEntryApiV1</code> offers opt-in access to a raw entry API for
+<code>IndexMap</code>, corresponding to the unstable API on <code>HashSet</code> as of Rust 1.75.</p>
+</li>
+<li>
+<p>Many <code>IndexMap</code> and <code>IndexSet</code> methods have relaxed their type constraints,
+e.g. removing <code>K: Hash</code> on methods that don't actually need to hash.</p>
+</li>
+<li>
+<p>Removal methods <code>remove</code>, <code>remove_entry</code>, and <code>take</code> are now deprecated
+in favor of their <code>shift_</code> or <code>swap_</code> prefixed variants, which are more
+explicit about their effect on the index and order of remaining items.
+The deprecated methods will remain to guide drop-in replacements from
+<code>HashMap</code> and <code>HashSet</code> toward the prefixed methods.</p>
+</li>
+</ul>
+<h4>2.1.0 (2023-10-31)</h4>
+<ul>
+<li>
+<p>Empty slices can now be created with <code>map::Slice::{new, new_mut}</code> and
+<code>set::Slice::new</code>. In addition, <code>Slice::new</code>, <code>len</code>, and <code>is_empty</code> are
+now <code>const</code> functions on both types.</p>
+</li>
+<li>
+<p><code>IndexMap</code>, <code>IndexSet</code>, and their respective <code>Slice</code>s all have binary
+search methods for sorted data: map <code>binary_search_keys</code> and set
+<code>binary_search</code> for plain comparison, <code>binary_search_by</code> for custom
+comparators, <code>binary_search_by_key</code> for key extraction, and
+<code>partition_point</code> for boolean conditions.</p>
+</li>
+</ul>
+<h4>2.0.2 (2023-09-29)</h4>
+<ul>
+<li>The <code>hashbrown</code> dependency has been updated to version 0.14.1 to
+complete the support for Rust 1.63.</li>
+</ul>
+<h4>2.0.1 (2023-09-27)</h4>
+<ul>
+<li><strong>MSRV</strong>: Rust 1.63.0 is now supported as well, pending publication of
+<code>hashbrown</code>'s relaxed MSRV (or use cargo <code>--ignore-rust-version</code>).</li>
+</ul>
+<h4>2.0.0 (2023-06-23)</h4>
+<ul>
+<li>
+<p><strong>MSRV</strong>: Rust 1.64.0 or later is now required.</p>
+</li>
+<li>
+<p>The <code>&quot;std&quot;</code> feature is no longer auto-detected. It is included in the
+default feature set, or else can be enabled like any other Cargo feature.</p>
+</li>
+<li>
+<p>The <code>&quot;serde-1&quot;</code> feature has been removed, leaving just the optional
+<code>&quot;serde&quot;</code> dependency to be enabled like a feature itself.</p>
+</li>
+<li>
+<p><code>IndexMap::get_index_mut</code> now returns <code>Option&lt;(&amp;K, &amp;mut V)&gt;</code>, changing
+the key part from <code>&amp;mut K</code> to <code>&amp;K</code>. There is also a new alternative
+<code>MutableKeys::get_index_mut2</code> to access the former behavior.</p>
+</li>
+<li>
+<p>The new <code>map::Slice&lt;K, V&gt;</code> and <code>set::Slice&lt;T&gt;</code> offer a linear view of maps
+and sets, behaving a lot like normal <code>[(K, V)]</code> and <code>[T]</code> slices. Notably,
+comparison traits like <code>Eq</code> only consider items in order, rather than hash
+lookups, and slices even implement <code>Hash</code>.</p>
+</li>
+<li>
+<p><code>IndexMap</code> and <code>IndexSet</code> now have <code>sort_by_cached_key</code> and
+<code>par_sort_by_cached_key</code> methods which perform stable sorts in place
+using a key extraction function.</p>
+</li>
+<li>
+<p><code>IndexMap</code> and <code>IndexSet</code> now have <code>reserve_exact</code>, <code>try_reserve</code>, and
+<code>try_reserve_exact</code> methods that correspond to the same methods on <code>Vec</code>.
+However, exactness only applies to the direct capacity for items, while the
+raw hash table still follows its own rules for capacity and load factor.</p>
+</li>
+<li>
+<p>The <code>Equivalent</code> trait is now re-exported from the <code>equivalent</code> crate,
+intended as a common base to allow types to work with multiple map types.</p>
+</li>
+<li>
+<p>The <code>hashbrown</code> dependency has been updated to version 0.14.</p>
+</li>
+<li>
+<p>The <code>serde_seq</code> module has been moved from the crate root to below the
+<code>map</code> module.</p>
+</li>
+</ul>
+<h4>1.9.3 (2023-03-24)</h4>
+<ul>
+<li>Bump the <code>rustc-rayon</code> dependency, for compiler use only.</li>
+</ul>
+<h4>1.9.2 (2022-11-17)</h4>
+<ul>
+<li><code>IndexMap</code> and <code>IndexSet</code> both implement <code>arbitrary::Arbitrary&lt;'_&gt;</code> and
+<code>quickcheck::Arbitrary</code> if those optional dependency features are enabled.</li>
+</ul>
+<h4>1.9.1 (2022-06-21)</h4>
+<ul>
+<li>The MSRV now allows Rust 1.56.0 as well. However, currently <code>hashbrown</code>
+0.12.1 requires 1.56.1, so users on 1.56.0 should downgrade that to 0.12.0
+until there is a later published version relaxing its requirement.</li>
+</ul>
+<h4>1.9.0 (2022-06-16)</h4>
+<ul>
+<li>
+<p><strong>MSRV</strong>: Rust 1.56.1 or later is now required.</p>
+</li>
+<li>
+<p>The <code>hashbrown</code> dependency has been updated to version 0.12.</p>
+</li>
+<li>
+<p><code>IterMut</code> and <code>ValuesMut</code> now implement <code>Debug</code>.</p>
+</li>
+<li>
+<p>The new <code>IndexMap::shrink_to</code> and <code>IndexSet::shrink_to</code> methods shrink
+the capacity with a lower bound.</p>
+</li>
+<li>
+<p>The new <code>IndexMap::move_index</code> and <code>IndexSet::move_index</code> methods change
+the position of an item from one index to another, shifting the items
+between to accommodate the move.</p>
+</li>
+</ul>
+<h4>1.8.2 (2022-05-27)</h4>
+<ul>
+<li>Bump the <code>rustc-rayon</code> dependency, for compiler use only.</li>
+</ul>
+<h4>1.8.1 (2022-03-29)</h4>
+<ul>
+<li>The new <code>IndexSet::replace_full</code> will return the index of the item along
+with the replaced value, if any, by @zakcutner in PR <a href="https://github.com/indexmap-rs/indexmap/pull/222">222</a>.</li>
+</ul>
+<h4>1.8.0 (2022-01-07)</h4>
+<ul>
+<li>
+<p>The new <code>IndexMap::into_keys</code> and <code>IndexMap::into_values</code> will consume
+the map into keys or values, respectively, matching Rust 1.54's <code>HashMap</code>
+methods, by @taiki-e in PR <a href="https://github.com/indexmap-rs/indexmap/pull/195">195</a>.</p>
+</li>
+<li>
+<p>More of the iterator types implement <code>Debug</code>, <code>ExactSizeIterator</code>, and
+<code>FusedIterator</code>, by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/196">196</a>.</p>
+</li>
+<li>
+<p><code>IndexMap</code> and <code>IndexSet</code> now implement rayon's <code>ParallelDrainRange</code>,
+by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/197">197</a>.</p>
+</li>
+<li>
+<p><code>IndexMap::with_hasher</code> and <code>IndexSet::with_hasher</code> are now <code>const</code>
+functions, allowing static maps and sets, by @mwillsey in PR <a href="https://github.com/indexmap-rs/indexmap/pull/203">203</a>.</p>
+</li>
+<li>
+<p><code>IndexMap</code> and <code>IndexSet</code> now implement <code>From</code> for arrays, matching
+Rust 1.56's implementation for <code>HashMap</code>, by @rouge8 in PR <a href="https://github.com/indexmap-rs/indexmap/pull/205">205</a>.</p>
+</li>
+<li>
+<p><code>IndexMap</code> and <code>IndexSet</code> now have methods <code>sort_unstable_keys</code>,
+<code>sort_unstable_by</code>, <code>sorted_unstable_by</code>, and <code>par_*</code> equivalents,
+which sort in-place without preserving the order of equal items, by
+@bhgomes in PR <a href="https://github.com/indexmap-rs/indexmap/pull/211">211</a>.</p>
+</li>
+</ul>
+<h4>1.7.0 (2021-06-29)</h4>
+<ul>
+<li>
+<p><strong>MSRV</strong>: Rust 1.49 or later is now required.</p>
+</li>
+<li>
+<p>The <code>hashbrown</code> dependency has been updated to version 0.11.</p>
+</li>
+</ul>
+<h4>1.6.2 (2021-03-05)</h4>
+<ul>
+<li>
+<p>Fixed to match <code>std</code> behavior, <code>OccupiedEntry::key</code> now references the
+existing key in the map instead of the lookup key, by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/170">170</a>.</p>
+</li>
+<li>
+<p>The new <code>Entry::or_insert_with_key</code> matches Rust 1.50's <code>Entry</code> method,
+passing <code>&amp;K</code> to the callback to create a value, by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/175">175</a>.</p>
+</li>
+</ul>
+<h4>1.6.1 (2020-12-14)</h4>
+<ul>
+<li>
+<p>The new <code>serde_seq</code> module implements <code>IndexMap</code> serialization as a
+sequence to ensure order is preserved, by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/158">158</a>.</p>
+</li>
+<li>
+<p>New methods on maps and sets work like the <code>Vec</code>/slice methods by the same name:
+<code>truncate</code>, <code>split_off</code>, <code>first</code>, <code>first_mut</code>, <code>last</code>, <code>last_mut</code>, and
+<code>swap_indices</code>, by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/160">160</a>.</p>
+</li>
+</ul>
+<h4>1.6.0 (2020-09-05)</h4>
+<ul>
+<li>
+<p><strong>MSRV</strong>: Rust 1.36 or later is now required.</p>
+</li>
+<li>
+<p>The <code>hashbrown</code> dependency has been updated to version 0.9.</p>
+</li>
+</ul>
+<h4>1.5.2 (2020-09-01)</h4>
+<ul>
+<li>The new &quot;std&quot; feature will force the use of <code>std</code> for users that explicitly
+want the default <code>S = RandomState</code>, bypassing the autodetection added in 1.3.0,
+by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/145">145</a>.</li>
+</ul>
+<h4>1.5.1 (2020-08-07)</h4>
+<ul>
+<li>
+<p>Values can now be indexed by their <code>usize</code> position by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/132">132</a>.</p>
+</li>
+<li>
+<p>Some of the generic bounds have been relaxed to match <code>std</code> by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/141">141</a>.</p>
+</li>
+<li>
+<p><code>drain</code> now accepts any <code>R: RangeBounds&lt;usize&gt;</code> by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/142">142</a>.</p>
+</li>
+</ul>
+<h4>1.5.0 (2020-07-17)</h4>
+<ul>
+<li>
+<p><strong>MSRV</strong>: Rust 1.32 or later is now required.</p>
+</li>
+<li>
+<p>The inner hash table is now based on <code>hashbrown</code> by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/131">131</a>.
+This also completes the method <code>reserve</code> and adds <code>shrink_to_fit</code>.</p>
+</li>
+<li>
+<p>Add new methods <code>get_key_value</code>, <code>remove_entry</code>, <code>swap_remove_entry</code>,
+and <code>shift_remove_entry</code>, by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/136">136</a></p>
+</li>
+<li>
+<p><code>Clone::clone_from</code> reuses allocations by @cuviper in PR <a href="https://github.com/indexmap-rs/indexmap/pull/125">125</a></p>
+</li>
+<li>
+<p>Add new method <code>reverse</code> by @linclelinkpart5 in PR <a href="https://github.com/indexmap-rs/indexmap/pull/128">128</a></p>
+</li>
+</ul>
+<h4>1.4.0 (2020-06-01)</h4>
+<ul>
+<li>
+<p>Add new method <code>get_index_of</code> by @Thermatrix in PR <a href="https://github.com/indexmap-rs/indexmap/pull/115">115</a> and <a href="https://github.com/indexmap-rs/indexmap/pull/120">120</a></p>
+</li>
+<li>
+<p>Fix build script rebuild-if-changed configuration to use &quot;build.rs&quot;;
+fixes issue <a href="https://github.com/indexmap-rs/indexmap/issues/123">123</a>. Fix by @cuviper.</p>
+</li>
+<li>
+<p>Dev-dependencies (rand and quickcheck) have been updated. The crate's tests
+now run using Rust 1.32 or later (MSRV for building the crate has not changed).
+by @kjeremy and @bluss</p>
+</li>
+</ul>
+<h4>1.3.2 (2020-02-05)</h4>
+<ul>
+<li>Maintenance update to regenerate the published <code>Cargo.toml</code>.</li>
+</ul>
+<h4>1.3.1 (2020-01-15)</h4>
+<ul>
+<li>Maintenance update for formatting and <code>autocfg</code> 1.0.</li>
+</ul>
+<h4>1.3.0 (2019-10-18)</h4>
+<ul>
+<li>The deprecation messages in the previous version have been removed.
+(The methods have not otherwise changed.) Docs for removal methods have been
+improved.</li>
+<li>From Rust 1.36, this crate supports being built <strong>without std</strong>, requiring
+<code>alloc</code> instead. This is enabled automatically when it is detected that
+<code>std</code> is not available. There is no crate feature to enable/disable to
+trigger this. The new build-dep <code>autocfg</code> enables this.</li>
+</ul>
+<h4>1.2.0 (2019-09-08)</h4>
+<ul>
+<li>
+<p>Plain <code>.remove()</code> now has a deprecation message, it informs the user
+about picking one of the removal functions <code>swap_remove</code> and <code>shift_remove</code>
+which have different performance and order semantics.
+Plain <code>.remove()</code> will not be removed, the warning message and method
+will remain until further.</p>
+</li>
+<li>
+<p>Add new method <code>shift_remove</code> for order preserving removal on the map,
+and <code>shift_take</code> for the corresponding operation on the set.</p>
+</li>
+<li>
+<p>Add methods <code>swap_remove</code>, <code>swap_remove_entry</code> to <code>Entry</code>.</p>
+</li>
+<li>
+<p>Fix indexset/indexmap to support full paths, like <code>indexmap::indexmap!()</code></p>
+</li>
+<li>
+<p>Internal improvements: fix warnings, deprecations and style lints</p>
+</li>
+</ul>
+<h4>1.1.0 (2019-08-20)</h4>
+<ul>
+<li>
+<p>Added optional feature <code>&quot;rayon&quot;</code> that adds parallel iterator support
+to <code>IndexMap</code> and <code>IndexSet</code> using Rayon. This includes all the regular
+iterators in parallel versions, and parallel sort.</p>
+</li>
+<li>
+<p>Implemented <code>Clone</code> for <code>map::{Iter, Keys, Values}</code> and
+<code>set::{Difference, Intersection, Iter, SymmetricDifference, Union}</code></p>
+</li>
+<li>
+<p>Implemented <code>Debug</code> for <code>map::{Entry, IntoIter, Iter, Keys, Values}</code> and
+<code>set::{Difference, Intersection, IntoIter, Iter, SymmetricDifference, Union}</code></p>
+</li>
+<li>
+<p>Serde trait <code>IntoDeserializer</code> are implemented for <code>IndexMap</code> and <code>IndexSet</code>.</p>
+</li>
+<li>
+<p>Minimum Rust version requirement increased to Rust 1.30 for development builds.</p>
+</li>
+</ul>
+<h4>1.0.2 (2018-10-22)</h4>
+<ul>
+<li>
+<p>The new methods <code>IndexMap::insert_full</code> and <code>IndexSet::insert_full</code> are
+both like <code>insert</code> with the index included in the return value.</p>
+</li>
+<li>
+<p>The new method <code>Entry::and_modify</code> can be used to modify occupied
+entries, matching the new methods of <code>std</code> maps in Rust 1.26.</p>
+</li>
+<li>
+<p>The new method <code>Entry::or_default</code> inserts a default value in unoccupied
+entries, matching the new methods of <code>std</code> maps in Rust 1.28.</p>
+</li>
+</ul>
+<h4>1.0.1 (2018-03-24)</h4>
+<ul>
+<li>Document Rust version policy for the crate (see rustdoc)</li>
+</ul>
+<h4>1.0.0 (2018-03-11)</h4>
+<ul>
+<li>This is the 1.0 release for <code>indexmap</code>! (the crate and datastructure
+formerly known as “ordermap”)</li>
+<li><code>OccupiedEntry::insert</code> changed its signature, to use <code>&amp;mut self</code> for
+the method receiver, matching the equivalent method for a standard
+<code>HashMap</code>.  Thanks to @dtolnay for finding this bug.</li>
+<li>The deprecated old names from ordermap were removed: <code>OrderMap</code>,
+<code>OrderSet</code>, <code>ordermap!{}</code>, <code>orderset!{}</code>. Use the new <code>IndexMap</code>
+etc names instead.</li>
+</ul>
+<h4>0.4.1 (2018-02-14)</h4>
+<ul>
+<li>Renamed crate to <code>indexmap</code>; the <code>ordermap</code> crate is now deprecated
+and the types <code>OrderMap/Set</code> now have a deprecation notice.</li>
+</ul>
+<h4>0.4.0 (2018-02-02)</h4>
+<ul>
+<li>
+<p>This is the last release series for this <code>ordermap</code> under that name,
+because the crate is <strong>going to be renamed</strong> to <code>indexmap</code> (with types
+<code>IndexMap</code>, <code>IndexSet</code>) and no change in functionality!</p>
+</li>
+<li>
+<p>The map and its associated structs moved into the <code>map</code> submodule of the
+crate, so that the map and set are symmetric</p>
+<ul>
+<li>The iterators, <code>Entry</code> and other structs are now under <code>ordermap::map::</code></li>
+</ul>
+</li>
+<li>
+<p>Internally refactored <code>OrderMap&lt;K, V, S&gt;</code> so that all the main algorithms
+(insertion, lookup, removal etc) that don't use the <code>S</code> parameter (the
+hasher) are compiled without depending on <code>S</code>, which reduces generics bloat.</p>
+</li>
+<li>
+<p><code>Entry&lt;K, V&gt;</code> no longer has a type parameter <code>S</code>, which is just like
+the standard <code>HashMap</code>'s entry.</p>
+</li>
+<li>
+<p>Minimum Rust version requirement increased to Rust 1.18</p>
+</li>
+</ul>
+<h4>0.3.5 (2018-01-14)</h4>
+<ul>
+<li>Documentation improvements</li>
+</ul>
+<h4>0.3.4 (2018-01-04)</h4>
+<ul>
+<li>The <code>.retain()</code> methods for <code>OrderMap</code> and <code>OrderSet</code> now
+traverse the elements in order, and the retained elements <strong>keep their order</strong></li>
+<li>Added new methods <code>.sort_by()</code>, <code>.sort_keys()</code> to <code>OrderMap</code> and
+<code>.sort_by()</code>, <code>.sort()</code> to <code>OrderSet</code>. These methods allow you to
+sort the maps in place efficiently.</li>
+</ul>
+<h4>0.3.3 (2017-12-28)</h4>
+<ul>
+<li>Document insertion behaviour better by @lucab</li>
+<li>Updated dependences (no feature changes) by @ignatenkobrain</li>
+</ul>
+<h4>0.3.2 (2017-11-25)</h4>
+<ul>
+<li>Add <code>OrderSet</code> by @cuviper!</li>
+<li><code>OrderMap::drain</code> is now (too) a double ended iterator.</li>
+</ul>
+<h4>0.3.1 (2017-11-19)</h4>
+<ul>
+<li>In all ordermap iterators, forward the <code>collect</code> method to the underlying
+iterator as well.</li>
+<li>Add crates.io categories.</li>
+</ul>
+<h4>0.3.0 (2017-10-07)</h4>
+<ul>
+<li>The methods <code>get_pair</code>, <code>get_pair_index</code> were both replaced by
+<code>get_full</code> (and the same for the mutable case).</li>
+<li>Method <code>swap_remove_pair</code> replaced by <code>swap_remove_full</code>.</li>
+<li>Add trait <code>MutableKeys</code> for opt-in mutable key access. Mutable key access
+is only possible through the methods of this extension trait.</li>
+<li>Add new trait <code>Equivalent</code> for key equivalence. This extends the
+<code>Borrow</code> trait mechanism for <code>OrderMap::get</code> in a backwards compatible
+way, just some minor type inference related issues may become apparent.
+See <a href="https://github.com/indexmap-rs/indexmap/pull/10">#10</a> for more information.</li>
+<li>Implement <code>Extend&lt;(&amp;K, &amp;V)&gt;</code> by @xfix.</li>
+</ul>
+<h4>0.2.13 (2017-09-30)</h4>
+<ul>
+<li>Fix deserialization to support custom hashers by @Techcable.</li>
+<li>Add methods <code>.index()</code> on the entry types by @garro95.</li>
+</ul>
+<h4>0.2.12 (2017-09-11)</h4>
+<ul>
+<li>Add methods <code>.with_hasher()</code>, <code>.hasher()</code>.</li>
+</ul>
+<h4>0.2.11 (2017-08-29)</h4>
+<ul>
+<li>Support <code>ExactSizeIterator</code> for the iterators. By @Binero.</li>
+<li>Use <code>Box&lt;[Pos]&gt;</code> internally, saving a word in the <code>OrderMap</code> struct.</li>
+<li>Serde support, with crate feature <code>&quot;serde-1&quot;</code>. By @xfix.</li>
+</ul>
+<h4>0.2.10 (2017-04-29)</h4>
+<ul>
+<li>Add iterator <code>.drain(..)</code> by @stevej.</li>
+</ul>
+<h4>0.2.9 (2017-03-26)</h4>
+<ul>
+<li>Add method <code>.is_empty()</code> by @overvenus.</li>
+<li>Implement <code>PartialEq, Eq</code> by @overvenus.</li>
+<li>Add method <code>.sorted_by()</code>.</li>
+</ul>
+<h4>0.2.8 (2017-03-01)</h4>
+<ul>
+<li>Add iterators <code>.values()</code> and <code>.values_mut()</code>.</li>
+<li>Fix compatibility with 32-bit platforms.</li>
+</ul>
+<h4>0.2.7 (2016-11-02)</h4>
+<ul>
+<li>Add <code>.retain()</code>.</li>
+</ul>
+<h4>0.2.6 (2016-11-02)</h4>
+<ul>
+<li>Add <code>OccupiedEntry::remove_entry</code> and other minor entry methods,
+so that it now has all the features of <code>HashMap</code>'s entries.</li>
+</ul>
+<h4>0.2.5 (2016-10-31)</h4>
+<ul>
+<li>Improved <code>.pop()</code> slightly.</li>
+</ul>
+<h4>0.2.4 (2016-10-22)</h4>
+<ul>
+<li>Improved performance of <code>.insert()</code> (<a href="https://github.com/indexmap-rs/indexmap/pull/3">#3</a>) by @pczarn.</li>
+</ul>
+<h4>0.2.3 (2016-10-11)</h4>
+<ul>
+<li>Generalize <code>Entry</code> for now, so that it works on hashmaps with non-default
+hasher. However, there's a lingering compat issue since libstd <code>HashMap</code>
+does not parameterize its entries by the hasher (<code>S</code> typarm).</li>
+<li>Special case some iterator methods like <code>.nth()</code>.</li>
+</ul>
+<h4>0.2.2 (2016-10-02)</h4>
+<ul>
+<li>Disable the verbose <code>Debug</code> impl by default.</li>
+</ul>
+<h4>0.2.1 (2016-10-02)</h4>
+<ul>
+<li>Fix doc links and clarify docs.</li>
+</ul>
+<h4>0.2.0 (2016-10-01)</h4>
+<ul>
+<li>Add more <code>HashMap</code> methods &amp; compat with its API.</li>
+<li>Experimental support for <code>.entry()</code> (the simplest parts of the API).</li>
+<li>Add <code>.reserve()</code> (placeholder impl).</li>
+<li>Add <code>.remove()</code> as synonym for <code>.swap_remove()</code>.</li>
+<li>Changed <code>.insert()</code> to swap value if the entry already exists, and
+return <code>Option</code>.</li>
+<li>Experimental support as an <em>indexed</em> hash map! Added methods
+<code>.get_index()</code>, <code>.get_index_mut()</code>, <code>.swap_remove_index()</code>,
+<code>.get_pair_index()</code>, <code>.get_pair_index_mut()</code>.</li>
+</ul>
+<h4>0.1.2 (2016-09-19)</h4>
+<ul>
+<li>Implement the 32/32 split idea for <code>Pos</code> which improves cache utilization
+and lookup performance.</li>
+</ul>
+<h4>0.1.1 (2016-09-16)</h4>
+<ul>
+<li>Initial release.</li>
+</ul>
+</div><p class="table-note">sha256:d0337e8981562fbf48eca08cf9a9927b9b0ccdb510cb091d6f2ea1b473668e3e</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0 OR MIT</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2016--2017
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:ecc269ef87fd38a1d98e30bfac9ba964a9dbd9315c3770fed98d4d7cb5882055</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:008f236cb00f25bde24ce73694ab480ffcf0e638b443443218282250cc18e7b3</code></dd><dt>Upstream checksum</dt><dd><code>sha256:d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at efce0ce</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/indexmap&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2.14.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">arbitrary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:arbitrary&quot;</span><span class="p">]</span>
+<span class="n">borsh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:borsh&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">quickcheck</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:quickcheck&quot;</span><span class="p">]</span>
+<span class="n">rayon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rayon&quot;</span><span class="p">]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">sval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:sval&quot;</span><span class="p">]</span>
+<span class="n">test_debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;indexmap&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">arbitrary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/arbitrary&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">borsh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/borsh&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">equivalent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/equivalent&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">hashbrown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/hashbrown&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.17&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">quickcheck</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/quickcheck&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rayon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rayon&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.220&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any())&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde_core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.220&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">sval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/sval&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:9ebe09693379e402e89284142b16dc935412d6addfd66c604969e8f15a42d5e0&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:0c8061b2662bc8ca14686e8ca0bdae3a8ac591e732140705967e33167a5b2d9d&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/indexmap/2.14.0">crates.io package</a></li><li><a href="https://github.com/indexmap-rs/indexmap">Source repository</a></li><li><a href="https://docs.rs/indexmap/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">indexmap</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/indexmap"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=2.14.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

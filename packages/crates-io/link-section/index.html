@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>link-section 0.19.3 · Incan.pub</title><meta name="description" content="Link-time initialized slices for Rust, with full support for Linux, macOS, Windows, WASM and many more platforms."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/link-section</p><div class="title-row"><h1>link-section</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/link-section/versions/0.19.3/" selected>0.19.3</option></select></label></div><p class="description">Link-time initialized slices for Rust, with full support for Linux, macOS, Windows, WASM and many more platforms.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0 OR MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><p>The crate is part of the <a href="https://crates.io/crates/linktime"><code>linktime</code></a> project.</p>
+<p><a href="https://github.com/mmastrac/linktime">GitHub</a> <a href="https://crates.io/crates/link-section">Crates.io License</a> <a href="https://github.com/mmastrac/linktime/actions/workflows/rust.yml">Build Status</a></p>
+<table>
+<thead>
+<tr>
+<th>crate</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>linktime</code>&lt;br&gt;<a href="https://docs.rs/linktime">docs.rs</a> <a href="https://crates.io/crates/linktime">crates.io</a></td>
+<td>Convenience crate for <code>ctor</code>, <code>dtor</code> and <code>link-section</code></td>
+</tr>
+<tr>
+<td><code>ctor</code>&lt;br&gt;<a href="https://docs.rs/ctor">docs.rs</a> <a href="https://crates.io/crates/ctor">crates.io</a></td>
+<td>Module initialization functions before main</td>
+</tr>
+<tr>
+<td><code>dtor</code>&lt;br&gt;<a href="https://docs.rs/dtor">docs.rs</a> <a href="https://crates.io/crates/dtor">crates.io</a></td>
+<td>Module shutdown functions before main</td>
+</tr>
+<tr>
+<td><code>link-section</code>&lt;br&gt;<a href="https://docs.rs/link-section">docs.rs</a> <a href="https://crates.io/crates/link-section">crates.io</a></td>
+<td>Linker-managed typed (slices) and untyped sections</td>
+</tr>
+<tr>
+<td><code>scattered-collect</code>&lt;br&gt;<a href="https://docs.rs/scattered-collect">docs.rs</a> <a href="https://crates.io/crates/scattered-collect">crates.io</a></td>
+<td>Linker-managed collections: slices, sorted slices, maps</td>
+</tr>
+</tbody>
+</table>
+<h3>link-section</h3>
+<p>A crate for defining linker-backed sections in Rust.</p>
+<p><code>link-section</code> provides two attributes:</p>
+<ul>
+<li><code>#[section(...)]</code> defines a section handle. The handle is a <code>static</code> item used
+to inspect the section at runtime, usually as a slice. The handle's visibility
+determines where items may be submitted: public handles can be submitted from
+any module, while private handles can only be submitted from the module that
+defines them.</li>
+<li><code>#[in_section(path::to::SECTION)]</code> submits an item to that section. A
+submitted item is an item annotated with <code>#[in_section(...)]</code>; depending on
+the section kind, it may also remain usable directly at the submission site.
+The <code>path::to::SECTION</code> must be visible to the submission site.</li>
+</ul>
+<p>Together, these attributes let separately-declared items be collected into one
+linker section and accessed through a single section handle.</p>
+<h4>Visibility</h4>
+<p>Importantly, even though the linker is used to collect items, the visibility of
+the section handle determines where items may be submitted: public handles can
+be submitted from any crate (assuming the submitting crate references the one
+with the collection handle), while private handles can only be submitted from
+the crate that defines them.</p>
+<p>The section name is generated from the name of the item and a location of the
+item within the source tree. This means that you may have more than one
+independent section with the item name in a project, and they will not conflict.</p>
+<p>Note that if you are generating sections from a macro, you <em>must</em> include at
+least one token from the top-level macro call in the section definition to avoid
+conflicts with tokens that are provided purely from the macro itself.</p>
+<p>To allow for submission of items without visibility constraints, the crate
+provides an <code>unsafe</code> option for the submission macro where the section's
+name and attributes may be specified manually:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">MyType</span><span class="p">(</span><span class="kt">u8</span><span class="p">);</span>
+
+<span class="k">mod</span><span class="w"> </span><span class="nn">my_private_section</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Specify a section name so it can be used without a direct reference.</span>
+<span class="w">    </span><span class="cp">#[section(typed, unsafe, name = my_crate::SECTION_NAME)]</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="n">MY_SECTION</span><span class="p">:</span><span class="w"> </span><span class="nc">link_section</span><span class="p">::</span><span class="n">TypedSection</span><span class="o">&lt;</span><span class="n">MyType</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">mod</span><span class="w"> </span><span class="nn">elsewhere</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// This must match the definition site!</span>
+<span class="w">    </span><span class="cp">#[in_section(unsafe, name = my_crate::SECTION_NAME, type = typed)]</span><span class="w"> </span><span class="c1">// optionally: aux(main = MAIN_SECTION)</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="n">ITEM</span><span class="p">:</span><span class="w"> </span><span class="nc">MyType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyType</span><span class="p">(</span><span class="mi">42</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Syntax</h5>
+<p>Section definition:</p>
+<ul>
+<li><code>#[section(&lt;kind&gt;)]</code></li>
+<li><code>#[section(&lt;kind&gt;, aux(main = &lt;path::to::MAIN_SECTION&gt;))]</code></li>
+<li><code>#[section(unsafe, type = &lt;kind&gt;)]</code></li>
+<li><code>#[section(unsafe, type = &lt;kind&gt;, name = &lt;name&gt;)]</code></li>
+</ul>
+<p>Section submission:</p>
+<ul>
+<li><code>#[in_section(path::to::SECTION)]</code></li>
+<li><code>#[in_section(unsafe, type = &lt;kind&gt;, name = &lt;name&gt;)]</code></li>
+</ul>
+<h4>Section Kinds</h4>
+<p>There are five section kinds:</p>
+<ul>
+<li><code>untyped</code>: Collects related code or data in one linker section without
+exposing a typed slice. This is useful for co-location, phase-specific code,
+or platform-specific section placement.</li>
+<li><code>typed</code>: Stores values of one type and exposes them as an immutable slice.</li>
+<li><code>mutable</code>: Stores values of one type and exposes them as a mutable slice.</li>
+<li><code>reference</code>: Stores values of one type, exposes them as an immutable slice,
+and also lets each submitted item be used as a reference at its submission
+site.</li>
+<li><code>movable</code>: Stores values of one type and exposes them as a mutable slice, and
+also lets each submitted item be used as a reference at its submission site.
+The entire section is available as a mutable slice, and items may be reordered
+during startup initialization (see [<code>TypedMovableSection</code>] for more details).</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Section Kind</th>
+<th>Immutable Slice</th>
+<th>Mutable Slice</th>
+<th><code>const</code> Items</th>
+<th><code>static</code> / Reference Items</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>untyped</code></td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>typed</code></td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+<td>⚠️</td>
+</tr>
+<tr>
+<td><code>mutable</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><code>reference</code></td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>movable</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<p>⚠️ Native targets support <code>static</code> submissions for <code>typed</code> sections; WASM uses
+<code>const</code> submissions only.</p>
+<h4>Submitting Items</h4>
+<p>Items are submitted with <code>#[in_section(SECTION)]</code>.</p>
+<p>A <code>const</code> submission copies the value into the section. The original constant
+remains usable as a normal Rust constant, and the section receives its own
+stored copy.</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[in_section(MY_SECTION)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">ITEM</span><span class="p">:</span><span class="w"> </span><span class="nc">MyType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyType</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+</code></pre>
+<p>A <code>static</code> submission stores the <code>static</code> directly in the section. References to
+the <code>static</code> and references obtained from the section slice point at the same
+underlying object. <code>static</code> submissions are supported for typed sections on
+native targets and for reference sections.</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[in_section(MY_SECTION)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ITEM</span><span class="p">:</span><span class="w"> </span><span class="nc">MyType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyType</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+</code></pre>
+<p>A <code>fn</code> submitted to a typed section is stored as a function pointer. The
+function body itself is not placed into the typed data section.</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[section(typed)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">FUNCTIONS</span><span class="p">:</span><span class="w"> </span><span class="nc">link_section</span><span class="p">::</span><span class="n">TypedSection</span><span class="o">&lt;</span><span class="k">fn</span><span class="p">()</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="cp">#[in_section(FUNCTIONS)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">callback</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Platform Support</h4>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linux</td>
+<td>✅ Supported, uses orphan section handling (§1)</td>
+</tr>
+<tr>
+<td>*BSD</td>
+<td>✅ Supported, uses orphan section handling (§1)</td>
+</tr>
+<tr>
+<td>macOS</td>
+<td>✅ Fully supported</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>✅ Fully supported</td>
+</tr>
+<tr>
+<td>WASM</td>
+<td>✅ Fully supported, via emulation (§2)</td>
+</tr>
+<tr>
+<td>AIX</td>
+<td>✅ Supported (§3) (§4)</td>
+</tr>
+<tr>
+<td>Other LLVM/GCC platforms</td>
+<td>✅ Supported, uses orphan section handling (§1)</td>
+</tr>
+</tbody>
+</table>
+<p>(§1) Orphan section handling is a feature of the linker that allows sections to
+be defined without a pre-defined name.</p>
+<p>(§2) WASM requires <code>const</code> items, and uses <code>ctor</code>-like initialization to copy
+data to a contiguous section. To access link-section slices in WASM in <code>#[ctor]</code>
+functions, make sure to use at least <code>#[ctor(priority = 1)]</code>.</p>
+<p>(§3) AIX requires <code>-C link-arg=-bdbg:namedsects:ss</code> which enables functionality
+similar to LLVM/GCC's orphan section handling.</p>
+<p>(§4) Empty sections are not currently supported: ensure every section has at least
+one item, or pass the <code>-C link-arg=-berok</code> linker flag to ignore errors.</p>
+<h4>Platform Details</h4>
+<p>Each platform has a slightly different implementation of section control.</p>
+<h5>Linux and other LLVM/GCC platforms</h5>
+<ul>
+<li>Has start/end symbols: ✅ (C-compatible names only)</li>
+<li>Supports linker sorting: ❌</li>
+</ul>
+<p>On Linux and other LLVM/GCC platforms, the linker supports orphan sections,
+which allow sections to be defined without a pre-defined name. These sections
+are emitted as if they were r/w <code>.data</code>. For sections with C-compatible names,
+the linker will emit start/end symbols for the section.</p>
+<p>Orphan sections are not sorted via numeric suffix (e.g.: <code>SECTION.1</code>,
+<code>SECTION.2</code>, etc.) with the default linker script.</p>
+<h5>macOS</h5>
+<ul>
+<li>Has start/end symbols: ✅</li>
+<li>Supports linker sorting: ❌</li>
+</ul>
+<p>On macOS, sections are configured via <code>__DATA</code> or <code>__TEXT</code> prefix and option
+suffixes (<code>regular</code>, <code>no_dead_strip</code>, etc.). The linker emits start and stop
+symbols, but Rust requires a (somewhat-stable) <code>\x01</code> prefix to avoid mangling
+the section name. macOS does not support ordering in the linker.</p>
+<h5>Windows</h5>
+<ul>
+<li>Has start/end symbols: ❌</li>
+<li>Supports linker sorting: ✅</li>
+</ul>
+<p>On Windows, the linker does not emit start/end symbols, but all sections with a
+common prefix are automatically sorted by suffix, allowing us to use suffixes to
+control placement of start/stop symbols that we emit.</p>
+<p>See
+<a href="https://devblogs.microsoft.com/oldnewthing/20181107-00/?p=100155">this blog post</a>
+and
+<a href="https://devblogs.microsoft.com/oldnewthing/20181108-00/?p=100165">this blog post</a>
+for more details about the alphabetical sorting rule.</p>
+<h5>WASM</h5>
+<ul>
+<li>Has start/end symbols: ❌</li>
+<li>Supports linker sorting: ❌</li>
+</ul>
+<p>On WASM platforms there are no linker-provided start/end symbols and no linker
+ordering. Normally, WASM does not support placing arbitrary data in link
+sections - only non-pointer data is supported. To work around this, the WASM
+support uses <code>const</code> items and pre-<code>main</code> construction functions to gather each
+entry into a contiguous section allocated at startup.</p>
+<p>Each submitted item emits a plain (linear-memory) static &quot;list node&quot; plus an
+<code>.init_array.0</code> constructor that threads the node onto an intrusive linked list
+rooted in the section. Because these nodes are interior-mutable and have their
+address taken, LLVM cannot merge them even under fat LTO, so the item
+count is always exact.</p>
+<p>The list is materialised into one contiguous allocation by an eager,
+ordered constructor. Item submissions run at <code>.init_array.0</code> (priority 0), and
+each section emits a finalization constructor at <code>.init_array.1</code> (priority 1).
+Because wasm-ld orders <code>.init_array.*</code> by the integer value of the suffix, the
+finalizer is guaranteed to run after every submission and before any
+<code>#[ctor(priority &gt;= 2)]</code> and before <code>main</code> — a well-defined pre-<code>main</code> time
+rather than &quot;whenever the section is first read&quot;.</p>
+<p>[<code>Ref</code>] / [<code>MovableRef</code>] handles carry a pointer to their owning section and also
+flatten it on first dereference. That lazy path is an idempotent backstop for the
+one remaining tie: an explicit <code>#[ctor(priority = 1)]</code> that runs before the
+finalizer. As a result the <code>#[ctor]</code> priority requirement is the same as
+elsewhere: to read a link section or dereference a [<code>Ref</code>] / [<code>MovableRef</code>]
+handle from a <code>#[ctor]</code>, use at least <code>#[ctor(priority = 1)]</code>. Reads from <code>main</code>
+(or any later constructor) are always safe.</p>
+<p>A <code>#[ctor(priority = 0)]</code> that reads section <em>bounds</em> (not a [<code>Ref</code>]) is the one
+corner that breaks: it interleaves with <code>.init_array.0</code> submissions, triggers an
+early lazy flatten, and then any later submission panics (the section is already
+materialised). The contract — use at least priority 1 — is unchanged, but the
+panic now names the section and the likely cause.</p>
+<h5>AIX</h5>
+<ul>
+<li>Has start/end symbols: ✅</li>
+<li>Supports linker sorting: ❌</li>
+</ul>
+<p>AIX maps Rust's <code>#[link_section]</code> to <code>csect</code>s (Control Sections), which act like
+subsections of the larger <code>.text</code> and <code>.data</code> sections
+&lt;sup&gt;<a href="https://www.ibm.com/docs/kk/aix/7.2.0?topic=program-understanding-programming-toc">↳</a>&lt;/sup&gt;.
+A <code>csect</code> is the smallest, indivisible unit of code or data.</p>
+<p>By default, AIX does not have section start/stop symbols, but the most recent
+versions of the linker added a new <code>-bdbg:namedsects:ss</code> flag which enables
+section start/stop symbols
+&lt;sup&gt;<a href="https://reviews.llvm.org/D124857?id=427067">↳</a>&lt;/sup&gt;.</p>
+<p>This flag can be set with <code>-C link-arg=-bdbg:namedsects:ss</code> (or by upgrading to
+a recent Rust version that sets this automatically
+&lt;sup&gt;<a href="https://rust.googlesource.com/rust/+/ad582a586550bf2c72e963939f61a71df1af7c0c%5E%21/#F0">↳</a>&lt;/sup&gt;
+to support link sections.</p>
+<p>The linker will report an error like this if the start/stop symbols are not
+found:</p>
+<pre><code>= note: ld: 0711-317 ERROR: Undefined symbol: __start__data_link_section_DATABASES
+        ld: 0711-317 ERROR: Undefined symbol: __stop__data_link_section_DATABASES
+        ld: 0711-345 Use the -bloadmap or -bnoquiet option to obtain more information.
+</code></pre>
+<p>In addition, the linker may report the same errors if a section is empty. It is
+recommended that you either (1) provide a sentinel item for AIX that can be skipped
+in the slice, or (2) pass the <code>-C link-arg=-berok</code> linker flag to ignore the error.</p>
+<p>For debugging AIX link-section issues, <code>-C link-arg=-bmap:[path]/linker.out</code> and
+<code>-C link-arg=-bnoquiet</code> may also be useful.</p>
+<p>AIX supports a special mode to strip (<code>strip -r</code>) that preserves structural
+symbols like <code>csect</code>s and exports. A future version of <code>link-section</code> may add
+support for loading <code>csect</code> bounds from the binary's symbol table.</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[target.powerpc64-ibm-aix]</span>
+<span class="n">rustflags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;-C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;link-arg=-bdbg:namedsects:ss&quot;</span><span class="p">,</span><span class="w">   </span><span class="c1"># required</span>
+<span class="w">    </span><span class="s2">&quot;-C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;link-arg=-bmap:linker.out&quot;</span><span class="p">,</span><span class="w">      </span><span class="c1"># for debugging</span>
+<span class="w">    </span><span class="s2">&quot;-C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;link-arg=-bnoquiet&quot;</span><span class="p">,</span><span class="w">             </span><span class="c1"># for debugging</span>
+<span class="p">]</span>
+</code></pre>
+<h4>Typed Sections</h4>
+<p>Typed sections provide a section where all items are of a specific, sized type.
+The typed section may be accessed as a slice of the type at zero cost if
+desired.</p>
+<p>A typed section can be created from either <code>static</code> or <code>const</code> items.</p>
+<p>For <code>const</code> items: a copy of the <code>const</code> is materialised at link time, while the
+constant itself remains available for use as a constant in <code>const</code> contexts.</p>
+<p>For <code>static</code> items: the static is stored directly in the link section.</p>
+<p><code>fn</code> items are special-cased and stored as function pointers in the typed
+section.</p>
+<h4>Exclusive Access</h4>
+<p>Mutable sections (ie: [<code>TypedMutableSection</code>] and [<code>TypedMovableSection</code>])
+require exclusive access to the section's memory while calling
+[<code>TypedMutableSection::as_mut_slice</code>] or [<code>TypedMovableSection::as_mut_slice</code>].</p>
+<p>This is normally satisfied only during pre-<code>main</code> initialization (for example
+inside a <code>#[ctor]</code>). After <code>main</code>, the caller must guarantee no concurrent reads
+or writes from other threads and no active Rust references into the section.</p>
+<p>It is highly recommended not to access the mutable references after <code>main</code> has
+started.</p>
+<h4>Usage</h4>
+<p>Create an untyped section using the <code>#[section]</code> macro that keeps related items
+in close proximity:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">link_section</span><span class="p">::{</span><span class="n">in_section</span><span class="p">,</span><span class="w"> </span><span class="n">section</span><span class="p">};</span>
+
+<span class="cp">#[section(untyped)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">CODE_SECTION</span><span class="p">:</span><span class="w"> </span><span class="nc">link_section</span><span class="p">::</span><span class="n">Section</span><span class="p">;</span>
+
+<span class="cp">#[in_section(CODE_SECTION)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">link_section_function</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;link_section_function&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>Create a typed section using the <code>#[section]</code> macro that stores items of a
+specific, sized type from <code>static</code> or <code>const</code> items:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">mod</span><span class="w"> </span><span class="nn">my_registry</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="n">link_section</span><span class="p">::{</span><span class="n">in_section</span><span class="p">,</span><span class="w"> </span><span class="n">section</span><span class="p">};</span>
+
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">MyStruct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cp">#[section(typed)]</span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">MY_REGISTRY</span><span class="p">:</span><span class="w"> </span><span class="nc">link_section</span><span class="p">::</span><span class="n">TypedSection</span><span class="o">&lt;</span><span class="n">MyStruct</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Registers a `const` item.</span>
+<span class="w">    </span><span class="k">mod</span><span class="w"> </span><span class="nn">register_a_constant</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">use</span><span class="w"> </span><span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// A copy of this constant is registered in the link section.</span>
+<span class="w">        </span><span class="cp">#[in_section(MY_REGISTRY)]</span>
+<span class="w">        </span><span class="k">pub</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">LINKED_MY_STRUCT</span><span class="p">:</span><span class="w"> </span><span class="nc">MyStruct</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyStruct</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my_struct&quot;</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Registers a `static` item.</span>
+<span class="w">    </span><span class="k">mod</span><span class="w"> </span><span class="nn">register_a_static</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">use</span><span class="w"> </span><span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// This static lives directly in the link section.</span>
+<span class="w">        </span><span class="cp">#[in_section(MY_REGISTRY)]</span>
+<span class="w">        </span><span class="k">pub</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">LINKED_MY_STRUCT</span><span class="p">:</span><span class="w"> </span><span class="nc">MyStruct</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyStruct</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my_struct_2&quot;</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Inspiration</h4>
+<p><code>link-section</code> would have been far more challenging to implement without dtolnay's great <code>linkme</code> project paving the way.</p>
+<h3>Re-exporting from another crate</h3>
+<p>The macros assume this crate is available as a direct dependency, resolving their
+support paths through the crate's own name. If you re-export this crate's items as
+part of your own crate (so that downstream users don't need to depend on it
+directly), you have two options:</p>
+<ul>
+<li>(preferred) use the declarative macro form. It resolves its support paths
+relative to your re-export, so no extra configuration is required.</li>
+<li>Alternatively, pass the <code>crate_path</code> attribute to redirect the macro's
+generated output to the path where this crate has been re-exported.</li>
+</ul>
+<p>See the <code>crate_path</code> entry in the <em>Macro Attributes</em> section below for the exact
+syntax for this crate.</p>
+<h3>Crate Features</h3>
+<table>
+<thead>
+<tr>
+<th>Cargo feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>proc_macro</code></td>
+<td>Crate feature <code>proc_macro</code> (enables the <code>#[section]</code> attribute shim).</td>
+</tr>
+</tbody>
+</table>
+<h3>Macro Attributes</h3>
+<p>&lt;table&gt;&lt;tr&gt;&lt;th&gt;Attribute&lt;/th&gt;&lt;th&gt;Description&lt;/th&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;aux(main = path::to::MAIN_SECTION)&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Auxiliary sections are stored in a section near the main section. The
+aux path must be a valid reference to the main section.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;crate_path = ::path::to::link_section&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>The path to the <code>link-section</code> crate containing the support macros. If
+you re-export <code>link-section</code> items as part of your crate, you can use
+this to redirect the macro's output to the correct crate.</p>
+<p>Using the declarative <a href="crate::declarative::section!"><code>section!</code></a> form is
+preferred over this parameter.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;name = my_crate::SECTION_NAME&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Specify a custom section name to allow the section to be used without a
+direct reference. If not specified, the section name will be generated
+using the item name and a path to the section.</p>
+<p>It is valid to specify multiple sections with the same name, and the linker
+will ensure that both sections contain the same items. The multiple sections
+must contain the same type, otherwise the section will <code>panic!</code> at runtime.</p>
+<p>While <code>name</code> accepts a path, this path does not refer to a specific Rust
+item path.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;untyped | typed | mutable | movable | reference&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>The type of the section.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;unsafe&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Allow the section to be used without a direct reference.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;</p>
+<h3>Defaults</h3>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>proc_macro</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>proc_macro</code></th><td>Yes<small>default → proc_macro</small></td><td><ul class="effects"><li><code>dep:linktime-proc-macro</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/linktime-proc-macro/"><code>crates-io/linktime-proc-macro</code></a><small>Alias: linktime-proc-macro</small></th><td><code>^0.2.3</code><small>Default features: enabled</small><small>Requests: link_section</small></td><td>Enabled through default → proc_macro</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/ctor/versions/1.0.13/">crates-io/ctor 1.0.13</a><span>Requires ^0.19.3 · alias link-section · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1702bb96543ee05a4f475daa6af72f3491e72e7b7ee704ce99563e1dac8b39a3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:91a19b5cf69fd2514d908f17d6f429fd94ea9da51bf47b5087523712b09200d5</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2d23b4b419d2164136dc879bcaf9b0627e011f290e4693eeda18a0fa23843fc9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:fccb117afd44552820743f946449a3f99001be807ad73924443ce2914477a074</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:451cf08e31b3e2d7470b2654a5426ff4da9d3341d15a8c73e0f6be74b148d361</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:a062542c45f0008da4bfadadb3fe55afbf0d5ff973b90c2ec6c20ae05965c03e</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5da68212141cba363be40a7eec942cddacd967ea51e8ca330f89b2997e717e57</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:b0e429e2ee5844df5b3acd1e50d2d457893afe1778f9486581b86ad83f419c9b</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/link-section/versions/0.19.3/">0.19.3</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/link-section/0.19.3">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>[0.19.3] - 2026-08-09</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>linktime-proc-macro</code> dependency to 0.2.3 (consistent 64-bit hash chunks
+and cross-crate section-name fix).</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>Documented the <code>crate_path</code> override and surfaced the generated attribute
+reference (including <code>crate_path</code>) in the crate docs and README.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix cross-crate section-name error on Rust versions 1.88-1.94 (https://github.com/mmastrac/linktime/pull/509)</li>
+<li>Fix undefined behavior on WASM when a <code>const</code> item is submitted to a <code>reference</code>
+section: the item's cell lacked the fix-up slot the section-wide layout expects,
+so materialisation read past the cell and could write through a garbage slot
+pointer (https://github.com/mmastrac/linktime/pull/511).</li>
+</ul>
+<h4>[0.19.2] - 2026-07-29</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>linktime-proc-macro</code> dependency to 0.2.1 (makes link-section names more stable).</li>
+</ul>
+<h4>[0.19.1] - 2026-07-15</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix for semicolons accidentally inserted in WASM expression macro (generates a
+warning on nightly).</li>
+</ul>
+<h4>[0.19.0] - 2026-07-06</h4>
+<h5>Fixed</h5>
+<ul>
+<li>WASM: item counts no longer collapse under fat LTO. Items are gathered through
+address-significant intrusive list nodes that survive LTO. Fixes
+<a href="https://github.com/mmastrac/linktime/issues/488">#488</a>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>WASM: the <code>read_custom_section</code> host import is no longer required. Sections
+are gathered in-module via <code>.init_array.0</code> submissions and an <code>.init_array.1</code>
+finalizer; the <code>#[ctor]</code> priority contract is unchanged.</li>
+<li>WASM: each item now lives in a single intrusive <code>LinkCell&lt;T&gt;</code> static (value
+plus trailing list metadata) instead of a separate value static and cell.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>Ref::as_ptr</code> and <code>MovableRef::as_ptr</code> are now <code>pub(crate)</code>. They exposed raw
+pointer plumbing that was never meant to be public API; use <code>Deref</code> (or
+<code>offset_of</code> for section-membership checks) instead. This is a breaking change.</li>
+</ul>
+<h4>[0.18.3] - 2026-06-23</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Windows/COFF: section start/end pointers are now opacified with <code>black_box</code>,
+fixing a miscompile where an optimizing (LTO) build could prove a gathered
+slice (e.g. <code>ScatteredSlice&lt;&amp;'static T&gt;</code>) reads as all-zero and fold it to
+null values, crashing on use (<code>0xC0000005</code>). Fixes
+<a href="https://github.com/mmastrac/linktime/issues/479">#479</a>.</li>
+</ul>
+<h4>[0.18.2] - 2026-06-06</h4>
+<h5>Changed</h5>
+<ul>
+<li>Empty sections are now automatically supported on all platforms other than AIX.</li>
+</ul>
+<h4>[0.18.1] - 2026-05-30</h4>
+<h5>Changed</h5>
+<ul>
+<li>Fixed WASM import module for <code>read_custom_section</code> and <code>atexit</code>.</li>
+</ul>
+<h4>[0.18.0] - 2026-05-28</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>proc_macro</code> feature is now required for any non-<code>unsafe</code> section.</li>
+<li>Non-<code>unsafe</code> sections now generate a unique ID for the submission site which
+allows multiple sections to share the same identifier.</li>
+</ul>
+<h4>[0.17.2] - 2026-05-18</h4>
+<h5>Changed</h5>
+<ul>
+<li>Fixed bug with submission of raw items to <code>aux</code> sections.</li>
+</ul>
+<h4>[0.17.1] - 2026-05-17</h4>
+<h5>Added</h5>
+<ul>
+<li><code>MovableRef</code> and <code>Ref</code> implement <code>Debug</code> and <code>Display</code> if the referenced type does.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Deprecated <code>reference</code> module in favor of <code>Ref</code> from the crate root.</li>
+</ul>
+<h4>[0.17.0] - 2026-05-16</h4>
+<h5>Added</h5>
+<ul>
+<li><code>reference</code> sections support access both as a slice and as a reference at the
+submission site on all platforms (including WASM).</li>
+<li><code>movable</code> sections support reordering and back-reference updates during
+startup initialization (allowing a &quot;reference&quot; to an item that may move during
+initialization at the submission site).</li>
+<li><code>typed</code> and <code>mutable</code> sections have been split: <code>typed</code> allows for <code>const</code> and
+<code>static</code> items, while <code>mutable</code> allows for <code>const</code> items and <code>as_mut_slice</code>
+access.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Bumped MSRV to 1.85.0.</li>
+<li>Significant rewrite to link-section's internal implementation.</li>
+<li>Sections require a type: <code>#[section(typed)]</code>, <code>#[section(untyped)]</code>,
+<code>#[section(mutable)]</code>, <code>#[section(movable)]</code>, or <code>#[section(reference)]</code>.</li>
+<li>When submitting a fn() with a body to a typed link section, the function's
+body is not placed in any specific section. To restore the previous behavior,
+manually split function pointers and bodies:</li>
+</ul>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[section(untyped, aux(main = FN_ARRAY))]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">FN_BODIES</span><span class="p">:</span><span class="w"> </span><span class="nc">link_section</span><span class="p">::</span><span class="n">Section</span><span class="p">;</span>
+
+<span class="cp">#[section(typed)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">FN_ARRAY</span><span class="p">:</span><span class="w"> </span><span class="nc">link_section</span><span class="p">::</span><span class="n">TypedSection</span><span class="o">&lt;</span><span class="k">fn</span><span class="p">()</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="cp">#[in_section(FN_ARRAY)]</span>
+<span class="k">const</span><span class="w"> </span><span class="n">_</span><span class="p">:</span><span class="w"> </span><span class="nc">fn</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">linked_function</span><span class="p">;</span>
+
+<span class="cp">#[in_section(FN_BODIES)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">linked_function</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">eprintln!</span><span class="p">(</span><span class="s">&quot;linked_function&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h4>[0.16.1] - 2026-05-11</h4>
+<h5>Changed</h5>
+<ul>
+<li>Repair MSRV breakage for WASM targets.</li>
+</ul>
+<h4>[0.16.0] - 2026-05-08</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for AIX targets. Requires <code>-C link-arg=-bdbg:namedsects:ss</code> (or a
+recent Rust version that sets this automatically).</li>
+</ul>
+<h4>[0.15.0] - 2026-05-06</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for <code>const</code> items in link sections.</li>
+<li>WASM now requires <code>const</code> items, and uses <code>ctor</code>-like initialization to copy
+data to a contiguous section. To access link-section slices in WASM in
+constructor functions, make sure to use <code>priority = 1</code>.</li>
+<li>Zero-sized types are no longer used in <code>extern</code>s. Windows now uses a
+non-zero-sized alignment marker to align the start and end of the section.
+Other LLVM/GCC platforms use a <code>u8</code>.</li>
+<li><code>link-section</code> is now <code>no_std</code>-compatible.</li>
+</ul>
+<h4>[0.14.0] - 2026-05-04</h4>
+<h5>Changed</h5>
+<ul>
+<li>WASM targets now use an extern <code>read_custom_section</code> function to read custom
+sections.</li>
+</ul>
+<h4>[0.13.1] - 2026-05-02</h4>
+<h5>Changed</h5>
+<ul>
+<li>Documentation polish and typo fixes.</li>
+</ul>
+<h4>[0.13.0] - 2026-05-02</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>used_linker</code> feature moved to <code>--cfg linktime_used_linker</code> flag.</li>
+<li>On macOS, <code>fn</code> items are placed in a <code>__TEXT,__text,regular,pure_instructions</code>
+section (fixes a linker warning in nightly).</li>
+</ul>
+<h4>[0.11.0] - 2026-04-28</h4>
+<h5>Changed</h5>
+<ul>
+<li>Macro attributes and crate features are auto-documented.</li>
+</ul>
+<h4>[0.2.1] - 2026-04-22</h4>
+<h5>Added</h5>
+<ul>
+<li>Included licenses in all files.</li>
+<li>Bumped proc-macro dependency versions.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>link-section</code> crate no longer offers <code>const</code> section pointers.</li>
+</ul>
+</div><p class="table-note">sha256:4e179289fcafe4a63762b54f5dd4b7165af263989ba9acc6be803029a0f1c1ef</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0 OR MIT</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "{}"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright {yyyy} {name of copyright owner}
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+</code></pre></div><p class="table-note">sha256:a8ad31b1c3f40dca5a84119351b8fa8ddc868edd77fad8a8ebf6d8f2d16fa4ae</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</code></pre></div><p class="table-note">sha256:bccaa8b6c09f94e81f06696e179dbe058464bbdfbc823b6d49cada1d71e84ac3</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:f54a4b2f2ba0224209a0bd060a24fd39a3ccf0434b5222a7f308e76e7d0f301d</code></dd><dt>Upstream checksum</dt><dd><code>sha256:39c29a617ce3df32c08497bdc1ab6e2376e0b17948ac166a2fbe5977c5954cd9</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/link-section&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.19.3&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;proc_macro&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">proc_macro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:linktime-proc-macro&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;link_section&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">linktime-proc-macro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/linktime-proc-macro&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;link_section&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Matt Mastracci &lt;matthew@mastracci.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/link-section/0.19.3">crates.io package</a></li><li><a href="https://github.com/mmastrac/linktime">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">link-section</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/link-section"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.19.3"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

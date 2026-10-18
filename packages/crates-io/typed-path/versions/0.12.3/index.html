@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>typed-path 0.12.3 · Incan.pub</title><meta name="description" content="Provides typed variants of Path and PathBuf for Unix and Windows"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/typed-path</p><div class="title-row"><h1>typed-path</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/typed-path/versions/0.12.3/" selected>0.12.3</option></select></label></div><p class="description">Provides typed variants of Path and PathBuf for Unix and Windows</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Typed Path</h3>
+<p><a href="https://crates.io/crates/typed-path">Crates.io</a> <a href="https://docs.rs/typed-path">Docs.rs</a> <a href="https://github.com/chipsenkbeil/typed-path/actions/workflows/ci.yml">CI</a> <a href="https://blog.rust-lang.org/2022/11/03/Rust-1.65.0/">RustC 1.58.1+</a></p>
+<p>Provides typed variants of <a href="https://doc.rust-lang.org/std/path/struct.Path.html"><code>Path</code></a> and <a href="https://doc.rust-lang.org/std/path/struct.PathBuf.html"><code>PathBuf</code></a> for
+Unix and Windows.</p>
+<h4>Install</h4>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">typed-path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.12&quot;</span>
+</code></pre>
+<p>As of version <code>0.7</code>, this library also supports <code>no_std</code> environments that
+depend on <code>alloc</code>. To build in this manner, remove the default <code>std</code> feature:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">typed-path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<h4>Why?</h4>
+<blockquote>
+<p>Some applications need to manipulate Windows or UNIX paths on different
+platforms, for a variety of reasons: constructing portable file formats,
+parsing files from other platforms, handling archive formats, working with
+certain network protocols, and so on.</p>
+<p>-- Josh Triplett</p>
+</blockquote>
+<p><a href="https://github.com/rust-lang/rust/issues/66621">Check out this issue</a> of a
+discussion for this. The functionality actually exists within the standard
+library, but is not exposed!</p>
+<p>This means that parsing a path like <code>C:\path\to\file.txt</code> will be parsed
+differently by <a href="https://doc.rust-lang.org/std/path/struct.Path.html"><code>std::path::Path</code></a> depending on which platform you are
+on!</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">path</span><span class="p">::</span><span class="n">Path</span><span class="p">;</span>
+
+<span class="c1">// On Windows, this prints out:</span>
+<span class="c1">//</span>
+<span class="c1">// * Prefix(PrefixComponent { raw: &quot;C:&quot;, parsed: Disk(67) })</span>
+<span class="c1">// * RootDir</span>
+<span class="c1">// * Normal(&quot;path&quot;)</span>
+<span class="c1">// * Normal(&quot;to&quot;)</span>
+<span class="c1">// * Normal(&quot;file.txt&quot;)]</span>
+<span class="c1">//</span>
+<span class="c1">// But on Unix, this prints out:</span>
+<span class="c1">//</span>
+<span class="c1">// * Normal(&quot;C:\\path\\to\\file.txt&quot;)</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Path</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">r&quot;C:\path\to\file.txt&quot;</span><span class="p">);</span>
+<span class="k">for</span><span class="w"> </span><span class="n">component</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">path</span><span class="p">.</span><span class="n">components</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;* {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">component</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Usage</h4>
+<h5>Byte paths</h5>
+<p>The library provides a generic <a href="https://docs.rs/typed-path/latest/typed_path/struct.Path.html"><code>Path&lt;T&gt;</code></a> and <a href="https://docs.rs/typed-path/latest/typed_path/struct.PathBuf.html"><code>PathBuf&lt;T&gt;</code></a>
+that use <code>[u8]</code> and <code>Vec&lt;u8&gt;</code> underneath instead of <code>OsStr</code> and <code>OsString</code>. An
+encoding generic type is provided to dictate how the underlying bytes are
+parsed in order to support consistent path functionality no matter what
+operating system you are compiling against!</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">WindowsPath</span><span class="p">;</span>
+
+<span class="c1">// On all platforms, this prints out:</span>
+<span class="c1">//</span>
+<span class="c1">// * Prefix(PrefixComponent { raw: &quot;C:&quot;, parsed: Disk(67) })</span>
+<span class="c1">// * RootDir</span>
+<span class="c1">// * Normal(&quot;path&quot;)</span>
+<span class="c1">// * Normal(&quot;to&quot;)</span>
+<span class="c1">// * Normal(&quot;file.txt&quot;)]</span>
+<span class="c1">//</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">WindowsPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">r&quot;C:\path\to\file.txt&quot;</span><span class="p">);</span>
+<span class="k">for</span><span class="w"> </span><span class="n">component</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">path</span><span class="p">.</span><span class="n">components</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;* {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">component</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h5>UTF8-enforced paths</h5>
+<p>Alongside the byte paths, this library also supports UTF8-enforced paths
+through <a href="https://docs.rs/typed-path/latest/typed_path/struct.Utf8Path.html"><code>Utf8Path&lt;T&gt;</code></a> and <a href="https://docs.rs/typed-path/latest/typed_path/struct.Utf8PathBuf.html"><code>Utf8PathBuf&lt;T&gt;</code></a>, which
+internally use <code>str</code> and <code>String</code>. An encoding generic type is provided to
+dictate how the underlying characters are parsed in order to support consistent
+path functionality no matter what operating system you are compiling against!</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">Utf8WindowsPath</span><span class="p">;</span>
+
+<span class="c1">// On all platforms, this prints out:</span>
+<span class="c1">//</span>
+<span class="c1">// * Prefix(Utf8WindowsPrefixComponent { raw: &quot;C:&quot;, parsed: Disk(67) })</span>
+<span class="c1">// * RootDir</span>
+<span class="c1">// * Normal(&quot;path&quot;)</span>
+<span class="c1">// * Normal(&quot;to&quot;)</span>
+<span class="c1">// * Normal(&quot;file.txt&quot;)]</span>
+<span class="c1">//</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Utf8WindowsPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">r&quot;C:\path\to\file.txt&quot;</span><span class="p">);</span>
+<span class="k">for</span><span class="w"> </span><span class="n">component</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">path</span><span class="p">.</span><span class="n">components</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;* {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">component</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Checking paths</h5>
+<p>When working with user-defined paths, there is an additional layer of defense needed to prevent abuse to avoid <a href="https://owasp.org/www-community/attacks/Path_Traversal">path traversal attacks</a> and other risks.</p>
+<p>To that end, you can use <code>PathBuf::push_checked</code> and <code>Path::join_checked</code> (and equivalents) to ensure that the paths being created do not alter pre-existing paths in unexpected ways.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::{</span><span class="n">CheckedPathError</span><span class="p">,</span><span class="w"> </span><span class="n">UnixPath</span><span class="p">,</span><span class="w"> </span><span class="n">UnixPathBuf</span><span class="p">};</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;/etc&quot;</span><span class="p">);</span>
+
+<span class="c1">// A valid path can be joined onto the existing one</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">path</span><span class="p">.</span><span class="n">join_checked</span><span class="p">(</span><span class="s">&quot;passwd&quot;</span><span class="p">),</span><span class="w"> </span><span class="nb">Ok</span><span class="p">(</span><span class="n">UnixPathBuf</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;/etc/passwd&quot;</span><span class="p">)));</span>
+
+<span class="c1">// An invalid path will result in an error</span>
+<span class="fm">assert_eq!</span><span class="p">(</span>
+<span class="w">    </span><span class="n">path</span><span class="p">.</span><span class="n">join_checked</span><span class="p">(</span><span class="s">&quot;/sneaky/replacement&quot;</span><span class="p">),</span><span class="w"> </span>
+<span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">CheckedPathError</span><span class="p">::</span><span class="n">UnexpectedRoot</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UnixPathBuf</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;/etc&quot;</span><span class="p">);</span>
+
+<span class="c1">// Pushing a relative path that contains parent directory references that cannot be</span>
+<span class="c1">// resolved within the path is considered an error as this is considered a path</span>
+<span class="c1">// traversal attack!</span>
+<span class="fm">assert_eq!</span><span class="p">(</span>
+<span class="w">    </span><span class="n">path</span><span class="p">.</span><span class="n">push_checked</span><span class="p">(</span><span class="s">&quot;..&quot;</span><span class="p">),</span><span class="w"> </span>
+<span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">CheckedPathError</span><span class="p">::</span><span class="n">PathTraversalAttack</span><span class="p">)</span>
+<span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">UnixPathBuf</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;/etc&quot;</span><span class="p">));</span>
+
+<span class="c1">// Pushing an absolute path will fail with an error</span>
+<span class="fm">assert_eq!</span><span class="p">(</span>
+<span class="w">    </span><span class="n">path</span><span class="p">.</span><span class="n">push_checked</span><span class="p">(</span><span class="s">&quot;/sneaky/replacement&quot;</span><span class="p">),</span><span class="w"> </span>
+<span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">CheckedPathError</span><span class="p">::</span><span class="n">UnexpectedRoot</span><span class="p">)</span>
+<span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">UnixPathBuf</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;/etc&quot;</span><span class="p">));</span>
+
+<span class="c1">// Pushing a relative path that is safe will succeed</span>
+<span class="fm">assert!</span><span class="p">(</span><span class="n">path</span><span class="p">.</span><span class="n">push_checked</span><span class="p">(</span><span class="s">&quot;abc/../def&quot;</span><span class="p">).</span><span class="n">is_ok</span><span class="p">());</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">UnixPathBuf</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;/etc/abc/../def&quot;</span><span class="p">));</span>
+</code></pre>
+<h5>Converting between encodings</h5>
+<p>There may be times in which you need to convert between encodings such as when
+you want to load a native path and convert it into another format. In that
+case, you can use the <code>with_encoding</code> method (or specific variants like
+<code>with_unix_encoding</code> and <code>with_windows_encoding</code>) to convert a <a href="https://docs.rs/typed-path/latest/typed_path/struct.Path.html"><code>Path</code></a>
+or <a href="https://docs.rs/typed-path/latest/typed_path/struct.Utf8Path.html"><code>Utf8Path</code></a> into their respective <a href="https://docs.rs/typed-path/latest/typed_path/struct.PathBuf.html"><code>PathBuf</code></a> and
+<a href="https://docs.rs/typed-path/latest/typed_path/struct.Utf8PathBuf.html"><code>Utf8PathBuf</code></a> with an explicit encoding:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::{</span><span class="n">Utf8WindowsPath</span><span class="p">,</span><span class="w"> </span><span class="n">Utf8UnixPath</span><span class="p">};</span>
+
+<span class="c1">// Convert from Unix to Windows</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">unix_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;/tmp/foo.txt&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">windows_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">unix_path</span><span class="p">.</span><span class="n">with_windows_encoding</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">windows_path</span><span class="p">,</span><span class="w"> </span><span class="n">Utf8WindowsPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">r&quot;\tmp\foo.txt&quot;</span><span class="p">));</span>
+
+<span class="c1">// Converting from Windows to Unix will drop any prefix</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">windows_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Utf8WindowsPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">r&quot;C:\tmp\foo.txt&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">unix_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">windows_path</span><span class="p">.</span><span class="n">with_unix_encoding</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">unix_path</span><span class="p">,</span><span class="w"> </span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">r&quot;/tmp/foo.txt&quot;</span><span class="p">));</span>
+
+<span class="c1">// Converting to itself should retain everything</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Utf8WindowsPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">r&quot;C:\tmp\foo.txt&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span>
+<span class="w">    </span><span class="n">path</span><span class="p">.</span><span class="n">with_windows_encoding</span><span class="p">(),</span>
+<span class="w">    </span><span class="n">Utf8WindowsPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">r&quot;C:\tmp\foo.txt&quot;</span><span class="p">),</span>
+<span class="p">);</span>
+</code></pre>
+<p>Like with pushing and joining paths using <em>checked</em> variants, we can also ensure that paths created from changing encodings are still valid:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::{</span><span class="n">CheckedPathError</span><span class="p">,</span><span class="w"> </span><span class="n">Utf8UnixPath</span><span class="p">,</span><span class="w"> </span><span class="n">Utf8WindowsPath</span><span class="p">};</span>
+
+<span class="c1">// Convert from Unix to Windows</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">unix_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;/tmp/foo.txt&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">windows_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">unix_path</span><span class="p">.</span><span class="n">with_windows_encoding_checked</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">windows_path</span><span class="p">,</span><span class="w"> </span><span class="n">Utf8WindowsPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">r&quot;\tmp\foo.txt&quot;</span><span class="p">));</span>
+
+<span class="c1">// Convert from Unix to Windows will fail if there are characters that are valid in Unix but not in Windows</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">unix_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;/tmp/|invalid|/foo.txt&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span>
+<span class="w">    </span><span class="n">unix_path</span><span class="p">.</span><span class="n">with_windows_encoding_checked</span><span class="p">(),</span>
+<span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">CheckedPathError</span><span class="p">::</span><span class="n">InvalidFilename</span><span class="p">),</span>
+<span class="p">);</span>
+</code></pre>
+<h5>Typed Paths</h5>
+<p>In the above examples, we were using paths where the encoding (Unix or Windows)
+was known at compile time. There may be situations where we need runtime
+support to decide and switch between encodings. For that, this crate provides
+the <a href="https://docs.rs/typed-path/latest/typed_path/enum.TypedPath.html"><code>TypedPath</code></a> and <a href="https://docs.rs/typed-path/latest/typed_path/enum.TypedPathBuf.html"><code>TypedPathBuf</code></a> enumerations
+(and their <a href="https://docs.rs/typed-path/latest/typed_path/enum.Utf8TypedPath.html"><code>Utf8TypedPath</code></a> and
+<a href="https://docs.rs/typed-path/latest/typed_path/enum.Utf8TypedPathBuf.html"><code>Utf8TypedPathBuf</code></a> variations):</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">Utf8TypedPath</span><span class="p">;</span>
+
+<span class="c1">// Derive the path by determining if it is Unix or Windows</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Utf8TypedPath</span><span class="p">::</span><span class="n">derive</span><span class="p">(</span><span class="s">r&quot;C:\path\to\file.txt&quot;</span><span class="p">);</span>
+<span class="fm">assert!</span><span class="p">(</span><span class="n">path</span><span class="p">.</span><span class="n">is_windows</span><span class="p">());</span>
+
+<span class="c1">// Change the encoding to Unix</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span><span class="p">.</span><span class="n">with_unix_encoding</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/path/to/file.txt&quot;</span><span class="p">);</span>
+</code></pre>
+<h5>Normalization</h5>
+<p>Alongside implementing the standard methods associated with <a href="https://doc.rust-lang.org/std/path/struct.Path.html"><code>Path</code></a>
+and <a href="https://doc.rust-lang.org/std/path/struct.PathBuf.html"><code>PathBuf</code></a> from the standard library, this crate also
+implements several additional methods including the ability to normalize a path
+by resolving <code>.</code> and <code>..</code> without the need to have the path exist.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">Utf8UnixPath</span><span class="p">;</span>
+
+<span class="fm">assert_eq!</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;foo/bar//baz/./asdf/quux/..&quot;</span><span class="p">).</span><span class="n">normalize</span><span class="p">(),</span>
+<span class="w">    </span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;foo/bar/baz/asdf&quot;</span><span class="p">),</span>
+<span class="p">);</span>
+</code></pre>
+<p>In addition, you can leverage <code>absolutize</code> to convert a path to an absolute
+form by prepending the current working directory if the path is relative and
+then normalizing it (requires <code>std</code> feature):</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::{</span><span class="n">utils</span><span class="p">,</span><span class="w"> </span><span class="n">Utf8UnixPath</span><span class="p">};</span>
+
+<span class="c1">// With an absolute path, it is just normalized</span>
+<span class="c1">// NOTE: This requires `std` feature, otherwise `absolutize` is missing!</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;/a/b/../c/./d&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">path</span><span class="p">.</span><span class="n">absolutize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;/a/c/d&quot;</span><span class="p">));</span>
+
+<span class="c1">// With a relative path, it is first joined with the current working directory</span>
+<span class="c1">// and then normalized</span>
+<span class="c1">// NOTE: This requires `std` feature, otherwise `utf8_current_dir` and</span>
+<span class="c1">//       `absolutize` are missing!</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">cwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">utils</span><span class="p">::</span><span class="n">utf8_current_dir</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="n">with_unix_encoding</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cwd</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;a/b/../c/./d&quot;</span><span class="p">));</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">path</span><span class="p">.</span><span class="n">absolutize</span><span class="p">().</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="n">cwd</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="n">Utf8UnixPath</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;a/c/d&quot;</span><span class="p">)));</span>
+</code></pre>
+<h5>Utility Functions</h5>
+<p>Helper functions are available in the <a href="https://docs.rs/typed-path/latest/typed_path/utils/index.html"><code>utils</code></a> module (requires <code>std</code>
+feature).</p>
+<p>Today, there are three mirrored methods to those found in
+<a href="https://doc.rust-lang.org/std/env/index.html"><code>std::env</code></a>:</p>
+<ul>
+<li><a href="https://doc.rust-lang.org/std/env/fn.current_dir.html"><code>std::env::current_dir</code></a></li>
+<li><a href="https://doc.rust-lang.org/std/env/fn.current_exe.html"><code>std::env::current_exe</code></a></li>
+<li><a href="https://doc.rust-lang.org/std/env/fn.temp_dir.html"><code>std::env::temp_dir</code></a></li>
+</ul>
+<p>Each has an implementation to produce a <a href="https://docs.rs/typed-path/latest/typed_path/type.NativePathBuf.html"><code>NativePathBuf</code></a> and a
+<a href="https://docs.rs/typed-path/latest/typed_path/type.Utf8NativePathBuf.html"><code>Utf8NativePathBuf</code></a>.</p>
+<h6>Current directory</h6>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// Retrieves the current directory as a NativePathBuf:</span>
+<span class="c1">//</span>
+<span class="c1">// * For Unix family, this would be UnixPathBuf</span>
+<span class="c1">// * For Windows family, this would be WindowsPathBuf</span>
+<span class="c1">//</span>
+<span class="c1">// NOTE: This requires `std` feature, otherwise `current_dir` is missing!</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">_cwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">utils</span><span class="p">::</span><span class="n">current_dir</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="c1">// Retrieves the current directory as a Utf8NativePathBuf:</span>
+<span class="c1">//</span>
+<span class="c1">// * For Unix family, this would be Utf8UnixPathBuf</span>
+<span class="c1">// * For Windows family, this would be Utf8WindowsPathBuf</span>
+<span class="c1">//</span>
+<span class="c1">// NOTE: This requires `std` feature, otherwise `utf8_current_dir` is missing!</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">_utf8_cwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">utils</span><span class="p">::</span><span class="n">utf8_current_dir</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+</code></pre>
+<h6>Current exe</h6>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// Returns the full filesystem path of the current running executable as a NativePathBuf:</span>
+<span class="c1">//</span>
+<span class="c1">// * For Unix family, this would be UnixPathBuf</span>
+<span class="c1">// * For Windows family, this would be WindowsPathBuf</span>
+<span class="c1">//</span>
+<span class="c1">// NOTE: This requires `std` feature, otherwise `current_exe` is missing!</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">_exe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">utils</span><span class="p">::</span><span class="n">current_exe</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="c1">// Returns the full filesystem path of the current running executable as a Utf8NativePathBuf:</span>
+<span class="c1">//</span>
+<span class="c1">// * For Unix family, this would be Utf8UnixPathBuf</span>
+<span class="c1">// * For Windows family, this would be Utf8WindowsPathBuf</span>
+<span class="c1">//</span>
+<span class="c1">// NOTE: This requires `std` feature, otherwise `utf8_current_exe` is missing!</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">_utf8_exe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">utils</span><span class="p">::</span><span class="n">utf8_current_exe</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+</code></pre>
+<h6>Temporary directory</h6>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// Returns the path of a temporary directory as a NativePathBuf:</span>
+<span class="c1">//</span>
+<span class="c1">// * For Unix family, this would be UnixPathBuf</span>
+<span class="c1">// * For Windows family, this would be WindowsPathBuf</span>
+<span class="c1">//</span>
+<span class="c1">// NOTE: This requires `std` feature, otherwise `temp_dir` is missing!</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">_temp_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">utils</span><span class="p">::</span><span class="n">temp_dir</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="c1">// Returns the path of a temporary directory as a Utf8NativePathBuf:</span>
+<span class="c1">//</span>
+<span class="c1">// * For Unix family, this would be Utf8UnixPathBuf</span>
+<span class="c1">// * For Windows family, this would be Utf8WindowsPathBuf</span>
+<span class="c1">//</span>
+<span class="c1">// NOTE: This requires `std` feature, otherwise `utf8_temp_dir` is missing!</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">_utf8_temp_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">typed_path</span><span class="p">::</span><span class="n">utils</span><span class="p">::</span><span class="n">utf8_temp_dir</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+</code></pre>
+<h4>License</h4>
+<p>This project is licensed under either of</p>
+<p>Apache License, Version 2.0, (LICENSE-APACHE or
+<a href="http://www.apache.org/licenses/LICENSE-2.0">apache-license</a>) MIT license (LICENSE-MIT or
+<a href="http://opensource.org/licenses/MIT">mit-license</a>) at your option.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p>No dependencies declared.</p></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/zip/versions/8.6.0/">crates-io/zip 8.6.0</a><span>Requires ^0.12 · alias typed-path · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:20f1c4db3fde7c9e62767567f6e901532462a3030e255d901266908a4c9370a4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636611">Attestation reference</a><small>Archive: sha256:1aa5018c4aa0f4aa02f1fab87a0c4a1d055fbc19a2fd1cb1e90479c1c21e9925</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:94af1bb967bffbb88d3218002be69580c44006a3a19b0d054ec4963dc677ee7d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:ab80fe5111edae1e31e6a30fb41013ff67870075757b64c80e4d666c4bb613b9</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a5f0f36b5de957c63570e30e9de4e59defe7fc9784066ab8046b5139ea17333e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:b436b3ed32cc0bb3672eb0855fabef2c9cfc53cc02e0507c136eb8da986cbbcc</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:116b1b420634c37d9c424abbf2ae9ca0cb442dacb38f54d7a1915db3d9870d69</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:34e6db8a4bfcb5dd264c9671368cb8615755611b8f54d85940eec89c88a2ec6d</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/typed-path/versions/0.12.3/">0.12.3</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/typed-path/0.12.3">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.12.3...HEAD">Unreleased</a></h4>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.12.2...v0.12.3">0.12.3</a> - 2026-02-10</h4>
+<ul>
+<li>Remove AsRef&lt;Path&lt;T&gt;&gt; for Cow&lt;[u8]&gt; and AsRef&lt;Utf8Path&lt;T&gt;&gt; for Cow&lt;str&gt; as they conflict with other libraries (by Its-Just-Nans)</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.12.1...v0.12.2">0.12.2</a> - 2026-01-27</h4>
+<ul>
+<li>Add missing LICENSE-APACHE and LICENSE-MIT files (#58)</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.12.0...v0.12.1">0.12.1</a> - 2026-01-22</h4>
+<ul>
+<li>Enable wasip2 feature for wasm32-wasip2 target (#57)</li>
+<li>Fix unused import warning for <code>std::io</code> on wasm targets where the <code>absolutize</code>
+function (which uses <code>io</code>) is not available (#57)</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.11.0...v0.12.0">0.12.0</a> - 2025-10-04</h4>
+<ul>
+<li>Fix type reference for parent() methods mentioned in #44</li>
+<li>Refactor utils to return platform paths instead of native paths</li>
+<li>Expose native and platform mods only when unix or windows (#51)</li>
+<li>Fix for platforms not supporting atomic loads (#52)</li>
+<li>Update to be compliant with Rust Clippy 1.90.0</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.10.0...v0.11.0">0.11.0</a> - 2025-04-25</h4>
+<ul>
+<li>Lift restriction on static lifetime for checking if an encoding is
+representative of the platform (#46)</li>
+<li>Remove lifetime from <code>Encoding</code> and <code>Utf8Encoding</code> traits as GATs introduced
+in Rust <code>1.65.0</code> enable us to relax this requirement (#47)</li>
+<li>Switch to <code>dtolnay/rust-toolchain</code> to fix issues where minimum version of Rust
+wasn't being applied in tests (#48)</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.9.3...v0.10.0">0.10.0</a> - 2024-12-01</h4>
+<ul>
+<li>Add <code>PlatformEncoding</code> and <code>Utf8PlatformEncoding</code> structs that mirror the
+functionality of <code>NativeEncoding</code> and <code>Utf8NativeEncoding</code> respectively, but
+as distinct structs instead of type aliases.</li>
+<li>Add <code>PlatformPath</code> and <code>PlatformPathBuf</code> type aliases that use <code>PlatformEncoding</code>.</li>
+<li>Add <code>Utf8PlatformPath</code> and <code>Utf8PlatformPathBuf</code> type aliases that use <code>Utf8PlatformEncoding</code>.</li>
+<li>Add <code>AsRef&lt;ffi::OsStr&gt;</code> for <code>Utf8Path</code> and <code>Utf8PathBuf</code>.</li>
+<li>Add <code>TryAsRef&lt;Utf8Path&gt;</code> for <code>ffi::OsStr</code> and <code>ffi::OsString</code>.</li>
+<li>Add <code>From&lt;Utf8PathBuf&gt;</code> for <code>ffi::OsString</code>.</li>
+<li>Remove implementation of <code>TryAsRef&lt;std::path::Path&gt;</code> for <code>Path&lt;T&gt;</code>.</li>
+<li>Remove implementation of <code>TryAsRef&lt;Path&lt;T&gt;&gt;</code> for <code>std::path::Path</code>.</li>
+<li>Remove implementation of <code>TryAsRef&lt;std::path::Path&gt;</code> for <code>TypedPath</code>.</li>
+<li>Remove implementation of <code>TryAsRef&lt;std::path::Path&gt;</code> for <code>Utf8TypedPath</code>.</li>
+<li>Remove implementation of <code>TryFrom&lt;Utf8TypedPathBuf&gt;</code> for <code>std::path::PathBuf</code>.</li>
+<li>Remove implementation of <code>TryFrom&lt;Utf8TypedPathBuf&gt;</code> for <code>std::path::PathBuf</code>.</li>
+<li>Remove implementation of <code>From&lt;Utf8UnixPathBuf&gt;</code> for <code>std::path::PathBuf</code>.</li>
+<li>Remove implementation of <code>From&lt;Utf8WindowsPathBuf&gt;</code> for <code>std::path::PathBuf</code>.</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.9.2...v0.9.3">0.9.3</a> - 2024-10-15</h4>
+<ul>
+<li>Fix <code>lib.rs</code> file permissions to not be executable
+(<a href="https://github.com/chipsenkbeil/typed-path/pull/33">#33</a>).</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.9.1...v0.9.2">0.9.2</a> - 2024-09-15</h4>
+<ul>
+<li>Fix <code>windows()</code> function of <code>TypedPathBuf</code> and <code>Utf8TypedPathBuf</code> to properly
+return an instance of <code>WindowsPathBuf</code> and <code>Utf8WindowsPathBuf</code> respectively.
+Before this fix, the function instead returned a Unix path wrapper.
+(<a href="https://github.com/chipsenkbeil/typed-path/pull/30">#30</a>)</li>
+<li>Minimum Rust version of 1.58.1 is now explicitly set via <code>rust-version</code>.</li>
+<li>Address a variety of internal clippy warnings.</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.9.0...v0.9.1">0.9.1</a> - 2024-07-16</h4>
+<ul>
+<li>Add derived <code>Hash</code>, <code>PartialOrd</code>, and <code>Ord</code> implementations for <code>TypedPath</code> and <code>TypedPathBuf</code> enumerations.</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.8.0...v0.9.0">0.9.0</a> - 2024-06-15</h4>
+<ul>
+<li>Add <code>current_exe</code> and <code>utf8_current_exe</code> functions to the <code>utils</code> module to return native pathbufs wrapping the standard library paths.</li>
+<li>Add <code>temp_dir</code> and <code>utf8_temp_dir</code> functions to the <code>utils</code> module to return native pathbufs wrapping the standard library paths.</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.7.1...v0.8.0">0.8.0</a> - 2024-02-24</h4>
+<ul>
+<li>Add <code>push_checked</code> function, which ensures that any path added to an existing <code>PathBuf</code> or <code>TypedPathBuf</code> must abide by the following rules:
+<ol>
+<li>It cannot be an absolute path. Only relative paths allowed.</li>
+<li>In the case of Windows, it cannot start with a prefix like <code>C:</code>.</li>
+<li>All normal components of the path must contain only valid characters.</li>
+<li>If parent directory (..) components are present, they must not result in a path traversal attack (impacting the current path).</li>
+</ol>
+</li>
+<li>Add <code>join_checked</code> function, which ensures that any path joied with an existing path follows the rules of <code>push_checked</code></li>
+<li>Add <code>with_encoding_checked</code> function to ensure that the resulting path from an encoding conversion is still valid</li>
+<li>Add <code>with_unix_encoding_checked</code> and <code>with_windows_encoding_checked</code> functions as shortcuts to <code>with_encoding_checked</code></li>
+<li>Add <code>is_valid</code> to <code>Component</code> and <code>Utf8Component</code> traits alongside <code>Path</code> and <code>Utf8Path</code> to indicate if a component/path is valid for the given encoding</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.7.0...v0.7.1">0.7.1</a> - 2024-02-15</h4>
+<ul>
+<li>Support <code>wasm</code> family for compilation</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.6.0...v0.7.0">0.7.0</a> - 2023-11-04</h4>
+<ul>
+<li>Support <code>no_std</code> environments, when <code>default-features = false</code> is set for the crate</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.5.0...v0.6.0">0.6.0</a> - 2023-10-12</h4>
+<ul>
+<li>Refactor crate exports such that everything other than constants are now
+top-level exports
+<ul>
+<li><code>typed_path::unix::UnixComponent</code> is now <code>typed_path::UnixComponent</code></li>
+<li><code>typed_path::unix::Utf8UnixComponent</code> is now <code>typed_path::Utf8UnixComponent</code></li>
+<li><code>typed_path::windows::WindowsComponent</code> is now <code>typed_path::WindowsComponent</code></li>
+<li><code>typed_path::windows::Utf8WindowsComponent</code> is now <code>typed_path::Utf8WindowsComponent</code></li>
+<li><code>typed_path::windows::WindowsPrefix</code> is now <code>typed_path::WindowsPrefix</code></li>
+<li><code>typed_path::windows::Utf8WindowsPrefix</code> is now <code>typed_path::Utf8WindowsPrefix</code></li>
+</ul>
+</li>
+<li>Constants are now located within the <code>constants</code> module, broken out by <code>unix</code>
+and <code>windows</code> modules to house each set of constants</li>
+<li><code>TypedPath</code> and <code>Utf8TypedPath</code> now match the method signature of <code>Path</code> for
+constructing self with <code>::new(...)</code></li>
+<li>Majority of methods available for <code>Path</code> and <code>PathBuf</code> have been ported over
+to <code>TypedPath</code> and <code>TypedPathBuf</code></li>
+<li>Implement <code>std::fmt::Display</code> for <code>Utf8UnixComponent</code>,
+<code>Utf8WindowsComponent</code>, and <code>Utf8TypedComponent</code></li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.4.2...v0.5.0">0.5.0</a> - 2023-09-28</h4>
+<ul>
+<li>Add <code>TypedPath</code>, <code>Utf8TypedPath</code>, <code>TypedPathBuf</code>, and <code>Utf8TypedPathBuf</code>
+enums to support code that can operate on both Windows and Unix paths</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.4.1...v0.4.2">0.4.2</a> - 2023-09-19</h4>
+<ul>
+<li>Add <code>From&lt;&amp;Utf8NativePath&gt;</code> for <code>std::path::PathBuf</code></li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.4.0...v0.4.1">0.4.1</a> - 2023-09-17</h4>
+<ul>
+<li>Add <code>AsRef&lt;std::path::Path&gt;</code> for <code>Utf8NativePath</code> and <code>Utf8NativePathBuf</code></li>
+<li>Add <code>From&lt;Utf8NativePathBuf&gt;</code> for <code>std::path::PathBuf</code></li>
+<li>Add <code>rustfmt.toml</code> to dictate formatting using <code>cargo +nightly fmt --all</code></li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.3.2...v0.4.0">0.4.0</a> - 2023-08-23</h4>
+<ul>
+<li>Add <code>normalize</code> method to <code>Path</code> and <code>Utf8Path</code> to support resolving <code>.</code> and
+<code>..</code> across Windows and Unix encodings</li>
+<li>Add <code>is_parent</code> and <code>is_current</code> methods to <code>Component</code> and <code>Utf8Component</code>
+traits with implementations for both Unix and Windows component
+implementations</li>
+<li>Add <code>root</code>, <code>parent</code>, and <code>current</code> static methods to <code>Component</code> and
+<code>Utf8Component</code> traits to support creating the instances from generics</li>
+<li>Add <code>absolutize</code> to both <code>normalize</code> the path and - in the case of relative
+paths - prefix the path with the current working directory</li>
+<li>Add <code>with_encoding</code> to <code>Path</code> and <code>Utf8Path</code> support converting between the
+Unix and Windows encoding types</li>
+<li>Add <code>utils::current_dir</code> and <code>utils::utf8_current_dir</code> to retrieve the
+current working directory as either a <code>PathBuf</code> or <code>Utf8PathBuf</code></li>
+<li>Add <code>with_unix_encoding</code> and <code>with_windows_encoding</code> to <code>Path</code> and <code>Utf8Path</code>
+support converting between the Unix and Windows encoding types</li>
+<li>Add <code>has_unix_encoding</code> and <code>has_windows_encoding</code> to <code>Path</code> and <code>Utf8Path</code>
+to detect explicit encodings</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.3.1...v0.3.2">0.3.2</a> - 2023-03-27</h4>
+<ul>
+<li>Fix implementation of <code>Display</code> for <code>Utf8Path</code> to use underlying str
+<code>Display</code> instead of <code>Debug</code></li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.3.0...v0.3.1">0.3.1</a> - 2023-03-14</h4>
+<ul>
+<li>Fix joining of empty path with relative path resulting in absolute path when
+using <code>UnixPath::join</code> or <code>Utf8UnixPath::join</code> (#6)</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.2.1...v0.3.0">0.3.0</a> - 2023-02-14</h4>
+<ul>
+<li>Add <code>Clone</code> implementation for <code>Box&lt;Path&lt;T&gt;&gt;</code> and <code>Box&lt;Utf8Path&lt;T&gt;&gt;</code></li>
+<li>Fix <code>Clone</code> implementation for <code>PathBuf&lt;T&gt;</code> and <code>Utf8PathBuf&lt;T&gt;</code> requiring a
+clone implementation for the encoding, which is not necessary
+(<a href="https://github.com/chipsenkbeil/typed-path/issues/5">#5</a>)</li>
+<li>Update <code>Debug</code> implementation for <code>Path&lt;T&gt;</code>, <code>Utf8Path&lt;T&gt;</code>, <code>PathBuf&lt;T&gt;</code>, and
+<code>Utf8PathBuf&lt;T&gt;</code> to no longer require debug implementation for encoding,
+which is not necessary</li>
+<li>Add <code>label</code> method to encoding implementations, used for debugging purposes</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.2.0...v0.2.1">0.2.1</a> - 2022-12-12</h4>
+<ul>
+<li>Update README with more UTF8 examples and add proper testing of README
+examples via doctest</li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/compare/v0.1.0...v0.2.0">0.2.0</a> - 2022-12-12</h4>
+<ul>
+<li>Added UTF-8 variants of <code>Path</code>, <code>PathBuf</code>, <code>Components</code>, <code>Component</code>, and
+other data structures to support <code>str</code> versus <code>[u8]</code></li>
+<li>Remove requirements of <code>Clone</code>, <code>Debug</code>, <code>Display</code>, and <code>Sized</code> on
+<code>Encoding</code> and subsequent implementations <code>UnixEncoding</code> and
+<code>WindowsEncoding</code></li>
+</ul>
+<h4><a href="https://github.com/chipsenkbeil/typed-path/releases/tag/v0.1.0">0.1.0</a> - 2022-08-24</h4>
+<p>Initial release of the library!</p>
+</div><p class="table-note">sha256:98af793983be911bb70b29e7eec0fd7b4aa1b5dc94a3675ebe2a973e4179ab0b</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+</code></pre></div><p class="table-note">sha256:62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:0601358f0ef6ae8de51e3dad4a31c324c302625e0b68e484138e57f1cc52c0ea</code></dd><dt>Upstream checksum</dt><dd><code>sha256:8e28f89b80c87b8fb0cf04ab448d5dd0dd0ade2f8891bae878de66a75a28600e</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/typed-path&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.12.3&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;typed_path&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Chip Senkbeil &lt;chip@senkbeil.org&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.65.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/typed-path/0.12.3">crates.io package</a></li><li><a href="https://github.com/chipsenkbeil/typed-path">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">typed-path</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/typed-path"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.12.3"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

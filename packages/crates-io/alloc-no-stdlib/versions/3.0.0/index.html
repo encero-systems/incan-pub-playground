@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>alloc-no-stdlib 3.0.0 · Incan.pub</title><meta name="description" content="A dynamic allocator that may be used with or without the stdlib. This allows a package with nostd to allocate memory dynamically and be used either with a custom allocator, items on the stack, or by a package that wishes to simply use Box&lt;&gt;. It also provides options to use calloc or a mutable global variable for pre-zeroed memory"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/alloc-no-stdlib</p><div class="title-row"><h1>alloc-no-stdlib</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/alloc-no-stdlib/versions/3.0.0/" selected>3.0.0</option><option value="../../../../../packages/crates-io/alloc-no-stdlib/versions/2.0.4/">2.0.4</option></select></label></div><p class="description">A dynamic allocator that may be used with or without the stdlib. This allows a package with nostd to allocate memory dynamically and be used either with a custom allocator, items on the stack, or by a package that wishes to simply use Box&lt;&gt;. It also provides options to use calloc or a mutable global variable for pre-zeroed memory</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>BSD-3-Clause</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Framework for allocating memory in #![no_std] modules.</h3>
+<p><a href="https://crates.io/crates/alloc-no-stdlib">crates.io</a>
+<a href="https://travis-ci.org/dropbox/rust-alloc-no-stdlib">Build Status</a></p>
+<h4>Requirements</h4>
+<ul>
+<li>Rust 1.6</li>
+</ul>
+<h4>Documentation</h4>
+<p>Currently there is no standard way to allocate memory from within a module that is no_std.
+This provides a mechanism to describe a memory allocation that can be satisfied entirely on
+the stack, by unsafely linking to calloc, or by unsafely referencing a mutable global variable.
+This library currently will leak memory if free_cell isn't specifically invoked on memory.</p>
+<p>However, if linked by a library that actually can depend on the stdlib then that library
+can simply pass in a few allocators and use the standard Box allocation and will free automatically.</p>
+<p>This library should also make it possible to entirely jail a rust application that needs dynamic
+allocations by preallocating a maximum limit of data upfront using calloc and
+using seccomp to disallow future syscalls.</p>
+<h4>Usage</h4>
+<p>There are 3 modes for allocating memory, each with advantages and disadvantages</p>
+<h5>On the stack</h5>
+<p>This is possible without the stdlib at all
+However, this eats into the natural ulimit on the stack depth and generally
+limits the program to only a few megs of dynamically allocated data</p>
+<p>Example:</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// First define a struct to hold all the array on the stack.</span>
+<span class="n">declare_stack_allocator_struct</span><span class="o">!</span><span class="p">(</span><span class="n">StackAllocatedFreelist4</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="n">stack</span><span class="p">);</span>
+<span class="c1">// since generics cannot be used, the actual struct to hold the memory must be defined with a macro</span>
+<span class="o">..</span><span class="p">.</span>
+
+<span class="c1">// in the code where the memory must be used, first the array needs to be readied</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">stack_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">define_allocator_memory_pool</span><span class="o">!</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="mi">65536</span><span class="p">],</span><span class="w"> </span><span class="n">stack</span><span class="p">);</span>
+<span class="c1">// then an allocator needs to be made and pointed to the stack_buffer on the stack</span>
+<span class="c1">// the final argument tells the system if free&#39;d data should be zero&#39;d before being</span>
+<span class="c1">// reused by a subsequent call to alloc_cell</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">ags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">StackAllocatedFreelist4</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new_allocator</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">stack_buffer</span><span class="p">,</span><span class="w"> </span><span class="n">bzero</span><span class="p">);</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="c1">// now we can get memory dynamically</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">9999</span><span class="p">);</span>
+<span class="w">    </span><span class="n">x</span><span class="p">.</span><span class="n">slice_mut</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// get more memory</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+<span class="w">    </span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// and free it, consuming the buffer</span>
+<span class="w">    </span><span class="n">ags</span><span class="p">.</span><span class="n">free_cell</span><span class="p">(</span><span class="n">y</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">//y.mem[0] = 6; // &lt;-- this is an error: won&#39;t compile (use after free)</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span>
+</code></pre>
+<h5>On the heap</h5>
+<p>This uses the standard Box facilities to allocate memory</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">halloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HeapAlloc</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="k">for</span><span class="w"> </span><span class="n">_i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="o">..</span><span class="mi">10</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// heap test</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">halloc</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">100000</span><span class="p">);</span>
+<span class="w">    </span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">halloc</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">110000</span><span class="p">);</span>
+<span class="w">    </span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">halloc</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">120000</span><span class="p">);</span>
+<span class="w">    </span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">6</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span>
+<span class="w">    </span><span class="n">halloc</span><span class="p">.</span><span class="n">free_cell</span><span class="p">(</span><span class="n">y</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">9</span><span class="p">],</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mi">6</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h5>On the heap, but uninitialized</h5>
+<p>This does allocate data every time it is requested, but it does not allocate the
+memory, so naturally it is unsafe. The caller must initialize the memory properly</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">halloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">unsafe</span><span class="p">{</span><span class="n">HeapAllocUninitialized</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new</span><span class="p">()};</span>
+<span class="p">{</span><span class="w"> </span><span class="c1">// heap test</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">halloc</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">100000</span><span class="p">);</span>
+<span class="w">    </span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">halloc</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">110000</span><span class="p">);</span>
+<span class="w">    </span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">halloc</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">120000</span><span class="p">);</span>
+<span class="w">    </span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">6</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span>
+<span class="w">    </span><span class="n">halloc</span><span class="p">.</span><span class="n">free_cell</span><span class="p">(</span><span class="n">y</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">9</span><span class="p">],</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mi">6</span><span class="p">);</span>
+<span class="w">    </span><span class="o">..</span><span class="p">.</span>
+<span class="p">}</span>
+</code></pre>
+<h5>On the heap in a single pool allocation</h5>
+<p>This does a single big allocation on the heap, after which no further usage of the stdlib
+will happen. This can be useful for a jailed application that wishes to restrict syscalls
+at this point</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">alloc_no_stdlib</span><span class="p">::</span><span class="n">HeapPrealloc</span><span class="p">;</span>
+<span class="o">..</span><span class="p">.</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">heap_global_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">define_allocator_memory_pool</span><span class="o">!</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="mi">6</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">],</span><span class="w"> </span><span class="n">heap</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">ags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HeapPrealloc</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new_allocator</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">heap_global_buffer</span><span class="p">,</span><span class="w"> </span><span class="n">uninitialized</span><span class="p">);</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">9999</span><span class="p">);</span>
+<span class="w">    </span><span class="n">x</span><span class="p">.</span><span class="n">slice_mut</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+<span class="w">    </span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+<span class="w">    </span><span class="n">ags</span><span class="p">.</span><span class="n">free_cell</span><span class="p">(</span><span class="n">y</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">//y.mem[0] = 6; // &lt;-- this is an error (use after free)</span>
+<span class="p">}</span>
+</code></pre>
+<h5>On the heap, uninitialized</h5>
+<p>This does a single big allocation on the heap, after which no further usage of the stdlib
+will happen. This can be useful for a jailed application that wishes to restrict syscalls
+at this point. This option keep does not set the memory to a valid value, so it is
+necessarily marked unsafe</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">alloc_no_stdlib</span><span class="p">::</span><span class="n">HeapPrealloc</span><span class="p">;</span>
+<span class="o">..</span><span class="p">.</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">heap_global_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">unsafe</span><span class="p">{</span><span class="n">HeapPrealloc</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new_uninitialized_memory_pool</span><span class="p">(</span><span class="mi">6</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">)};</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">ags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HeapPrealloc</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new_allocator</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">heap_global_buffer</span><span class="p">,</span><span class="w"> </span><span class="n">uninitialized</span><span class="p">);</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">9999</span><span class="p">);</span>
+<span class="w">    </span><span class="n">x</span><span class="p">.</span><span class="n">slice_mut</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+<span class="w">    </span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+<span class="w">    </span><span class="n">ags</span><span class="p">.</span><span class="n">free_cell</span><span class="p">(</span><span class="n">y</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">//y.mem[0] = 6; // &lt;-- this is an error (use after free)</span>
+<span class="p">}</span>
+</code></pre>
+<h5>With calloc</h5>
+<p>This is the most efficient way to get a zero'd dynamically sized buffer without the stdlib
+It does invoke the C calloc function and hence must invoke unsafe code.
+In this version, the number of cells are fixed to the parameter specified in the struct definition
+(4096 in this example)</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">extern</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">calloc</span><span class="p">(</span><span class="n">n_elem</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">,</span><span class="w"> </span><span class="n">el_size</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="o">*</span><span class="k">mut</span><span class="w"> </span><span class="kt">u8</span><span class="p">;</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">malloc</span><span class="p">(</span><span class="n">len</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="o">*</span><span class="k">mut</span><span class="w"> </span><span class="kt">u8</span><span class="p">;</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">free</span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="o">*</span><span class="k">mut</span><span class="w"> </span><span class="kt">u8</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">declare_stack_allocator_struct</span><span class="o">!</span><span class="p">(</span><span class="n">CallocAllocatedFreelist4096</span><span class="p">,</span><span class="w"> </span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="n">calloc</span><span class="p">);</span>
+<span class="o">..</span><span class="p">.</span>
+
+<span class="c1">// the buffer is defined with 200 megs of zero&#39;d memory from calloc</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">calloc_global_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="n">define_allocator_memory_pool</span><span class="o">!</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="mi">200</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">],</span><span class="w"> </span><span class="n">calloc</span><span class="p">)};</span>
+<span class="c1">// and assigned to a new_allocator</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">ags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CallocAllocatedFreelist4096</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new_allocator</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">calloc_global_buffer</span><span class="p">.</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">bzero</span><span class="p">);</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">9999</span><span class="p">);</span>
+<span class="w">    </span><span class="n">x</span><span class="p">.</span><span class="n">slice_mut</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+<span class="w">    </span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+<span class="w">    </span><span class="n">ags</span><span class="p">.</span><span class="n">free_cell</span><span class="p">(</span><span class="n">y</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">//y.mem[0] = 6; // &lt;-- this is an error (use after free)</span>
+<span class="p">}</span>
+</code></pre>
+<h5>With a static, mutable buffer</h5>
+<p>If a single buffer of data is needed for the entire span of the application
+Then the simplest way to do so without a zero operation on
+the memory and without using the stdlib is to simply have a global allocated
+structure. Accessing mutable static variables requires unsafe code; however,
+so this code will invoke an unsafe block.</p>
+<p>Make sure to only reference global_buffer in a single place, at a single time in the code
+If it is used from two places or at different times, undefined behavior may result,
+since multiple allocators may get access to global_buffer.</p>
+<pre><code class="syntax-highlight language-rust"><span class="n">declare_stack_allocator_struct</span><span class="o">!</span><span class="p">(</span><span class="n">GlobalAllocatedFreelist</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="n">global</span><span class="p">);</span>
+<span class="n">define_allocator_memory_pool</span><span class="o">!</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">],</span><span class="w"> </span><span class="n">global</span><span class="p">,</span><span class="w"> </span><span class="n">global_buffer</span><span class="p">);</span>
+
+<span class="o">..</span><span class="p">.</span>
+<span class="c1">// this references a global buffer</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">ags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GlobalAllocatedFreelist</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new_allocator</span><span class="p">(</span><span class="n">bzero</span><span class="p">);</span>
+<span class="k">unsafe</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">bind_global_buffers_to_allocator</span><span class="o">!</span><span class="p">(</span><span class="n">ags</span><span class="p">,</span><span class="w"> </span><span class="n">global_buffer</span><span class="p">,</span><span class="w"> </span><span class="kt">u8</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">9999</span><span class="p">);</span>
+<span class="w">    </span><span class="n">x</span><span class="p">.</span><span class="n">slice_mut</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ags</span><span class="p">.</span><span class="n">alloc_cell</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+<span class="w">    </span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+<span class="w">    </span><span class="n">ags</span><span class="p">.</span><span class="n">free_cell</span><span class="p">(</span><span class="n">y</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">//y.mem[0] = 6; // &lt;-- this is an error (use after free)</span>
+<span class="p">}</span>
+</code></pre>
+<h4>What changed in 3.0.0</h4>
+<p>Forbid unsafe and moving of the Calloc malloc into the unsafe bin so we can
+forbid unsafe using the compiler.</p>
+<p>Note: this is a breaking change for downstreams that referenced
+CallocBackingStore/AllocatorC without the &quot;unsafe&quot; feature (e.g. brotli's
+&quot;seccomp&quot; feature, which should now also enable alloc-no-stdlib/unsafe).</p>
+<h4>Contributors</h4>
+<ul>
+<li>Daniel Reiter Horn</li>
+</ul>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>unsafe</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p>No dependencies declared.</p></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/alloc-stdlib/versions/0.3.0/">crates-io/alloc-stdlib 0.3.0</a><span>Requires &gt;=3.0.0, &lt;4.0.0 · alias alloc-no-stdlib · </span></li><li><a href="../../../../../packages/crates-io/alloc-stdlib/versions/0.2.4/">crates-io/alloc-stdlib 0.2.4</a><span>Requires &gt;=2.0.4, &lt;3.0.0 · alias alloc-no-stdlib · </span></li><li><a href="../../../../../packages/crates-io/brotli/versions/9.0.0/">crates-io/brotli 9.0.0</a><span>Requires &gt;=3.0.0, &lt;4.0.0 · alias alloc-no-stdlib · </span></li><li><a href="../../../../../packages/crates-io/brotli/versions/8.0.4/">crates-io/brotli 8.0.4</a><span>Requires &gt;=2.0.4, &lt;3 · alias alloc-no-stdlib · </span></li><li><a href="../../../../../packages/crates-io/brotli-decompressor/versions/6.0.1/">crates-io/brotli-decompressor 6.0.1</a><span>Requires &gt;=3.0.0, &lt;4.0.0 · alias alloc-no-stdlib · </span></li><li><a href="../../../../../packages/crates-io/brotli-decompressor/versions/5.0.3/">crates-io/brotli-decompressor 5.0.3</a><span>Requires &gt;=2.0.4, &lt;3 · alias alloc-no-stdlib · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:c896df76c4402127523d6909fd877a21684af905a9f0c0d149656f0e126ac048</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:9fbe5594eb2910813861ed189f6cfaa417ed57842db4bdfcd93b02a73e45f42c</small></li><li><code>sha256:de38bc806616ead03cb8f4300a71a66311df817e338f7546b92154a8756be74f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:73bf435f68467b941d8f7d8547eeea5333d5dc801bca8989a5cec431db415e81</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7ab49186a12330858ca6020674f9d2595b53002f44d14c3b565e73cf17187c3e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:fb7e32379982a8ffc5f5c1ce32afa6efd3e3f50da9bbe9152caab06660d476da</small></li><li><code>sha256:f2f7b9e5dc20b34201641ebedba7a500306059899ef723fbf29ac586fe4efe77</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:79280f570737bd305ff77922c234e75a36df9c0535b03f46937e4f83f1645017</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:88ec6e62be07411eae6ed2de05756f2c68b29019d2a97bee9c23bd1e982812ea</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:72d03cec915d4b3e89f4b1d2df31b8ba2377158c574802b7d8cd7e76f54a0b73</small></li><li><code>sha256:ba074ee12c48a19fe5388044111d955d73cb9f4c017cfdcdaa35bafd47a13b74</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:1c5856c019e80df0e54f71f4fc3eef1dbb4cd146706cf08fb850f6ace50d9909</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:c0f5774e909cafa8fb965d2f76fb8ef7da761b9220e62b4560f2af025c170151</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:58fe1ff29ed6ab849012f477d6ec1e09491d78e766b70371d7ec6160b5ed828c</small></li><li><code>sha256:f8e3ab5fe84eb0cf8dd57404b5204e11e4f20001e9610ccbdad7fbbabc9a3ff7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:a07c30a418f3b27aa09f1df5da6ec3a3404855be7213a6e82533650b5a59a3d4</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/alloc-no-stdlib/versions/3.0.0/">3.0.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/alloc-no-stdlib/3.0.0">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/alloc-no-stdlib/versions/2.0.4/">2.0.4</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/alloc-no-stdlib/2.0.4">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>BSD-3-Clause</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2016 Dropbox, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</code></pre></div><p class="table-note">sha256:c0c56f26d9c051cac4d200c34c84e7ae9aaa853e01a982a1df08b09931e518ae</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:c948d434772e82e8dd515eeb034559ce4f3774c33b0a4616335dd64ad7125e9a</code></dd><dt>Upstream checksum</dt><dd><code>sha256:c2fb6cfd47bf496ff64095c20eaba0c201404ee38714d4142fcfa1dc334fcc7a</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/alloc-no-stdlib&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;3.0.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">unsafe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;alloc_no_stdlib&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2015&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Daniel Reiter Horn &lt;danielrh@dropbox.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/alloc-no-stdlib/3.0.0">crates.io package</a></li><li><a href="https://github.com/dropbox/rust-alloc-no-stdlib">Source repository</a></li><li><a href="https://raw.githubusercontent.com/dropbox/rust-alloc-no-stdlib/master/tests/lib.rs">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">alloc-no-stdlib</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/alloc-no-stdlib"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=3.0.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

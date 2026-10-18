@@ -1,3 +1,13 @@
+# Incan.pub registry website playground
+
+The Incan.pub preview now builds from a pinned registry feed, with the complete catalog and version-specific package pages. [Build and data guide](docs/registry-site.md).
+
+- [Hosted catalog](https://encero-systems.github.io/incan-pub-playground/catalog/)
+- [Hosted homepage](https://encero-systems.github.io/incan-pub-playground/)
+- [Incan.io mockup](https://encero-systems.github.io/incan-pub-playground/incan-io-directions/real/) — remains separate and parked.
+
+The historical design/experiment notes below are retained as context.
+
 # Incan.pub design playground
 
 A public HTML review surface, separate from the production registry website.

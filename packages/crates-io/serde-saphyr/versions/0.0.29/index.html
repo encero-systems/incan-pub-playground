@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>serde-saphyr 0.0.29 · Incan.pub</title><meta name="description" content="YAML (de)serializer for Serde, emphasizing panic-free parsing, fast builds and good error reporting. Supports properties, comments, include"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/serde-saphyr</p><div class="title-row"><h1>serde-saphyr</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/serde-saphyr/versions/0.0.29/" selected>0.0.29</option></select></label></div><p class="description">YAML (de)serializer for Serde, emphasizing panic-free parsing, fast builds and good error reporting. Supports properties, comments, include</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>serde-saphyr</h3>
+<p><a href="https://github.com/rust-secure-code/safety-dance/">unsafe forbidden</a>
+<a href="https://github.com/bourumir-wyngs/serde-saphyr/actions/workflows/miri.yml">Miri</a>
+<a href="https://effective-rust.com/panic.html">panic-free</a>
+<a href="https://github.com/bourumir-wyngs/serde-saphyr/actions">GitHub Workflow Status</a>
+<a href="https://docs.rs/serde-saphyr">docs.rs</a>
+<a href="https://codecov.io/gh/bourumir-wyngs/serde-saphyr">codecov</a>
+<a href="https://github.com/bourumir-wyngs/serde-saphyr/actions/workflows/ci.yml">Fuzz &amp; Audit</a></p>
+<p><a href="https://crates.io/crates/serde-saphyr">crates.io</a>
+<a href="https://crates.io/crates/serde-saphyr">crates.io</a>
+<a href="https://github.com/bourumir-wyngs/serde-saphyr/actions/workflows/api-compat.yml">0.0.18 compatible (see API note)</a>
+<a href="https://socket.dev/cargo/package/serde-saphyr">Socket</a>
+<a href="https://crates.io/crates/serde-saphyr">crates.io</a></p>
+<p><strong>serde-saphyr</strong> is a strongly typed YAML deserializer built on top of <a href="https://crates.io/crates/granit-parser"><code>granit-parser</code></a>. It aims to be <strong>panic-free</strong> on malformed input and to exclude <code>unsafe</code> code from the library. The crate deserializes YAML <em>directly into your Rust types</em> without constructing an intermediate tree of “abstract values.” Try it online as a WebAssembly application <a href="https://verdanta.tech/yva/">here</a>.</p>
+<p>See <a href="https://github.com/bourumir-wyngs/serde-saphyr/releases">release history</a> on GitHub.</p>
+<h4>Overview</h4>
+<h5>Why this approach?</h5>
+<ul>
+<li><strong>Light on resources:</strong> Having almost no intermediate data structures should result in more efficient parsing, especially if anchors are used only lightly.</li>
+<li><strong>Also, simpler:</strong> No code to support intermediate Values of all kinds.</li>
+<li><strong>Type-driven parsing:</strong> YAML that doesn’t match the expected Rust types is rejected early.</li>
+<li><strong>Safer by construction:</strong> serde-saphyr avoids the typical YAML remote code execution vulnerability because it does not support or implement tag-driven object instantiation. Instead, it deserializes into fixed Rust types via Serde, removing the object-instantiation mechanism that such <a href="https://www.arp242.net/yaml-config.html">exploits</a> depend on.</li>
+</ul>
+<h5>Notable features</h5>
+<ul>
+<li><strong>Configurable budgets:</strong> Enforce input limits to mitigate resource exhaustion (e.g., deeply nested structures or very large arrays); see <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/budget/struct.Budget.html"><code>Budget</code></a>.</li>
+<li>Precise error reporting with <strong>snippet rendering</strong>.</li>
+<li>Optional <strong>!include</strong> support with a custom or default resolver (inclusion of either a complete document or the node referenced by a specified anchor).</li>
+<li><strong>Comment support</strong>. Wrapper <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Commented.html">Commented</a> both captures and emits comments.</li>
+<li><strong>Property support</strong> (to prevent leaking any secrets from YAML files via error messages or files themselves)</li>
+<li><strong>Serializer supports emitting anchors</strong> (Rc, Arc, Weak) if they are properly wrapped (see below).</li>
+<li><strong>Declarative validation with optional <a href="https://crates.io/crates/validator"><code>validator</code></a> (<a href="https://github.com/bourumir-wyngs/serde-saphyr/blob/master/examples/validator_validate.rs">example</a>)</strong> or <strong><a href="https://crates.io/crates/garde"><code>garde</code></a></strong> (<a href="https://github.com/bourumir-wyngs/serde-saphyr/blob/master/examples/garde_validate.rs">example</a>).</li>
+<li><strong>Optional <a href="https://crates.io/crates/miette"><code>miette</code></a></strong> (<a href="https://github.com/bourumir-wyngs/serde-saphyr/blob/master/examples/miette.rs">example</a>) integration for more advanced error reporting.</li>
+<li><strong>serde_json::Value</strong> is supported when parsing without target structure defined.</li>
+<li><strong><a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Serializer.html">Serializer</a></strong> and <strong><a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Deserializer.html">Deserializer</a></strong> are public (due to how it's implemented, Deserializer is available in the closure only).</li>
+<li>Serialized floats are official YAML floats.</li>
+<li>Correct handling for JSON-style Unicode surrogate pairs.</li>
+<li><strong>robotic extensions</strong> to support YAML dialect common in robotics (see below).</li>
+</ul>
+<p><code>serde-saphyr</code> is compatible with WebAssembly. The CI flow includes builds for both <code>wasm32-unknown-unknown</code> (browser / JS) and <code>wasm32-wasip1</code> (WASI runtimes) with the full test suite running and passing. We also wrote <a href="https://github.com/bourumir-wyngs/yva">yva</a> in <a href="https://dioxuslabs.com/">dioxus</a> to deploy <code>serde-saphyr</code> on the web.</p>
+<p>The test suite currently includes over 2000 passing tests, including the fully converted <a href="https://github.com/yaml/yaml-test-suite">yaml-test-suite</a>, with <em>ALL</em> tests from there passing with no exceptions. To pass the last few remaining cases, we use <a href="https://crates.io/crates/granit-parser"><code>granit-parser</code></a>, a fork of Saphyr's parser. Some additional cases are taken from the original serde-yaml tests.</p>
+<h5>Project relationship</h5>
+<p><code>serde-saphyr</code> is not a fork of the older <a href="https://crates.io/crates/serde_yaml"><code>serde-yaml</code></a> crate and shares no code with it (apart from some reused tests). It is also not part of the <a href="https://crates.io/crates/saphyr"><code>saphyr</code></a> project. The name was historically chosen to reflect the use of <a href="https://crates.io/crates/saphyr-parser">saphyr parser</a> at a time when the Saphyr project did not provide its own Serde integration. <a href="https://crates.io/crates/granit-parser">granit-parser</a> it's currently using is the fork of Saphyr parser.</p>
+<h4>Getting started</h4>
+<h5>Usage</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Config</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">  </span><span class="n">enabled</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="p">,</span>
+<span class="w">  </span><span class="n">retries</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">yaml_input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;</span>
+<span class="s">  name: &quot;My Application&quot;</span>
+<span class="s">  enabled: true</span>
+<span class="s">  retries: 5</span>
+<span class="s">...</span>
+<span class="s">&quot;#</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">config</span><span class="p">:</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="n">Config</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="n">yaml_input</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">parsed_config</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Parsed successfully: {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">parsed_config</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">eprintln!</span><span class="p">(</span><span class="s">&quot;Failed to parse YAML: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Using serializer or deserializer specifically</h5>
+<p>To speed up compilation, starting from version <code>0.0.23</code> you can link only the deserializer or only the serializer (along with their respective dependencies). For easier initial integration, both <code>serialize</code> and <code>deserialize</code> features are enabled by default.</p>
+<p>If you only need one side, you can disable default features and enable only the API surface you use:</p>
+<pre><code class="syntax-highlight language-toml"><span class="n">serde-saphyr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.0.27&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<p>or</p>
+<pre><code class="syntax-highlight language-toml"><span class="n">serde-saphyr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.0.27&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serialize&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<p>Disabling both will produce a &quot;Invalid feature configuration&quot; error (such configuration makes no sense).</p>
+<p>The optional <code>huge_documents</code> feature switches span storage from <code>u32</code> indices to a packed 48-bit internal representation so spans can cover YAML inputs far beyond 4 GiB without widening every coordinate to a full <code>u64</code>. Public getters still return <code>u64</code>, and values beyond the packed range saturate instead of wrapping.</p>
+<h5>Executable</h5>
+<p>serde-saphyr comes with a simple executable (CLI) that can be used to check the budget of a given YAML file, and can also be used as a YAML validator, printing the YAML error line, column numbers, and excerpt.</p>
+<p>To run it (no Rust knowledge required):</p>
+<pre><code>cargo install serde-saphyr
+
+# binary name is the package name by default
+serde-saphyr path/to/file.yaml
+</code></pre>
+<p>To enable <strong>fancy error reporting</strong> (graphical diagnostics) via the optional <code>miette</code> integration, install/build the CLI with the <code>miette</code> feature enabled:</p>
+<pre><code># install with miette enabled
+cargo install serde-saphyr --features miette
+
+# or run from a git checkout
+cargo run --features miette -- path/to/file.yaml
+</code></pre>
+<p>If you want to keep the previous plain-text error output even when built with <code>miette</code>, pass <code>--plain</code>:</p>
+<pre><code>serde-saphyr --plain path/to/file.yaml
+</code></pre>
+<p>If you want to allow file inclusion (<code>!include</code> tags) during parsing, configure the filesystem root path using <code>--include</code>:</p>
+<pre><code>serde-saphyr --include path/to/root path/to/file.yaml
+</code></pre>
+<h4>Configuration and safety controls</h4>
+<h5>Options</h5>
+<p>Serde-saphyr provides control over serialization and deserialization behavior. We generally welcome feature requests, but we also recognize that not every user wants every feature enabled by default.</p>
+<p>To support different use cases, most behavior can be enabled, disabled, or tuned via <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/options/struct.Options.html">Options</a> (deserializers) and <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/ser/options/struct.SerializerOptions.html">SerializerOptions</a> (serializers). Adding fields to the public API is a breaking change. To allow new options without breaking compatibility, Serde-saphyr uses a macro-driven approach based on the <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/macro.options.html"><code>options!</code></a>, <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/macro.budget.html"><code>budget!</code></a>, and <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/macro.ser_options.html"><code>ser_options!</code></a> macros.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">options</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="n">budget</span><span class="p">:</span><span class="w"> </span><span class="nc">serde_saphyr</span><span class="p">::</span><span class="n">budget</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="n">max_documents</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">     </span><span class="p">},</span>
+<span class="w">     </span><span class="n">duplicate_keys</span><span class="p">:</span><span class="w"> </span><span class="nc">DuplicateKeyPolicy</span><span class="p">::</span><span class="n">LastWins</span><span class="p">,</span>
+<span class="w"> </span><span class="p">};</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>API note:</strong> <code>serde-saphyr</code> is moving away from <a href="https://doc.rust-lang.org/book/ch05-01-defining-structs.html">struct literals</a> for its configuration structs (<code>Options</code>, <code>SerializerOptions</code>, <code>Budget</code>). Struct literals and direct field access will be deprecated soon. In the first <code>1.x</code> release, these types will become <code>#[non_exhaustive]</code> to prevent direct instantiation. During the migration period, semver checks temporarily allow adding fields to these structures, and the badge does not treat new fields as a breaking change (which is correct when using the macros).</p>
+<h5>Pathological inputs &amp; budgets</h5>
+<p>Fuzzing shows that certain adversarial inputs can make YAML parsers consume excessive time or memory, enabling denial-of-service scenarios. To counter this, <code>serde-saphyr</code> offers a fast, configurable pre-check via a <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/budget/struct.Budget.html"><code>Budget</code></a>, available through <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Options.html"><code>Options</code></a>. Defaults are conservative; tighten them when you know your input shape, or disable the budget if you only parse YAML you generate yourself.
+During <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/fn.from_reader_with_options.html">reader</a>-based deserialization, serde-saphyr does not buffer the entire payload; it parses incrementally, counting bytes and enforcing configured budgets. This design blocks denial-of-service attempts via excessively large inputs. When <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/fn.read_with_options.html">streaming</a> from the reader through the iterator, other budget limits apply on a per-document basis, since such a reader may be expected to stream indefinitely. The total size of the input is not limited in this case.
+To find the typical budget requirements for your file, use our <a href="https://verdanta.tech/yva/">web demo</a> or run the <code>main()</code> executable of this library, providing a YAML file path as a program parameter. You can also fetch the budget programmatically by registering a closure with <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Options.html#method.with_budget_report"><code>Options::with_budget_report</code></a>.</p>
+<h5>Indentation checking</h5>
+<p>Adding or removing a single space in YAML indentation may result in a document that is still syntactically correct but semantically wrong. To mitigate such issues, <code>serde-saphyr</code> can enforce indentation rules during deserialization via <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/enum.RequireIndent.html"><code>RequireIndent</code></a>.</p>
+<p>You can require the number of indentation columns to be consistent throughout the document, ensure it is even, or enforce that it is divisible by a specific number (for example, 4 or 6). Configure the desired policy using <code>Options</code>.</p>
+<h5>Duplicate keys</h5>
+<p>Duplicate key handling is configurable. By default it’s an error; “first wins” and “last wins” strategies are available via <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/options/struct.Options.html"><code>Options</code></a>. The duplicate key policy applies not just to strings but also to other types (if used as keys when deserializing into a map).</p>
+<h5>Booleans</h5>
+<p>By default, if the target field is boolean, serde-saphyr will attempt to interpret standard YAML 1.1 values as boolean (not just <code>false</code> but also <code>no</code>, etc.).
+If you do not want this (or if you are parsing into a JSON Value where it might be incorrectly inferred), enclose the value in quotes or set <code>strict_booleans</code> to true in <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/options/struct.Options.html"><code>Options</code></a>.</p>
+<h4>Deserialization patterns and YAML types</h4>
+<h5>Rust types as schema</h5>
+<p>To address the “Norway problem,” the target Rust types serve as an explicit schema. Because the parser knows whether a field expects a string or a boolean, it can correctly accept <code>1.2</code> either as a number or as the string <code>&quot;1.2&quot;</code>, and interpret the common YAML boolean shorthands (<code>y</code>, <code>on</code>, <code>n</code>, <code>off</code>) as actual booleans when appropriate (can be disabled). Likewise, <code>0x2A</code> is parsed as a hexadecimal integer when the target field is numeric, and as a string when the target is <code>String</code>. As with <a href="https://hitchdev.com/strictyaml/why/implicit-typing-removed/">StrictYAML</a>, <strong>serde-saphyr</strong> avoids inferring types from values — one of the most heavily criticized aspects of YAML. The Rust type system already provides all the necessary schema information.</p>
+<p>Schema-based parsing can be disabled by setting <code>no_schema</code> to true in <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Options.html"><code>Options</code></a>. In this case all <em>unquoted</em> values that are parsed into strings, but can be understood as something else, are rejected. This can be used for enforcing compatibility with another YAML parser that reads the same content and requires this quoting. Default setting is false.</p>
+<p>Legacy octal notation such as <code>0052</code> can be enabled via <code>Options</code>, but it is disabled by default.</p>
+<p>The concept that “Rust code is the schema” naturally extends to implemented support for <a href="https://crates.io/crates/validator"><code>validator</code></a> and <a href="https://crates.io/crates/garde"><code>garde</code></a>, as these crates allow annotations to be added directly to Rust types, providing even stricter control over permissible values.</p>
+<h5>Multiple documents</h5>
+<p>YAML streams can contain several documents separated by <code>---</code>/<code>...</code> markers. When deserializing with <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/fn.from_multiple.html"><code>serde_saphyr::from_multiple</code></a>, you still need to supply the vector element type up front (<code>Vec&lt;T&gt;</code>). That does <strong>not</strong> lock you into a single shape: make the element an enum and each document will deserialize into the matching variant. This lets you mix different payloads in one stream while retaining strong typing on the Rust side.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, Deserialize, PartialEq)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Document</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(rename = </span><span class="s">&quot;person&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">Person</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">age</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="cp">#[serde(rename = </span><span class="s">&quot;pet&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">Pet</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">kind</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">},</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;---</span>
+<span class="s"> person:</span>
+<span class="s">   name: Alice</span>
+<span class="s">   age: 30</span>
+<span class="s">---</span>
+<span class="s"> pet:</span>
+<span class="s">  kind: cat</span>
+<span class="s">---</span>
+<span class="s"> person:</span>
+<span class="s">   name: Bob</span>
+<span class="s">   age: 25</span>
+<span class="s">&quot;#</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">docs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_multiple</span><span class="p">(</span><span class="n">input</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;valid YAML stream&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Nested enums</h5>
+<p>Externally tagged enums nest naturally in YAML as maps keyed by the variant name.
+This enables strict, expressive models (enums with associated data) instead of generic maps.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+
+<span class="cp">#[derive(Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Move</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">by</span><span class="p">:</span><span class="w"> </span><span class="kt">f32</span><span class="p">,</span>
+<span class="w">  </span><span class="n">constraints</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Constraint</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Deserialize)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Constraint</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">StayWithin</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="kt">f32</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="kt">f32</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">:</span><span class="w"> </span><span class="kt">f32</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="n">MaxSpeed</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="kt">f32</span><span class="w"> </span><span class="p">},</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">yaml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;</span>
+<span class="s">- by: 10.0</span>
+<span class="s">  constraints:</span>
+<span class="s">    - StayWithin:</span>
+<span class="s">      x: 0.0</span>
+<span class="s">      y: 0.0</span>
+<span class="s">      r: 5.0</span>
+<span class="s">    - StayWithin:</span>
+<span class="s">      x: 4.0</span>
+<span class="s">      y: 0.0</span>
+<span class="s">      r: 5.0</span>
+<span class="s">    - MaxSpeed:</span>
+<span class="s">      v: 3.5</span>
+<span class="s">      &quot;#</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="n">robot_moves</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Move</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="n">yaml</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">  </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Parsed {} moves&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">robot_moves</span><span class="p">.</span><span class="n">len</span><span class="p">());</span>
+<span class="w">  </span><span class="p">}</span>
+</code></pre>
+<p>There are two variants of the deserialization functions: from_* and from_*_with_options. The latter accepts an <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/options/struct.Options.html">Options</a>
+object that allows you to configure budget and other aspects of parsing. For larger projects that require consistent parsing behavior, we recommend defining a wrapper function so that all option and budget settings are managed in one place (see examples/wrapper_function.rs).</p>
+<p>Tagged enums written as <code>!!EnumName VARIANT</code> are also supported, but only for single-level scalar variants. YAML itself cannot nest such tagged enums, so use mapping-based representations (<code>EnumName: RED</code>) if you need to embed enums within other enums.</p>
+<h5>Tuple enum variants</h5>
+<p>It is possible to deserialize tuple enum variants:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Debug, PartialEq, Eq, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="nc">Value</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">Expression</span><span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+<span class="w">  </span><span class="n">Pair</span><span class="p">(</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Debug, PartialEq, Eq, Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Context</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">Value</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p><code>serde_saphyr::from_str::&lt;Context&gt;(yaml)</code> would take the <code>value: !Expression 1 + 1</code> or <code>value: !Pair [a, 12]</code>. Both YAML lists and Rust tuples allow their elements to have different types.</p>
+<h5>Composite keys</h5>
+<p>YAML supports complex (non-string) mapping keys. Rust maps can mirror this, allowing you to parse such structures directly.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::{</span><span class="n">Deserialize</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, PartialEq, Eq, Hash, Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span>
+<span class="w">  </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Debug, PartialEq, Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Transform</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Transform between locations</span>
+<span class="w">    </span><span class="n">map</span><span class="p">:</span><span class="w"> </span><span class="nc">HashMap</span><span class="o">&lt;</span><span class="n">Point</span><span class="p">,</span><span class="w"> </span><span class="n">Point</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">yaml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;</span>
+<span class="s">    map:</span>
+<span class="s">      {x: 1, y: 2}: {x: 3, y: 4}</span>
+<span class="s">      {x: 5, y: 6}: {x: 7, y: 8}</span>
+<span class="s">    &quot;#</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">transform</span><span class="p">:</span><span class="w"> </span><span class="nc">Transform</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="n">yaml</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{} entries&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">transform</span><span class="p">.</span><span class="n">map</span><span class="p">.</span><span class="n">len</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Binary scalars</h5>
+<p><code>!!binary</code>-tagged YAML values are base64-decoded when deserializing into <code>Vec&lt;u8&gt;</code> or <code>String</code> (reporting an error if they are not valid UTF-8).</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, Deserialize, PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Blob</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">data</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">parse_blob</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">blob</span><span class="p">:</span><span class="w"> </span><span class="nc">Blob</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="s">&quot;data: !!binary aGVsbG8=&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">blob</span><span class="p">.</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="s">b&quot;hello&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>Important</strong>: some projects add the <code>!!binary</code> tag while actually expecting a <em>verbatim string value</em> (for example, the literal string <code>&quot;aGVsbG8=&quot;</code>). This works with parsers that simply ignore the tag. However, <code>serde-saphyr</code> decodes <code>!!binary</code> values by default, attempting to interpret them as UTF-8 bytes.</p>
+<p>If you use <code>!!binary</code> only as a documentation or annotation tag, enable <code>ignore_binary_tag_for_string = true</code> in <code>Options</code>.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+
+<span class="cp">#[derive(Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">ContainsString</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">parse_string</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">ContainsString</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str_with_options</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;name: !!binary H4sIAA==&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">options</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">ignore_binary_tag_for_string</span><span class="p">:</span><span class="w"> </span><span class="nc">true</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">    </span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">value</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;H4sIAA==&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p><code>!!binary</code> for other types like <code>Vec&lt;u8&gt;</code> will stay supported.</p>
+<h5>Deserializing into abstract JSON Value</h5>
+<p>If you must work with abstract types, you can also deserialize YAML into <a href="https://docs.rs/serde_json/latest/serde_json/value/index.html"><code>serde_json::Value</code></a>. Serde will drive the process through <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Deserializer.html#method.deserialize_any"><code>deserialize_any</code></a> because <code>Value</code> does not fix a Rust primitive type ahead of time. You lose the strict type control provided by Rust <code>struct</code> data types. Also, unlike YAML, JSON does not allow composite keys; keys must be strings. Field order will be preserved.</p>
+<h5>Borrowed string deserialization</h5>
+<p>serde-saphyr supports zero-copy deserialization for string fields when using <code>from_str</code> or <code>from_slice</code>. This allows deserializing into <code>&amp;str</code> fields that borrow directly from the input, avoiding allocation overhead.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Data</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span>
+<span class="w">    </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">yaml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;name: hello</span><span class="se">\n</span><span class="s">value: 42</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">data</span><span class="p">:</span><span class="w"> </span><span class="nc">Data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="n">yaml</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">);</span>
+</code></pre>
+<h5>UTF-16</h5>
+<p>Reader-based entry points (<code>from_reader</code>, <code>from_reader_with_options</code>,
+<code>read</code>, and <code>read_with_options</code>) accept BOM-marked UTF-8, UTF-16LE, and
+UTF-16BE. If no recognized BOM is present, reader input is treated as UTF-8. String- and slice-based entry
+points take UTF-8 only.</p>
+<h4>YAML composition, comments, and external values</h4>
+<h5>Merge keys</h5>
+<p><code>serde-saphyr</code> supports merge keys, which reduce redundancy and verbosity by specifying shared key-value pairs once and then reusing them across multiple mappings. Here is an example with merge keys (inherited properties):</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+
+<span class="sd">/// Configuration to parse into. Does not include &quot;defaults&quot;</span>
+<span class="cp">#[derive(Debug, Deserialize, PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Config</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">development</span><span class="p">:</span><span class="w"> </span><span class="nc">Connection</span><span class="p">,</span>
+<span class="w">    </span><span class="n">production</span><span class="p">:</span><span class="w"> </span><span class="nc">Connection</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Debug, Deserialize, PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Connection</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">adapter</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="n">host</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="n">database</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">yaml_input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;</span>
+<span class="s"># Here we define &quot;default configuration&quot;  </span>
+<span class="s">defaults: &amp;defaults</span>
+<span class="s">  adapter: postgres</span>
+<span class="s">  host: localhost</span>
+
+<span class="s">development:</span>
+<span class="s">  &lt;&lt;: *defaults</span>
+<span class="s">  database: dev_db</span>
+
+<span class="s">production:</span>
+<span class="s">  &lt;&lt;: *defaults</span>
+<span class="s">  database: prod_db</span>
+<span class="s">&quot;#</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Deserialize YAML with anchors, aliases and merge keys into the Config struct</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">parsed</span><span class="p">:</span><span class="w"> </span><span class="nc">Config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="n">yaml_input</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;Failed to deserialize YAML&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Define expected Config structure explicitly</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">expected</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">development</span><span class="p">:</span><span class="w"> </span><span class="nc">Connection</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">adapter</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgres&quot;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span>
+<span class="w">            </span><span class="n">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;localhost&quot;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span>
+<span class="w">            </span><span class="n">database</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;dev_db&quot;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="n">production</span><span class="p">:</span><span class="w"> </span><span class="nc">Connection</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">adapter</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgres&quot;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span>
+<span class="w">            </span><span class="n">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;localhost&quot;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span>
+<span class="w">            </span><span class="n">database</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;prod_db&quot;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">    </span><span class="p">};</span>
+
+<span class="w">    </span><span class="c1">// Assert parsed config matches expected</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">parsed</span><span class="p">,</span><span class="w"> </span><span class="n">expected</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>Merge keys are standard in YAML 1.1. Although YAML 1.2 no longer includes merge keys in its specification, it doesn't explicitly disallow them either, and many parsers implement this feature.</p>
+<p>Merge-key handling is configurable with the <code>merge_keys</code> option. The default
+<code>MergeKeyPolicy::Merge</code> expands <code>&lt;&lt;</code> entries. Use <code>MergeKeyPolicy::AsOrdinary</code>
+to accept <code>&lt;&lt;</code> as a regular mapping key, or <code>MergeKeyPolicy::Error</code> to reject
+merge keys.</p>
+<h5>Comments</h5>
+<ul>
+<li>As granit-parser now supports comments, the wrapper <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Commented.html">Commented</a> will also capture the relevant YAML comment into its field when deserializing YAML.</li>
+<li>During serialization, <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Commented.html">Commented</a> also emits a comment next to a scalar or reference (handy when the reference is far from its definition and needs explanation).</li>
+<li>For container values, a comment attached to the parent value itself, such as <code>root: # comment</code>, is captured only by <code>Commented&lt;Container&gt;</code> and is not inherited by the first child. A comment inside the container, directly above a child key or sequence item, is captured by that child.</li>
+<li>Comments are not copied from anchor definitions through aliases or merge keys. In <code>actual: { &lt;&lt;: *defaults }</code>, a <code>Commented</code> field materialized from <code>&amp;defaults</code> will not receive a comment that was written at the definition site above <code>defaults.port</code>; that comment belongs to the original field.</li>
+<li>For aliases to containers used as nested values, leading comments above the alias follow the same rule as comments inside a direct nested container. In <code>root:\n  # comment\n  *defaults</code>, the comment remains available to the expanded container's first child rather than being captured as a comment on the alias use itself.</li>
+<li>See example <a href="https://github.com/bourumir-wyngs/serde-saphyr/blob/master/examples/commented.rs">commented.rs</a>.</li>
+</ul>
+<h5>Properties</h5>
+<p>Many configuration formats contain secret values that should not live in checked-in YAML or leak into error snippets.
+The optional <code>properties</code> feature adds docker-compose-style <code>${NAME}</code> interpolation for that use case, with values supplied through <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/options/struct.Options.html"><code>Options</code></a>.
+It is also useful for generated values or values that change between releases or deployments.</p>
+<p>Interpolation is intentionally narrow:</p>
+<ul>
+<li>it only applies to <strong>plain scalars</strong>; quoted and block scalars stay literal,</li>
+<li>the supported forms are listed in the table below,</li>
+<li>the unbraced <code>$NAME</code> form is opt-in (see below) so a bare <code>$NAME</code> stays a literal by default,</li>
+<li><code>$${NAME}</code> escapes to a literal <code>${NAME}</code>,</li>
+<li>nesting is not supported: <code>default</code>/<code>replacement</code>/<code>error</code> text is taken verbatim up to the first <code>}</code> with no further interpolation or escape processing,</li>
+<li>if no property map is configured, every <code>${...}</code> form remains unchanged.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Form</th>
+<th><code>NAME</code> unset</th>
+<th><code>NAME</code> set to empty</th>
+<th><code>NAME</code> set to non-empty</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>${NAME}</code></td>
+<td>error</td>
+<td><code>&quot;&quot;</code></td>
+<td>the value</td>
+</tr>
+<tr>
+<td><code>${NAME-default}</code></td>
+<td><code>default</code></td>
+<td><code>&quot;&quot;</code></td>
+<td>the value</td>
+</tr>
+<tr>
+<td><code>${NAME:-default}</code></td>
+<td><code>default</code></td>
+<td><code>default</code></td>
+<td>the value</td>
+</tr>
+<tr>
+<td><code>${NAME+replacement}</code></td>
+<td><code>&quot;&quot;</code></td>
+<td><code>replacement</code></td>
+<td><code>replacement</code></td>
+</tr>
+<tr>
+<td><code>${NAME:+replacement}</code></td>
+<td><code>&quot;&quot;</code></td>
+<td><code>&quot;&quot;</code></td>
+<td><code>replacement</code></td>
+</tr>
+<tr>
+<td><code>${NAME?error}</code></td>
+<td>error (with <code>error</code> as hint)</td>
+<td><code>&quot;&quot;</code></td>
+<td>the value</td>
+</tr>
+<tr>
+<td><code>${NAME:?error}</code></td>
+<td>error (with <code>error</code> as hint)</td>
+<td>error (with <code>error</code> as hint)</td>
+<td>the value</td>
+</tr>
+</tbody>
+</table>
+<p><code>default</code>, <code>replacement</code>, and <code>error</code> are literal text from the YAML and are not treated as secret.
+The <code>error</code> hint may be empty (<code>${NAME?}</code> / <code>${NAME:?}</code>), matching docker-compose.</p>
+<p><code>properties</code> is gated behind the <code>properties</code> feature flag.
+Once enabled, pass a property map through <code>Options::with_properties(...)</code>:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[cfg(feature = </span><span class="s">&quot;properties&quot;</span><span class="cp">)]</span>
+<span class="cp">#[derive(Debug, PartialEq, Eq, Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Config</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">database_url</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="n">mode</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[cfg(feature = </span><span class="s">&quot;properties&quot;</span><span class="cp">)]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">property_map</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="n">Config</span><span class="p">,</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::{</span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">from_str_with_options</span><span class="p">};</span>
+<span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">properties</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="w">    </span><span class="n">properties</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;DATABASE_URL&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span>
+<span class="w">        </span><span class="s">&quot;postgres://db.example/app&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="n">properties</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;MODE&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;production&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">options</span><span class="o">!</span><span class="w"> </span><span class="p">{}.</span><span class="n">with_properties</span><span class="p">(</span><span class="n">properties</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">yaml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;</span>
+<span class="s">        database_url: ${DATABASE_URL}</span>
+<span class="s">        mode: ${MODE}</span>
+<span class="s">&quot;#</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">parsed</span><span class="p">:</span><span class="w"> </span><span class="nc">Config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from_str_with_options</span><span class="p">(</span><span class="n">yaml</span><span class="p">,</span><span class="w"> </span><span class="n">options</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[cfg(feature = </span><span class="s">&quot;properties&quot;</span><span class="cp">)]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">property_map_example_works</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">parsed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">property_map</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span>
+<span class="w">        </span><span class="n">parsed</span><span class="p">,</span>
+<span class="w">        </span><span class="n">Config</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">database_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgres://db.example/app&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span>
+<span class="w">            </span><span class="n">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;production&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>Set <code>property_syntax: PropertySyntax::BracedOrBare</code> to also accept the unbraced <code>$NAME</code> shorthand.
+It uses the same Required semantics as <code>${NAME}</code>, including <code>&quot;$$NAME&quot;</code> being a literal <code>&quot;$NAME&quot;</code>.
+Name boundaries are greedy.
+<code>$NAMEfoo</code> looks up <code>NAMEfoo</code>, so write <code>${NAME}foo</code> instead when you need to concatenate.
+Unset names produce an error.
+Modifiers stay brace-only:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Debug, Deserialize, PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Config</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">db</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[cfg(feature = </span><span class="s">&quot;properties&quot;</span><span class="cp">)]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">unbraced</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+<span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::{</span><span class="n">PropertySyntax</span><span class="p">,</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">from_str_with_options</span><span class="p">};</span>
+<span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">properties</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span><span class="p">::</span><span class="n">from</span><span class="p">([</span>
+<span class="w">        </span><span class="p">(</span><span class="s">&quot;DATABASE_URL&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;postgres://db.example/app&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">()),</span>
+<span class="w">    </span><span class="p">]);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">opts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">options</span><span class="o">!</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">property_syntax</span><span class="p">:</span><span class="w"> </span><span class="nc">PropertySyntax</span><span class="p">::</span><span class="n">BracedOrBare</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="p">.</span><span class="n">with_properties</span><span class="p">(</span><span class="n">properties</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">parsed</span><span class="p">:</span><span class="w"> </span><span class="nc">Config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from_str_with_options</span><span class="p">(</span><span class="s">&quot;db: $DATABASE_URL</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">opts</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">expected</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">db</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgres://db.example/app&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">()</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span><span class="w"> </span><span class="n">parsed</span><span class="p">);</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<p>A bare <code>${NAME}</code> with no value in the map (and no <code>-</code>/<code>:-</code> default), a <code>${NAME?msg}</code> / <code>${NAME:?msg}</code> that triggers its error condition, or a malformed <code>${...}</code> candidate (invalid name, unsupported modifier), fails deserialization with a dedicated error pointing at the YAML source location.
+Configuration mistakes fail closed rather than silently producing partial values.</p>
+<p>When the property values are secrets, interpolation resolves the final value before Serde finishes deserializing the surrounding type, so a downstream custom deserializer or validation path could otherwise echo the resolved secret.
+<code>serde-saphyr</code> tracks interpolated values and redacts them back to their <code>${...}</code> form in later error messages.
+Treat the property map itself as sensitive - do not log or format it directly.</p>
+<h5>Includes</h5>
+<p>The need for including YAML (not part of the official specs) can be seen from the popularity of the command-line <a href="https://crates.io/crates/yaml-include">yaml-include</a> crate. That crate is very feature-complete. However, if the YAML parser and validator are separate from the pre-processor, they usually only report the line number and snippet in the processed document. For large documents with multiple and deep includes, this becomes challenging to interpret. YAML indentation and security requirements like path confinement or anchor isolation make &quot;quick adding&quot; of includes non-trivial.</p>
+<p><code>serde-saphyr</code> allows resolving <code>!include</code> tags via a custom resolver configured in <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/options/struct.Options.html"><code>Options</code></a>. When using a single <code>!include</code> directly as a value, it works naturally for replacing a scalar, sequence, or an entire mapping:</p>
+<pre><code># Replacing the entire mapping value
+my_mapping: !include my_mapping.yaml
+
+# Supplying a list/sequence value
+my_list: !include my_list.yaml
+</code></pre>
+<p>However, if you want to include a mapping and <strong>merge</strong> its keys into a parent mapping alongside other keys, you <strong>must</strong> use the merge key (<code>&lt;&lt;</code>). Attempting to list <code>!include</code> inside a mapping without a merge key is invalid YAML syntax:</p>
+<pre><code># INVALID: `!include` is treated as a key missing a value (`:`)
+a: 1
+!include my_mapping.yaml
+b: 2
+</code></pre>
+<p>Instead, use the merge key to correctly inject the included mapping:</p>
+<pre><code># VALID: merges the contents of my_mapping.yaml
+a: 1
+&lt;&lt;: !include my_mapping.yaml
+b: 2
+</code></pre>
+<p><code>!include</code> is gated behind the <code>include</code> feature flag. If it is not enabled, or the resolver is not set, this tag has no special treatment. The <code>include</code> feature allows resolvers that do not access the filesystem. For the most common case, where files are included from the filesystem, <code>include_fs</code> must be enabled as well. Then the most common way to enable includes looks like this:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">options</span><span class="o">!</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">        </span><span class="p">.</span><span class="n">with_filesystem_root</span><span class="p">(</span><span class="s">&quot;examples&quot;</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;failed to create filesystem include resolver&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">config</span><span class="p">:</span><span class="w"> </span><span class="nc">Config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from_str_with_options</span><span class="p">(</span><span class="n">yaml_to_parse</span><span class="p">,</span><span class="w"> </span><span class="n">options</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;failed to parse filesystem include example&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>You can alternatively use <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.SafeFileResolver.html"><code>SafeFileResolver</code></a> to configure more options, or provide your own <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/type.IncludeResolver.html"><code>IncludeResolver</code></a> callback that resolves a name into YAML text, which can be useful for custom storage backends or generated YAML without using the filesystem. The safety features of this resolver are summarized in the documentation header of this class.</p>
+<p>Instead of including the whole document, you can also include only the value of a specific anchor defined in the included YAML document:</p>
+<pre><code>  !include my_mapping.yaml#anchor_name
+</code></pre>
+<p><code>SafeFileResolver</code> has a built-in capability for anchor extraction. For flexibility, custom <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/type.IncludeResolver.html"><code>IncludeResolver</code></a> implementations must do this on their own, splitting anchor from the reference and then returning <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/enum.InputSource.html#variant.AnchoredText"><code>InputSource::AnchoredText</code></a>.</p>
+<p>Unless otherwise stated, the anchor scope is restricted to the document where it is defined. Overriding a parent anchor value somewhere deep inside included content would be challenging to debug and could even become a security issue.</p>
+<p>Whole-document includes only support sources that contain a single YAML document. Fragment includes also require the included source to contain a single YAML document; multi-document sources are rejected instead of scanning across document boundaries. Recursive inclusion is not permitted (and the file, not the fragment, is the include's identity).</p>
+<h4>Validation and diagnostics</h4>
+<h5>Snippets</h5>
+<p>To make debugging easier, <strong>serde-saphyr</strong> renders snippets of the YAML that caused an error (similar to how many compilers report errors). These snippets include the line where the error occurred along with some surrounding context. Any terminal control sequences that might be present in the YAML are stripped out. If not desired, snippets can be removed for a specific error using <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/enum.Error.html#method.without_snippet"><code>without_snippet</code></a>, or disabled entirely via the <code>Options</code> configuration.</p>
+<h5>Garde and Validator integration</h5>
+<p>This crate optionally integrates with <a href="https://crates.io/crates/validator">validator</a> or <a href="https://crates.io/crates/garde"><code>garde</code></a> to run declarative validation. serde-saphyr error will print the snippet, providing location information. If the invalid value comes from the YAML anchor, serde-saphyr will also tell where this anchor has been defined.</p>
+<h6>Garde</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">garde</span><span class="p">::</span><span class="n">Validate</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, Deserialize, Validate)]</span>
+<span class="cp">#[serde(rename_all = </span><span class="s">&quot;camelCase&quot;</span><span class="cp">)]</span><span class="w"> </span><span class="c1">// Rust in snake_case, YAML in camelCase.</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">AB</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Just defined here (we validate `second_string` only).</span>
+<span class="w">    </span><span class="cp">#[garde(skip)]</span>
+<span class="w">    </span><span class="n">first_string</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+
+<span class="w">    </span><span class="cp">#[garde(length(min = 2))]</span>
+<span class="w">    </span><span class="n">second_string</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">yaml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;</span>
+<span class="s">        firstString: &amp;A &quot;x&quot;</span>
+<span class="s">        secondString: *A</span>
+<span class="s">   &quot;#</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str_valid</span><span class="p">::</span><span class="o">&lt;</span><span class="n">AB</span><span class="o">&gt;</span><span class="p">(</span><span class="n">yaml</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">expect_err</span><span class="p">(</span><span class="s">&quot;must fail validation&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Field in error message in camelCase (as in YAML).</span>
+<span class="w">    </span><span class="fm">eprintln!</span><span class="p">(</span><span class="s">&quot;{err}&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Validator</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Deserialize</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">validator</span><span class="p">::</span><span class="n">Validate</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, Deserialize, Validate)]</span>
+<span class="cp">#[serde(rename_all = </span><span class="s">&quot;camelCase&quot;</span><span class="cp">)]</span><span class="w"> </span><span class="c1">// Rust in snake_case, YAML in camelCase.</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">AB</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Just defined here (we validate `second_string` only).</span>
+<span class="w">    </span><span class="cp">#[allow(dead_code)]</span>
+<span class="w">    </span><span class="n">first_string</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+
+<span class="w">    </span><span class="cp">#[validate(length(min = 2))]</span>
+<span class="w">    </span><span class="n">second_string</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">yaml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;</span>
+<span class="s">        firstString: &amp;A &quot;x&quot;</span>
+<span class="s">        secondString: *A</span>
+<span class="s">   &quot;#</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str_validate</span><span class="p">::</span><span class="o">&lt;</span><span class="n">AB</span><span class="o">&gt;</span><span class="p">(</span><span class="n">yaml</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">expect_err</span><span class="p">(</span><span class="s">&quot;must fail validation&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="fm">eprintln!</span><span class="p">(</span><span class="s">&quot;{err}&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>A typical output with serde-saphyr native snippet rendering looks like:</p>
+<pre><code>error: line 3 column 23: invalid here, validation error: length is lower than 2 for `secondString`
+ --&gt; the value is used here:3:23
+  |
+1 |
+2 |         firstString: &amp;A "x"
+3 |         secondString: *A
+  |                       ^ invalid here, validation error: length is lower than 2 for `secondString`
+4 |  
+  |
+  | This value comes indirectly from the anchor at line 2 column 25:
+  |
+1 | 
+2 |         firstString: &amp;A "x"
+  |                         ^ defined here
+3 |         secondString: *A
+4 |  
+</code></pre>
+<p>The integration of garde is feature-gated and disabled by default. Use <code>serde-saphyr = { version = &quot;0.0.17&quot;, features = [&quot;garde&quot;] }</code> (or <code>features = [&quot;validator&quot;]</code>) in <code>Cargo.toml</code> to enable it.</p>
+<p>If you prefer to validate without validation crates and want to ensure that location information is always available, use the heavier approach with <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/spanned/struct.Spanned.html"><code>Spanned&lt;T&gt;</code></a> wrapper instead.</p>
+<h5>Custom messages</h5>
+<p>The default error messages are <strong>developer-oriented</strong>. They may mention <code>serde-saphyr</code> APIs and
+options and include “action items” intended to help fix the problem.</p>
+<p>If error messages are shown to end users, switch to the built-in user-facing formatter or provide
+your own formatter (for example, to translate messages into another language).</p>
+<p>See:</p>
+<ul>
+<li><a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/trait.MessageFormatter.html"><code>MessageFormatter</code></a> — controls the main message text for each <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/enum.Error.html"><code>Error</code></a>.</li>
+<li><a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/trait.Localizer.html"><code>Localizer</code></a> — controls message pieces that are composed <em>outside</em> <code>MessageFormatter::format_message</code> (location suffixes, validation/snippet labels, etc.).</li>
+</ul>
+<h6>Use the built-in user-facing formatter</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">UserMessageFormatter</span><span class="p">;</span>
+
+<span class="p">#</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">).</span><span class="n">unwrap_err</span><span class="p">();</span>
+<span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">[User Error]:</span><span class="se">\n</span><span class="s">{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">err</span><span class="p">.</span><span class="n">render_with_formatter</span><span class="p">(</span><span class="o">&amp;</span><span class="n">UserMessageFormatter</span><span class="p">));</span>
+</code></pre>
+<h6>Use a custom formatter with <code>miette</code></h6>
+<p>If you want fancy diagnostics via <code>miette</code>, you can convert a <code>serde-saphyr</code> error to a
+<code>miette::Report</code> while still controlling the message text via a custom formatter:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::{</span><span class="n">MessageFormatter</span><span class="p">,</span><span class="w"> </span><span class="n">UserMessageFormatter</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">yaml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;not_a_bool</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">opts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">options</span><span class="o">!</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">with_snippet</span><span class="p">:</span><span class="w"> </span><span class="nc">false</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str_with_options</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="n">yaml</span><span class="p">,</span><span class="w"> </span><span class="n">opts</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">expect_err</span><span class="p">(</span><span class="s">&quot;bool parse error expected&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// You can plug in `&amp;UserMessageFormatter` or your own `&amp;dyn MessageFormatter`.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">formatter</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">dyn</span><span class="w"> </span><span class="n">MessageFormatter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">UserMessageFormatter</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">report</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">miette</span><span class="p">::</span><span class="n">to_miette_report_with_formatter</span><span class="p">(</span>
+<span class="w">        </span><span class="o">&amp;</span><span class="n">err</span><span class="p">,</span>
+<span class="w">        </span><span class="n">yaml</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;config.yaml&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">formatter</span><span class="p">,</span>
+<span class="w">    </span><span class="p">);</span>
+
+<span class="w">    </span><span class="fm">eprintln!</span><span class="p">(</span><span class="s">&quot;{report:?}&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>This requires enabling the crate’s <code>miette</code> feature.</p>
+<p>For a complete custom formatter/localizer example, see <code>examples/pirate_formatter.rs</code>. For an
+end-to-end <code>miette</code> example, see <code>examples/miette.rs</code>.</p>
+<h5>Figment</h5>
+<p>Both <a href="https://crates.io/crates/figment">figment</a> and <a href="https://crates.io/crates/figment2">figment2</a> are supported as optional features (see <code>examples/figment_yaml</code>).</p>
+<h4>Serialization and round-tripping</h4>
+<h5>Serialization</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::</span><span class="n">Serialize</span><span class="p">;</span>
+
+<span class="cp">#[derive(Serialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">User</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">active</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">}</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">yaml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">to_string</span><span class="p">(</span><span class="o">&amp;</span><span class="n">User</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Ada&quot;</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="n">active</span><span class="p">:</span><span class="w"> </span><span class="nc">true</span><span class="w"> </span><span class="p">}).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert!</span><span class="p">(</span><span class="n">yaml</span><span class="p">.</span><span class="n">contains</span><span class="p">(</span><span class="s">&quot;name: Ada&quot;</span><span class="p">));</span>
+</code></pre>
+<h5>Anchors (Rc/Arc/Weak)</h5>
+<p>Serde-saphyr can conceptually connect YAML anchors with Rust shared references (Rc, Weak and Arc). You need to use wrappers to activate this feature:</p>
+<ul>
+<li><a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.RcAnchor.html">RcAnchor&lt;T&gt;</a> and <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.ArcAnchor.html">ArcAnchor&lt;T&gt;</a> emit anchors like <code>&amp;a1</code> on first occurrence and may emit aliases <code>*a1</code> later.</li>
+<li><a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.RcWeakAnchor.html">RcWeakAnchor&lt;T&gt;</a> and <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.ArcWeakAnchor.html">ArcWeakAnchor&lt;T&gt;</a> serialize a weak ref: if the strong pointer is gone, it becomes <code>null</code>.</li>
+</ul>
+<pre><code class="syntax-highlight language-rust"><span class="w">     </span><span class="cp">#[derive(Deserialize, Serialize)]</span>
+<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">Doc</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="nc">RcAnchor</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="nc">RcAnchor</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cp">#[derive(Deserialize, Serialize)]</span>
+<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">Bigger</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">primary_a</span><span class="p">:</span><span class="w"> </span><span class="nc">RcAnchor</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">doc</span><span class="p">:</span><span class="w"> </span><span class="nc">Doc</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">the_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RcAnchor</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="n">Rc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Node</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;primary_a&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span>
+<span class="w">    </span><span class="p">}));</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Bigger</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">primary_a</span><span class="p">:</span><span class="w"> </span><span class="nc">the_a</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span>
+<span class="w">        </span><span class="n">doc</span><span class="p">:</span><span class="w"> </span><span class="nc">Doc</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="nc">the_a</span><span class="p">.</span><span class="n">clone</span><span class="p">(),</span>
+<span class="w">            </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="nc">RcAnchor</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="n">Rc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Node</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;the_b&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span>
+<span class="w">            </span><span class="p">})),</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">    </span><span class="p">};</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">serialized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">to_string</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">serialized</span><span class="p">,</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span>
+<span class="w">        </span><span class="n">indoc</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="s">r#&quot;primary_a: &amp;a1</span>
+<span class="s">                  name: primary_a</span>
+<span class="s">                doc:</span>
+<span class="s">                  a: *a1</span>
+<span class="s">                  b: &amp;a2</span>
+<span class="s">                    name: the_b</span>
+<span class="s">            &quot;#</span><span class="p">}));</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">deserialized</span><span class="p">:</span><span class="w"> </span><span class="nc">Bigger</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_saphyr</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="o">&amp;</span><span class="n">serialized</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="o">&amp;</span><span class="n">deserialized</span><span class="p">.</span><span class="n">primary_a</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">deserialized</span><span class="p">.</span><span class="n">doc</span><span class="p">.</span><span class="n">a</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="o">&amp;</span><span class="n">deserialized</span><span class="p">.</span><span class="n">doc</span><span class="p">.</span><span class="n">b</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">data</span><span class="p">.</span><span class="n">doc</span><span class="p">.</span><span class="n">b</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert!</span><span class="p">(</span><span class="n">Rc</span><span class="p">::</span><span class="n">ptr_eq</span><span class="p">(</span><span class="o">&amp;</span><span class="n">deserialized</span><span class="p">.</span><span class="n">primary_a</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">deserialized</span><span class="p">.</span><span class="n">doc</span><span class="p">.</span><span class="n">a</span><span class="p">.</span><span class="mi">0</span><span class="p">));</span>
+
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<p>When anchors are highly repetitive and also large, packing them into references can make YAML more human-readable.</p>
+<p>To support round-tripping, the library can also deserialize into these anchor structures; this deserialization is identity-preserving. A field or structure that is defined once and subsequently referenced will exist as a single instance in memory, with all anchor fields pointing to it. This is crucial when the topology of references itself constitutes important information to be transferred.</p>
+<h5>Recursive YAML</h5>
+<p>While recursive YAML is unusual, it is not forbidden by the specification. Real-world examples and <a href="https://github.com/saphyr-rs/saphyr/issues/24">requests to implement it</a> exist.</p>
+<p>Serde-saphyr supports recursive structures, but Rust requires being very explicit about this. A structure that may hold recursive references to itself must be wrapped in a <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.RcRecursive.html"><code>RcRecursive&lt;T&gt;</code></a>, and any reference that points to it must be <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.RcRecursion.html"><code>RcRecursion&lt;T&gt;</code></a>. Arc varieties exist. See also <a href="https://github.com/bourumir-wyngs/serde-saphyr/blob/f23c28ce14fdfc0c254867468222e51267853b35/examples/recursive_yaml.rs">examples/recursive_yaml.rs</a>.</p>
+<h5>Controlling serialization</h5>
+<ul>
+<li>Empty maps are serialized as {} and empty lists as [] by default.</li>
+<li>Strings containing newlines, and very long strings are serialized as appropriate block scalars, except in cases where they would need escaping (like ending with <code>:</code>).</li>
+<li>Indentation is configurable.</li>
+<li>The wrapper <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.SpaceAfter.html">SpaceAfter</a> adds an empty line after the wrapped value, useful for visually separating sections in the output YAML.</li>
+<li>It is possible to request that all strings be <strong>quoted</strong> — using single quotes when no escape sequences are present, and double quotes otherwise. This is very explicit and unambiguous, but such YAML may be less readable for humans. Line wrapping is disabled in this mode.</li>
+<li>YAML 1.1 booleans (<code>y</code>, <code>yes</code>, <code>on</code>, etc.) are normally quoted as both keys and values. If this is undesired (y is a coordinate), set <code>yaml_12</code> to true.</li>
+</ul>
+<p>These settings can be changed in <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/ser/options/struct.SerializerOptions.html">SerializerOptions</a>.</p>
+<h4>Feature-gated domain extensions</h4>
+<h5>Robotics</h5>
+<p>The feature-gated &quot;robotics&quot; capability enables parsing of YAML extensions commonly used in robotics (<a href="https://www.ros.org/blog/why-ros/">ROS</a>). These extensions support conversion functions (deg, rad) and simple mathematical expressions such as deg(180), rad(pi), <code>1 + 2*(3 - 4/5)</code>, or rad(pi/2). This capability is gated behind the <code>robotics</code> feature and is not enabled by default. Additionally, <strong>angle_conversions</strong> must be set to true in the <a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/options/struct.Options.html">Options</a>. Just adding the robotics feature is not enough to activate this mode of parsing. This parser is still just a simple expression calculator implemented directly in Rust, not some hook into a language interpreter.</p>
+<pre><code>rad_tag: !radians 0.15 # value in radians, stays in radians
+deg_tag: !degrees 180 # value in degrees, converts to radians
+expr_complex: 1 + 2*(3 - 4/5) # simple expressions supported
+func_deg: deg(180) # value in degrees, converts to radians
+func_rad: rad(pi) # value in radians (stays in radians)
+hh_mm_secs: -0:30:30.5 # Time
+longitude: !radians 8:32:53.2 # Nautical, ETH Zürich Main Building (8°32′53.2″ E)
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Options</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">angle_conversions</span><span class="p">:</span><span class="w"> </span><span class="nc">true</span><span class="p">,</span><span class="w"> </span><span class="c1">// enable robotics angle parsing</span>
+<span class="w">    </span><span class="o">..</span><span class="w"> </span><span class="n">Options</span><span class="p">::</span><span class="n">default</span><span class="p">()</span>
+<span class="p">};</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="nc">RoboFloats</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from_str_with_options</span><span class="p">(</span><span class="n">yaml</span><span class="p">,</span><span class="w"> </span><span class="n">options</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;parse robotics YAML&quot;</span><span class="p">);</span>
+</code></pre>
+<p>Safety hardening measures with this feature enabled include limits on maximal expression depth, maximal number of digits, strict underscore placement, and fraction parsing limits to the precision-relevant digit.</p>
+<h4>Limitations</h4>
+<h5>Unsupported features</h5>
+<ul>
+<li>Common Serde renames made to follow naming conventions (case changes, snake_case, kebab-case, r# stripping) are supported in snippets, as long as they do not introduce ambiguity. Arbitrary renames, flattening, aliases and other complex manipulations possible with serde are not. Parsing and validation will still work, but error messages for arbitrarily renamed fields will only show the Rust path.</li>
+<li><a href="https://docs.rs/serde-saphyr/latest/serde_saphyr/spanned/struct.Spanned.html"><code>Spanned&lt;T&gt;</code></a>  cannot be used within variants of untagged or internally tagged enums due to a fundamental limitation in Serde. Instead, wrap the entire enum in Spanned&lt;T&gt;, or use externally tagged enums (the default).</li>
+<li>Anchors are not fully compatible with <code>#[serde(flatten)]</code> directive (this is Serde limitation we can't work around). Deserialization succeeds, but full strong-pointer identity may be lost for nested anchors inside flattened payloads.</li>
+<li>Borrowing works for any scalar whose parsed value exists <strong>verbatim</strong> in the input. This includes plain scalars and simple quoted strings without escape sequences (e.g., <code>&quot;hello world&quot;</code> can be borrowed, but <code>&quot;hello\nworld&quot;</code> cannot because <code>\n</code> is transformed to a newline). For maximum flexibility, use <code>Cow&lt;'a, str&gt;</code> which borrows when possible and owns when transformation is required.</li>
+<li>Reader-based entry points (<code>from_reader</code>) require <code>DeserializeOwned</code> and cannot return borrowed values.</li>
+<li><code>serde-saphyr</code> does not capture freestanding comments, not obviously attached to any node (separated by multiple empty lines, or at the end of the document). Use <a href="https://crates.io/crates/granit-parser"><code>granit-parser</code></a> directly to capture such comments (serde-saphyr re-exports it).</li>
+</ul>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>serialize</code></li><li><code>deserialize</code></li></ul></td></tr><tr><th scope="row"><code>deserialize</code></th><td>Yes<small>default → deserialize</small></td><td><ul class="effects"><li><code>dep:num-traits</code></li><li><code>dep:annotate-snippets</code></li><li><code>dep:granit-parser</code></li><li><code>dep:smallvec</code></li><li><code>dep:encoding_rs_io</code></li><li><code>dep:ahash</code></li></ul></td></tr><tr><th scope="row"><code>figment</code></th><td>No</td><td><ul class="effects"><li><code>dep:figment</code></li><li><code>deserialize</code></li></ul></td></tr><tr><th scope="row"><code>figment2</code></th><td>No</td><td><ul class="effects"><li><code>dep:figment2</code></li><li><code>deserialize</code></li></ul></td></tr><tr><th scope="row"><code>garde</code></th><td>No</td><td><ul class="effects"><li><code>dep:garde</code></li><li><code>deserialize</code></li></ul></td></tr><tr><th scope="row"><code>huge_documents</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>include</code></th><td>No</td><td><ul class="effects"><li><code>deserialize</code></li></ul></td></tr><tr><th scope="row"><code>include_fs</code></th><td>No</td><td><ul class="effects"><li><code>include</code></li></ul></td></tr><tr><th scope="row"><code>miette</code></th><td>No</td><td><ul class="effects"><li><code>dep:miette</code></li><li><code>deserialize</code></li></ul></td></tr><tr><th scope="row"><code>properties</code></th><td>No</td><td><ul class="effects"><li><code>deserialize</code></li></ul></td></tr><tr><th scope="row"><code>robotics</code></th><td>No</td><td><ul class="effects"><li><code>deserialize</code></li></ul></td></tr><tr><th scope="row"><code>serde_derived_types</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>serialize</code></th><td>Yes<small>default → serialize</small></td><td><ul class="effects"><li><code>dep:base64</code></li><li><code>dep:num-traits</code></li><li><code>dep:zmij</code></li><li><code>dep:nohash-hasher</code></li></ul></td></tr><tr><th scope="row"><code>validator</code></th><td>No</td><td><ul class="effects"><li><code>dep:validator</code></li><li><code>deserialize</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/ahash/"><code>crates-io/ahash</code></a><small>Alias: ahash</small></th><td><code>^0.8</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → deserialize</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/annotate-snippets/"><code>crates-io/annotate-snippets</code></a><small>Alias: annotate-snippets</small></th><td><code>^0.12</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → deserialize</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/base64/"><code>crates-io/base64</code></a><small>Alias: base64</small></th><td><code>&gt;=0.21.0, &lt;=0.22.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → serialize</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/encoding_rs_io/"><code>crates-io/encoding_rs_io</code></a><small>Alias: encoding_rs_io</small></th><td><code>^0.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → deserialize</td></tr><tr><th scope="row"><code>crates-io/figment</code><small>Alias: figment</small></th><td><code>^0.10</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/figment2</code><small>Alias: figment2</small></th><td><code>^0.11</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/garde</code><small>Alias: garde</small></th><td><code>&gt;=0.19.0, &lt;0.24</code><small>Default features: enabled</small><small>Requests: derive</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/getrandom/"><code>crates-io/getrandom</code></a><small>Alias: getrandom</small></th><td><code>^0.3</code><small>Default features: enabled</small><small>Requests: wasm_js</small></td><td>Required · when cfg(target_arch = &quot;wasm32&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/granit-parser/"><code>crates-io/granit-parser</code></a><small>Alias: granit-parser</small></th><td><code>^0.0.7</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → deserialize</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/miette/"><code>crates-io/miette</code></a><small>Alias: miette</small></th><td><code>^7</code><small>Default features: enabled</small><small>Requests: fancy</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/nohash-hasher/"><code>crates-io/nohash-hasher</code></a><small>Alias: nohash-hasher</small></th><td><code>^0.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → serialize</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/num-traits/"><code>crates-io/num-traits</code></a><small>Alias: num-traits</small></th><td><code>&gt;=0.2.0, &lt;=0.2.19</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → deserialize</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1</code><small>Default features: disabled</small><small>Requests: derive</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde_core/"><code>crates-io/serde_core</code></a><small>Alias: serde_core</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/smallvec/"><code>crates-io/smallvec</code></a><small>Alias: smallvec</small></th><td><code>&gt;=1.0.0, &lt;1.16.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → deserialize</td></tr><tr><th scope="row"><code>crates-io/validator</code><small>Alias: validator</small></th><td><code>&gt;=0.11, &lt;0.21</code><small>Default features: enabled</small><small>Requests: derive</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/zmij/"><code>crates-io/zmij</code></a><small>Alias: zmij</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → serialize</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/kube-client/versions/4.2.0/">crates-io/kube-client 4.2.0</a><span>Requires ^0.0.29 · alias serde-saphyr · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="notice">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/serde-saphyr/versions/0.0.29/">0.0.29</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/serde-saphyr/0.0.29">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+</code></pre></div><p class="table-note">sha256:62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:89920517992ae874c0926b9bd518fad056f3f5a022a0448833f68a52117ec2d9</code></dd><dt>Upstream checksum</dt><dd><code>sha256:7bd22781911de0ca6debda95f073c8f18bec65d1a94f1fa9573f3102e514cea4</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde-saphyr&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.0.29&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serialize&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span>
+<span class="n">deserialize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:num-traits&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:annotate-snippets&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:granit-parser&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:smallvec&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:encoding_rs_io&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:ahash&quot;</span><span class="p">]</span>
+<span class="n">figment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:figment&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span>
+<span class="n">figment2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:figment2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span>
+<span class="n">garde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:garde&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span>
+<span class="n">huge_documents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">include</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span>
+<span class="n">include_fs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;include&quot;</span><span class="p">]</span>
+<span class="n">miette</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:miette&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span>
+<span class="n">properties</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span>
+<span class="n">robotics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span>
+<span class="n">serde_derived_types</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">serialize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:base64&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:num-traits&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:zmij&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:nohash-hasher&quot;</span><span class="p">]</span>
+<span class="n">validator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:validator&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;deserialize&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;serde_saphyr&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">ahash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/ahash&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">annotate-snippets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/annotate-snippets&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.12&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">base64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/base64&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.21.0, &lt;=0.22.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">encoding_rs_io</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/encoding_rs_io&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">figment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/figment&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.10&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">figment2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/figment2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.11&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">garde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/garde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.19.0, &lt;0.24&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">getrandom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;wasm_js&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_arch = </span><span class="se">\&quot;</span><span class="s2">wasm32</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">granit-parser</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/granit-parser&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.0.7&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">miette</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/miette&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^7&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fancy&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">nohash-hasher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/nohash-hasher&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">num-traits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/num-traits&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.2.0, &lt;=0.2.19&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde_core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">smallvec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/smallvec&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=1.0.0, &lt;1.16.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">validator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/validator&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.11, &lt;0.21&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zmij</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zmij&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/serde-saphyr/0.0.29">crates.io package</a></li><li><a href="https://github.com/bourumir-wyngs/serde-saphyr">Source repository</a></li><li><a href="https://docs.rs/serde-saphyr/latest/serde-saphyr/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">serde-saphyr</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/serde-saphyr"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.0.29"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

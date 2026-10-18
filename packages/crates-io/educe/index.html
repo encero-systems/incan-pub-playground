@@ -1,0 +1,1559 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>educe 0.8.1 · Incan.pub</title><meta name="description" content="This crate offers procedural macros designed to facilitate the swift implementation of Rust&#39;s built-in traits."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/educe</p><div class="title-row"><h1>educe</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/educe/versions/0.8.1/" selected>0.8.1</option><option value="../../../packages/crates-io/educe/versions/0.6.0/">0.6.0</option></select></label></div><p class="description">This crate offers procedural macros designed to facilitate the swift implementation of Rust&#39;s built-in traits.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Educe</h3>
+<p><a href="https://github.com/magiclen/educe/actions/workflows/ci.yml">CI</a></p>
+<p>This crate offers procedural macros designed to facilitate the swift implementation of Rust's built-in traits.</p>
+<h4>Features</h4>
+<p>By default, every trait this crate supports will be enabled. You can disable all of them by turning off the default features and enable only the traits that you want to use by adding them to the <code>features</code> explicitly.</p>
+<p>For example,</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies.educe]</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Debug&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Clone&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Copy&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Hash&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Default&quot;</span><span class="p">]</span>
+<span class="n">default-features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</code></pre>
+<p>Besides the traits, there is one more feature, <code>full</code>, which is off by default. It widens the set of expressions that can be parsed in an attribute, and is only needed for the advanced expressions of <code>Default</code>; see the <code>Default</code> section below.</p>
+<h4>Trait Bounds</h4>
+<p>When a trait is derived with Educe and no explicit <code>bound</code> is set, the where predicates of the generated impl are determined automatically. Every field type that the generated code touches (ignored fields and fields handled by a custom <code>method</code> are excluded) is processed with the following rules, in order:</p>
+<ol>
+<li>A type that is known to implement the trait unconditionally produces no predicate at all. This covers <code>PhantomData</code>, raw pointers, and function pointers for every trait, shared references for <code>Clone</code> and <code>Copy</code>, plus the types in table A.</li>
+<li>A type that does not use any generic type or const parameter produces no predicate, because such a predicate would be constant.</li>
+<li>A std type that implements the trait whenever its type arguments do (table B) produces the predicates of its type arguments instead, with these rules applied recursively: a field of type <code>Option&lt;T&gt;</code> produces <code>T: Trait</code>, and one of type <code>Vec&lt;Box&lt;T&gt;&gt;</code> produces just <code>T: Clone</code> for <code>Clone</code>.</li>
+<li>A type that mentions the derived type itself, by name or through <code>Self</code> (e.g. <code>Box&lt;List&lt;T&gt;&gt;</code> or <code>(Self, T)</code> inside <code>List&lt;T&gt;</code>) produces <code>Param: Trait</code> bounds for the type parameters it uses, because a self-referencing predicate would overflow the trait solver (E0275).</li>
+<li>Any other type produces the precise predicate <code>FieldType: Trait</code>, so the compiler verifies the real requirement: a field of type <code>Wrapper&lt;T&gt;</code> where <code>Wrapper</code> has its own conditional <code>Clone</code> impl produces <code>Wrapper&lt;T&gt;: Clone</code>, which works for exactly the type arguments that <code>Wrapper</code> supports.</li>
+</ol>
+<p>Table A — types whose type arguments never need a bound:</p>
+<table>
+<thead>
+<tr>
+<th>Trait</th>
+<th>Types</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Clone</code>, <code>Copy</code></td>
+<td><code>Arc</code>, <code>Rc</code>, <code>Weak</code>, <code>NonNull</code>, <code>Cow</code>, <code>Discriminant</code></td>
+</tr>
+<tr>
+<td><code>Debug</code></td>
+<td><code>Weak</code>, <code>NonNull</code>, <code>AtomicPtr</code>, <code>Discriminant</code></td>
+</tr>
+<tr>
+<td><code>PartialEq</code>, <code>Eq</code>, <code>Hash</code></td>
+<td><code>NonNull</code>, <code>Discriminant</code></td>
+</tr>
+<tr>
+<td><code>PartialOrd</code>, <code>Ord</code></td>
+<td><code>NonNull</code></td>
+</tr>
+<tr>
+<td><code>Default</code></td>
+<td><code>Option</code>, <code>Vec</code>, <code>VecDeque</code>, <code>LinkedList</code>, <code>HashMap</code>, <code>HashSet</code>, <code>BTreeMap</code>, <code>BTreeSet</code>, <code>Weak</code></td>
+</tr>
+</tbody>
+</table>
+<p>A few entries hold because the type never implements the trait at all rather than because it always does: <code>Arc</code>, <code>Rc</code>, <code>Weak</code>, and <code>Cow</code> are never <code>Copy</code>, and raw pointers and function pointers never implement <code>Default</code>. Leaving out the predicate there makes the compiler reject the derive directly, instead of accepting an implementation whose bound could never be satisfied.</p>
+<p>Table B — types that forward the trait to their type arguments:</p>
+<table>
+<thead>
+<tr>
+<th>Trait</th>
+<th>Types</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Clone</code></td>
+<td><code>Option</code>, <code>Result</code>, <code>Box</code>, <code>Vec</code>, <code>VecDeque</code>, <code>LinkedList</code>, <code>BTreeMap</code>, <code>BTreeSet</code>, <code>BinaryHeap</code>, <code>HashMap</code>, <code>HashSet</code>, <code>RefCell</code>, <code>Wrapping</code>, <code>Reverse</code>, <code>Saturating</code></td>
+</tr>
+<tr>
+<td><code>Copy</code></td>
+<td><code>Option</code>, <code>Result</code>, <code>Wrapping</code>, <code>Reverse</code>, <code>Saturating</code></td>
+</tr>
+<tr>
+<td><code>Debug</code></td>
+<td><code>Option</code>, <code>Result</code>, <code>Box</code>, <code>Vec</code>, <code>VecDeque</code>, <code>LinkedList</code>, <code>BTreeMap</code>, <code>BTreeSet</code>, <code>BinaryHeap</code>, <code>HashMap</code>, <code>HashSet</code>, <code>Arc</code>, <code>Rc</code>, <code>RefCell</code>, <code>Mutex</code>, <code>RwLock</code>, <code>Wrapping</code>, <code>Reverse</code>, <code>Saturating</code></td>
+</tr>
+<tr>
+<td><code>PartialEq</code>, <code>Eq</code>, <code>PartialOrd</code>, <code>Ord</code></td>
+<td><code>Option</code>, <code>Result</code>, <code>Box</code>, <code>Vec</code>, <code>VecDeque</code>, <code>LinkedList</code>, <code>BTreeMap</code>, <code>BTreeSet</code>, <code>Arc</code>, <code>Rc</code>, <code>RefCell</code>, <code>Wrapping</code>, <code>Reverse</code>, <code>Saturating</code></td>
+</tr>
+<tr>
+<td><code>Hash</code></td>
+<td><code>Option</code>, <code>Result</code>, <code>Box</code>, <code>Vec</code>, <code>VecDeque</code>, <code>LinkedList</code>, <code>BTreeMap</code>, <code>BTreeSet</code>, <code>Arc</code>, <code>Rc</code>, <code>Wrapping</code>, <code>Reverse</code>, <code>Saturating</code></td>
+</tr>
+<tr>
+<td><code>Default</code></td>
+<td><code>Box</code>, <code>Arc</code>, <code>Rc</code>, <code>Cell</code>, <code>RefCell</code>, <code>Mutex</code>, <code>RwLock</code>, <code>Wrapping</code>, <code>Reverse</code>, <code>Saturating</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>HashMap</code> and <code>HashSet</code> with an explicit hasher type use a whole-type predicate instead of either table. This preserves the hasher requirements of each trait: <code>Default</code> needs a default hasher, while <code>Debug</code> does not require the hasher to implement <code>Debug</code>.</p>
+<p><code>HashMap</code> and <code>HashSet</code> are not in the comparison rows of table B because their comparison impls additionally require <code>K: Eq + Hash</code>; such fields get the precise whole-type predicate from rule 5 instead.</p>
+<p>Both tables match type names syntactically (by the last path segment), except for declared generic type parameters and paths that start with them, such as <code>T::PhantomData</code>. These parameters and associated types use their own trait requirements. Other user-defined types that share a name with a std type are still treated like that std type; if the resulting bounds do not fit, set them explicitly with <code>bound(...)</code>.</p>
+<p>An associated type such as <code>T::Value</code> or <code>&lt;T as Family&gt;::Value</code> is not treated as recursive just because the source type is also named <code>Value</code>.
+It receives its own field-type predicate; any type arguments and qualified self type are still checked for actual recursion.</p>
+<h6>Bound Inheritance</h6>
+<p>When related traits are derived together with automatic bounds, a trait inherits the final predicates of its prerequisite traits: <code>Eq</code> and <code>PartialOrd</code> inherit from <code>PartialEq</code>, <code>Ord</code> inherits from <code>Eq</code> and <code>PartialOrd</code>, and <code>Copy</code> inherits from <code>Clone</code>. This way, a custom bound like <code>#[educe(PartialEq(bound(T: MyTrait)), Eq)]</code> automatically carries <code>T: MyTrait</code> into the <code>Eq</code> impl.</p>
+<p>Educe cannot see the traits derived by other derive macros, including the built-in ones, so inheritance only applies between traits listed in the same <code>#[educe(...)]</code> attribute; a prerequisite trait implemented elsewhere contributes nothing.</p>
+<p>When <code>PartialEq</code> and <code>Eq</code> are derived together, fields marked <code>PartialEq(ignore)</code> or <code>PartialEq(method = ...)</code> do not add automatic <code>Eq</code> bounds.
+Explicit bounds are still used as written.</p>
+<h6>Controlling the Bounds</h6>
+<ul>
+<li><code>bound(where_predicates)</code> or <code>bound = &quot;where_predicates&quot;</code> uses exactly the given predicates, without inheritance.</li>
+<li><code>bound(*)</code> adds <code>Param: Trait</code> for every generic type parameter, like the built-in derives.</li>
+<li><code>bound(false)</code> adds no predicates at all.</li>
+</ul>
+<p>An explicit bound is used verbatim; if a prerequisite impl carries predicates that the explicit bound does not imply, the compiler reports an unsatisfied supertrait and the missing predicates have to be added by hand.</p>
+<p><code>Deref</code> and <code>DerefMut</code> accept no <code>bound</code> parameter. They return a reference to a field instead of building a new value, so their impls add no predicates at all.</p>
+<h6>Unions</h6>
+<p>The <code>Debug</code>, <code>PartialEq</code>, <code>Eq</code>, and <code>Hash</code> implementations of a union read its whole storage as bytes instead of reading its fields, so their automatic bound is empty. <code>bound(*)</code> and custom predicates are still accepted and are used as written. <code>Clone</code> and <code>Copy</code> both add <code>FieldType: Copy</code> predicates, because a union can only be cloned by copying its whole storage.</p>
+<h6>Packed Types</h6>
+<p>A field of a <code>#[repr(packed)]</code> or <code>#[repr(packed(N))]</code> type cannot be borrowed where it lies, so the generated code copies each field it reads into a temporary first.
+Every field that the generated code reads therefore has to implement <code>Copy</code>, and the automatic bound adds the matching <code>FieldType: Copy</code> predicates, just like the built-in derives do.
+Any packing level is treated the same way, because a field's alignment cannot be worked out from the type syntax.</p>
+<p><code>Deref</code> and <code>DerefMut</code> return a reference to a field, so they can only be derived for a packed type whose target field does not need more alignment than the packing allows.</p>
+<h6>Limitations</h6>
+<ul>
+<li>Mutually recursive generic types (an <code>A&lt;T&gt;</code> containing <code>Vec&lt;B&lt;T&gt;&gt;</code> while <code>B&lt;T&gt;</code> contains <code>A&lt;T&gt;</code>) cannot be detected from a single type definition, so automatic bounds make the trait solver overflow (E0275) on them; use <code>bound(*)</code> or a custom bound for such types.</li>
+<li>The precise predicates appear in the public where clause of the impl, so private field types become visible in documentation and error messages, and changing a private field type can change the public bounds of the impl.</li>
+</ul>
+<h6>Custom Methods</h6>
+<p>Custom methods accept full paths, including qualified paths such as <code>&lt;Type as Trait&gt;::method::&lt;T&gt;</code>.
+The <code>method = path</code>, <code>method(path)</code>, <code>method = &quot;path&quot;</code>, and <code>method(&quot;path&quot;)</code> forms are supported.
+In custom method paths, <code>Self</code> refers to the type being derived, including its generic arguments.
+For <code>Into</code>, this also applies when the generated implementation is <code>From</code> for the target type; use an explicit target type path to call a target method.
+Generated primitive types use <code>::core::primitive</code> paths.
+The <code>Debug</code> helper types and <code>Hash</code> method type parameters avoid identifiers in the input, including method paths written as strings.</p>
+<h4>Traits</h4>
+<ul>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#debug">Debug</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#clone">Clone</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#copy">Copy</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#partialeq">PartialEq</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#eq">Eq</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#partialord">PartialOrd</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#ord">Ord</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#hash">Hash</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#default">Default</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#deref">Deref</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#derefmut">DerefMut</a></li>
+<li><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/README.md#into">Into</a></li>
+</ul>
+<h6>Debug</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(Debug)]</code> to implement the <code>Debug</code> trait for a struct, enum, or union. This allows you to modify the names of your types, variants, and fields. You can also choose to ignore specific fields or set a method to replace the <code>Debug</code> trait. Additionally, you have the option to format a struct as a tuple and vice versa.</p>
+<h6>Basic Usage</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Change the Name of a Type, a Variant or a Field</h6>
+<p>The <code>name</code> parameter can rename a type, a variant or a field. If you set it to <code>false</code>, the name can be ignored or forced to show otherwise.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug(name(Struct2)))]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(Debug(name(f)))]</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug(name = true))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(Debug(name = false))]</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Debug(name(V)))]</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Debug(name(f)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="cp">#[educe(Debug(name = false))]</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Ignore Fields</h6>
+<p>The <code>ignore</code> parameter can ignore a specific field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(Debug(ignore))]</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Debug(ignore))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(Debug(ignore))]</span>
+<span class="w">        </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Fake Structs and Tuples</h6>
+<p>With the <code>named_field</code> parameter, structs can be formatted as tuples and tuples can be formatted as structs.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug(named_field = false))]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Debug(named_field = false))]</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="cp">#[educe(Debug(named_field = true))]</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Debug(name(value)))]</span>
+<span class="w">        </span><span class="kt">i32</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Use Another Method to Handle the Formatting</h6>
+<p>The <code>method</code> parameter can be utilized to replace the implementation of the <code>Debug</code> trait for a field, eliminating the need to implement the <code>Debug</code> trait for the type of that field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fmt</span><span class="p">::{</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">Formatter</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">fmt</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_s</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">Formatter</span><span class="o">&lt;&#39;</span><span class="nb">_</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">fmt</span><span class="p">::</span><span class="nb">Result</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f</span><span class="p">.</span><span class="n">write_str</span><span class="p">(</span><span class="s">&quot;Hi&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Debug(method(fmt)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(Debug(method(std::fmt::UpperHex::fmt)))]</span>
+<span class="w">        </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Debug(method(fmt)))]</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>Debug</code> Trait or Others</h6>
+<p>The where predicates of the generated impl are determined from the field types automatically; see the &quot;Trait Bounds&quot; section above for the exact rules.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fmt</span><span class="p">::{</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">Formatter</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">fmt</span><span class="o">&lt;</span><span class="n">D</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_s</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">D</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">Formatter</span><span class="o">&lt;&#39;</span><span class="nb">_</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">fmt</span><span class="p">::</span><span class="nb">Result</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f</span><span class="p">.</span><span class="n">write_str</span><span class="p">(</span><span class="s">&quot;Hi&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug(bound(T: std::fmt::Debug)))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Debug(method(fmt)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>In the above case, <code>T</code> is bound to the <code>Debug</code> trait, but <code>K</code> is not.</p>
+<h6>Union</h6>
+<p>A union is formatted as a <code>u8</code> slice because its active field is not tracked at runtime. Its fields cannot be ignored, renamed, or formatted with custom methods. <code>Debug(unsafe)</code> requires every byte of the union to be initialized and readable during each call, including padding and bytes outside the active field. The storage must not change during a call. This condition must hold after construction, writes, moves, and copies. Reading uninitialized bytes is undefined behavior, not just a risk of exposing memory. Initializing one field, or zeroing storage before moving the value, does not by itself guarantee this condition.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Debug(unsafe))]</span>
+<span class="k">union</span><span class="w"> </span><span class="nc">Union</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Clone</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(Clone)]</code> to implement the <code>Clone</code> trait for a struct, an enum, or a union. You can set a method to replace the <code>Clone</code> trait.</p>
+<p>When <code>Clone</code> and <code>Copy</code> are derived together, Educe can copy the whole value if no field uses a type or const parameter and no field has a custom clone method.
+For a struct or enum with any generic parameters, a nonempty custom <code>Copy(bound(...))</code> also disables this shortcut.
+In that case, <code>clone</code> and <code>clone_from</code> use the existing field-wise implementation, while the custom <code>Copy</code> conditions are not added to <code>Clone</code>.
+For example, <code>Copy(bound('a: 'static))</code> on <code>S&lt;'a&gt;(&amp;'a i32)</code> allows <code>Copy</code> only for <code>'static</code>, but <code>Clone</code> still works with shorter lifetimes.
+This rule also covers const parameters that do not appear in the fields.
+Field clone methods can have visible side effects, and the performance difference has not been measured.
+The automatic, <code>bound(*)</code>, <code>bound(false)</code>, and empty custom <code>Copy</code> modes keep the original shortcut rules; unions keep their existing clone behavior.</p>
+<h6>Basic Usage</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Clone)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Clone)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Use Another Method to Perform Cloning</h6>
+<p>The <code>method</code> parameter can be utilized to replace the implementation of the <code>Clone</code> trait for a field, eliminating the need to implement the <code>Clone</code> trait for the type of that field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">clone</span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">u8</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u8</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">v</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">100</span>
+<span class="p">}</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">rhs</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">clone2</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">T</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">v</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Clone)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Clone(method(clone)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(Clone(method(clone2)))]</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>Clone</code> Trait or Others</h6>
+<p>The where predicates of the generated impl are determined from the field types automatically; see the &quot;Trait Bounds&quot; section above for the exact rules.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Clone)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">rhs</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">clone</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">T</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">v</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Clone(bound(T: std::clone::Clone)))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Clone(method(clone)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>In the above case, <code>T</code> is bound to the <code>Clone</code> trait, but <code>K</code> is not.</p>
+<h6>Union</h6>
+<p>Refer to the introduction of the <code>#[educe(Copy)]</code> attribute.</p>
+<h6>Copy</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(Copy)]</code> to implement the <code>Copy</code> trait for a struct, an enum, or a union.</p>
+<h6>Basic Usage</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Copy, Clone)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Copy, Clone)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>Copy</code> Trait or Others</h6>
+<p>The where predicates of the generated impl are determined from the field types automatically; see the &quot;Trait Bounds&quot; section above for the exact rules. With automatic bounds, the <code>Copy</code> impl additionally inherits the predicates of the <code>Clone</code> impl generated by Educe, because <code>Copy</code> requires <code>Clone</code>.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Copy, Clone)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">rhs</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">clone</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">T</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">v</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Copy, Clone(bound(T: Copy, K: A + Copy)))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Clone(method(clone)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Note that utilizing custom cloning methods for a type that implements the <code>Copy</code> and <code>Clone</code> traits may not be entirely appropriate.</p>
+<h6>Union</h6>
+<p>The <code>#[educe(Copy, Clone)]</code> attribute can be used for a union. The fields of a union cannot be cloned with other methods.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Copy, Clone)]</span>
+<span class="k">union</span><span class="w"> </span><span class="nc">Union</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<h6>PartialEq</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(PartialEq)]</code> to implement the <code>PartialEq</code> trait for a struct, enum, or union. You can also choose to ignore specific fields or set a method to replace the <code>PartialEq</code> trait.</p>
+<h6>Basic Usage</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Ignore Fields</h6>
+<p>The <code>ignore</code> parameter can ignore a specific field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(PartialEq(ignore))]</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(PartialEq(ignore))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(PartialEq(ignore))]</span>
+<span class="w">        </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Use Another Method to Perform Comparison</h6>
+<p>The <code>method</code> parameter can be utilized to replace the implementation of the <code>PartialEq</code> trait for a field, eliminating the need to implement the <code>PartialEq</code> trait for the type of that field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">eq</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">u8</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">*</span><span class="n">b</span>
+<span class="p">}</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">is_same</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">other</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">Self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">eq2</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">a</span><span class="p">.</span><span class="n">is_same</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(PartialEq(method(eq)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(PartialEq(method(eq2)))]</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>PartialEq</code> Trait or Others</h6>
+<p>The where predicates of the generated impl are determined from the field types automatically; see the &quot;Trait Bounds&quot; section above for the exact rules.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">is_same</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">other</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">Self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">eq</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">a</span><span class="p">.</span><span class="n">is_same</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq(bound(T: std::cmp::PartialEq, K: A)))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(PartialEq(method(eq)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Union</h6>
+<p>The <code>#[educe(PartialEq(unsafe))]</code> attribute compares the entire storage of two unions as bytes. Custom field methods are not supported. Every byte must be initialized and readable during each comparison, including padding and bytes outside the active field. The storage must not change during a call. This condition must hold after construction, writes, moves, and copies. Otherwise the comparison has undefined behavior. The <code>unsafe</code> attribute requires the user to uphold this contract; it does not make uninitialized reads valid.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq(unsafe))]</span>
+<span class="k">union</span><span class="w"> </span><span class="nc">Union</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Eq</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(Eq)]</code> to implement the <code>Eq</code> trait for a struct, enum, or union. <code>Eq</code> is a marker trait, so it has no field attributes of its own; field-level equality settings such as <code>ignore</code> and <code>method</code> belong to the <code>PartialEq</code> attribute.</p>
+<p>With automatic bounds, every ordinary struct or enum field must implement <code>Eq</code>, even when its type is concrete, such as <code>f64</code>.
+This check uses the final impl bounds, adds no runtime calls, and does not put concrete field requirements in the public where clause.
+When Educe also derives <code>PartialEq</code>, fields with <code>PartialEq(ignore)</code> or <code>PartialEq(method = ...)</code> are excluded from this check and from automatic <code>Eq</code> bounds.
+The author must ensure that custom comparison methods form an equivalence relation: reflexive, symmetric, and transitive.</p>
+<p>Educe cannot inspect an external <code>PartialEq</code> implementation, so all fields are treated as ordinary fields in that case.
+If a manual implementation provides an equivalence relation without requiring every field to implement <code>Eq</code>, use <code>Eq(bound(false))</code>, <code>Eq(bound(*))</code>, or custom predicates.
+These explicit modes and unions keep their existing behavior and do not perform the automatic field check; the author is responsible for the equality contract.</p>
+<h6>Basic Usage</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq, Eq)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq, Eq)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>Eq</code> Trait or Others</h6>
+<p>The where predicates of the generated impl are determined from the field types automatically; see the &quot;Trait Bounds&quot; section above for the exact rules. With automatic bounds, the <code>Eq</code> impl also inherits the predicates of the <code>PartialEq</code> impl generated by Educe.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq, Eq)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">is_same</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">other</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">Self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">eq</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">a</span><span class="p">.</span><span class="n">is_same</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(</span>
+<span class="cp">    PartialEq(bound(T: std::cmp::PartialEq, K: A)),</span>
+<span class="cp">    Eq(bound(T: std::cmp::Eq, K: A))</span>
+<span class="cp">)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(PartialEq(method(eq)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Union</h6>
+<p>The <code>#[educe(PartialEq(unsafe), Eq)]</code> attribute compares the entire storage of two unions as bytes, without tracking their active fields. Custom field methods are not supported. Every byte must be initialized and readable during each comparison, including padding and bytes outside the active field. The storage must not change during a call. This condition must hold after construction, writes, moves, and copies; otherwise the comparison has undefined behavior.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq(unsafe), Eq)]</span>
+<span class="k">union</span><span class="w"> </span><span class="nc">Union</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span>
+<span class="p">}</span>
+</code></pre>
+<h6>PartialOrd</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(PartialOrd)]</code> to implement the <code>PartialOrd</code> trait for a struct or enum. You can also choose to ignore specific fields or set a method to replace the <code>PartialOrd</code> trait.</p>
+<h6>Basic Usage</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(PartialEq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Ignore Fields</h6>
+<p>The <code>ignore</code> parameter can ignore a specific field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(PartialOrd(ignore))]</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(PartialEq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(PartialOrd(ignore))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(PartialOrd(ignore))]</span>
+<span class="w">        </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Use Another Method to Perform Comparison</h6>
+<p>The <code>method</code> parameter can be utilized to replace the implementation of the <code>PartialOrd</code> trait for a field, eliminating the need to implement the <code>PartialOrd</code> trait for the type of that field.</p>
+<p>When <code>Ord</code> is derived together, a field without its own <code>PartialOrd</code> attribute follows the <code>ignore</code>, <code>rank</code>, and <code>method</code> settings of its <code>Ord</code> attribute, so <code>partial_cmp</code> stays consistent with <code>cmp</code>; the result of an <code>Ord</code> comparison method is wrapped in <code>Some</code> automatically.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">cmp</span><span class="p">::</span><span class="n">Ordering</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">partial_cmp</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">u8</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Ordering</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Some</span><span class="p">(</span><span class="n">Ordering</span><span class="p">::</span><span class="n">Less</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Some</span><span class="p">(</span><span class="n">Ordering</span><span class="p">::</span><span class="n">Greater</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Some</span><span class="p">(</span><span class="n">Ordering</span><span class="p">::</span><span class="n">Equal</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u8</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">partial_cmp2</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Ordering</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">partial_cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">.</span><span class="n">value</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">b</span><span class="p">.</span><span class="n">value</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq, PartialOrd)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(PartialOrd(method(partial_cmp)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(PartialOrd(method(partial_cmp2)))]</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Ranking</h6>
+<p>Each field can add a <code>#[educe(PartialOrd(rank = priority_value))]</code> attribute, where <code>priority_value</code> is an integer value indicating its comparison precedence (lower values indicate higher priority). The default <code>priority_value</code> for a field depends on its ordinal position (lower towards the front) and starts with <code>isize::MIN</code>.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(PartialOrd(rank = 1))]</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(PartialOrd(rank = 0))]</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>For variants, the discriminant can be explicitly set for comparison. Constant expressions are evaluated by Rust, and integer representations retain their full signed or unsigned range. Alignment settings do not affect the comparison order.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd)]</span>
+<span class="cp">#[repr(u8)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Three</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Two</span><span class="p">(</span><span class="kt">u8</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">    </span><span class="n">One</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>PartialOrd</code> Trait or Others</h6>
+<p>The where predicates of the generated impl are determined from the field types automatically; see the &quot;Trait Bounds&quot; section above for the exact rules. With automatic bounds, the <code>PartialOrd</code> impl also inherits the predicates of the <code>PartialEq</code> impl generated by Educe.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">cmp</span><span class="p">::</span><span class="n">Ordering</span><span class="p">;</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u8</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">partial_cmp</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Ordering</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">a</span><span class="p">.</span><span class="n">value</span><span class="p">().</span><span class="n">partial_cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">b</span><span class="p">.</span><span class="n">value</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(PartialEq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd(bound(T: std::cmp::PartialOrd, K: std::cmp::PartialOrd + A)))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(PartialOrd(method(partial_cmp)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Ord</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(Ord)]</code> to implement the <code>Ord</code> trait for a struct or enum. You can also choose to ignore specific fields or set a method to replace the <code>Ord</code> trait.</p>
+<h6>Basic Usage</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Eq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd, Ord)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(PartialEq, Eq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd, Ord)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Ignore Fields</h6>
+<p>The <code>ignore</code> parameter can ignore a specific field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Eq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd, Ord)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(Ord(ignore))]</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(PartialEq, Eq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd, Ord)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Ord(ignore))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(Ord(ignore))]</span>
+<span class="w">        </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Use Another Method to Perform Comparison</h6>
+<p>The <code>method</code> parameter can be utilized to replace the implementation of the <code>Ord</code> trait for a field, eliminating the need to implement the <code>Ord</code> trait for the type of that field.</p>
+<p>When <code>PartialOrd</code> is derived together, a field without its own <code>Ord</code> attribute follows the <code>ignore</code> and <code>rank</code> settings of its <code>PartialOrd</code> attribute; a <code>PartialOrd</code> comparison method returns an <code>Option&lt;Ordering&gt;</code> and cannot be used by <code>cmp</code>, so such a field is compared with the built-in comparison.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">cmp</span><span class="p">::</span><span class="n">Ordering</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">cmp</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">u8</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Ordering</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Ordering</span><span class="p">::</span><span class="n">Less</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Ordering</span><span class="p">::</span><span class="n">Greater</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Ordering</span><span class="p">::</span><span class="n">Equal</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u8</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">cmp2</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Ordering</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">.</span><span class="n">value</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">b</span><span class="p">.</span><span class="n">value</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq, Eq, PartialOrd, Ord)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Ord(method(cmp)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(Ord(method(cmp2)))]</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Ranking</h6>
+<p>Each field can add a <code>#[educe(Ord(rank = priority_value))]</code> attribute, where <code>priority_value</code> is an integer value indicating its comparison precedence (lower values indicate higher priority). The default <code>priority_value</code> for a field depends on its ordinal position (lower towards the front) and starts with <code>isize::MIN</code>.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Eq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd, Ord)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(Ord(rank = 1))]</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Ord(rank = 0))]</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>For variants, the discriminant can be explicitly set for comparison. Constant expressions are evaluated by Rust, and integer representations retain their full signed or unsigned range. Alignment settings do not affect the comparison order.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Eq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd, Ord)]</span>
+<span class="cp">#[repr(u8)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Three</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Two</span><span class="p">(</span><span class="kt">u8</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">    </span><span class="n">One</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>Ord</code> Trait or Others</h6>
+<p>The where predicates of the generated impl are determined from the field types automatically; see the &quot;Trait Bounds&quot; section above for the exact rules. With automatic bounds, the <code>Ord</code> impl also inherits the predicates of the <code>Eq</code> and <code>PartialOrd</code> impls generated by Educe.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(PartialEq, Eq, Educe)]</span>
+<span class="cp">#[educe(PartialOrd, Ord)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">cmp</span><span class="p">::</span><span class="n">Ordering</span><span class="p">;</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u8</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">cmp</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Ordering</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">a</span><span class="p">.</span><span class="n">value</span><span class="p">().</span><span class="n">cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">b</span><span class="p">.</span><span class="n">value</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(PartialEq, Eq, Educe)]</span>
+<span class="cp">#[educe(</span>
+<span class="cp">    PartialOrd(bound(T: std::cmp::PartialOrd, K: std::cmp::PartialEq + A)),</span>
+<span class="cp">    Ord(bound(T: std::cmp::Ord, K: std::cmp::Ord + A))</span>
+<span class="cp">)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Ord(method(cmp)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Hash</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(Hash)]</code> to implement the <code>Hash</code> trait for a struct, enum, or union. You can also choose to ignore specific fields or set a method to replace the <code>Hash</code> trait.</p>
+<h6>Basic Usage</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Hash)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Hash)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Ignore Fields</h6>
+<p>The <code>ignore</code> parameter can ignore a specific field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Hash)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(Hash(ignore))]</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Hash)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Hash(ignore))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(Hash(ignore))]</span>
+<span class="w">        </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Use Another Method for Hashing</h6>
+<p>The <code>method</code> parameter can be utilized to replace the implementation of the <code>Hash</code> trait for a field, eliminating the need to implement the <code>Hash</code> trait for the type of that field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">hash</span><span class="p">::{</span><span class="n">Hash</span><span class="p">,</span><span class="w"> </span><span class="n">Hasher</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">hash</span><span class="o">&lt;</span><span class="n">H</span><span class="p">:</span><span class="w"> </span><span class="nc">Hasher</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_s</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">H</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Hash</span><span class="p">::</span><span class="n">hash</span><span class="p">(</span><span class="o">&amp;</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">hash2</span><span class="o">&lt;</span><span class="n">H</span><span class="p">:</span><span class="w"> </span><span class="nc">Hasher</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_s</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">H</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Hash</span><span class="p">::</span><span class="n">hash</span><span class="p">(</span><span class="o">&amp;</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Hash)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Hash(method(hash)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(Hash(method(hash2)))]</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>Hash</code> Trait or Others</h6>
+<p>The where predicates of the generated impl are determined from the field types automatically; see the &quot;Trait Bounds&quot; section above for the exact rules.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Hash)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">hash</span><span class="p">::{</span><span class="n">Hash</span><span class="p">,</span><span class="w"> </span><span class="n">Hasher</span><span class="p">};</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u8</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">hash</span><span class="o">&lt;</span><span class="n">H</span><span class="p">:</span><span class="w"> </span><span class="nc">Hasher</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="o">&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">H</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Hash</span><span class="p">::</span><span class="n">hash</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">.</span><span class="n">value</span><span class="p">(),</span><span class="w"> </span><span class="n">state</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Hash(bound(T: std::hash::Hash, K: A)))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Hash(method(hash)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Union</h6>
+<p>The <code>#[educe(PartialEq(unsafe), Eq, Hash(unsafe))]</code> attribute compares and hashes the entire storage of a union as bytes, without tracking its active field. Custom field methods are not supported. Every byte must be initialized and readable during each call, including padding and bytes outside the active field. The storage must not change during a call. This condition must hold after construction, writes, moves, and copies; otherwise these operations have undefined behavior.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(PartialEq(unsafe), Eq, Hash(unsafe))]</span>
+<span class="k">union</span><span class="w"> </span><span class="nc">Union</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Default</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(Default)]</code> to implement the <code>Default</code> trait for a struct, enum, or union.
+You can set a default expression for the entire type or for individual fields.
+For an enum, mark the default variant with <code>#[educe(Default)]</code>; for a union, mark the field to initialize.
+Fields without a custom value use their type's <code>Default</code> implementation.</p>
+<h6>Basic Usage</h6>
+<p>For enums and unions, it is necessary to designate a default variant (for enums) and a default field (for unions) unless the enum has only one variant or the union has only one field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default)]</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V3</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default)]</span>
+<span class="k">union</span><span class="w"> </span><span class="nc">Union</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default)]</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<h6>The Default Value for the Entire Type</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default(expression = Struct { f1: 1 }))]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default(expression = Enum::Struct { f1: 1 }))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Unit</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">Tuple</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default(expression = Union { f1: 1 }))]</span>
+<span class="k">union</span><span class="w"> </span><span class="nc">Union</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>You may need to activate the <code>full</code> feature to enable support for advanced expressions.</p>
+<p>Note that the expression is pasted into the generated <code>default</code> method as it is written, so for a generic type it has to be valid for every possible instantiation; an expression producing a concrete type does not work for a generic field. A bare literal is the one exception: it is wrapped in <code>Into::into</code>, so a literal of another type works as long as the conversion exists.</p>
+<h6>The Default Values for Specific Fields</h6>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[educe(Default = 1)]</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default = 11111111111111111111111111111)]</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">i128</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default = 1.1)]</span>
+<span class="w">    </span><span class="n">f3</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default = true)]</span>
+<span class="w">    </span><span class="n">f4</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default = </span><span class="s">&quot;Hi&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">f5</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default = </span><span class="s">&quot;Hello&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">f6</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default = &#39;M&#39;)]</span>
+<span class="w">    </span><span class="n">f7</span><span class="p">:</span><span class="w"> </span><span class="kt">char</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Unit</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default)]</span>
+<span class="w">    </span><span class="n">Tuple</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(Default(expression = 0 + 1))]</span>
+<span class="w">        </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Default(expression = -11111111111111111111111111111 * -1))]</span>
+<span class="w">        </span><span class="kt">i128</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Default(expression = 1.0 + 0.1))]</span>
+<span class="w">        </span><span class="kt">f64</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Default(expression = !false))]</span>
+<span class="w">        </span><span class="kt">bool</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Default(expression = </span><span class="s">&quot;Hi&quot;</span><span class="cp">))]</span>
+<span class="w">        </span><span class="o">&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Default(expression = String::from(</span><span class="s">&quot;Hello&quot;</span><span class="cp">)))]</span>
+<span class="w">        </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Default(expression = &#39;M&#39;))]</span>
+<span class="w">        </span><span class="kt">char</span><span class="p">,</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default)]</span>
+<span class="k">union</span><span class="w"> </span><span class="nc">Union</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">i128</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f3</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f4</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default = </span><span class="s">&quot;Hi&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="n">f5</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f6</span><span class="p">:</span><span class="w"> </span><span class="kt">char</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>Default</code> Trait or Others</h6>
+<p>The where predicates of the generated impl are determined from the field types automatically; see the &quot;Trait Bounds&quot; section above for the exact rules.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Unit</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default)]</span>
+<span class="w">    </span><span class="n">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">T</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">Tuple</span><span class="p">(</span><span class="n">T</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default(bound(T: std::default::Default)))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Unit</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Default)]</span>
+<span class="w">    </span><span class="n">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">T</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">Tuple</span><span class="p">(</span><span class="n">T</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>The <code>new</code> Associated Function</h6>
+<p>With the <code>#[educe(Default(new))]</code> attribute, your type will include an additional associated function called <code>new</code>. This function can be utilized to invoke the <code>default</code> method of the <code>Default</code> trait.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Default(new))]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Deref</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(Deref)]</code> to implement the <code>Deref</code> trait for a struct or enum.</p>
+<h6>Basic Usage</h6>
+<p>You must designate a field as the default for obtaining an immutable reference unless the number of fields is exactly one.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Deref)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Deref)]</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Deref)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">Struct2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Deref)]</span>
+<span class="w">        </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">Tuple</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Tuple2</span><span class="p">(</span>
+<span class="w">        </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Deref)]</span>
+<span class="w">        </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>DerefMut</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(DerefMut)]</code> to implement the <code>DerefMut</code> trait for a struct or enum.</p>
+<h6>Basic Usage</h6>
+<p>You must designate a field as the default for obtaining a mutable reference unless the number of fields is exactly one.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Deref, DerefMut)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[educe(Deref, DerefMut)]</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Deref, DerefMut)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">Struct2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Deref, DerefMut)]</span>
+<span class="w">        </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">Tuple</span><span class="p">(</span><span class="kt">u8</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Tuple2</span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(DerefMut)]</span>
+<span class="w">        </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Deref)]</span>
+<span class="w">        </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>The mutable dereferencing fields do not need to be the same as the immutable dereferencing fields, but their types must be consistent.</p>
+<h6>Into</h6>
+<p>Use <code>#[derive(Educe)]</code> and <code>#[educe(Into(type))]</code> to make a struct or enum convertible into another type.</p>
+<p>Educe generates an <code>impl From&lt;YourType&gt; for type</code>, which automatically provides the corresponding <code>Into</code> through the standard library's blanket implementation. Use the bare <code>into</code> flag — <code>#[educe(Into(type, into))]</code> — to generate a direct <code>impl Into&lt;type&gt;</code> instead.</p>
+<h6>Basic Usage</h6>
+<p>You need to designate a field as the default for <code>Into&lt;type&gt;</code> conversion unless the number of fields is exactly one. If you don't, Educe will automatically try to find a proper one.</p>
+<p>Reference targets preserve explicit lifetimes, <code>mut</code>, and each reference layer, so <code>Into(&amp;'a mut T)</code> and <code>Into(&amp;'a &amp;'b T)</code> keep those types in the generated interface.
+An omitted lifetime on a target reference defaults to <code>'static</code>.
+Automatic field matching ignores reference lifetimes, preserves reference depth, and permits an outer mutable reference to become a shared reference when Rust accepts the coercion.</p>
+<p>Original generic declarations and <code>where</code> clauses keep <code>Self</code> tied to the source type in a generated <code>From</code> impl.
+Custom <code>bound(...)</code> predicates are used verbatim: their <code>Self</code> means the target type in <code>From</code>, and the source type in a direct <code>Into</code> impl.
+Custom method paths always use the source type for <code>Self</code>.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Into(u8), Into(u16))]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">u16</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Into(u8))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">        </span><span class="cp">#[educe(Into(u8))]</span>
+<span class="w">        </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>The <code>into</code> Flag</h6>
+<p>A <code>From</code> impl also lets callers write <code>Target::from(value)</code>, whereas a direct <code>Into</code> impl only supports <code>value.into()</code>. Use the <code>into</code> flag when you deliberately want the conversion to be one-directional, exposed only as <code>value.into()</code>.</p>
+<h6>Use Another Method to Perform Into Conversion</h6>
+<p>The <code>method</code> parameter can be utilized to replace the implementation of the <code>Into</code> trait for a field, eliminating the need to implement the <code>Into</code> trait for the type of that field.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">into</span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="kt">u16</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u8</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">v</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Into(u8))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#[educe(Into(u8, method(into)))]</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="kt">u16</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="kt">u8</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h6>Generic Parameters Bound to the <code>Into</code> Trait or Others</h6>
+<p>A generic type parameter is automatically bound to <code>Into&lt;type&gt;</code> only when it is itself the type of a field, because a nested parameter cannot meaningfully receive an <code>Into</code> bound.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Into(u8))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>Or you can set the where predicates by yourself.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">educe</span><span class="p">::</span><span class="n">Educe</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">into</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_v</span><span class="p">:</span><span class="w"> </span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u8</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="mi">0</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(Educe)]</span>
+<span class="cp">#[educe(Into(u8, bound(K: Into&lt;u8&gt;)))]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Enum</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">K</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">V1</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">V2</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="cp">#[educe(Into(u8, method(into)))]</span>
+<span class="w">        </span><span class="n">T</span>
+<span class="w">    </span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Crates.io</h4>
+<p>https://crates.io/crates/educe</p>
+<h4>Documentation</h4>
+<p>https://docs.rs/educe</p>
+<h4>License</h4>
+<p><a href="https://github.com/magiclen/educe/blob/561fe8c9e09d6f5dd613834cb3bfc6ed4257946f/LICENSE">MIT</a></p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>Clone</code></th><td>Yes<small>default → Clone</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>Copy</code></th><td>Yes<small>default → Copy</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>Debug</code></th><td>Yes<small>default → Debug</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>Default</code></th><td>Yes<small>default → Default</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>Deref</code></th><td>Yes<small>default → Deref</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>DerefMut</code></th><td>Yes<small>default → DerefMut</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>Eq</code></th><td>Yes<small>default → Eq</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>Hash</code></th><td>Yes<small>default → Hash</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>Into</code></th><td>Yes<small>default → Into</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>Ord</code></th><td>Yes<small>default → Ord</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>PartialEq</code></th><td>Yes<small>default → PartialEq</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>PartialOrd</code></th><td>Yes<small>default → PartialOrd</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>Debug</code></li><li><code>Clone</code></li><li><code>Copy</code></li><li><code>PartialEq</code></li><li><code>Eq</code></li><li><code>PartialOrd</code></li><li><code>Ord</code></li><li><code>Hash</code></li><li><code>Default</code></li><li><code>Deref</code></li><li><code>DerefMut</code></li><li><code>Into</code></li></ul></td></tr><tr><th scope="row"><code>full</code></th><td>No</td><td><ul class="effects"><li><code>syn/full</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/enum-ordinalize/"><code>crates-io/enum-ordinalize</code></a><small>Alias: enum-ordinalize</small></th><td><code>^4.4</code><small>Default features: disabled</small><small>Requests: derive</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/proc-macro2/"><code>crates-io/proc-macro2</code></a><small>Alias: proc-macro2</small></th><td><code>^1.0.91</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/quote/"><code>crates-io/quote</code></a><small>Alias: quote</small></th><td><code>^1.0.44</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/syn/"><code>crates-io/syn</code></a><small>Alias: syn</small></th><td><code>^3</code><small>Default features: enabled</small><small>Requests: visit, visit-mut</small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/ark-ff/versions/0.6.0/">crates-io/ark-ff 0.6.0</a><span>Requires ^0.6.0 · alias educe · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>Clone, Copy, Debug, Default, Deref, DerefMut, Eq, Hash, Into, Ord, PartialEq, PartialOrd, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7d81e6f193703864162a1f1845d8241818ef3443d408d99cab88f225bccb785e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:8f028f121fcba36b969df4ea2a60361bf74e8ae811ec735e569adf7115fe7ee5</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>Clone, Copy, Debug, Default, Deref, DerefMut, Eq, Hash, Into, Ord, PartialEq, PartialOrd, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8a060d874d47b6fe894ae0edc8f8b685568cb61af8b513d1a7c5dbcab1084d05</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:53048c3606c10ef8176b348df97c970a8fc3feb9c524555af4db4313146adbf2</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>Clone, Copy, Debug, Default, Deref, DerefMut, Eq, Hash, Into, Ord, PartialEq, PartialOrd, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a66cc6590a95a6526cae3a2a15b48650babfd0d0596688682dc13e3ef81d09c8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:e93368312f0902b7ba2b2b5fb8345c1b3dedfc5b2288456ca3dba582c25f6577</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>Clone, Copy, Debug, Default, Deref, DerefMut, Eq, Hash, Into, Ord, PartialEq, PartialOrd, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:f718ecf4e3858cd9ae4aec4f7c42db98ea881d42f6c12d413658d92b6127dcb9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:2a65ced01ab0ef77b753905d5318b0ea1fb84daec9ea76beeac637bc6daa30c1</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/educe/versions/0.8.1/">0.8.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/educe/0.8.1">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/educe/versions/0.6.0/">0.6.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/educe/0.6.0">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2023 magiclen.org (Ron Li)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:dd0741aba702705d02da3e18fca5d3a27538fe6c983e9f09946e82ecfc59acab</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:99eaca7628b4503a9df827c7ee7fd4e88b3f665687361156ce01bdc01c8df377</code></dd><dt>Upstream checksum</dt><dd><code>sha256:1ebdb1f8f8d2815bbe7b369a7da10343c82026a4503b68bd1279ba557611e96d</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/educe&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.8.1&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">Clone</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">Copy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">Debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">Default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">Deref</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">DerefMut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">Eq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">Hash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">Into</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">Ord</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">PartialEq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">PartialOrd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Debug&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Clone&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Copy&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;PartialEq&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Eq&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;PartialOrd&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Ord&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Hash&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Deref&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;DerefMut&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Into&quot;</span><span class="p">]</span>
+<span class="n">full</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;syn/full&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;educe&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;proc-macro&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">enum-ordinalize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/enum-ordinalize&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^4.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">proc-macro2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/proc-macro2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.91&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">quote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/quote&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.44&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syn&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;visit&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;visit-mut&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Magic Len &lt;len@magiclen.org&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.89</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/educe/0.8.1">crates.io package</a></li><li><a href="https://github.com/magiclen/educe">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">educe</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/educe"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.8.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

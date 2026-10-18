@@ -1,0 +1,1884 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>proptest 1.11.0 · Incan.pub</title><meta name="description" content="Hypothesis-like property-based testing and shrinking."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/proptest</p><div class="title-row"><h1>proptest</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/proptest/versions/1.11.0/" selected>1.11.0</option></select></label></div><p class="description">Hypothesis-like property-based testing and shrinking.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Proptest</h3>
+<p><a href="https://github.com/proptest-rs/proptest/actions">Build Status</a>
+<a href="https://crates.io/crates/proptest"></a>
+<a href="https://proptest-rs.github.io/proptest/intro.html"></a>
+<a href="https://docs.rs/proptest/latest/proptest/"></a></p>
+<h4>Book</h4>
+<p>A detailed introduction to proptest can be found in the <a href="https://proptest-rs.github.io/proptest/">book</a></p>
+<h4>Introduction</h4>
+<p>Proptest is a property testing framework (i.e., the QuickCheck family)
+inspired by the <a href="https://hypothesis.works/">Hypothesis</a> framework for
+Python. It allows to test that certain properties of your code hold for
+arbitrary inputs, and if a failure is found, automatically finds the
+minimal test case to reproduce the problem. Unlike QuickCheck, generation
+and shrinking is defined on a per-value basis instead of per-type, which
+makes it more flexible and simplifies composition.</p>
+<h5>Status of this crate</h5>
+<p>The crate is fairly close to being feature-complete and has not seen
+substantial architectural changes in quite some time. At this point, it mainly
+sees passive maintenance.</p>
+<p>See the <a href="https://github.com/proptest-rs/proptest/blob/main/proptest/CHANGELOG.md">changelog</a>
+for a full list of substantial historical changes, breaking and otherwise.</p>
+<h5>MSRV</h5>
+<p>The current MSRV of this crate is 1.84.
+The MSRV is guaranteed to not exceed <code>&lt;current stable release&gt; - 7</code>, though in practice it may be lower than this - your mileage may vary.
+If we change this policy in a backwards incompatible way (e.g. changing it to <code>&lt;current stable release&gt; - 1</code>), this constitutes a breaking change, and would be a major version bump (e.g. 1.1 -&gt; 2.0).</p>
+<h5>What is property testing?</h5>
+<p><em>Property testing</em> is a system of testing code by checking that certain
+properties of its output or behaviour are fulfilled for all inputs. These
+inputs are generated automatically, and, critically, when a failing input
+is found, the input is automatically reduced to a <em>minimal</em> test case.</p>
+<p>Property testing is best used to complement traditional unit testing (i.e.,
+using specific inputs chosen by hand). Traditional tests can test specific
+known edge cases, simple inputs, and inputs that were known in the past to
+reveal bugs, whereas property tests will search for more complicated inputs
+that cause problems.</p>
+<h4>Getting Started</h4>
+<p>Let's say we want to make a function that parses dates of the form
+<code>YYYY-MM-DD</code>. We're not going to worry about <em>validating</em> the date, any
+triple of integers is fine. So let's bang something out real quick.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">fn</span><span class="w"> </span><span class="nf">parse_date</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="p">(</span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="p">)</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">len</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="s">&quot;-&quot;</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">4</span><span class="o">..</span><span class="mi">5</span><span class="p">]</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s">&quot;-&quot;</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">7</span><span class="o">..</span><span class="mi">8</span><span class="p">]</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">year</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="o">..</span><span class="mi">4</span><span class="p">];</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">month</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">6</span><span class="o">..</span><span class="mi">7</span><span class="p">];</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">day</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">8</span><span class="o">..</span><span class="mi">10</span><span class="p">];</span>
+
+<span class="w">    </span><span class="n">year</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">().</span><span class="n">ok</span><span class="p">().</span><span class="n">and_then</span><span class="p">(</span>
+<span class="w">        </span><span class="o">|</span><span class="n">y</span><span class="o">|</span><span class="w"> </span><span class="n">month</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">().</span><span class="n">ok</span><span class="p">().</span><span class="n">and_then</span><span class="p">(</span>
+<span class="w">            </span><span class="o">|</span><span class="n">m</span><span class="o">|</span><span class="w"> </span><span class="n">day</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">().</span><span class="n">ok</span><span class="p">().</span><span class="n">map</span><span class="p">(</span>
+<span class="w">                </span><span class="o">|</span><span class="n">d</span><span class="o">|</span><span class="w"> </span><span class="p">(</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">))))</span>
+<span class="p">}</span>
+</code></pre>
+<p>It compiles, that means it works, right? Maybe not, let's add some tests.</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[test]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">test_parse_date</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="nb">None</span><span class="p">,</span><span class="w"> </span><span class="n">parse_date</span><span class="p">(</span><span class="s">&quot;2017-06-1&quot;</span><span class="p">));</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="nb">None</span><span class="p">,</span><span class="w"> </span><span class="n">parse_date</span><span class="p">(</span><span class="s">&quot;2017-06-170&quot;</span><span class="p">));</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="nb">None</span><span class="p">,</span><span class="w"> </span><span class="n">parse_date</span><span class="p">(</span><span class="s">&quot;2017006-17&quot;</span><span class="p">));</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="nb">None</span><span class="p">,</span><span class="w"> </span><span class="n">parse_date</span><span class="p">(</span><span class="s">&quot;2017-06017&quot;</span><span class="p">));</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="nb">Some</span><span class="p">((</span><span class="mi">2017</span><span class="p">,</span><span class="w"> </span><span class="mi">06</span><span class="p">,</span><span class="w"> </span><span class="mi">17</span><span class="p">)),</span><span class="w"> </span><span class="n">parse_date</span><span class="p">(</span><span class="s">&quot;2017-06-17&quot;</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre>
+<p>Tests pass, deploy to production! But now your application starts crashing,
+and people are upset that you moved Christmas to February. Maybe we need to
+be a bit more thorough.</p>
+<p>In <code>Cargo.toml</code>, add</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dev-dependencies]</span>
+<span class="n">proptest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.10.0&quot;</span>
+</code></pre>
+<p>Now we can add some property tests to our date parser. But how do we test
+the date parser for arbitrary inputs, without making another date parser in
+the test to validate it? We won't need to as long as we choose our inputs
+and properties correctly. But before correctness, there's actually an even
+simpler property to test: <em>The function should not crash.</em> Let's start
+there.</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// Bring the macros and other important things into scope.</span>
+<span class="k">use</span><span class="w"> </span><span class="n">proptest</span><span class="p">::</span><span class="n">prelude</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="n">proptest</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[test]</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">doesnt_crash</span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\\</span><span class="s">PC*&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">parse_date</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>What this does is take a literally random <code>&amp;String</code> (ignore <code>\\PC*</code> for the
+moment, we'll get back to that — if you've already figured it out, contain
+your excitement for a bit) and give it to <code>parse_date()</code> and then throw the
+output away.</p>
+<p>When we run this, we get a bunch of scary-looking output, eventually ending
+with</p>
+<pre><code>thread 'main' panicked at 'Test failed: byte index 4 is not a char boundary; it is inside 'ௗ' (bytes 2..5) of `aAௗ0㌀0`; minimal failing input: s = "aAௗ0㌀0"
+	successes: 102
+	local rejects: 0
+	global rejects: 0
+'
+</code></pre>
+<p>If we look at the top directory after the test fails, we'll see a new
+<code>proptest-regressions</code> directory, which contains some files corresponding to
+source files containing failing test cases. These are <a href="https://proptest-rs.github.io/proptest/proptest/failure-persistence.html"><em>failure
+persistence</em></a>
+files. The first thing we should do is add these to source control.</p>
+<pre><code>$ git add proptest-regressions
+</code></pre>
+<p>The next thing we should do is copy the failing case to a traditional unit
+test since it has exposed a bug not similar to what we've tested in the
+past.</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[test]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">test_unicode_gibberish</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="nb">None</span><span class="p">,</span><span class="w"> </span><span class="n">parse_date</span><span class="p">(</span><span class="s">&quot;aAௗ0㌀0&quot;</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre>
+<p>Now, let's see what happened... we forgot about UTF-8! You can't just
+blindly slice strings since you could split a character, in this case that
+Tamil diacritic placed atop other characters in the string.</p>
+<p>In the interest of making the code changes as small as possible, we'll just
+check that the string is ASCII and reject anything that isn't.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">fn</span><span class="w"> </span><span class="nf">parse_date</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="p">(</span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="p">)</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">len</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// NEW: Ignore non-ASCII strings so we don&#39;t need to deal with Unicode.</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">s</span><span class="p">.</span><span class="n">is_ascii</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="s">&quot;-&quot;</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">4</span><span class="o">..</span><span class="mi">5</span><span class="p">]</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s">&quot;-&quot;</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">7</span><span class="o">..</span><span class="mi">8</span><span class="p">]</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">year</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="o">..</span><span class="mi">4</span><span class="p">];</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">month</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">6</span><span class="o">..</span><span class="mi">7</span><span class="p">];</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">day</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">8</span><span class="o">..</span><span class="mi">10</span><span class="p">];</span>
+
+<span class="w">    </span><span class="n">year</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">().</span><span class="n">ok</span><span class="p">().</span><span class="n">and_then</span><span class="p">(</span>
+<span class="w">        </span><span class="o">|</span><span class="n">y</span><span class="o">|</span><span class="w"> </span><span class="n">month</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">().</span><span class="n">ok</span><span class="p">().</span><span class="n">and_then</span><span class="p">(</span>
+<span class="w">            </span><span class="o">|</span><span class="n">m</span><span class="o">|</span><span class="w"> </span><span class="n">day</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">().</span><span class="n">ok</span><span class="p">().</span><span class="n">map</span><span class="p">(</span>
+<span class="w">                </span><span class="o">|</span><span class="n">d</span><span class="o">|</span><span class="w"> </span><span class="p">(</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">))))</span>
+<span class="p">}</span>
+</code></pre>
+<p>The tests pass now! But we know there are still more problems, so let's
+test more properties.</p>
+<p>Another property we want from our code is that it parses every valid date.
+We can add another test to the <code>proptest!</code> section:</p>
+<pre><code class="syntax-highlight language-rust"><span class="n">proptest</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// snip...</span>
+
+<span class="w">    </span><span class="cp">#[test]</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">parses_all_valid_dates</span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s">&quot;[0-9]{4}-[0-9]{2}-[0-9]{2}&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">parse_date</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>The thing to the right-hand side of <code>in</code> is actually a <em>regular
+expression</em>, and <code>s</code> is chosen from strings which match it. So in our
+previous test, <code>&quot;\\PC*&quot;</code> was generating arbitrary strings composed of
+arbitrary non-control characters. Now, we generate things in the YYYY-MM-DD
+format.</p>
+<p>The new test passes, so let's move on to something else.</p>
+<p>The final property we want to check is that the dates are actually parsed
+<em>correctly</em>. Now, we can't do this by generating strings — we'd end up just
+reimplementing the date parser in the test! Instead, we start from the
+expected output, generate the string, and check that it gets parsed back.</p>
+<pre><code class="syntax-highlight language-rust"><span class="n">proptest</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// snip...</span>
+
+<span class="w">    </span><span class="cp">#[test]</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">parses_date_back_to_original</span><span class="p">(</span><span class="n">y</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="k">u32</span><span class="o">..</span><span class="mi">10000</span><span class="p">,</span>
+<span class="w">                                    </span><span class="n">m</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="k">u32</span><span class="o">..</span><span class="mi">13</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="k">u32</span><span class="o">..</span><span class="mi">32</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">y2</span><span class="p">,</span><span class="w"> </span><span class="n">m2</span><span class="p">,</span><span class="w"> </span><span class="n">d2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">parse_date</span><span class="p">(</span>
+<span class="w">            </span><span class="o">&amp;</span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{:04}-{:02}-{:02}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">)).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// prop_assert_eq! is basically the same as assert_eq!, but doesn&#39;t</span>
+<span class="w">        </span><span class="c1">// cause a bunch of panic messages to be printed on intermediate</span>
+<span class="w">        </span><span class="c1">// test failures. Which one to use is largely a matter of taste.</span>
+<span class="w">        </span><span class="n">prop_assert_eq</span><span class="o">!</span><span class="p">((</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="n">y2</span><span class="p">,</span><span class="w"> </span><span class="n">m2</span><span class="p">,</span><span class="w"> </span><span class="n">d2</span><span class="p">));</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>Here, we see that besides regexes, we can use any expression which is a
+<code>proptest::strategy::Strategy</code>, in this case, integer ranges.</p>
+<p>The test fails when we run it. Though there's not much output this time.</p>
+<pre><code>thread 'main' panicked at 'Test failed: assertion failed: `(left == right)` (left: `(0, 10, 1)`, right: `(0, 0, 1)`) at examples/dateparser_v2.rs:46; minimal failing input: y = 0, m = 10, d = 1
+	successes: 2
+	local rejects: 0
+	global rejects: 0
+', examples/dateparser_v2.rs:33
+note: Run with `RUST_BACKTRACE=1` for a backtrace.
+</code></pre>
+<p>The failing input is <code>(y, m, d) = (0, 10, 1)</code>, which is a rather specific
+output. Before thinking about why this breaks the code, let's look at what
+proptest did to arrive at this value. At the start of our test function,
+insert</p>
+<pre><code class="syntax-highlight language-rust"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;y = {}, m = {}, d = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">);</span>
+</code></pre>
+<p>Running the test again, we get something like this:</p>
+<pre><code>y = 2497, m = 8, d = 27
+y = 9641, m = 8, d = 18
+y = 7360, m = 12, d = 20
+y = 3680, m = 12, d = 20
+y = 1840, m = 12, d = 20
+y = 920, m = 12, d = 20
+y = 460, m = 12, d = 20
+y = 230, m = 12, d = 20
+y = 115, m = 12, d = 20
+y = 57, m = 12, d = 20
+y = 28, m = 12, d = 20
+y = 14, m = 12, d = 20
+y = 7, m = 12, d = 20
+y = 3, m = 12, d = 20
+y = 1, m = 12, d = 20
+y = 0, m = 12, d = 20
+y = 0, m = 6, d = 20
+y = 0, m = 9, d = 20
+y = 0, m = 11, d = 20
+y = 0, m = 10, d = 20
+y = 0, m = 10, d = 10
+y = 0, m = 10, d = 5
+y = 0, m = 10, d = 3
+y = 0, m = 10, d = 2
+y = 0, m = 10, d = 1
+</code></pre>
+<p>The test failure message said there were two successful cases; we see these
+at the very top, <code>2497-08-27</code> and <code>9641-08-18</code>. The next case,
+<code>7360-12-20</code>, failed. There's nothing immediately obviously special about
+this date. Fortunately, proptest reduced it to a much simpler case. First,
+it rapidly reduced the <code>y</code> input to <code>0</code> at the beginning, and similarly
+reduced the <code>d</code> input to the minimum allowable value of <code>1</code> at the end.
+Between those two, though, we see something different: it tried to shrink
+<code>12</code> to <code>6</code>, but then ended up raising it back up to <code>10</code>. This is because
+the <code>0000-06-20</code> and <code>0000-09-20</code> test cases <em>passed</em>.</p>
+<p>In the end, we get the date <code>0000-10-01</code>, which apparently gets parsed as
+<code>0000-00-01</code>. Again, this failing case was added to the failure persistence
+file, and we should add this as its own unit test:</p>
+<pre><code>$ git add proptest-regressions
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[test]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">test_october_first</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="nb">Some</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)),</span><span class="w"> </span><span class="n">parse_date</span><span class="p">(</span><span class="s">&quot;0000-10-01&quot;</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre>
+<p>Now to figure out what's broken in the code. Even without the intermediate
+input, we can say with reasonable confidence that the year and day parts
+don't come into the picture since both were reduced to the minimum
+allowable input. The month input was <em>not</em>, but was reduced to <code>10</code>. This
+means we can infer that there's something special about <code>10</code> that doesn't
+hold for <code>9</code>. In this case, that &quot;special something&quot; is being two digits
+wide. In our code:</p>
+<pre><code class="syntax-highlight language-rust"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">month</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">6</span><span class="o">..</span><span class="mi">7</span><span class="p">];</span>
+</code></pre>
+<p>We were off by one, and need to use the range <code>5..7</code>. After fixing this,
+the test passes.</p>
+<p>The <code>proptest!</code> macro has some additional syntax, including for setting
+configuration for things like the number of test cases to generate. See its
+<a href="https://docs.rs/proptest/latest/proptest/macro.proptest.html">documentation</a>
+for more details.</p>
+<h4>Differences between QuickCheck and Proptest</h4>
+<p>QuickCheck and Proptest are similar in many ways: both generate random
+inputs for a function to check certain properties, and automatically shrink
+inputs to minimal failing cases.</p>
+<p>The one big difference is that QuickCheck generates and shrinks values
+based on type alone, whereas Proptest uses explicit <code>Strategy</code> objects. The
+QuickCheck approach has a lot of disadvantages in comparison:</p>
+<ul>
+<li>
+<p>QuickCheck can only define one generator and shrinker per type. If you need a
+custom generation strategy, you need to wrap it in a newtype and implement
+traits on that by hand. In Proptest, you can define arbitrarily many
+different strategies for the same type, and there are plenty built-in.</p>
+</li>
+<li>
+<p>For the same reason, QuickCheck has a single &quot;size&quot; configuration that tries
+to define the range of values generated. If you need an integer between 0 and
+100 and another between 0 and 1000, you probably need to do another newtype.
+In Proptest, you can directly just express that you want a <code>0..100</code> integer
+and a <code>0..1000</code> integer.</p>
+</li>
+<li>
+<p>Types in QuickCheck are not easily composable. Defining <code>Arbitrary</code> and
+<code>Shrink</code> for a new struct which is simply produced by the composition of its
+fields requires implementing both by hand, including a bidirectional mapping
+between the struct and a tuple of its fields. In Proptest, you can make a
+tuple of the desired components and then <code>prop_map</code> it into the desired form.
+Shrinking happens automatically in terms of the input types.</p>
+</li>
+<li>
+<p>Because constraints on values cannot be expressed in QuickCheck, generation
+and shrinking may lead to a lot of input rejections. Strategies in Proptest
+are aware of simple constraints and do not generate or shrink to values that
+violate them.</p>
+</li>
+</ul>
+<p>The author of Hypothesis also has an <a href="https://hypothesis.works/articles/integrated-shrinking/">article on this
+topic</a>.</p>
+<p>Of course, there's also some relative downsides that fall out of what
+Proptest does differently:</p>
+<ul>
+<li>Generating complex values in Proptest can be up to an order of magnitude
+slower than in QuickCheck. This is because QuickCheck performs stateless
+shrinking based on the output value, whereas Proptest must hold on to all the
+intermediate states and relationships in order for its richer shrinking model
+to work.</li>
+</ul>
+<h4>Limitations of Property Testing</h4>
+<p>Given infinite time, property testing will eventually explore the whole
+input space to a test. However, time is not infinite, so only a randomly
+sampled portion of the input space can be explored. This means that
+property testing is extremely unlikely to find single-value edge cases in a
+large space. For example, the following test will virtually always pass:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">proptest</span><span class="p">::</span><span class="n">prelude</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="n">proptest</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[test]</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">i64_abs_is_never_negative</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// This actually fails if a == i64::MIN, but randomly picking one</span>
+<span class="w">        </span><span class="c1">// specific value out of 2⁶⁴ is overwhelmingly unlikely.</span>
+<span class="w">        </span><span class="fm">assert!</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">abs</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>Because of this, traditional unit testing with intelligently selected cases
+is still necessary for many kinds of problems.</p>
+<p>Similarly, in some cases it can be hard or impossible to define a strategy
+which actually produces useful inputs. A strategy of <code>.{1,4096}</code> may be
+great to fuzz a C parser, but is highly unlikely to produce anything that
+makes it to a code generator.</p>
+<h3>Acknowledgements</h3>
+<p>This crate wouldn't have come into existence had it not been for the <a href="https://github.com/BurntSushi/quickcheck">Rust port
+of QuickCheck</a> and the
+<a href="https://github.com/CryptArchy/regex_generate"><code>regex_generate</code></a> crate which
+gave wonderful examples of what is possible.</p>
+<h4>Contribution</h4>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall
+be dual licensed as above, without any additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>alloc</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>atomic64bit</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>attr-macro</code></th><td>No</td><td><ul class="effects"><li><code>proptest-macro</code></li></ul></td></tr><tr><th scope="row"><code>bit-set</code></th><td>Yes<small>default → bit-set</small></td><td><ul class="effects"><li><code>dep:bit-set</code></li><li><code>dep:bit-vec</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>fork</code></li><li><code>timeout</code></li><li><code>bit-set</code></li></ul></td></tr><tr><th scope="row"><code>default-code-coverage</code></th><td>No</td><td><ul class="effects"><li><code>std</code></li><li><code>fork</code></li><li><code>timeout</code></li><li><code>bit-set</code></li></ul></td></tr><tr><th scope="row"><code>f16</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>fork</code></th><td>Yes<small>default → fork</small></td><td><ul class="effects"><li><code>std</code></li><li><code>rusty-fork</code></li><li><code>tempfile</code></li></ul></td></tr><tr><th scope="row"><code>handle-panics</code></th><td>No</td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>hardware-rng</code></th><td>No</td><td><ul class="effects"><li><code>x86</code></li></ul></td></tr><tr><th scope="row"><code>no_std</code></th><td>No</td><td><ul class="effects"><li><code>num-traits/libm</code></li></ul></td></tr><tr><th scope="row"><code>proptest-macro</code></th><td>No</td><td><ul class="effects"><li><code>dep:proptest-macro</code></li></ul></td></tr><tr><th scope="row"><code>regex-syntax</code></th><td>Yes<small>default → std → regex-syntax</small></td><td><ul class="effects"><li><code>dep:regex-syntax</code></li></ul></td></tr><tr><th scope="row"><code>rusty-fork</code></th><td>Yes<small>default → fork → rusty-fork</small></td><td><ul class="effects"><li><code>dep:rusty-fork</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>rand/std</code></li><li><code>rand/os_rng</code></li><li><code>regex-syntax</code></li><li><code>num-traits/std</code></li></ul></td></tr><tr><th scope="row"><code>tempfile</code></th><td>Yes<small>default → fork → tempfile</small></td><td><ul class="effects"><li><code>dep:tempfile</code></li></ul></td></tr><tr><th scope="row"><code>timeout</code></th><td>Yes<small>default → timeout</small></td><td><ul class="effects"><li><code>fork</code></li><li><code>dep:rusty-fork</code></li><li><code>rusty-fork/timeout</code></li></ul></td></tr><tr><th scope="row"><code>unstable</code></th><td>No</td><td><ul class="effects"><li><code>f16</code></li></ul></td></tr><tr><th scope="row"><code>x86</code></th><td>No</td><td><ul class="effects"><li><code>dep:x86</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/bit-set/"><code>crates-io/bit-set</code></a><small>Alias: bit-set</small></th><td><code>^0.8.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → bit-set</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/bit-vec/"><code>crates-io/bit-vec</code></a><small>Alias: bit-vec</small></th><td><code>^0.8.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → bit-set</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/bitflags/"><code>crates-io/bitflags</code></a><small>Alias: bitflags</small></th><td><code>^2.10</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/num-traits/"><code>crates-io/num-traits</code></a><small>Alias: num-traits</small></th><td><code>^0.2.15</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><code>crates-io/proptest-macro</code><small>Alias: proptest-macro</small></th><td><code>^0.5.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/rand/"><code>crates-io/rand</code></a><small>Alias: rand</small></th><td><code>^0.9</code><small>Default features: disabled</small><small>Requests: alloc</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/rand_chacha/"><code>crates-io/rand_chacha</code></a><small>Alias: rand_chacha</small></th><td><code>^0.9</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/rand_xorshift/"><code>crates-io/rand_xorshift</code></a><small>Alias: rand_xorshift</small></th><td><code>^0.4</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/regex-syntax/"><code>crates-io/regex-syntax</code></a><small>Alias: regex-syntax</small></th><td><code>^0.8</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → std → regex-syntax</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/rusty-fork/"><code>crates-io/rusty-fork</code></a><small>Alias: rusty-fork</small></th><td><code>^0.3.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Enabled through default → fork → rusty-fork</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/tempfile/"><code>crates-io/tempfile</code></a><small>Alias: tempfile</small></th><td><code>^3.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → fork → tempfile</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/unarray/"><code>crates-io/unarray</code></a><small>Alias: unarray</small></th><td><code>^0.1.4</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><code>crates-io/x86</code><small>Alias: x86</small></th><td><code>^0.52.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/camino/versions/1.2.6/">crates-io/camino 1.2.6</a><span>Requires ^1.0.0 · alias proptest · </span></li><li><a href="../../../packages/crates-io/camino/versions/1.2.2/">crates-io/camino 1.2.2</a><span>Requires ^1.0.0 · alias proptest · </span></li><li><a href="../../../packages/crates-io/compact_str/versions/0.10.0/">crates-io/compact_str 0.10.0</a><span>Requires ^1 · alias proptest · </span></li><li><a href="../../../packages/crates-io/compact_str/versions/0.9.1/">crates-io/compact_str 0.9.1</a><span>Requires ^1 · alias proptest · </span></li><li><a href="../../../packages/crates-io/const-hex/versions/1.19.3/">crates-io/const-hex 1.19.3</a><span>Requires ^1.4 · alias proptest · </span></li><li><a href="../../../packages/crates-io/ordered-float/versions/5.5.0/">crates-io/ordered-float 5.5.0</a><span>Requires ^1.0.0 · alias proptest · </span></li><li><a href="../../../packages/crates-io/ordered-float/versions/2.10.1/">crates-io/ordered-float 2.10.1</a><span>Requires ^1.0.0 · alias proptest · </span></li><li><a href="../../../packages/crates-io/rust_decimal/versions/1.43.0/">crates-io/rust_decimal 1.43.0</a><span>Requires ^1.0 · alias proptest · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>bit-set, default, fork, regex-syntax, rusty-fork, std, tempfile, timeout</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0eb4beb817ac2539370ef4652fea7037839ad1eb790555aee5c49f1386b5274f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:a3f4b26b6c46ddc359dbc9fc85b495fc0a59056a0695f11e8143aaea99746734</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>bit-set, default, fork, regex-syntax, rusty-fork, std, tempfile, timeout</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:29d5e21a4104cbd81c49874fee9f39c2a294303e37b25071a10c7ac44e263e70</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:ab6ec1230f41406af8a7aee0da60d85834e6ff1a10ff349c099d72f6d53018c9</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>bit-set, default, fork, regex-syntax, rusty-fork, std, tempfile, timeout</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:65a184160b5a9ade75ccab077be317eedd3b481bc85542a5bd55b43a1c92615b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:8f1e034aa418c2f90715ec6f5be0fe19f1c581875ee8e1a9e978d39cbc8a8405</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>bit-set, default, fork, regex-syntax, rusty-fork, std, tempfile, timeout</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b7f783280f31bcbbab1e914863eb8966975c0e18e1284a529a70080d4220e58d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:bc46b81023611c1af4d3b44b73500aab01c21805e52b59a4d4a56c5b8e7cd201</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/proptest/versions/1.11.0/">1.11.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/proptest/1.11.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h4>Unreleased</h4>
+<h4>1.11.0</h4>
+<h5>New Features</h5>
+<ul>
+<li>Added <code>bits::u128</code> and <code>bits::i128</code> strategies for 128-bit integer bit set generation. (<a href="https://github.com/proptest-rs/proptest/issues/311">#311</a>)</li>
+<li>Added support for f16 feature-gated by &quot;f16&quot; or &quot;unstable&quot;. (<a href="https://github.com/proptest-rs/proptest/pull/638">#638</a>)</li>
+</ul>
+<h4>1.10.0</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>The minimum supported Rust version has been increased to 1.84.0. (<a href="https://github.com/proptest-rs/proptest/pull/612">#612</a>)</li>
+</ul>
+<h5>New Features</h5>
+<ul>
+<li>Added a memory-efficient strategy for sampling subsets from ranges without replacement. (<a href="https://github.com/proptest-rs/proptest/pull/586">#586</a>)</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li>Updated <code>convert_case</code> requirement from 0.6 to 0.11. (<a href="https://github.com/proptest-rs/proptest/pull/623">#623</a>)</li>
+<li>Updated <code>trybuild</code> requirement from =1.0.113 to =1.0.115. (<a href="https://github.com/proptest-rs/proptest/pull/624">#624</a>)</li>
+</ul>
+<h4>1.9.0</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>The minimum supported Rust version has been increased to 1.82.0. (<a href="https://github.com/proptest-rs/proptest/pull/605">#605</a>)</li>
+</ul>
+<h5>New Features</h5>
+<ul>
+<li>Added <code>ProptestResultExt</code> trait with <code>prop_assume_ok</code> helper method for converting <code>Result</code> types to test outcomes. (<a href="https://github.com/proptest-rs/proptest/pull/589">#589</a>)</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li>Replaced <code>lazy_static</code> dependency with <code>std::sync::LazyLock</code>. (<a href="https://github.com/proptest-rs/proptest/pull/546">#546</a>)</li>
+<li>Fixed doctest and cleaned up warnings. (<a href="https://github.com/proptest-rs/proptest/pull/606">#606</a>)</li>
+</ul>
+<h4>1.8.0</h4>
+<h5>New Features</h5>
+<ul>
+<li>Implement <code>Arbitrary</code> for <code>Saturating&lt;T&gt;</code>. (<a href="https://github.com/proptest-rs/proptest/pull/585">#585</a>)</li>
+<li>Allow <code>prop_assert!</code> with trailing comma. (<a href="https://github.com/proptest-rs/proptest/pull/581">#581</a>)</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fix arithmetic overflow on 32-bit processors. (<a href="https://github.com/proptest-rs/proptest/pull/596">#596</a>)</li>
+<li>Sanitize user-facing macros to use fully qualified paths, preventing conflicts with user code. (<a href="https://github.com/proptest-rs/proptest/pull/584">#584</a>)</li>
+</ul>
+<h4>1.7.0</h4>
+<h5>Other Notes</h5>
+<ul>
+<li>Updated <code>rand</code> dependency from 0.8 to 0.9.</li>
+<li>Bump all dependencies to latest compatible with MSRV 1.66.</li>
+</ul>
+<h4>1.6.0</h4>
+<h5>New Features</h5>
+<ul>
+<li>Added <code>handle-panics</code> feature which enables catching panics raised in tests
+and turning them into failures. (<a href="https://github.com/proptest-rs/proptest/pull/525">#525</a>)</li>
+<li>Exit early if shrink disabled. (<a href="https://github.com/proptest-rs/proptest/pull/520">#520</a>)</li>
+<li>Add <code>Config::with_failure_persistence</code>. A convenience constructor making use
+of a generic parameter over <code>FailurePersistence</code> impls and hiding the
+<code>Some(Box::new(...))</code>. (<a href="https://github.com/proptest-rs/proptest/pull/508">#508</a>)</li>
+<li>Add From's for SizeRange and Probability. (<a href="%5Bhttps://github.com/proptest-rs/proptest/pull/498">#498</a>)</li>
+<li>When running persisted regressions, the most recently added regression is now
+run first. (<a href="https://github.com/proptest-rs/proptest/pull/496%5D">#496</a>)</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fix WebAssembly support. Hides a few paths, that fail at runtime on
+wasm32-unknown-unknown, under conditional compilation. (<a href="https://github.com/proptest-rs/proptest/pull/519">#519</a>)</li>
+<li>Fix incorrectly reading environment configuration. Previously controlling
+proptest configuration via env vars was not properly applied. This caused
+vars like <code>PROPTEST_MAX_DEFAULT_SIZE_RANGE</code> to be not be properly applied,
+leading to unexpected behavior. (<a href="https://github.com/proptest-rs/proptest/pull/457">#457</a>)</li>
+<li>Allow trailing comma in prop_assert_eq/ne like std. (<a href="https://github.com/proptest-rs/proptest/pull/510">#510</a>)</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li>Add <code>no_std</code> to <code>alloc</code> contexts. <code>no_std</code> must be used explicitly with
+<code>alloc</code>. Updated CI and documentation to reflect this. (<a href="https://github.com/proptest-rs/proptest/pull/528">#528</a>)</li>
+<li>Make <code>libm</code> optional in a <code>std</code> environment. (<a href="https://github.com/proptest-rs/proptest/pull/524">#524</a>)</li>
+<li>Update <code>bit-set</code> and <code>bit-vec</code> to <code>0.8.0</code>. (<a href="https://github.com/proptest-rs/proptest/pull/501">#501</a>)</li>
+<li>Removed unused <code>frunk</code> feature. (<a href="https://github.com/proptest-rs/proptest/pull/498">#498</a>)</li>
+</ul>
+<h4>1.5.0</h4>
+<h5>New Features</h5>
+<ul>
+<li>Setting <code>PROPTEST_MAX_DEFAULT_SIZE_RANGE</code> now customizes the default <code>SizeRange</code>
+used by the default strategies for collections (like <code>Vec</code>). The default remains 100.</li>
+<li>Empty ranges panic during tree creation instead of during sampling.</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>Reference the derive macro in Arbitrary's documentation</li>
+<li>Fix broken links in the book</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fixed issue where config contextualization would clobber existing failure persistence config</li>
+</ul>
+<h4>1.4.0</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>The minimum supported Rust version has been increased to 1.65.0.</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li><code>regex-syntax</code> updated from 0.7 to 0.8</li>
+<li>Fixed new clippies</li>
+<li>Fixed nightly build where Generator was renamed to Coroutine</li>
+</ul>
+<h4>1.3.1</h4>
+<h5>Other Notes</h5>
+<ul>
+<li><code>bit-set</code> updated from 0.5.0 to 0.5.2 to ensure minimum compatible version with bit-vec 0.6</li>
+</ul>
+<h4>1.3.0</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>The minimum supported Rust version has been increased to 1.64.0.</li>
+</ul>
+<h5>New Features</h5>
+<ul>
+<li>Adds Arbitrary impl for PathBuf</li>
+<li>Permit use of (?-u) in byte-regex strategies, allowing non-utf-8 bytes to be generated</li>
+</ul>
+<h5>Book</h5>
+<ul>
+<li>Various small fixes -- typos, formatting</li>
+<li>Removal of custom theme</li>
+<li>Add book page for Tips and Best Practices</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li><code>regex-syntax</code> version 0.7 is now used.</li>
+<li>Print a seed to stderr for a failed test even when a regressions file is already present.</li>
+<li>Fixed a performance issue with <code>VarBitSet::saturated</code> that can slow down <code>VecStrategy</code></li>
+<li>Remove use of rust feature <code>core_intrinsics</code></li>
+<li>Remove no longer needed &quot;break-dead-code&quot; feature</li>
+<li>Disable <code>clippy::arc_with_non_send_sync</code></li>
+<li>Remove dependency on <code>byteorder</code></li>
+</ul>
+<h4>1.2.0</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li><code>PROPTEST_</code> environment variables now take precedence over tests' non-default
+configuration.</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Don't implement Arbitrary for NonZeroU128 and NonZeroI128 on wasm targets where
+u128 and i128 Arbitrary impls don't exist</li>
+</ul>
+<h5>New Features</h5>
+<h5>Other Notes</h5>
+<ul>
+<li>Minimal failing input is now printed using debug pretty-printing</li>
+<li>Made public <code>VarBitSet</code>, <code>SizeRange</code> read-only methods and num sampling
+functions in preparation for release of a <code>proptest-state-machine</code> crate.</li>
+<li>Removed dependency on <code>quick_error</code></li>
+<li>Start publishing MSRV</li>
+</ul>
+<h4>1.1.0</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Sampling from large ranges of floats such as <code>(0f32)..</code> no longer panics
+with newer versions of the <code>rand</code> crate</li>
+<li>[dependencies.x86] was bumped to latest current version. x86 crate does
+was on a very old version 0.33.0 which used a removed macro from rust.</li>
+<li>The calculation for the arbitrary impl of Layout was using a max_size that
+was too large and overflowing Layout. This has been fixed.</li>
+<li>Test for arbitrary AllocError was referring to AllocErr which
+does not exist, this was fixed.</li>
+<li>NoneError has been removed from rust so it was subsequently
+removed from proptest. It was blocking compilation. evidence:
+https://github.com/rust-lang/rust/issues/85614</li>
+<li><code>try_reserve</code> is stable so removed from unstable features</li>
+<li><code>try_trait</code> has been changed to <code>try_trait_v2</code> so that was adjusted
+in <code>Cargo.toml</code>.</li>
+<li><code>prop_assert_ne!</code> now uses fully qualified <code>prop_assert_eq!</code></li>
+<li>Persisted tests are not counted against the number of cases to run</li>
+</ul>
+<h5>New Features</h5>
+<ul>
+<li>Add <code>Arbitrary</code> impls for arrays of all sizes using const generics</li>
+<li>Add <code>Arbitrary</code> impls for <code>core::num::NonZero*</code></li>
+<li>Adds ability to disable failure persistence via env var <code>PROPTEST_DISABLE_FAILURE_PERSISTENCE</code></li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li><code>proptest</code> no longer depends on the <code>quick-error</code> crate.</li>
+</ul>
+<h4>1.0.0</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>
+<p>The minimum supported Rust version has been increased to 1.50.0.</p>
+</li>
+<li>
+<p>The version of the <code>rand</code> crate has been increased to 0.8.</p>
+</li>
+<li>
+<p>Due to changes in the <code>getrandom</code> crate, if you wish to use proptest on the
+<code>wasm32-unknown-unknown</code> target, you must manually add a dependency on that
+crate and enable a feature that will allow it to work. Refer to the
+<code>getrandom</code> crate documentation for more information.</p>
+</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li><code>prop_shuffle()</code> can now produce all permutations.</li>
+</ul>
+<h5>New Features</h5>
+<ul>
+<li>Tuple strategies up to 12 elements are now supported, for parity with the
+blanket implementations that <code>std</code> provides.</li>
+</ul>
+<h4>0.10.1</h4>
+<h5>New Features</h5>
+<ul>
+<li>Added <code>RngAlgorithm::Recorder</code> and supporting APIs which allow capturing
+random data generated as part of generating a value or running a test.</li>
+</ul>
+<h4>0.10.0</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>
+<p>The version of the <code>rand</code> crate has been increased to 0.7.</p>
+</li>
+<li>
+<p>The <code>proptest!</code> macro no longer accepts function bodies which implicitly
+return a value (which would then be discarded).</p>
+</li>
+<li>
+<p>The <code>TupleUnion</code> implementation in <code>proptest</code> 0.9 has been removed and
+replaced with <code>LazyTupleUnion</code>. <code>prop_oneof!</code> is unaffected and continues
+to be the recommended way to build a union of strategies.</p>
+</li>
+</ul>
+<h5>New Features</h5>
+<ul>
+<li>
+<p>Enabling the <code>hardware-rng</code> optional dependency (disabled by default) allows
+obtaining non-deterministic random seeds even in <code>no_std</code> environments
+provided the architecture is x86 or AMD64.</p>
+</li>
+<li>
+<p>Added missing <code>?Sized</code> bound to <code>B</code> on the implementation of
+<code>Arbitrary</code> for <code>std::borrow::Cow&lt;'_, B&gt;</code>.</p>
+</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li><code>prop_assert!</code> and <code>prop_assume!</code> should now be usable in <code>no_std</code>
+environments.</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li>
+<p><code>rusty_fork</code> has been bumped to 0.3.0, which adds support for a number of
+<a href="https://github.com/AltSysrq/rusty-fork/blob/master/CHANGELOG.md#improvements">new test flags</a>
+when running forked tests.</p>
+</li>
+<li>
+<p>The <code>PassThrough</code> RNG algorithm now returns 0 instead of panicking when it
+runs out of entropy.</p>
+</li>
+</ul>
+<h4>0.9.6</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fixed <a href="https://github.com/proptest-rs/proptest/issues/186">#186</a>,
+a Rust future-compatibility issue.</li>
+</ul>
+<h4>0.9.5</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fixed a Rust future-compatibility issue (https://github.com/rust-lang/rust/pull/65819).</li>
+</ul>
+<h5>New Additions</h5>
+<h4>0.9.4</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>The <code>unstable</code> feature one again works against the latest nightly.</li>
+</ul>
+<h5>Performance Improvements</h5>
+<ul>
+<li>
+<p>Unions and the <code>prop_oneof!</code> combinator now generate value trees
+lazily.</p>
+<p>In previous versions of <code>proptest</code>, if a value tree for a
+union variant was generated, so would value trees for earlier
+variants -- as a result, union value tree generation was linear in the
+number of variants.</p>
+<p>In <code>proptest</code> 0.9.4 and above, value trees are only generated for
+union variants that are picked. Union value tree generation is now
+independent of the number of variants.</p>
+</li>
+</ul>
+<h5>Deprecations</h5>
+<ul>
+<li><code>TupleUnion</code> has been deprecated, and its implementation will be
+replaced by <code>LazyTupleUnion</code>'s in 0.10.0.</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li>
+<p>The return type of <code>prop_oneof!</code> has changed from <code>TupleUnion</code> to
+<code>LazyTupleUnion</code>. <code>prop_oneof!</code>'s return type is documented to not be
+stable, and that continues to be the case.</p>
+</li>
+<li>
+<p>Shrinking is now limited to four times as many iterations as configured
+number of test cases by default.</p>
+</li>
+<li>
+<p><code>prop_assert_eq!</code> and <code>prop_assert_ne!</code> produce output more similar to the
+<code>assert_eq!</code> and <code>assert_ne!</code> macros. This should also make it easier to
+visually parse out the source location in the resulting messages.</p>
+</li>
+</ul>
+<h4>0.9.3</h4>
+<p>This is a minor release to correct some packaging errors. The license files are
+now included in the files published to crates.io, and some unneeded files are
+now excluded.</p>
+<h4>0.9.2</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>Closures generated by <code>prop_compose!</code> are now <code>move</code>. This is not expected to
+cause any breakage since there is no way to successfully use a borrowing
+closure with that macro.</p>
+</li>
+<li>
+<p>There is now <strong>highly experimental</strong> support for building on Web Assembly.
+Refer to <a href="https://altsysrq.github.io/proptest-book/proptest/wasm.html">the Proptest
+book</a> for build
+instructions.</p>
+</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li>
+<p>Using proptest with the default <code>std</code> feature enabled, the <code>spin</code> crate is no
+longer brought in as a dependency.</p>
+</li>
+<li>
+<p>Using proptest with the <code>std</code> feature disabled, neither <code>spin</code> nor
+<code>lazy_static</code> are brought in as dependencies.</p>
+</li>
+</ul>
+<h4>0.9.1</h4>
+<h5>New RNG Algorithm</h5>
+<p>Starting in this version, the default RNG algorithm has been changed from
+XorShift to ChaCha since it produces higher-quality randomness. This may make
+test case generation a bit slower but it avoids certain pathological cases that
+the old generator had.</p>
+<p>The old algorithm is still supported, and is used automatically when reading
+old failure persistence files.</p>
+<p>Note that this change also affects the internal representation of RNG seeds,
+which affects the <code>FailurePersistence</code> trait which previously only supported
+the seed representation for XorShift. This release maintains source
+compatibility with 0.9.0 by providing defaults for the new methods which
+delegate (when possible) to the old ones, but be aware that custom failure
+persistence implementations using the old API will not function when using an
+RNG other than XorShift.</p>
+<p>To keep using the old algorithm, you can set the environment variable
+<code>PROPTEST_RNG_ALGORITHM</code> to <code>xs</code> or set <code>Config.rng_algorithm</code> to
+<code>RngAlgorithm::XorShift</code> in code.</p>
+<p>Besides ChaCha, this version also adds a <code>PassThrough</code> RNG &quot;algorithm&quot; which
+makes it possible to use an external source of entropy with Proptest.</p>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p><code>TestRng</code> instances can be created with the <code>from_seed</code> function.</p>
+</li>
+<li>
+<p><code>TestRunner</code> instances can be created with user-provided <code>TestRng</code>s.</p>
+</li>
+<li>
+<p><code>TestRunner</code> now has a <code>deterministic()</code> constructor which uses the same RNG
+every time, to facilitate doing statistical tests on strategy outputs.</p>
+</li>
+<li>
+<p>There is now a work-around for a <a href="https://github.com/rust-lang/rust/issues/52478">compiler
+bug</a> which prevents building
+with <code>-C link-dead-code</code>. Please see this issue for details:
+https://github.com/proptest-rs/proptest/issues/124</p>
+</li>
+</ul>
+<h5>Deprecations</h5>
+<ul>
+<li>The <code>load_persisted_failures</code> and <code>save_persisted_failure</code> methods on the
+<code>FailurePersistence</code> trait have been deprecated and will be removed in
+0.10.0.</li>
+</ul>
+<h4>0.9.0</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li>
+<p>The minimum Rust version has been increased to 1.32.0.</p>
+</li>
+<li>
+<p>The version of the <code>rand</code> crate has been increased to 0.6.</p>
+</li>
+<li>
+<p>The <code>ValueFor</code> type alias (deprecated in 0.8.0) has been removed. Replace
+<code>ValueFor&lt;S&gt;</code> with <code>S::Value</code> or <code>&lt;S as Strategy&gt;::Value</code> as necessary.</p>
+</li>
+<li>
+<p><code>From&lt;SizeRange&gt;</code> implementations converting a <code>SizeRange</code> back to various
+std types have been removed since they were of limited utility and had
+unclear or incorrect conversion properties.</p>
+</li>
+<li>
+<p>Many optional elements (such as trailing commas or function visibility
+modifiers) in certain macros could be specified more than once. The macros
+now accept at most one occurrence.</p>
+</li>
+<li>
+<p>Visibility modifiers inside <code>prop_compose</code> must no longer be enclosed in
+brackets. Unless other modifiers (e.g., <code>unsafe</code>) are also in use, simply
+removing the brackets is sufficient.</p>
+</li>
+</ul>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>Rust 2018 style macro imports are now supported.</p>
+</li>
+<li>
+<p>In a Rust 2018 crate, all the macros can be brought into scope with
+<code>import proptest::prelude::*;</code>.</p>
+</li>
+<li>
+<p>The proptest macros now accept trailing commas in more locations.</p>
+</li>
+<li>
+<p>Visibility modifiers can now be passed to <code>prop_compose!</code> without enclosing
+them in brackets. Unfortunately, the old way could not continue to be
+supported due to the way the <code>vis</code> macro matcher works.</p>
+</li>
+</ul>
+<h5>Nightly-only breakage</h5>
+<ul>
+<li>
+<p>The <code>nightly</code> feature, which was formerly required for using proptest with
+<code>#[no_std]</code>, has been removed. References to the feature can simply be
+deleted.</p>
+</li>
+<li>
+<p>When using the <code>unstable</code> feature and setting <code>default-features = false</code>, the
+<code>AtomicI64</code> and <code>AtomicU64</code> types are not supported unless the <code>atomic64bit</code>
+feature is enabled. This supports <code>no_std</code> usage on platforms which do not
+support atomic 64-bit operations.</p>
+</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li>
+<p>Generated strings are now much more likely to contain right-to-left override
+characters.</p>
+</li>
+<li>
+<p>Most of the crate-level documentation has been relocated to the <a href="https://altsysrq.github.io/proptest-book/proptest/index.html">Proptest
+Book</a>.</p>
+</li>
+</ul>
+<h4>0.8.7</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>Add <code>max_shrink_iters</code> and <code>max_shrink_time</code> options to test configuration to
+allow capping the resources expended on shrinking test cases.</p>
+</li>
+<li>
+<p>Add <code>verbose</code> option to make proptest give details about what is happening as
+the test executes.</p>
+</li>
+<li>
+<p>When a failure is saved to the persistence file, the message now also
+includes the seed that was saved so that it can manually be added to the
+appropriate file should the test have run somewhere where the updated file is
+not accessible (for example, on a CI system).</p>
+</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li><code>any::&lt;SystemTime&gt;()</code> now generates random values centred on the UNIX epoch
+rather than always producing the current time.</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li>When using forking, proptest will now detect conditions which cause the child
+process to crash without running any tests, and will fail quickly instead of
+respawning child processes.</li>
+</ul>
+<h4>0.8.6</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p><code>Vec&lt;S&gt; where S: Strategy</code> is now itself a <code>Strategy</code> for producing
+fixed-size <code>Vec</code>s whose values are derived from the respective strategies.</p>
+</li>
+<li>
+<p>It is now possible to configure the test runner to cache test results to
+avoid spending time running identical tests. See <code>Config.result_cache</code>.</p>
+</li>
+<li>
+<p>Add <code>sample::Index</code>, a type for generating indices into runtime-sized slices
+and vectors.</p>
+</li>
+<li>
+<p>Add <code>sample::Selector</code>, a type for picking items out of dynamically-created
+iterables.</p>
+</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>Fix panic when using <code>sample::subsequence</code> with an empty vector.</p>
+</li>
+<li>
+<p>Fix panic when using <code>sample::subsequence</code> with a size equal to the size of
+the input vector.</p>
+</li>
+<li>
+<p>Fix sampled bitset strategies on integers not allowing to generate exactly
+the same number of bits as the integer is wide.</p>
+</li>
+</ul>
+<h5>Other Notes</h5>
+<ul>
+<li>
+<p>Passing empty size ranges to functions requiring a non-empty size range now
+panic with an explicit message immediately rather than causing an arithmetic
+error when generating input values.</p>
+</li>
+<li>
+<p>There were a few cases where proptest would accept a <code>SizeRange</code> with an
+inclusive maximum value of <code>usize::MAX</code>. Size ranges are now always clamped
+to <code>usize::MAX - 1</code>.</p>
+</li>
+</ul>
+<h4>0.8.5</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fix build when nightly features are enabled.</li>
+</ul>
+<h4>0.8.4</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Nightly and no_std support work against latest nightly once again.</li>
+</ul>
+<h5>New Additions</h5>
+<ul>
+<li>Added <code>bits::bool_vec</code> for generating <code>Vec&lt;bool&gt;</code> as a bit set.</li>
+</ul>
+<h5>Nightly-only breakage</h5>
+<ul>
+<li>
+<p><code>impl Arbitrary for CollectionAllocErr</code> is temporarily removed pending it
+being available outside the <code>alloc</code> crate again.</p>
+</li>
+<li>
+<p><code>bits::bitset</code> is no longer available without the <code>bit-set</code> feature (enabled
+by default), which is <a href="https://github.com/contain-rs/bit-vec/pull/51">not compatible with <code>#[no_std]</code>
+environments</a>.</p>
+</li>
+</ul>
+<h4>0.8.3</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fix that regex-based string generation could transpose the order of a literal
+and a non-literal component.</li>
+</ul>
+<h4>0.8.2</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>Macros which previously accepted <code>pattern in strategy</code> syntax to specify
+arguments now also accept <code>pattern: type</code> syntax as shorthand for
+<code>pattern in any::&lt;type&gt;()</code>.</p>
+</li>
+<li>
+<p>Closure-style <code>proptest!</code> invocation no longer requires the body to use block
+syntax.</p>
+</li>
+<li>
+<p>Closure-style <code>proptest!</code> invocation now accepts custom configurations.</p>
+</li>
+</ul>
+<h4>0.8.1</h4>
+<h5>New Additions</h5>
+<ul>
+<li><code>proptest!</code> now has form that accepts a closure. See the documentation for
+the macro for more details.</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>Fix spurious warning about corrupt regression files. The files were not
+corrupt but the parser was failing to handle the blank line at the end.</p>
+</li>
+<li>
+<p>The <code>multiplex_alloc!</code> and <code>multiplex_core!</code> macros which were
+unintentionally exported in 0.8.0 are no longer exported. This is not
+considered a breaking change since they were not supposed to be accessible,
+and in any case would not have expanded into valid code in most other crates.</p>
+</li>
+</ul>
+<h4>0.8.0</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>A combinator <code>.prop_filter_map</code> has been added to <code>Strategy</code>.
+It is similar to <code>.filter_map</code> for <code>Iterator</code> in that it is the
+combination of <code>.prop_filter</code> and <code>.prop_map</code>.</p>
+</li>
+<li>
+<p><code>i128</code> and <code>u128</code> are now supported without any feature flags and on stable.</p>
+</li>
+<li>
+<p>More implementations of <code>Arbitrary</code> are supported for <code>alloc</code> + <code>no_std</code> users.</p>
+</li>
+<li>
+<p><code>size_range</code> now accepts inclusive ranges of form <code>low..=high</code> and <code>..=high</code>.
+Thus, you can construct a <code>vec</code> strategy as: <code>vec(elt_strategy, low..=high)</code>
+and <code>vec(elt_strategy, ..=high)</code>. This also applies to other functions
+accepting <code>Into&lt;SizeRange&gt;</code>.</p>
+</li>
+<li>
+<p><code>..= high</code> is now a valid strategy. Please note that <code>..= 1</code> will naturally
+include numbers lower than <code>0</code> for sized types.</p>
+</li>
+<li>
+<p><code>low..=high</code> is also a valid strategy.</p>
+</li>
+<li>
+<p><code>Arbitrary</code> is implemented for <code>RangeInclusive&lt;Idx&gt;</code>, <code>RangeToInclusive</code>,
+and <code>DecodeUtf16</code> on stable.</p>
+</li>
+<li>
+<p>Bitset strategies and <code>subsequence</code> now accept all range syntaxes.</p>
+</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fix a race condition where a test failing due to running ever so slightly
+over the set timeout could cause the test harness to converge to the
+incorrect failing value, a non-failing value, or panic.</li>
+</ul>
+<h5>Deprecations</h5>
+<ul>
+<li>The type alias <code>ValueFor&lt;S&gt;</code> is now deprecated and will be removed in
+version 0.9. You should just use <code>S::Value</code> instead.</li>
+</ul>
+<h5>Breaking changes</h5>
+<ul>
+<li>
+<p>A minimum version of 1.27 of Rust is now required.</p>
+</li>
+<li>
+<p><code>regex-syntax</code> version 0.6 is now used.</p>
+</li>
+<li>
+<p><code>rand</code> version 0.5 is now used.</p>
+</li>
+<li>
+<p>As a consequence, the <code>FailurePersistence</code> trait will now use <code>[u8; 16]</code> seeds
+instead of <code>[u32; 4]</code>. However, the stored failure persistence files using
+the default <code>FileFailurePersistence</code> will still use <code>[u32; 4]</code> so your old
+failure persistence files should still work.</p>
+</li>
+<li>
+<p>The RNG used by proptest has been changed to a PRNG <code>TestRng</code> which proptest
+exposes. This is currently a simple new-type wrapper around <code>XorShiftRng</code>.
+In the future, this will give us more freedom to make changes without breakage.</p>
+</li>
+<li>
+<p>The feature flag <code>i128_support</code> has been removed. The features it added are
+now always supported.</p>
+</li>
+<li>
+<p>The associated type <code>Value</code> of <code>Strategy</code> has been renamed to <code>Tree</code>.
+A new associated type <code>Value</code> has been added to <code>Strategy</code> which always refers
+to the same type as <code>&lt;S::Tree as ValueTree&gt;::Value</code> for some strategy <code>S</code>.
+This change allows you to write <code>-&gt; impl Strategy&lt;Value = T&gt;</code> for functions
+returning a <code>Strategy</code> generating <code>T</code>s. This is more ergonomic to use than
+<code>-&gt; impl Strategy&lt;Value = impl ValueTree&lt;Value = T&gt;&gt;</code>.</p>
+</li>
+<li>
+<p>The method <code>new_value</code> in <code>Strategy</code> has been renamed to <code>new_tree</code> to mirror
+the renaming of <code>Value</code> to <code>Tree</code>.</p>
+</li>
+<li>
+<p>As a consequence change, the associated type <code>ValueTree</code> has been removed from
+<code>Arbitrary</code>.</p>
+</li>
+<li>
+<p>The methods <code>run</code> and <code>run_one</code> on <code>TestRunner</code> now takes a function-under-test
+that accepts the generated type by value instead of by reference instead.
+This means that you don't need to write <code>ref value in my_strategy</code> and can
+write <code>value in my_strategy</code> instead even if <code>typeof(value)</code> doesn't implement
+<code>Copy</code>. This is also a step in the direction of allowing strategies to generate
+references when generic associated types (GATs) land.
+However, <code>ref value in my_strategy</code> will still be accepted, so not a lot of
+breakage should come of this if you've used <code>proptest! { .. }</code>.</p>
+</li>
+<li>
+<p><code>prop_compose!</code> no longer applies <code>.boxed()</code> to the strategy produced.
+Therefore, <code>-&gt; BoxedStrategy&lt;T&gt;</code> is no longer the correct type.
+The new return type is <code>-&gt; impl Strategy&lt;Value = T&gt;</code>.
+If you want the old behaviour, you can use <code>.boxed()</code> yourself.</p>
+</li>
+<li>
+<p><code>Arbitrary</code> for <code>SizeRange</code> changed its associated type to use <code>RangeInclusive</code>.
+Same applies for <code>CString</code>.</p>
+</li>
+<li>
+<p>Many APIs now use <code>impl Trait</code> in argument position, which could affect code
+using turbofishes to specify types explicitly.</p>
+</li>
+<li>
+<p><code>char</code> APIs which formerly represented a range as <code>(start, end)</code> now require
+<code>start..=end</code>.</p>
+</li>
+</ul>
+<h5>Nightly-only breakage</h5>
+<ul>
+<li>As <code>std::io::{Chars, CharsError}</code> have been deprecated on nightly,
+their <code>Arbitrary</code> implementations have been removed.</li>
+</ul>
+<h4>0.7.2</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fix that <code>bool</code> would not shrink correctly, leading to hangs when tests
+taking <code>bool</code> parameters would fail in certain circumstances.</li>
+</ul>
+<h4>0.7.1</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>It is now possible to run test cases in sub-processes. This allows using
+proptest to test functions which may cause the test process to terminate
+abruptly, such as by calling <code>abort()</code> or even suffering a segmentation
+fault. This requires the &quot;fork&quot; feature, enabled by default.</p>
+</li>
+<li>
+<p>Added support for setting a timeout which applies on a per-test-case (i.e.,
+single input rather than the whole test) basis. This allows using proptest to
+find inputs which cause code to get stuck in infinite loops or exhibit other
+pathological performance behaviour. This requires the &quot;timeout&quot; feature (and
+transitively, the &quot;fork&quot; feature), enabled by default.</p>
+</li>
+</ul>
+<p>See also <a href="https://github.com/proptest-rs/proptest/blob/7f1367f9a4dc8440c47b93166a38ed064f63ea8c/proptest/README.md#forking-and-timeouts">the documentation</a> for these
+features.</p>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>Fix that failure persistence file would be written to the incorrect location
+in projects using workspaces. See
+<a href="https://github.com/proptest-rs/proptest/issues/24">#24</a> for more details and
+instructions on how to migrate any persistence files that had been written to
+the wrong location.</p>
+</li>
+<li>
+<p>Fix a case where <code>any::&lt;ArgsOs&gt;()</code> or <code>any::&lt;VarsOs&gt;()</code> could panic on
+Windows.</p>
+</li>
+</ul>
+<h5>Nightly-only breakage</h5>
+<ul>
+<li>Support for the <code>hashmap_core</code> crate is removed pending
+https://github.com/Amanieu/hashmap_core/issues/3.</li>
+</ul>
+<h4>0.7.0</h4>
+<h5>Potential Breaking Changes</h5>
+<ul>
+<li>
+<p>The persistence system has been refactored to allow for
+non-file-system based persistence. <code>FailurePersistence</code>
+is now a trait, and the prior file-based enum which fulfilled
+that purpose is now called <code>FileFailurePersistence</code> and implements
+the generic trait. The default behavior has not changed.</p>
+</li>
+<li>
+<p>Reflecting the change to persistence, <code>Config.failure_persistence</code>
+is now of type <code>Option&lt;Box&lt;FailurePersistence&gt;&gt;</code>.</p>
+</li>
+<li>
+<p>The <code>source_file</code> used as an optional reference point to the location of the
+calling test is now tracked on the <code>Config</code> struct rather than the
+<code>TestRunner</code>.</p>
+</li>
+</ul>
+<h5>New Additions</h5>
+<ul>
+<li>Experimental support on nightly for working in <code>#![no_std]</code> environments has
+been added. To use it, one must disable the default-features for proptest and
+use the new &quot;alloc&quot; and &quot;nightly&quot; features. Currently access to a heap
+allocator is still required.</li>
+</ul>
+<h4>0.6.0</h4>
+<h5>Potential Breaking Changes</h5>
+<ul>
+<li>There is a small change of breakage if you've relied on <code>Recursive</code> using an
+<code>Arc&lt;BoxedStrategy&lt;T&gt;&gt;</code> as <code>Recursive</code> now internally uses <code>BoxedStrategy&lt;T&gt;</code>
+instead as well as expecting a <code>Fn(BoxedStrategy&lt;T&gt;) -&gt; R</code> instead of
+<code>Fn(Arc&lt;BoxedStrategy&lt;T&gt;&gt;) -&gt; R</code>. In addition, the type of recursive
+strategies has changed from <code>Recursive&lt;BoxedStrategy&lt;T&gt;, F&gt;</code> to just
+<code>Recursive&lt;T, F&gt;</code>.</li>
+</ul>
+<h5>Minor changes</h5>
+<ul>
+<li>
+<p>Reduced indirections and heap allocations inside <code>Recursive&lt;T, F&gt;</code> somewhat.</p>
+</li>
+<li>
+<p><code>BoxedStrategy&lt;T&gt;</code> and <code>SBoxedStrategy&lt;T&gt;</code> now use <code>Arc</code> internally instead of
+using <code>Box</code>. While this has marginal overhead, it also reduces the overhead
+in <code>Recursive&lt;T, F&gt;</code>. The upside to this change is also that you can very
+cheaply clone strategies.</p>
+</li>
+<li>
+<p><code>Filter</code> is marginally faster.</p>
+</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>Removed <code>impl Arbitrary for LocalKeyState</code> since <code>LocalKeyState</code> no longer
+exists in the nightly compiler.</p>
+</li>
+<li>
+<p>Unstable features compile on latest nightly again.</p>
+</li>
+</ul>
+<h4>0.5.1</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p><code>proptest::strategy::Union</code> and <code>proptest::strategy::TupleUnion</code> now work
+with weighted strategies even if the sum of the weights overflows a <code>u32</code>.</p>
+</li>
+<li>
+<p>Added <code>SIGNALING_NAN</code> strategy to generate signalling NaNs if supported by
+the platform. Note that this is <em>not</em> included in <code>ANY</code>.</p>
+</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>Fixed values produced via <code>prop_recursive()</code> not shrinking from the recursive
+to the non-recursive case.</p>
+</li>
+<li>
+<p>Fix that <code>QUIET_NAN</code> would generate signalling NaNs on most platforms on Rust
+1.24.0 and later.</p>
+</li>
+</ul>
+<h4>0.5.0</h4>
+<h5>Potential Breaking Changes</h5>
+<ul>
+<li>
+<p>There is a small chance of breakage if you've relied on the constraints put
+on type inference by the closure in <code>leaf.prop_recursive(..)</code> having a fixed
+output type. The output type is now any strategy that generates the same type
+as <code>leaf</code>. This change is intended to make working with recursive types a bit
+easier as you no longer have to use <code>.boxed()</code> inside the closure you pass to
+<code>.prop_recursive(..)</code>.</p>
+</li>
+<li>
+<p>There is a small chance of breakage wrt. type inference due to the
+introduction of <code>SizeRange</code>.</p>
+</li>
+<li>
+<p>There is a small chance of breakage wrt. type inference due to the
+introduction of <code>Probability</code>.</p>
+</li>
+<li>
+<p><code>BoxedStrategy</code> and <code>SBoxedStrategy</code> are now newtypes instead of being type
+aliases. You will only experience breaking changes if you've directly
+used <code>.boxed()</code> and not <code>(S)BoxedStrategy&lt;T&gt;</code> but rather
+<code>Box&lt;Strategy&lt;Value = Box&lt;ValueTree&lt;Value = T&gt;&gt;&gt;&gt;</code>. The probability of
+breakage is very small, but still possible. The benefit of this change
+is that calling <code>.boxed()</code> or <code>.sboxed()</code> twice only boxes once. This can
+happen in situations where you have functions <code>Strategy -&gt; BoxedStrategy</code> or
+with code generation.</p>
+</li>
+<li>
+<p><code>proptest::char::ANY</code> has been removed. Any remaining uses must be replaced
+by <code>proptest::char::any()</code>.</p>
+</li>
+<li>
+<p><code>proptest::strategy::Singleton</code> has been removed. Any remaining uses must be
+replaced by <code>proptest::strategy::Just</code>.</p>
+</li>
+</ul>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>Proptest now has an <code>Arbitrary</code> trait in <code>proptest::arbitrary</code> and re-exported
+in the <code>proptest::prelude</code>. <code>Arbitrary</code> has also been <code>impl</code>emented for most
+of the standard library. The trait provides a mechanism to define a canonical
+<code>Strategy</code> for a given type just like <code>Arbitrary</code> in Haskell's QuickCheck.
+Deriving for this trait will also be provided soon in the crate
+<code>proptest_derive</code>. To use the canonical strategy for a certain type <code>T</code>,
+you can simply use <code>any::&lt;T&gt;()</code>. This is the major new addition of this release.</p>
+</li>
+<li>
+<p>The <code>any_with</code>, <code>arbitrary</code>, <code>arbitrary_with</code> free functions in
+the module <code>proptest::arbitrary</code>.</p>
+</li>
+<li>
+<p>The <code>ArbitraryF1</code> and <code>ArbitraryF2</code> traits in <code>proptest::arbitrary::functor</code>.
+These are &quot;higher order&quot; <code>Arbitrary</code> traits that correspond to the <code>Arbitrary1</code>
+and <code>Arbitrary2</code> type classes in Haskell's QuickCheck. They are mainly provided
+to support a common set of container-like types in custom deriving self-recursive
+types in <code>proptest_derive</code>. More on this later releases.</p>
+</li>
+<li>
+<p>The strategies in <code>proptest::option</code> and <code>proptest::result</code> now accept a type
+<code>Probability</code> which is a wrapper around <code>f64</code>. Conversions from types such as
+<code>f64</code> are provided to make the interface ergonomic to use. Users may also use
+the <code>proptest::option::prob</code> function to explicitly construct the type.</p>
+</li>
+<li>
+<p>The strategies in <code>proptest::collections</code> now accept a type <code>SizeRange</code>
+which is a wrapper around <code>Range&lt;usize&gt;</code>. Conversions from types
+such as <code>usize</code> and <code>Range&lt;usize&gt;</code> are provided to make the interface
+ergonomic to use. Users may also use the <code>proptest::collections::size_bounds</code>
+function to explicitly construct the type.</p>
+</li>
+<li>
+<p>A <code>.prop_map_into()</code> operation on all strategies that map
+using <code>Into&lt;OutputType&gt;</code>. This is a clearer and cheaper
+operation than using <code>.prop_map(OutputType::from)</code>.</p>
+</li>
+<li>
+<p>A nonshrinking <code>LazyJust</code> strategy that can be used instead of <code>Just</code> when you
+have non-<code>Clone</code> types.</p>
+</li>
+<li>
+<p>Anything that can be coerced to <code>fn() -&gt; T</code> where <code>T: Debug</code> is a <code>Strategy</code>
+where <code>ValueFor&lt;fn() -&gt; T&gt; == T</code>. This is intended to make it easier to reuse
+proptest for unit tests with manual input space partition where <code>fn() -&gt; T</code>
+provides fixtures.</p>
+</li>
+</ul>
+<h5>Minor changes</h5>
+<ul>
+<li>
+<p>Relaxed the constraints of <code>btree_map</code> removing <code>'static</code>.</p>
+</li>
+<li>
+<p>Reduced the heap allocation inside <code>Recursive</code> somewhat.</p>
+</li>
+</ul>
+<h4>0.4.2</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>The <code>unstable</code> feature now works again.</li>
+</ul>
+<h4>0.4.1</h4>
+<h5>New Additions</h5>
+<ul>
+<li>The <code>proptest::num::f32</code> and <code>proptest::num::f64</code> modules now have additional
+constants (e.g., <code>POSITIVE</code>, <code>SUBNORMAL</code>, <code>INFINITE</code>) which can be used to
+generate subsets of the floating-point domain by class and sign.</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li><code>proptest::num::f32::ANY</code> and <code>proptest::num::f64::ANY</code> now actually produce
+arbitrary values. Previously, they had the same effect as <code>0.0..1.0</code>. While
+this fix is a very substantial change in behaviour, it was not considered a
+breaking change since (a) the new behaviour is consistent with the
+documentation and expectations, (b) it's quite unlikely anyone was depending
+on the old behaviour since anyone who wanted that range would have written it
+out, and (c) Proptest isn't generally a transitive dependency so the chance
+of this update happening &quot;by surprise&quot; is low.</li>
+</ul>
+<h4>0.4.0</h4>
+<h5>Deprecations and Potential Breaking Changes</h5>
+<ul>
+<li>
+<p><code>proptest::char::ANY</code> replaced with <code>proptest::char::any()</code>.
+<code>proptest::char::ANY</code> is present but deprecated, and will be removed in
+proptest 0.5.0.</p>
+</li>
+<li>
+<p>Instead of returning <code>-&gt; Result&lt;Self::Value, String&gt;</code>, strategies are
+expected to return <code>-&gt; Result&lt;Self::Value, Reason&gt;</code> instead. <code>Reason</code> reduces
+the amount of heap allocations, especially for <code>.prop_filter(..)</code> where you
+may now also pass in <code>&amp;'static str</code>. You will only experience breaks if
+you've written your own strategy types or if you've used
+<code>TestCaseError::Reject</code> or <code>TestCaseError::Fail</code> explicitly.</p>
+</li>
+<li>
+<p>Update of externally-visible crate <code>rand</code> to <code>0.4.2</code>.</p>
+</li>
+</ul>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>Added <code>proptest::test_runner::Reason</code> which allows you to avoid heap
+allocation in some places and may be used to make the API richer in the
+future without incurring more breaking changes.</p>
+</li>
+<li>
+<p>Added a type alias <code>proptest::strategy::NewTree&lt;S&gt;</code> where <code>S: Strategy</code>
+defined as: <code>type NewTree&lt;S&gt; = Result&lt;&lt;S as Strategy&gt;::Value, Rejection&gt;</code>.</p>
+</li>
+</ul>
+<h4>0.3.4</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Cases where <code>file!()</code> returns a relative path, such as on Windows, are now
+handled more reasonably. See
+<a href="https://github.com/proptest-rs/proptest/issues/24">#24</a> for more details and
+instructions on how to migrate any persistence files that had been written to
+the wrong location.</li>
+</ul>
+<h4>0.3.3</h4>
+<p>Boxing Day Special</p>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>Added support for <code>i128</code> and <code>u128</code>. Since this is an unstable feature in
+Rust, this is hidden behind the feature <code>unstable</code> which you have to
+explicitly opt into in your <code>Cargo.toml</code> file.</p>
+</li>
+<li>
+<p>Failing case persistence. By default, when a test fails, Proptest will now
+save the seed for the failing test to a file, and later runs will test the
+persisted failing cases before generating new ones.</p>
+</li>
+<li>
+<p>Added <code>UniformArrayStrategy</code> and helper functions to simplify generating
+homogeneous arrays with non-<code>Copy</code> inner strategies.</p>
+</li>
+<li>
+<p>Trait <code>rand::Rng</code> and struct <code>rand::XorShiftRng</code> are now included in
+<code>proptest::prelude</code>.</p>
+</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>Fix a case where certain combinations of strategies, like two
+<code>prop_shuffle()</code>s in close proximity, could result in low-quality randomness.</li>
+</ul>
+<h4>0.3.2</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>Added <code>SampledBitSetStrategy</code> to generate bit sets based on size
+distribution.</p>
+</li>
+<li>
+<p>Added <code>Strategy::sboxed()</code> and <code>SBoxedStrategy</code> to make <code>Send + Sync</code> boxed
+strategies.</p>
+</li>
+<li>
+<p><code>RegexGeneratorStrategy</code> is now <code>Send</code> and <code>Sync</code>.</p>
+</li>
+<li>
+<p>Added a type alias <code>ValueFor&lt;S&gt;</code> where <code>S: Strategy</code>. This is a shorter way
+to refer to: <code>&lt;&lt;S as Strategy&gt;::Value as ValueTree&gt;::Value</code>.</p>
+</li>
+<li>
+<p>Added a type alias <code>type W&lt;T&gt; = (u32, T)</code> for a weighted strategy <code>T</code> in the
+context of union strategies.</p>
+</li>
+<li>
+<p><code>TestRunner</code> now implements <code>Default</code>.</p>
+</li>
+<li>
+<p>Added <code>Config::with_cases(number_of_cases: u32) -&gt; Config</code> for simpler
+construction of a <code>Config</code> that only differs by the number of test cases.</p>
+</li>
+<li>
+<p>All default fields of <code>Config</code> can now be overridden by setting environment
+variables. See the docs of that struct for more details.</p>
+</li>
+<li>
+<p>Bumped dependency <code>rand = &quot;0.3.18&quot;</code>.</p>
+</li>
+<li>
+<p>Added <code>proptest::sample::subsequence</code> which returns a strategy generating
+subsequences, of the source <code>Vec</code>, with a size within the given <code>Range</code>.</p>
+</li>
+<li>
+<p>Added <code>proptest::sample::select</code> which returns a strategy selecting exactly
+one value from another collection.</p>
+</li>
+<li>
+<p>Added <code>prop_perturb</code> strategy combinator.</p>
+</li>
+<li>
+<p>Added <code>strategy::check_strategy_sanity()</code> function to do sanity checks on the
+shrinking implementation of a strategy.</p>
+</li>
+<li>
+<p>Added <code>prop_shuffle</code> strategy combinator.</p>
+</li>
+<li>
+<p>Added <code>strategy::Fuse</code> adaptor.</p>
+</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>Fix bug where <code>Vec</code>, array and tuple shrinking could corrupt the state of
+their inner values, for example leading to out-of-range integers.</p>
+</li>
+<li>
+<p>Fix bug where <code>Flatten</code> (a.k.a. the <code>prop_flat_map</code> combinator) could fail to
+converge to a failing test case during shrinking.</p>
+</li>
+<li>
+<p>Fix <code>TupleUnion</code> sometimes panicking during shrinking if there were more than
+two choices.</p>
+</li>
+</ul>
+<h4>0.3.1</h4>
+<h5>New Additions</h5>
+<ul>
+<li>Added <code>CharStrategy::new_borrowed</code>.</li>
+</ul>
+<h4>0.3.0</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p><code>Union</code> now supports weighting via <code>Union::new_weighted</code>. Corresponding
+syntax to specify weights is also available in <code>prop_oneof!</code>.</p>
+</li>
+<li>
+<p>Added <code>TupleUnion</code>, which works like <code>Union</code> but permits doing static
+dispatch even with heterogeneous delegate strategies.</p>
+</li>
+<li>
+<p><code>prop_oneof!</code> is smarter about how it combines the input strategies.</p>
+</li>
+<li>
+<p>Added <code>option</code> module to generate weighted or unweighted <code>Option</code> types.</p>
+</li>
+<li>
+<p>Added <code>result</code> module to generate weighted or unweighted <code>Result</code> types.</p>
+</li>
+<li>
+<p>All <code>bits</code> submodules now have a <code>masked</code> function to create a strategy for
+generating subsets of an arbitrary bitmask.</p>
+</li>
+</ul>
+<h5>Potential Breaking Changes</h5>
+<ul>
+<li>
+<p><code>Union::new</code> now has a generic argument type which could impact type
+inference.</p>
+</li>
+<li>
+<p>The concrete types produced by <code>prop_oneof!</code> have changed.</p>
+</li>
+<li>
+<p>API functions which used to return <code>BoxedStrategy</code> now return a specific
+type.</p>
+</li>
+<li>
+<p><code>BitSetStrategy&lt;T&gt;</code> is no longer <code>Copy</code> for non-<code>Copy</code> types <code>T</code> nor <code>Debug</code>
+for non-<code>Debug</code> types <code>T</code>.</p>
+</li>
+<li>
+<p><code>BitSetLike::max</code> has been renamed to <code>BitSetLike::len</code>.</p>
+</li>
+</ul>
+<h4>0.2.1</h4>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p>Added <code>prop_assert!</code> macro family to assert without panicking, for quieter
+test failure modes.</p>
+</li>
+<li>
+<p>New <code>prelude</code> module for easier importing of important things.</p>
+</li>
+<li>
+<p>Renamed <code>Singleton</code> to <code>Just</code>. (The old name is still available.)</p>
+</li>
+<li>
+<p>Failure messages produced by <code>proptest!</code> are now much more readable.</p>
+</li>
+<li>
+<p>Added in-depth tutorial.</p>
+</li>
+</ul>
+<h4>0.2.0</h4>
+<h5>Breaking Changes</h5>
+<ul>
+<li><code>Strategy</code> now requires <code>std::fmt::Debug</code>.</li>
+</ul>
+<h5>New Additions</h5>
+<ul>
+<li>
+<p><code>Strategy</code> now has a family of <code>prop_flat_map()</code> combinators for producing
+dynamic and higher-order strategies.</p>
+</li>
+<li>
+<p><code>Strategy</code> has a <code>prop_recursive()</code> combinator which allows generating
+recursive structures.</p>
+</li>
+<li>
+<p>Added <code>proptest::bool::weighted()</code> to pull booleans from a weighted
+distribution.</p>
+</li>
+<li>
+<p>New <code>prop_oneof!</code> macro makes it easier to select from one of several
+strategies.</p>
+</li>
+<li>
+<p>New <code>prop_compose!</code> macro to simplify writing most types of custom
+strategies.</p>
+</li>
+</ul>
+<h4>0.1.1</h4>
+<h5>New Additions</h5>
+<p>Add <code>strategy::NoShrink</code>, <code>Strategy::no_shrink()</code>.</p>
+</div><p class="table-note">sha256:0b9fad52878cd9cccd69a06983ee8f020319a4f24b75effdfdb004eca847c710</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2016 FullContact, Inc
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:d8e0806926ce9f0a5030c382ecc0ffdf6de6fbea5c69a458435fd443fa7a5b92</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:056aa8beff7d9b47852ccdc108c88c510629735bcec818d2d4de7dc763e74b4c</code></dd><dt>Upstream checksum</dt><dd><code>sha256:4b45fcc2344c680f5025fe57779faef368840d0bd1f42f216291f0dc4ace4744</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/proptest&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.11.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">atomic64bit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">attr-macro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;proptest-macro&quot;</span><span class="p">]</span>
+<span class="n">bit-set</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:bit-set&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:bit-vec&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fork&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;timeout&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;bit-set&quot;</span><span class="p">]</span>
+<span class="n">default-code-coverage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fork&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;timeout&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;bit-set&quot;</span><span class="p">]</span>
+<span class="n">f16</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">fork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rusty-fork&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tempfile&quot;</span><span class="p">]</span>
+<span class="n">handle-panics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">hardware-rng</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;x86&quot;</span><span class="p">]</span>
+<span class="n">no_std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;num-traits/libm&quot;</span><span class="p">]</span>
+<span class="n">proptest-macro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:proptest-macro&quot;</span><span class="p">]</span>
+<span class="n">regex-syntax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:regex-syntax&quot;</span><span class="p">]</span>
+<span class="n">rusty-fork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rusty-fork&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;rand/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rand/os_rng&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;regex-syntax&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;num-traits/std&quot;</span><span class="p">]</span>
+<span class="n">tempfile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tempfile&quot;</span><span class="p">]</span>
+<span class="n">timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fork&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:rusty-fork&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rusty-fork/timeout&quot;</span><span class="p">]</span>
+<span class="n">unstable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;f16&quot;</span><span class="p">]</span>
+<span class="n">x86</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:x86&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;proptest&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">bit-set</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/bit-set&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">bit-vec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/bit-vec&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">bitflags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/bitflags&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.10&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">num-traits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/num-traits&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.15&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">proptest-macro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/proptest-macro&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.5.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rand&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rand_chacha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rand_chacha&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rand_xorshift</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rand_xorshift&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">regex-syntax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/regex-syntax&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rusty-fork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rusty-fork&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tempfile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tempfile&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^3.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">unarray</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/unarray&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.4&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">x86</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/x86&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.52.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Jason Lingle</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/proptest/1.11.0">crates.io package</a></li><li><a href="https://github.com/proptest-rs/proptest">Source repository</a></li><li><a href="https://docs.rs/proptest/latest/proptest/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">proptest</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/proptest"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.11.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

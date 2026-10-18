@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>chacha20 0.10.2 · Incan.pub</title><meta name="description" content="The ChaCha20 stream cipher (RFC 8439) implemented in pure Rust using traits
+from the RustCrypto `cipher` crate, with optional architecture-specific
+hardware acceleration (AVX2, SSE2). Additionally provides the ChaCha8, ChaCha12,
+XChaCha20, XChaCha12 and XChaCha8 stream ciphers, and also optional
+rand_core-compatible RNGs based on those ciphers."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/chacha20</p><div class="title-row"><h1>chacha20</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/chacha20/versions/0.10.2/" selected>0.10.2</option></select></label></div><p class="description">The ChaCha20 stream cipher (RFC 8439) implemented in pure Rust using traits
+from the RustCrypto `cipher` crate, with optional architecture-specific
+hardware acceleration (AVX2, SSE2). Additionally provides the ChaCha8, ChaCha12,
+XChaCha20, XChaCha12 and XChaCha8 stream ciphers, and also optional
+rand_core-compatible RNGs based on those ciphers.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>RustCrypto: ChaCha20</h3>
+<p><a href="https://crates.io/crates/chacha20">Crate</a>
+<a href="https://docs.rs/chacha20/">Docs</a>
+<a href="https://github.com/RustCrypto/stream-ciphers/actions/workflows/chacha20.yml">Build Status</a>
+Apache2/MIT licensed
+Rust Version
+<a href="https://rustcrypto.zulipchat.com/#narrow/stream/260049-stream-ciphers">Project Chat</a>
+<a href="https://github.com/RustCrypto/meta/blob/master/HAZMAT.md">HAZMAT</a></p>
+<p>Implementation of the <a href="https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant">ChaCha</a> family of stream ciphers.</p>
+<p>ChaCha improves upon the previous <a href="https://en.wikipedia.org/wiki/Salsa20">Salsa</a> family of stream ciphers
+with increased per-round diffusion at no cost to performance.</p>
+<p>This crate also contains an implementation of the <a href="https://tools.ietf.org/html/draft-arciszewski-xchacha-02">XChaCha</a> family of stream ciphers
+with an extended 192-bit (24-byte) nonce, gated under the <code>xchacha</code> Cargo feature,
+and &quot;legacy&quot; (a.k.a &quot;djb&quot;) variant with 64-bit nonce, gated under the <code>legacy</code> crate feature.</p>
+<p><strong>WARNING:</strong> This implementation internally uses 32-bit counter,
+while the original &quot;legacy&quot; variant implementation uses 64-bit counter.
+In other words, it does not allow encryption of more than 256 GiB of data.</p>
+<h4>Security</h4>
+<h5>⚠️ Warning: <a href="https://github.com/RustCrypto/meta/blob/master/HAZMAT.md">Hazmat!</a></h5>
+<p>This crate does not ensure ciphertexts are authentic (i.e. by using a MAC to
+verify ciphertext integrity), which can lead to serious vulnerabilities
+if used incorrectly!</p>
+<p>To avoid this, use an <a href="https://en.wikipedia.org/wiki/Authenticated_encryption">AEAD</a> mode based on ChaCha20, e.g. <a href="https://docs.rs/chacha20poly1305"><code>chacha20poly1305</code></a>.
+See the <a href="https://github.com/RustCrypto/AEADs">RustCrypto/AEADs</a> repository for more information.</p>
+<p>USE AT YOUR OWN RISK!</p>
+<h5>Notes</h5>
+<p>This crate has received one <a href="https://web.archive.org/web/20240108154854/https://research.nccgroup.com/wp-content/uploads/2020/02/NCC_Group_MobileCoin_RustCrypto_AESGCM_ChaCha20Poly1305_Implementation_Review_2020-02-12_v1.0.pdf">security audit by NCC Group</a>, with no significant
+findings. We would like to thank <a href="https://www.mobilecoin.com/">MobileCoin</a> for funding the audit.</p>
+<p>All implementations contained in the crate (along with the underlying ChaCha20
+stream cipher itself) are designed to execute in constant time.</p>
+<h4>Examples</h4>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// This example requires `cipher` crate feature</span>
+<span class="cp">#[cfg(feature = </span><span class="s">&quot;cipher&quot;</span><span class="cp">)]</span><span class="w"> </span><span class="p">{</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">chacha20</span><span class="p">::</span><span class="n">ChaCha20</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">chacha20</span><span class="p">::</span><span class="n">cipher</span><span class="p">::{</span><span class="n">KeyIvInit</span><span class="p">,</span><span class="w"> </span><span class="n">StreamCipher</span><span class="p">,</span><span class="w"> </span><span class="n">StreamCipherSeek</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">hex_literal</span><span class="p">::</span><span class="n">hex</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mh">0x42</span><span class="p">;</span><span class="w"> </span><span class="mi">32</span><span class="p">];</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">nonce</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mh">0x24</span><span class="p">;</span><span class="w"> </span><span class="mi">12</span><span class="p">];</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">plaintext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hex</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;000102030405060708090A0B0C0D0E0F&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">ciphertext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hex</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;e405626e4f1236b3670ee428332ea20e&quot;</span><span class="p">);</span>
+
+<span class="c1">// Key and IV must be references to the `Array` type.</span>
+<span class="c1">// Here we use the `Into` trait to convert arrays into it.</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">cipher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ChaCha20</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">.</span><span class="n">into</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">nonce</span><span class="p">.</span><span class="n">into</span><span class="p">());</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">plaintext</span><span class="p">;</span>
+
+<span class="c1">// apply keystream (encrypt)</span>
+<span class="n">cipher</span><span class="p">.</span><span class="n">apply_keystream</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">buffer</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">ciphertext</span><span class="p">);</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">ciphertext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buffer</span><span class="p">;</span>
+
+<span class="c1">// ChaCha ciphers support seeking</span>
+<span class="n">cipher</span><span class="p">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="k">u32</span><span class="p">);</span>
+
+<span class="c1">// decrypt ciphertext by applying keystream again</span>
+<span class="n">cipher</span><span class="p">.</span><span class="n">apply_keystream</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">buffer</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">plaintext</span><span class="p">);</span>
+
+<span class="c1">// stream ciphers can be used with streaming messages</span>
+<span class="n">cipher</span><span class="p">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="k">u32</span><span class="p">);</span>
+<span class="k">for</span><span class="w"> </span><span class="n">chunk</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">buffer</span><span class="p">.</span><span class="n">chunks_mut</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">cipher</span><span class="p">.</span><span class="n">apply_keystream</span><span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="n">ciphertext</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Configuration Flags</h4>
+<p>You can modify crate using the following configuration flags:</p>
+<ul>
+<li><code>chacha20_backend=&quot;avx2&quot;</code>: force AVX2 backend on x86/x86_64 targets.
+Requires enabled AVX2 target feature. Ignored on non-x86(_64) targets.</li>
+<li><code>chacha20_backend=&quot;avx512&quot;</code>: force AVX-512 backend on x86/x86_64 targets.
+Requires enabled AVX-512 target feature (MSRV 1.89). Ignored on non-x86(_64) targets.</li>
+<li><code>chacha20_backend=&quot;soft&quot;</code>: force software backend.</li>
+<li><code>chacha20_backend=&quot;sse2&quot;</code>: force SSE2 backend on x86/x86_64 targets.
+Requires enabled SSE2 target feature. Ignored on non-x86(-64) targets.</li>
+</ul>
+<p>To use the MSRV 1.89 AVX-512 support with autodetection, you must enable it using
+<code>chacha20_avx512</code> configuration flag.</p>
+<p>The flags can be enabled using <code>RUSTFLAGS</code> environmental variable
+(e.g. <code>RUSTFLAGS='--cfg chacha20_backend=&quot;avx2&quot;'</code>) or by modifying <code>.cargo/config.toml</code>.</p>
+<h4>License</h4>
+<p>Licensed under either of:</p>
+<ul>
+<li><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a></li>
+<li><a href="http://opensource.org/licenses/MIT">MIT license</a></li>
+</ul>
+<p>at your option.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>cipher</code></th><td>Yes<small>default → cipher</small></td><td><ul class="effects"><li><code>dep:cipher</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>cipher</code></li></ul></td></tr><tr><th scope="row"><code>legacy</code></th><td>No</td><td><ul class="effects"><li><code>cipher</code></li></ul></td></tr><tr><th scope="row"><code>rng</code></th><td>No</td><td><ul class="effects"><li><code>dep:rand_core</code></li></ul></td></tr><tr><th scope="row"><code>xchacha</code></th><td>No</td><td><ul class="effects"><li><code>cipher</code></li></ul></td></tr><tr><th scope="row"><code>zeroize</code></th><td>No</td><td><ul class="effects"><li><code>dep:zeroize</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/cfg-if/"><code>crates-io/cfg-if</code></a><small>Alias: cfg-if</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/cipher/"><code>crates-io/cipher</code></a><small>Alias: cipher</small></th><td><code>^0.5</code><small>Default features: enabled</small><small>Requests: stream-wrapper</small></td><td>Enabled through default → cipher</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/cpufeatures/"><code>crates-io/cpufeatures</code></a><small>Alias: cpufeatures</small></th><td><code>^0.3</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(any(target_arch = &quot;x86_64&quot;, target_arch = &quot;x86&quot;))</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/rand_core/"><code>crates-io/rand_core</code></a><small>Alias: rand_core</small></th><td><code>^0.10</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zeroize/"><code>crates-io/zeroize</code></a><small>Alias: zeroize</small></th><td><code>^1.8.1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/chacha20poly1305/versions/0.11.0/">crates-io/chacha20poly1305 0.11.0</a><span>Requires ^0.10 · alias chacha20 · </span></li><li><a href="../../../packages/crates-io/rand/versions/0.10.3/">crates-io/rand 0.10.3</a><span>Requires ^0.10.0 · alias chacha20 · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cipher, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:f9306e775ae9b0f849c1711e071ee53d3c6ca4686b051e4a6b7077a0b2304ea2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:c4781f4789efa9343c2145ecfda3b1f829feac1d0857c90370d433428458f6bd</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cipher, xchacha</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:fcefa9949a8277dffb54a8ef530c3252c28786898429a6a2266bbb1cc15bf3d5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:bb336fa1e6f7843f4100425a6d8c3226cd27150074cfe50ed30566a7748ad79b</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>rng</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8a7b95a6474707a8d127730baf9870c59f93af16ef73fca8ad09e342ea309e70</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53449647">Attestation reference</a><small>Archive: sha256:95afbfdbd8591be9ca1ba1ba41663c028eac5023365f364e06bcfde949dde10c</small></li><li><code>sha256:a08166da2b57ffa1977b26ae22b66a4c5e6a021baeb810dfda9cf9c65a0a434d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:eee7f294f8355c379d5c059477153e60c0a62b0a96138554f84ff4354f2c013f</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cipher, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d19776fd2030b06c49669911d2429c5d9fcb5ca60fa13922ec2ffb979f908deb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:4cab895c33cca39a8a7335deb08e4087ae33e99dd49d093ec43bdff8ae8128c0</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cipher, xchacha</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b68a36fbc244155905e94628f14f76c9d03ebc260a14334ea0703a67986a1f76</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:315de669ae2f75a19f3946813e6b95da679696fd23395c3663b16b72e39576d1</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>rng</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:03bcab31d67035a9a943a303dc50c774333174f88af1fec154fb8fbcdb749831</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54020554">Attestation reference</a><small>Archive: sha256:035ed723aa6d4125723a0c8b4275806437c314c34c55353bb178bb18f7e5032b</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cipher, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ef70588850da683a42d2b05e3e00eb211ad6a55bd7f5114a42198518302ad463</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:e89a73ead9da157e2da8a0727a567606c9b47465df6091cbc2c06d5eed2352b0</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cipher, xchacha</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:aaa462db5fd17d1f43fad1bbde7047bf9444b902f73189a27c74c847161aa855</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:376a28a0975afd9ca4d34aabaa6945e262d2aba84467e3619bdd54d45acc0b65</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>rng</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8f6fa30d93eaf86c452bc03b195bda22d74073081adefdf1a39fa796edb1431a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674109">Attestation reference</a><small>Archive: sha256:0a49a0c59d3223b9220cd6ba1b9662407d0be20a4e3fed4d1d5ef250ee33fa60</small></li><li><code>sha256:b792290802f7fdcfdb3ae2c4ae04586eb85097d9f331d0e6efb94f982de36a12</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53493685">Attestation reference</a><small>Archive: sha256:53247ffc12ee1fade69a54edb82cf24fb255910cf318f8f3fa788fc98d82c9a6</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cipher, default</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d87009e7dbe27426912346f50ed4bc8a4de4cbfebc3baf9bfe5c77a2ab30568e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:d62151c62add08ee2b49c45d277c16ca1bc4b75b620b7ceb89a5ec26ec80ae22</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>cipher, xchacha</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:f7e5fd5db0851c9af270e674e30b215970ebd4ec4be1f44b03f99ed0bb3736ba</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:3e92eaf3d96edfaf70a292afe4e05417f2810f031f5c3ceca4562e3bc02f1685</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>rng</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7ff8279a2d177c055a42a5c6d0e01a0d6b173991fed1db8fb4241e01b60769de</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54075092">Attestation reference</a><small>Archive: sha256:2f7574590a4d20894c8c98582cae91d91c3173bcb1b8e6d25961f6b897405484</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/chacha20/versions/0.10.2/">0.10.2</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/chacha20/0.10.2">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>0.10.2 (2026-08-27)</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Use of SSE4.1 intrinsic in SSE2 backend of RNG and legacy (64-bit counter) variants (<a href="https://github.com/RustCrypto/stream-ciphers/pull/580">#580</a>)</li>
+</ul>
+<h4>0.10.1 (2026-06-24)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>ChaCha20LegacyCore</code> type and <code>Nonce</code> type alias (<a href="https://github.com/RustCrypto/stream-ciphers/pull/570">#570</a>)</li>
+</ul>
+<h4>0.10.0 (2026-02-07)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>rand_core</code> v0.10 support (<a href="https://github.com/RustCrypto/stream-ciphers/pull/333">#333</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/513">#513</a>)</li>
+<li>64-bit counter support (<a href="https://github.com/RustCrypto/stream-ciphers/pull/439">#439</a>)</li>
+<li><code>{get,set}_block_pos</code> inherent methods (<a href="https://github.com/RustCrypto/stream-ciphers/pull/516">#516</a>)</li>
+<li>AVX-512 backend - requires <code>--cfg chacha20_avx512</code> to enable (<a href="https://github.com/RustCrypto/stream-ciphers/pull/477">#477</a>)</li>
+<li>Inherent methods for RNG state (de)serialization (<a href="https://github.com/RustCrypto/stream-ciphers/pull/541">#541</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>cipher</code> from <code>0.4</code> to <code>0.5</code> - replaces <code>generic-array</code> with <code>hybrid-array</code> (<a href="https://github.com/RustCrypto/stream-ciphers/pull/338">#338</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/521">#521</a>)</li>
+<li>Edition changed to 2024 and MSRV bumped to 1.85 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/397">#397</a>)</li>
+<li>Relax MSRV policy and allow MSRV bumps in patch releases</li>
+<li>Bump <code>cpufeatures</code> to v0.3 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/530">#530</a>)</li>
+<li><code>--cfg chacha20_backend=&quot;...&quot;</code> replaces previous <code>chacha20_force*</code> (<a href="https://github.com/RustCrypto/stream-ciphers/pull/520">#520</a>)
+<ul>
+<li><code>chacha20_force_avx2</code> =&gt; <code>chacha20_backend=&quot;avx2&quot;</code></li>
+<li><code>chacha20_force_avx512</code> =&gt; <code>chacha20_backend=&quot;avx512&quot;</code></li>
+<li><code>chacha20_force_soft</code> =&gt; <code>chacha20_backend=&quot;soft&quot;</code></li>
+<li><code>chacha20_force_sse2</code> =&gt; <code>chacha20_backend=&quot;sse2&quot;</code></li>
+</ul>
+</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>chacha20_force_neon</code> cfg attribute - now on-by-default for supported targets (<a href="https://github.com/RustCrypto/stream-ciphers/pull/361">#361</a>)</li>
+<li><code>std</code> feature (<a href="https://github.com/RustCrypto/stream-ciphers/pull/397">#397</a>)</li>
+<li><code>Clone</code> impls (<a href="https://github.com/RustCrypto/stream-ciphers/pull/462">#462</a>)</li>
+</ul>
+<h4>0.9.1 (2023-04-01)</h4>
+<h5>Added</h5>
+<ul>
+<li>NEON support via <code>chacha20_force_neon</code> cfg attribute (<a href="https://github.com/RustCrypto/stream-ciphers/pull/310">#310</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/317">#317</a>)</li>
+</ul>
+<h4>0.9.0 (2022-02-21)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>chacha20_force_soft</code>, <code>chacha20_force_sse2</code>, and <code>chacha20_force_avx2</code>
+configuration flags (<a href="https://github.com/RustCrypto/stream-ciphers/pull/293">#293</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>cipher</code> dependency to v0.4 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/276">#276</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Minimal versions build (<a href="https://github.com/RustCrypto/stream-ciphers/pull/290">#290</a>)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>neon</code>, <code>force-soft</code>, <code>expose-core</code>, <code>hchacha</code>, <code>legacy</code>, and <code>rng</code> features (<a href="https://github.com/RustCrypto/stream-ciphers/pull/276">#276</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/293">#293</a>)</li>
+</ul>
+<h4>0.8.2 (2022-07-07)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Unpin <code>zeroize</code> dependency (<a href="https://github.com/RustCrypto/stream-ciphers/pull/301">#301</a>)</li>
+</ul>
+<h4>0.8.1 (2021-08-30)</h4>
+<h5>Added</h5>
+<ul>
+<li>NEON implementation for aarch64 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/274">#274</a>)</li>
+</ul>
+<h4>0.8.0 (2021-08-29)</h4>
+<h5>Added</h5>
+<ul>
+<li>SSE2 autodetection support (<a href="https://github.com/RustCrypto/stream-ciphers/pull/270">#270</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>AVX2 performance improvements (<a href="https://github.com/RustCrypto/stream-ciphers/pull/267">#267</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/267">#267</a>)</li>
+<li>MSRV 1.51+ (<a href="https://github.com/RustCrypto/stream-ciphers/pull/267">#267</a>)</li>
+<li>Lock to <code>zeroize</code> &lt;1.5 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/269">#269</a>)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>xchacha</code> feature: all <code>XChaCha*</code> types are now available by-default (<a href="https://github.com/RustCrypto/stream-ciphers/pull/271">#271</a>)</li>
+</ul>
+<h4>0.7.3 (2021-08-27)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Improve AVX2 performance (<a href="https://github.com/RustCrypto/stream-ciphers/pull/261">#261</a>)</li>
+<li>Bump <code>cpufeatures</code> to v0.2 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/265">#265</a>)</li>
+</ul>
+<h4>0.7.2 (2021-07-20)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Pin <code>zeroize</code> dependency to v1.3 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/256">#256</a>)</li>
+</ul>
+<h4>0.7.1 (2021-04-29)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>hchacha</code> feature (<a href="https://github.com/RustCrypto/stream-ciphers/pull/234">#234</a>)</li>
+</ul>
+<h4>0.7.0 (2021-04-29) [YANKED]</h4>
+<h5>Added</h5>
+<ul>
+<li>AVX2 detection; MSRV 1.49+ (<a href="https://github.com/RustCrypto/stream-ciphers/pull/200">#200</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/212">#212</a>)</li>
+<li><code>XChaCha8</code> and <code>XChaCha12</code> (<a href="https://github.com/RustCrypto/stream-ciphers/pull/215">#215</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Full 64-bit counters (<a href="https://github.com/RustCrypto/stream-ciphers/pull/217">#217</a>)</li>
+<li>Bump <code>cipher</code> crate dependency to v0.3 release (<a href="https://github.com/RustCrypto/stream-ciphers/pull/226">#226</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>rng</code> feature on big endian platforms (<a href="https://github.com/RustCrypto/stream-ciphers/pull/202">#202</a>)</li>
+<li>Stream-length overflow check (<a href="https://github.com/RustCrypto/stream-ciphers/pull/216">#216</a>)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>Clone</code> impls on RNGs (<a href="https://github.com/RustCrypto/stream-ciphers/pull/220">#220</a>)</li>
+</ul>
+<h4>0.6.0 (2020-10-16)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Rename <code>Cipher</code> to <code>ChaCha</code> (<a href="https://github.com/RustCrypto/stream-ciphers/pull/177">#177</a>)</li>
+<li>Replace <code>block-cipher</code>/<code>stream-cipher</code> with <code>cipher</code> crate (<a href="https://github.com/RustCrypto/stream-ciphers/pull/177">#177</a>)</li>
+</ul>
+<h4>0.5.0 (2020-08-25)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>stream-cipher</code> dependency to v0.7 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/161">#161</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/164">#164</a>)</li>
+</ul>
+<h4>0.4.3 (2020-06-11)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Documentation improvements (<a href="https://github.com/RustCrypto/stream-ciphers/pull/155">#153</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/155">#154</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/155">#155</a>)</li>
+</ul>
+<h4>0.4.2 (2020-06-11)</h4>
+<h5>Added</h5>
+<ul>
+<li>Documentation improvements (<a href="https://github.com/RustCrypto/stream-ciphers/pull/149">#149</a>)</li>
+<li><code>Key</code>, <code>Nonce</code>, <code>XNonce</code>, and <code>LegacyNonce</code> type aliases (<a href="https://github.com/RustCrypto/stream-ciphers/pull/147">#147</a>)</li>
+</ul>
+<h4>0.4.1 (2020-06-06)</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Links in documentation (<a href="https://github.com/RustCrypto/stream-ciphers/pull/142">#142</a>)</li>
+</ul>
+<h4>0.4.0 (2020-06-06)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Upgrade to the <code>stream-cipher</code> v0.4 crate (<a href="https://github.com/RustCrypto/stream-ciphers/pull/121">#121</a>, <a href="https://github.com/RustCrypto/stream-ciphers/pull/138">#138</a>)</li>
+</ul>
+<h4>0.3.4 (2020-03-02)</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Avoid accidental <code>alloc</code> and <code>std</code> linking (<a href="https://github.com/RustCrypto/stream-ciphers/pull/105">#105</a>)</li>
+</ul>
+<h4>0.3.3 (2020-01-18)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Replace macros with <code>Rounds</code> trait + generics (<a href="https://github.com/RustCrypto/stream-ciphers/pull/100">#100</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix warnings when building with <code>rng</code> feature alone (<a href="https://github.com/RustCrypto/stream-ciphers/pull/99">#99</a>)</li>
+</ul>
+<h4>0.3.2 (2020-01-17)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>CryptoRng</code> marker on all <code>ChaCha*Rng</code> types (<a href="https://github.com/RustCrypto/stream-ciphers/pull/91">#91</a>)</li>
+</ul>
+<h4>0.3.1 (2020-01-16)</h4>
+<h5>Added</h5>
+<ul>
+<li>Parallelize AVX2 backend (<a href="https://github.com/RustCrypto/stream-ciphers/pull/87">#87</a>)</li>
+<li>Benchmark for <code>ChaCha20Rng</code> (<a href="https://github.com/RustCrypto/stream-ciphers/pull/87">#87</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix broken buffering logic (<a href="https://github.com/RustCrypto/stream-ciphers/pull/86">#86</a>)</li>
+</ul>
+<h4>0.3.0 (2020-01-15) [YANKED]</h4>
+<p>NOTE: This release was yanked due to a showstopper bug in the newly added
+buffering logic which when seeking in the keystream could result in plaintexts
+being clobbered with the keystream instead of XOR'd correctly.</p>
+<p>The bug was addressed in v0.3.1 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/86">#86</a>).</p>
+<h5>Added</h5>
+<ul>
+<li>AVX2 accelerated implementation (<a href="https://github.com/RustCrypto/stream-ciphers/pull/83">#83</a>)</li>
+<li>ChaCha8 and ChaCha20 reduced round variants (<a href="https://github.com/RustCrypto/stream-ciphers/pull/84">#84</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Simplify portable implementation (<a href="https://github.com/RustCrypto/stream-ciphers/pull/76">#76</a>)</li>
+<li>Make 2018 edition crate; MSRV 1.34+ (<a href="https://github.com/RustCrypto/stream-ciphers/pull/77">#77</a>)</li>
+<li>Replace <code>salsa20-core</code> dependency with <code>ctr</code>-derived buffering (<a href="https://github.com/RustCrypto/stream-ciphers/pull/81">#81</a>)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>byteorder</code> dependency (<a href="https://github.com/RustCrypto/stream-ciphers/pull/80">#80</a>)</li>
+</ul>
+<h4>0.2.3 (2019-10-23)</h4>
+<h5>Security</h5>
+<ul>
+<li>Ensure block counter &lt; MAX_BLOCKS (<a href="https://github.com/RustCrypto/stream-ciphers/pull/68">#68</a>)</li>
+</ul>
+<h4>0.2.2 (2019-10-22)</h4>
+<h5>Added</h5>
+<ul>
+<li>SSE2 accelerated implementation (<a href="https://github.com/RustCrypto/stream-ciphers/pull/61">#61</a>)</li>
+</ul>
+<h4>0.2.1 (2019-08-19)</h4>
+<h5>Added</h5>
+<ul>
+<li>Add <code>MAX_BLOCKS</code> and <code>BLOCK_SIZE</code> constants (<a href="https://github.com/RustCrypto/stream-ciphers/pull/47">#47</a>)</li>
+</ul>
+<h4>0.2.0 (2019-08-18)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>impl SyncStreamCipher</code> (<a href="https://github.com/RustCrypto/stream-ciphers/pull/39">#39</a>)</li>
+<li><code>XChaCha20</code> (<a href="https://github.com/RustCrypto/stream-ciphers/pull/36">#36</a>)</li>
+<li>Support for 12-byte nonces ala RFC 8439 (<a href="https://github.com/RustCrypto/stream-ciphers/pull/19">#19</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Refactor around a <code>ctr</code>-like type (<a href="https://github.com/RustCrypto/stream-ciphers/pull/44">#44</a>)</li>
+<li>Extract and encapsulate <code>Cipher</code> type (<a href="https://github.com/RustCrypto/stream-ciphers/pull/43">#43</a>)</li>
+<li>Switch tests to use <code>new_sync_test!</code> (<a href="https://github.com/RustCrypto/stream-ciphers/pull/42">#42</a>)</li>
+<li>Refactor into <code>ChaCha20</code> and <code>ChaCha20Legacy</code> (<a href="https://github.com/RustCrypto/stream-ciphers/pull/25">#25</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix <code>zeroize</code> cargo feature (<a href="https://github.com/RustCrypto/stream-ciphers/pull/21">#21</a>)</li>
+<li>Fix broken Cargo feature attributes (<a href="https://github.com/RustCrypto/stream-ciphers/pull/21">#21</a>)</li>
+</ul>
+<h4>0.1.0 (2019-06-24)</h4>
+<ul>
+<li>Initial release</li>
+</ul>
+</div><p class="table-note">sha256:62b490baa02637dc7810a52716a1b7c2cdbce591fab695df87d843857cdd47cd</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2019-2026 The RustCrypto Project Developers
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:b8c6939380a400f53e11923d50fcc4dd2fa1ba8339fd9d04cda38a0251b6c9b0</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:ec1b783fc35a431c69cee2cd33933c62e3466070172dbfcf598d852a62e70a7e</code></dd><dt>Upstream checksum</dt><dd><code>sha256:65c35e4b699c7e15ccbe7ee35c005e4fc0a278d22238a2857e6ce2dadeda1b06</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/chacha20&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.10.2&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">cipher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:cipher&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cipher&quot;</span><span class="p">]</span>
+<span class="n">legacy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cipher&quot;</span><span class="p">]</span>
+<span class="n">rng</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rand_core&quot;</span><span class="p">]</span>
+<span class="n">xchacha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cipher&quot;</span><span class="p">]</span>
+<span class="n">zeroize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:zeroize&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;chacha20&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">cfg-if</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cfg-if&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">cipher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cipher&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.5&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;stream-wrapper&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">cpufeatures</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cpufeatures&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(target_arch = </span><span class="se">\&quot;</span><span class="s2">x86_64</span><span class="se">\&quot;</span><span class="s2">, target_arch = </span><span class="se">\&quot;</span><span class="s2">x86</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rand_core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rand_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.10&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zeroize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zeroize&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.8.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>RustCrypto Developers</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/chacha20/0.10.2">crates.io package</a></li><li><a href="https://github.com/RustCrypto/stream-ciphers">Source repository</a></li><li><a href="https://docs.rs/chacha20">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">chacha20</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/chacha20"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.10.2"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

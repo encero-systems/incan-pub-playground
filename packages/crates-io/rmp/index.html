@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>rmp 0.8.15 · Incan.pub</title><meta name="description" content="Pure Rust MessagePack serialization implementation"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/rmp</p><div class="title-row"><h1>rmp</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/rmp/versions/0.8.15/" selected>0.8.15</option></select></label></div><p class="description">Pure Rust MessagePack serialization implementation</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h4>The Rust MessagePack Library</h4>
+<p>RMP is a pure Rust <a href="http://msgpack.org">MessagePack</a> implementation of an efficient binary
+serialization format. This crate provides low-level core functionality, writers and readers for
+primitive values with direct mapping between binary MessagePack format.</p>
+<p><a href="https://lib.rs/crates/rmp-serde">Looking for Serde support</a>?</p>
+<p>This crate represents the very basic functionality needed to work with MessagePack format.
+Ideologically it is developed as a basis for building high-level abstractions.</p>
+<h5>Usage</h5>
+<p>To use <code>rmp</code>, first add this to your <code>Cargo.toml</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies.rmp]</span>
+<span class="n">rmp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.8&quot;</span>
+</code></pre>
+<h5>Features</h5>
+<ul>
+<li>
+<p><strong>Low-level API</strong></p>
+<p>RMP is designed to be lightweight and straightforward. There are low-level APIs, which give you
+full control over the encoding/decoding process. <code>no-std</code> environments are supported.</p>
+</li>
+<li>
+<p><strong>Zero-copy value decoding</strong></p>
+<p>RMP allows to decode bytes from a buffer in a zero-copy manner, without any heap allocations.
+easily and blazingly fast. Rust static checks guarantee that the data will be valid until buffer lives.</p>
+</li>
+<li>
+<p><strong>Clear error handling</strong></p>
+<p>RMP's error system guarantees that you never receive an error enum with unreachable variant.</p>
+</li>
+<li>
+<p><strong>Robust and tested</strong></p>
+<p>This project is developed using TDD and CI, so any found bugs will be fixed without breaking
+existing functionality.</p>
+</li>
+</ul>
+<h5>Detailed</h5>
+<p>Currently there are two large modules: encode and decode. More detail you can find in the
+corresponding sections.</p>
+<p>Formally every MessagePack message consists of some marker encapsulating a data type and the
+data itself. Sometimes there are no separate data chunk, for example for booleans. In these
+cases a marker contains the value. For example, the <code>true</code> value is encoded as <code>0xc3</code>.</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="n">rmp</span><span class="p">::</span><span class="n">encode</span><span class="p">::</span><span class="n">write_bool</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="fm">assert_eq!</span><span class="p">([</span><span class="mh">0xc3</span><span class="p">],</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]);</span>
+</code></pre>
+<p>Sometimes a single value can be encoded in multiple ways. For example a value of <code>42</code> can be
+represented as: <code>[0x2a], [0xcc, 0x2a], [0xcd, 0x00, 0x2a]</code> and so on, and all of them are
+considered as valid representations. To allow fine-grained control over encoding such values
+the library provides direct mapping functions.</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">bufs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="fm">vec!</span><span class="p">[];</span><span class="w"> </span><span class="mi">5</span><span class="p">];</span>
+
+<span class="n">rmp</span><span class="p">::</span><span class="n">encode</span><span class="p">::</span><span class="n">write_pfix</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mi">42</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="n">rmp</span><span class="p">::</span><span class="n">encode</span><span class="p">::</span><span class="n">write_u8</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="mi">42</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="n">rmp</span><span class="p">::</span><span class="n">encode</span><span class="p">::</span><span class="n">write_u16</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="mi">42</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="n">rmp</span><span class="p">::</span><span class="n">encode</span><span class="p">::</span><span class="n">write_u32</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="mi">42</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="n">rmp</span><span class="p">::</span><span class="n">encode</span><span class="p">::</span><span class="n">write_u64</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span><span class="w"> </span><span class="mi">42</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="fm">assert_eq!</span><span class="p">([</span><span class="mh">0x2a</span><span class="p">],</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">..</span><span class="p">]);</span>
+<span class="fm">assert_eq!</span><span class="p">([</span><span class="mh">0xcc</span><span class="p">,</span><span class="w"> </span><span class="mh">0x2a</span><span class="p">],</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="o">..</span><span class="p">]);</span>
+<span class="fm">assert_eq!</span><span class="p">([</span><span class="mh">0xcd</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x2a</span><span class="p">],</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="o">..</span><span class="p">]);</span>
+<span class="fm">assert_eq!</span><span class="p">([</span><span class="mh">0xce</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x2a</span><span class="p">],</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="o">..</span><span class="p">]);</span>
+<span class="fm">assert_eq!</span><span class="p">([</span><span class="mh">0xcf</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x00</span><span class="p">,</span><span class="w"> </span><span class="mh">0x2a</span><span class="p">],</span><span class="w"> </span><span class="n">bufs</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="o">..</span><span class="p">]);</span>
+</code></pre>
+<p>But they aren't planned to be widely used. Instead we often need to encode bytes compactly to
+save space. In these cases RMP provides functions that guarantee that for encoding the most
+compact representation will be chosen.</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+
+<span class="n">rmp</span><span class="p">::</span><span class="n">encode</span><span class="p">::</span><span class="n">write_sint</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="mi">300</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="fm">assert_eq!</span><span class="p">([</span><span class="mh">0xcd</span><span class="p">,</span><span class="w"> </span><span class="mh">0x1</span><span class="p">,</span><span class="w"> </span><span class="mh">0x2c</span><span class="p">],</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]);</span>
+</code></pre>
+<p>On the other hand for deserialization it is not matter in which representation the value is
+encoded - RMP deals with all of them.</p>
+<p>Sometimes you know the exact type representation and want to enforce the deserialization process
+to make it strongly type safe.</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mh">0xcd</span><span class="p">,</span><span class="w"> </span><span class="mh">0x1</span><span class="p">,</span><span class="w"> </span><span class="mh">0x2c</span><span class="p">];</span>
+
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="n">rmp</span><span class="p">::</span><span class="n">decode</span><span class="p">::</span><span class="n">read_u16</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]).</span><span class="n">unwrap</span><span class="p">());</span>
+</code></pre>
+<p>However if you try to decode such bytearray as other integer type, for example <code>u32</code>, there will
+be type mismatch error.</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mh">0xcd</span><span class="p">,</span><span class="w"> </span><span class="mh">0x1</span><span class="p">,</span><span class="w"> </span><span class="mh">0x2c</span><span class="p">];</span>
+<span class="n">rmp</span><span class="p">::</span><span class="n">decode</span><span class="p">::</span><span class="n">read_u32</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]).</span><span class="n">err</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+</code></pre>
+<p>But sometimes all you want is just to encode an integer that <em>must</em> fit in the specified type
+no matter how it was encoded. RMP provides <a href="https://docs.rs/rmp/latest/rmp/decode/fn.read_int.html"><code>such</code></a> function to ease integration with
+other MessagePack libraries.</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mh">0xcd</span><span class="p">,</span><span class="w"> </span><span class="mh">0x1</span><span class="p">,</span><span class="w"> </span><span class="mh">0x2c</span><span class="p">];</span>
+
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="mi">300</span><span class="k">i16</span><span class="p">,</span><span class="w"> </span><span class="n">rmp</span><span class="p">::</span><span class="n">decode</span><span class="p">::</span><span class="n">read_int</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]).</span><span class="n">unwrap</span><span class="p">());</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="mi">300</span><span class="k">i32</span><span class="p">,</span><span class="w"> </span><span class="n">rmp</span><span class="p">::</span><span class="n">decode</span><span class="p">::</span><span class="n">read_int</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]).</span><span class="n">unwrap</span><span class="p">());</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="mi">300</span><span class="k">i64</span><span class="p">,</span><span class="w"> </span><span class="n">rmp</span><span class="p">::</span><span class="n">decode</span><span class="p">::</span><span class="n">read_int</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]).</span><span class="n">unwrap</span><span class="p">());</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="mi">300</span><span class="k">u16</span><span class="p">,</span><span class="w"> </span><span class="n">rmp</span><span class="p">::</span><span class="n">decode</span><span class="p">::</span><span class="n">read_int</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]).</span><span class="n">unwrap</span><span class="p">());</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="mi">300</span><span class="k">u32</span><span class="p">,</span><span class="w"> </span><span class="n">rmp</span><span class="p">::</span><span class="n">decode</span><span class="p">::</span><span class="n">read_int</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]).</span><span class="n">unwrap</span><span class="p">());</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="mi">300</span><span class="k">u64</span><span class="p">,</span><span class="w"> </span><span class="n">rmp</span><span class="p">::</span><span class="n">decode</span><span class="p">::</span><span class="n">read_int</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]).</span><span class="n">unwrap</span><span class="p">());</span>
+</code></pre>
+<h5>API</h5>
+<p>Almost all API are represented as pure functions, which accepts a generic <code>Write</code> or <code>Read</code> and
+the value to be encoded/decoded. For example let's do a round trip for π number.</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">pi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="kt">f64</span><span class="p">::</span><span class="n">consts</span><span class="p">::</span><span class="n">PI</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="n">rmp</span><span class="p">::</span><span class="n">encode</span><span class="p">::</span><span class="n">write_f64</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">pi</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="fm">assert_eq!</span><span class="p">([</span><span class="mh">0xcb</span><span class="p">,</span><span class="w"> </span><span class="mh">0x40</span><span class="p">,</span><span class="w"> </span><span class="mh">0x9</span><span class="p">,</span><span class="w"> </span><span class="mh">0x21</span><span class="p">,</span><span class="w"> </span><span class="mh">0xfb</span><span class="p">,</span><span class="w"> </span><span class="mh">0x54</span><span class="p">,</span><span class="w"> </span><span class="mh">0x44</span><span class="p">,</span><span class="w"> </span><span class="mh">0x2d</span><span class="p">,</span><span class="w"> </span><span class="mh">0x18</span><span class="p">],</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span><span class="w"> </span><span class="n">rmp</span><span class="p">::</span><span class="n">decode</span><span class="p">::</span><span class="n">read_f64</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="p">]).</span><span class="n">unwrap</span><span class="p">());</span>
+</code></pre>
+<p>License: MIT</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>num-traits/std</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/num-traits/"><code>crates-io/num-traits</code></a><small>Alias: num-traits</small></th><td><code>^0.2.19</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/rmp-serde/versions/1.3.1/">crates-io/rmp-serde 1.3.1</a><span>Requires ^0.8.14 · alias rmp · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:414763d6fde62ef4ef3629c62636a433ca333c3c5406df96377cd2f8abe18d88</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:24e12088a109b620cb1684e14903401cd4621081dfd9006a91275e6db4536869</small></li><li><code>sha256:4b15ec04a495667ea3540900eddd240d7d8894dbe8ab3cf6fdd1b05877416960</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:9270977b33a23c9bf6bcf0f612a2f87d020e81b6494b3060b30cbbe3e28f4be5</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2d1d813fa524f49ade6952363264157750d6f5426cf5f2b93f336a87f5b74b0b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:27bdfdc1b14ef00fc2e9349bfd593c92603816b4a1fff8cc6d2f83fe95c1944d</small></li><li><code>sha256:41f669496c510ecae6506539664f368bcbbb0c4861e7b84b728916a3914bf551</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:e49e7d436fb8d350181477d521391e5a3a08d82bb5e618d5a4c01b523bd60e9b</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a4be9fc203c4f3f5080c3e604b2d3e06c4848814cc91dd44b711de99b3888d27</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:51488362a08707a498f4a394af9e8a51db82836ef453a87a2033833437807a7f</small></li><li><code>sha256:bbdf67b615e12b0e04f88f4cfe292f06e4f87566135361d875c99dc20437717c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:9d88ac59377992c1f2db2fe3ae7ac719ed9b69e4016675ffeec0a0bb65153e84</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:143860996a6c07b521be42c95e319dc6def785682c2c0d94db5303038f286258</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:fcc53b96f365d741e49bc65654c48b572420ff784c55511b09e669c15114b1c0</small></li><li><code>sha256:de5202530ff224ab95cb9e8ad034f7a733812a09dea9920a90821c4a1b42a9e0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:af5002df7bb6c810da3d4a2c0b0c6782f385df4d38474dacaa445b2ad02b491d</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/rmp/versions/0.8.15/">0.8.15</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/rmp/0.8.15">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Change Log</h3>
+<p>All notable changes to this project will be documented in this file.
+This project adheres to <a href="http://semver.org/">Semantic Versioning</a>.</p>
+<h4>Unreleased (0.8.11)</h4>
+<h5>Added</h5>
+<ul>
+<li>Implemeneted support for <code>#![no_std]</code> in <code>rmpv</code>
+<ul>
+<li>Adds new <code>feature=&quot;std&quot;</code> (on by default)</li>
+</ul>
+</li>
+<li>Introduces new <code>RmpRead</code> and <code>RmpWrite</code> traits.
+<ul>
+<li>Needed because <code>std::io::Read</code> (and Write) are missing on <code>#![no_std]</code></li>
+</ul>
+</li>
+<li>Introduces new <code>Bytes</code> and <code>ByteBuf</code> wrappers, that implement RmpRead/RmpWrite for no_std targets.</li>
+</ul>
+<h4>0.8.6 - 2017-04-23</h4>
+<h5>Added</h5>
+<ul>
+<li>New <code>rmp::decode::read_str_from_slice</code> function for zero-copy reading strings from slices.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Deprecate <code>rmp::decode::read_str_ref</code>, because it's useless and inconvenient.</li>
+</ul>
+<h4>0.8.5 - 2017-03-13</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix compilation on rustc 1.13.0.</li>
+</ul>
+<h4>0.8.4 - 2017-03-09</h4>
+<h5>Added</h5>
+<ul>
+<li>Derive <code>Debug</code> for <code>MarkerReadError</code>.</li>
+</ul>
+<h4>0.8.3 - 2017-03-04</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed <code>write_sint</code>, so it should mark positive values as unsigned integers.
+Before this change it marked signed integers larger than <code>4294967296</code> with I64 marker, which is not consistent with other MessagePack implementations.
+Now it should mark such integers with U64 marker.</li>
+</ul>
+<h4>0.8.2 - 2017-02-01</h4>
+<h5>Added</h5>
+<ul>
+<li>Conversion from <code>ValueWriteError</code> into I/O error.</li>
+</ul>
+<h4>0.8.1 - 2017-01-05</h4>
+<h5>Changed</h5>
+<ul>
+<li>Fixed docs link.</li>
+</ul>
+<h4>0.8.0 - 2017-01-05</h4>
+<h5>Added</h5>
+<ul>
+<li>Marker now implements <code>From</code> and <code>Into</code> traits for <code>u8</code>.</li>
+<li>Add <code>read_int</code> function, which allows to read integer values and automatically cast to the expected result type even if they aren't the same. An additional <code>OutOfRange</code> error will be returned in the case of failed numeric cast.</li>
+<li>Add <code>NumValueReadError</code> enum with additional <code>OutOfRange</code> variant to be able to detect whether integer decoding failed because of out of range.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Update <code>byteorder</code> dependency to 1.0.</li>
+<li>Unexpected EOF variant has been merged with the default one in the I/O Error enum.</li>
+<li>Function <code>write_sint</code> now encodes 64-bit signed integers using the most compact representation.</li>
+<li>Function <code>write_uint</code> now encodes 64-bit unsigned integers using the most compact representation.</li>
+<li>Rename <code>read_array_size</code> function to <code>read_array_len</code> for consistency.</li>
+<li>Rename <code>read_map_size</code> function to <code>read_map_len</code> for consistency.</li>
+<li>Make <code>FixedValueWriteError</code> struct private. All functions, that previously returned such kind of error now return the Standard I/O error.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>Move <code>Value</code> and <code>ValueRef</code> enums and associated functions into the separate <code>rmpv</code> crate.</li>
+<li>Remove conversions from <code>byteorder</code> crate errors, because since 0.5 there are no such errors.</li>
+<li>Remove <code>write_sint_eff</code> function - its functionality can now be done using <code>write_sint</code> instead.</li>
+<li>Remove <code>write_uint_eff</code> function - its functionality can now be done using <code>write_uint</code> instead.</li>
+<li>Integral functions like <code>read_*_loosely</code> and <code>read_*_fit</code> were removed in favor of generic <code>read_int</code> function, which allows to read integral values and cast them to the specified result type even if they aren't the same.</li>
+<li>Remove <code>read_bin_borrow</code> function.</li>
+</ul>
+<h4>0.7.5 - 2016-07-24</h4>
+<h5>Added</h5>
+<ul>
+<li>Add <code>is_*</code> methods for Value for checking its underlying value without explicit matching.</li>
+<li>Add <code>as_*</code> methods for Value for borrowing its underlying value.</li>
+<li>Value is now indexable by integer.</li>
+</ul>
+<h4>0.7.4 - 2016-07-18</h4>
+<h5>Added</h5>
+<ul>
+<li>Value now can be initialized from primitive values using From trait.</li>
+</ul>
+<h4>0.7.3 - 2015-09-23</h4>
+<h5>Changed</h5>
+<ul>
+<li>Restricted upper version limit for dependencies.</li>
+</ul>
+<h4>0.7.2 - 2015-09-23</h4>
+<h5>Added</h5>
+<ul>
+<li>Implemented <code>Display</code> trait for <code>Value</code>.</li>
+</ul>
+<h4>0.7.1 - 2015-09-11</h4>
+<h5>Changed</h5>
+<ul>
+<li>Use <code>to_owned</code> instead of <code>to_string</code> while converting <code>ValueRef</code> into <code>Value</code>.
+This change improves <code>ValueRef::to_owned()</code> method performance by approximately 10-20%.s Also after this change it's cheaper to decode directly into <code>ValueRef</code> with further converting to owned value rather than decoding directly into <code>Value</code>.</li>
+</ul>
+<h4>0.7.0 - 2015-08-24</h4>
+<h5>Changed</h5>
+<ul>
+<li>The big single crate has been refactored, which results in three crates: <code>rmp</code>, <code>rmp-serialize</code> and <code>rmp-serde</code>.</li>
+</ul>
+<h4>0.6.0 - 2015-08-17</h4>
+<h5>Added</h5>
+<ul>
+<li>Initial support for <a href="https://github.com/serde-rs/serde">Serde</a> serializer and deserializer.</li>
+<li>Efficient bytes serialization with Serde.</li>
+<li>Efficient binaries deserialization with Serde using <code>ByteBuf</code>.</li>
+<li>Rust serialize Decoder now can provide the underlying reader both by reference or by value, destroying itself in the last case.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Update well-formness for <code>BigEndianRead</code> trait to be implemented only for sized types.</li>
+<li>Renamed <code>PositiveFixnum</code> marker to <code>FixPos</code>.</li>
+<li>Renamed <code>NegativeFixnum</code> marker to <code>FixNeg</code>.</li>
+<li>Renamed <code>FixedString</code> marker to <code>FixStr</code>.</li>
+<li>Renamed <code>FixedArray</code> marker to <code>FixArray</code>.</li>
+<li>Renamed <code>FixedMap</code> to <code>FixMap</code>.</li>
+<li>Minor documentation updates and markdown fixes.</li>
+</ul>
+<h4>0.5.1 - 2015-08-10</h4>
+<h5>Changed</h5>
+<ul>
+<li>Now the <code>rustc_serialize::Encoder</code> should encode signed integers using the most effective underlying representation.</li>
+<li>Now the <code>rustc_serialize::Decoder</code> should properly map integers to the result type if the decoded value fits in
+result type's range.</li>
+</ul>
+<h4>0.5.0 - 2015-08-01</h4>
+<h5>Added</h5>
+<ul>
+<li>New <code>ValueRef</code> value struct represents MessagePack'ed value, but unlike an owning <code>Value</code> it owns nothing except its
+structure. It means that all strings and binaries it contains are borrowed from the byte array from which the value
+was created.</li>
+<li>New <code>BorrowRead</code> trait, which looks like a standard <code>BufRead</code> but unlike the standard this has an explicit internal
+buffer lifetime, which allows to borrow from underlying buffer while mutating the type.</li>
+<li>Encoding function for <code>ValueRef</code> with its own error category.</li>
+<li>Decoding function for <code>ValueRef</code> with its own error category.</li>
+<li>Conversion method from <code>ValueRef</code> to <code>Value</code>.</li>
+<li>More benchmarks and tests.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Derive <code>Copy</code> trait for <code>Integer</code> and <code>Float</code> enums.</li>
+</ul>
+<h4>0.4.0 - 2015-07-17</h4>
+<h5>Added</h5>
+<ul>
+<li>Low level <code>write_str</code> function allows to serialize the UTF-8 encoded strings the most efficient way.</li>
+<li>Low level <code>write_bin</code> function allows to serialize the binary array the most efficient way.</li>
+<li>Implemented <code>std::error::Error</code> trait for error types.</li>
+</ul>
+<h4>0.3.2 - 2015-07-05</h4>
+<h5>Changed</h5>
+<ul>
+<li>Encoder now should return proper error types.</li>
+</ul>
+<h4>0.3.1 - 2015-06-28</h4>
+<h5>Changed</h5>
+<ul>
+<li>Stabilizing enum serialization/deserialization. Now every enum is serialized as [int, [args...]].</li>
+<li>Suppressed some warnings appeared on updated compiler.</li>
+</ul>
+<h4>0.3.0 - 2015-06-25</h4>
+<h5>Added</h5>
+<ul>
+<li>Enum serialization/deserialization.</li>
+</ul>
+<h4>0.2.2 - 2015-06-15</h4>
+<h5>Changed</h5>
+<ul>
+<li>Minor integer decoding performance tweaking.</li>
+</ul>
+<h4>0.2.1 - 2015-05-30</h4>
+<h5>Added</h5>
+<ul>
+<li>Benchmarking module.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Increased string decoding performance by ~30 times.</li>
+<li>Exported <code>read_value</code> function to the <code>rmp::decode</code> module.</li>
+<li>Exported <code>Value</code> struct to the root crate namespace.</li>
+</ul>
+<h4>0.2.0 - 2015-05-27</h4>
+<h5>Added</h5>
+<ul>
+<li>Introducing a <code>Value</code> algebraic data type, which represents an owning MessagePack object. It can
+be found in <code>rmp::value</code> module.</li>
+<li>The Value ADT encoding and decoding functions.</li>
+<li>Low-level ext type decoders.</li>
+</ul>
+<h4>0.1.1 - 2015-05-18</h4>
+<h5>Changed</h5>
+<ul>
+<li>Added documentation and repository site in Cargo.toml.</li>
+<li>Added keywords to ease searching using crates.io.</li>
+</ul>
+<h4>0.1.0 - 2015-05-15</h4>
+<h5>Added</h5>
+<ul>
+<li>Initial commit.</li>
+<li>This CHANGELOG file to hopefully serve as an evolving example of a standardized open source
+project CHANGELOG.</li>
+</ul>
+</div><p class="table-note">sha256:7fa7c73b5b677038d450f99773c4f530e8ae5c9b3b4b1bc9797ebe16ad7291f6</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2017 Evgeny Safronov
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:979d35e1d157289100ba2a7eb13fffe4e7a1b93506c755c4c66890918e467c4e</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:5d7f0983e87b7963bd712efcdd9b22e7dabe0caa6f59a052e28e747a66295499</code></dd><dt>Upstream checksum</dt><dd><code>sha256:4ba8be72d372b2c9b35542551678538b562e7cf86c3315773cae48dfbfe7790c</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rmp&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.8.15&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;num-traits/std&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rmp&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">num-traits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/num-traits&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.19&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Evgeny Safronov &lt;division494@gmail.com&gt;, Kornel &lt;kornel@geekhood.net&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/rmp/0.8.15">crates.io package</a></li><li><a href="https://github.com/3Hren/msgpack-rust">Source repository</a></li><li><a href="https://docs.rs/rmp">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">rmp</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/rmp"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.8.15"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

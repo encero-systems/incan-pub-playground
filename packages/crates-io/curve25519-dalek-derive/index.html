@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>curve25519-dalek-derive 0.1.1 · Incan.pub</title><meta name="description" content="curve25519-dalek Derives"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/curve25519-dalek-derive</p><div class="title-row"><h1>curve25519-dalek-derive</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/curve25519-dalek-derive/versions/0.1.1/" selected>0.1.1</option></select></label></div><p class="description">curve25519-dalek Derives</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT/Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>A more convenient <code>#[target_feature]</code> replacement</h3>
+<p>To get good performance out of SIMD everything on the SIMD codepath must be inlined.
+With how SIMD is currently implemented in Rust one of two things have to be true for
+a function using SIMD to be inlinable: (and this includes the SIMD intrinsics themselves)</p>
+<p>a) The whole program has to be compiled with the relevant <code>-C target-cpu</code> or <code>-C target-feature</code> flags.</p>
+<p>b) SIMD support must be automatically detected at runtime, and every function on the SIMD codepath must be marked with <code>#[target_feature]</code>.</p>
+<p>Both have their downsides. Setting the <code>target-cpu</code> or <code>target-features</code> makes the resulting binary
+incompatible with older CPUs, while using <code>#[target_feature]</code> is incredibly inconvenient.</p>
+<p>This crate is meant to make <code>#[target_feature]</code> less painful to use.</p>
+<h4>Problems with <code>#[target_feature]</code></h4>
+<p>When we're not compiling with the relevant <code>target-cpu</code>/<code>target-feature</code> flags everything on
+the SIMD codepath must be marked with the <code>#[target_feature]</code> attribute. This is not a problem
+when all of your SIMD code is neatly encapsulated inside of a single function, but once you start
+to build out more elaborate abstractions it starts to become painful to use.</p>
+<ul>
+<li>
+<p>It can only be used on <code>unsafe</code> functions, so everything on your SIMD codepath now has to be <code>unsafe</code>.</p>
+<p>In theory this is nice - these functions require the relevant SIMD instructions to be present at runtime,
+so calling them without checking is obviously unsafe! But in practice this is rarely what you want. When
+you build an abstraction over SIMD code you usually want to assume that <em>internally</em> within your module
+all of the necessary SIMD instructions are available, and you only want to check this at the boundaries
+when you're first entering your module. You do <em>not</em> want to infect everything <em>inside</em> of the module with
+<code>unsafe</code> since you've already checked this invariant at the module's API boundary.</p>
+</li>
+<li>
+<p>It cannot be used on non-<code>unsafe</code> trait methods.</p>
+<p>If you're implementing a trait, say for example <code>std::ops::Add</code>, then you cannot mark the method <code>unsafe</code>
+unless the original trait also has it marked as <code>unsafe</code>, and usually it doesn't.</p>
+</li>
+<li>
+<p>It makes it impossible to abstract over a given SIMD instruction set using a trait.</p>
+<p>For example, let's assume you want to abstract over which SIMD instructions you use using a trait in the following way:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">trait</span><span class="w"> </span><span class="n">Backend</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">unsafe</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">sum</span><span class="p">(</span><span class="n">input</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="kt">u32</span><span class="p">])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u32</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">AVX</span><span class="p">;</span>
+<span class="p">#</span><span class="w"> </span><span class="cp">#[cfg(any(target_arch = </span><span class="s">&quot;x86&quot;</span><span class="cp">, target_arch = </span><span class="s">&quot;x86_64&quot;</span><span class="cp">))]</span>
+<span class="k">impl</span><span class="w"> </span><span class="n">Backend</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">AVX</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[target_feature(enable = </span><span class="s">&quot;avx&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="k">unsafe</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">sum</span><span class="p">(</span><span class="n">xs</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="kt">u32</span><span class="p">])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">        </span><span class="fm">todo!</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">AVX2</span><span class="p">;</span>
+<span class="p">#</span><span class="w"> </span><span class="cp">#[cfg(any(target_arch = </span><span class="s">&quot;x86&quot;</span><span class="cp">, target_arch = </span><span class="s">&quot;x86_64&quot;</span><span class="cp">))]</span>
+<span class="k">impl</span><span class="w"> </span><span class="n">Backend</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">AVX2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[target_feature(enable = </span><span class="s">&quot;avx2&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="k">unsafe</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">sum</span><span class="p">(</span><span class="n">xs</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="kt">u32</span><span class="p">])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">        </span><span class="fm">todo!</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// And now you want a have function which calls into that trait:</span>
+<span class="k">unsafe</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">do_calculations</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;</span><span class="p">(</span><span class="n">xs</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="kt">u32</span><span class="p">])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="nc">where</span><span class="w"> </span><span class="n">B</span><span class="p">:</span><span class="w"> </span><span class="nc">Backend</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">B</span><span class="p">::</span><span class="n">sum</span><span class="p">(</span><span class="n">xs</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// ...do some more calculations here...</span>
+<span class="w">    </span><span class="n">value</span>
+<span class="p">}</span>
+</code></pre>
+<p>We have a problem here. This has to be marked with <code>#[target_feature]</code>, and that has to specify the concrete
+feature flag for a given SIMD instruction set, but this function is generic so we can't do that!</p>
+</li>
+</ul>
+<h4>How does this crate make it better?</h4>
+<h5>You can now mark safe functions with <code>#[target_feature]</code></h5>
+<p>This crate exposes an <code>#[unsafe_target_feature]</code> macro which works just like <code>#[target_feature]</code> except
+it moves the <code>unsafe</code> from the function prototype into the macro name, and can be used on safe functions.</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// ERROR: `#[target_feature(..)]` can only be applied to `unsafe` functions</span>
+<span class="cp">#[target_feature(enable = </span><span class="s">&quot;avx2&quot;</span><span class="cp">)]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">func</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// It works, but must be `unsafe`</span>
+<span class="p">#</span><span class="w"> </span><span class="cp">#[cfg(any(target_arch = </span><span class="s">&quot;x86&quot;</span><span class="cp">, target_arch = </span><span class="s">&quot;x86_64&quot;</span><span class="cp">))]</span>
+<span class="cp">#[target_feature(enable = </span><span class="s">&quot;avx2&quot;</span><span class="cp">)]</span>
+<span class="k">unsafe</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">func</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">curve25519_dalek_derive</span><span class="p">::</span><span class="n">unsafe_target_feature</span><span class="p">;</span>
+
+<span class="c1">// No `unsafe` on the function itself!</span>
+<span class="p">#</span><span class="w"> </span><span class="cp">#[cfg(any(target_arch = </span><span class="s">&quot;x86&quot;</span><span class="cp">, target_arch = </span><span class="s">&quot;x86_64&quot;</span><span class="cp">))]</span>
+<span class="cp">#[unsafe_target_feature(</span><span class="s">&quot;avx2&quot;</span><span class="cp">)]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">func</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
+</code></pre>
+<p>It can also be used to mark functions inside of impls:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">struct</span><span class="w"> </span><span class="nc">S</span><span class="p">;</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">core</span><span class="p">::</span><span class="n">ops</span><span class="p">::</span><span class="n">Add</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">S</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">type</span><span class="w"> </span><span class="nc">Output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">S</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// ERROR: method `add` has an incompatible type for trait</span>
+<span class="w">    </span><span class="cp">#[target_feature(enable = </span><span class="s">&quot;avx2&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="k">unsafe</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">rhs</span><span class="p">:</span><span class="w"> </span><span class="nc">S</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">S</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">S</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">curve25519_dalek_derive</span><span class="p">::</span><span class="n">unsafe_target_feature</span><span class="p">;</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">S</span><span class="p">;</span>
+
+<span class="p">#</span><span class="w"> </span><span class="cp">#[cfg(any(target_arch = </span><span class="s">&quot;x86&quot;</span><span class="cp">, target_arch = </span><span class="s">&quot;x86_64&quot;</span><span class="cp">))]</span>
+<span class="cp">#[unsafe_target_feature(</span><span class="s">&quot;avx2&quot;</span><span class="cp">)]</span>
+<span class="k">impl</span><span class="w"> </span><span class="n">core</span><span class="p">::</span><span class="n">ops</span><span class="p">::</span><span class="n">Add</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">S</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">type</span><span class="w"> </span><span class="nc">Output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">S</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// No `unsafe` on the function itself!</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">rhs</span><span class="p">:</span><span class="w"> </span><span class="nc">S</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">S</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">S</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+</code></pre>
+<h5>You can generate specialized copies of a module for each target feature</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">curve25519_dalek_derive</span><span class="p">::</span><span class="n">unsafe_target_feature_specialize</span><span class="p">;</span>
+
+<span class="p">#</span><span class="w"> </span><span class="cp">#[cfg(any(target_arch = </span><span class="s">&quot;x86&quot;</span><span class="cp">, target_arch = </span><span class="s">&quot;x86_64&quot;</span><span class="cp">))]</span>
+<span class="cp">#[unsafe_target_feature_specialize(</span><span class="s">&quot;sse2&quot;</span><span class="cp">, </span><span class="s">&quot;avx2&quot;</span><span class="cp">, conditional(</span><span class="s">&quot;avx512ifma&quot;</span><span class="cp">, nightly))]</span>
+<span class="k">mod</span><span class="w"> </span><span class="nn">simd</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[for_target_feature(</span><span class="s">&quot;sse2&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">CONSTANT</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cp">#[for_target_feature(</span><span class="s">&quot;avx2&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">CONSTANT</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cp">#[for_target_feature(</span><span class="s">&quot;avx512ifma&quot;</span><span class="cp">)]</span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">CONSTANT</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="p">#</span><span class="w"> </span><span class="cp">#[cfg(any(target_arch = </span><span class="s">&quot;x86&quot;</span><span class="cp">, target_arch = </span><span class="s">&quot;x86_64&quot;</span><span class="cp">))]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">entry_point</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[cfg(nightly)]</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="fm">is_x86_feature_detected!</span><span class="p">(</span><span class="s">&quot;avx512ifma&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">simd_avx512ifma</span><span class="p">::</span><span class="n">func</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="fm">is_x86_feature_detected!</span><span class="p">(</span><span class="s">&quot;avx2&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">simd_avx2</span><span class="p">::</span><span class="n">func</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="fm">is_x86_feature_detected!</span><span class="p">(</span><span class="s">&quot;sse2&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">simd_sse2</span><span class="p">::</span><span class="n">func</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="fm">unimplemented!</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<h4>How to use <code>#[unsafe_target_feature]</code>?</h4>
+<ul>
+<li>Can be used on <code>fn</code>s, <code>impl</code>s and <code>mod</code>s.</li>
+<li>When used on a function will only apply to that function; it won't apply to any nested functions, traits, mods, etc.</li>
+<li>When used on an <code>impl</code> will only apply to all of the functions directly defined inside of that <code>impl</code>.</li>
+<li>When used on a <code>mod</code> will only apply to all of the <code>fn</code>s and <code>impl</code>s directly defined inside of that <code>mod</code>.</li>
+<li>Cannot be used on methods which use <code>self</code> or <code>Self</code>; instead use it on the <code>impl</code> in which the method is defined.</li>
+</ul>
+<h4>License</h4>
+<p>Licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0, <a href="https://github.com/dalek-cryptography/curve25519-dalek/blob/72761ca6b4772af985f969db53faf7accbad9b36/curve25519-dalek-derive/LICENSE-APACHE">LICENSE-APACHE</a></li>
+<li>MIT license (<a href="https://github.com/dalek-cryptography/curve25519-dalek/blob/72761ca6b4772af985f969db53faf7accbad9b36/curve25519-dalek-derive/LICENSE-MIT">LICENSE-MIT</a>)</li>
+</ul>
+<p>at your option.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p>No feature declarations recorded.</p></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/proc-macro2/"><code>crates-io/proc-macro2</code></a><small>Alias: proc-macro2</small></th><td><code>^1.0.66</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/quote/"><code>crates-io/quote</code></a><small>Alias: quote</small></th><td><code>^1.0.31</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/syn/"><code>crates-io/syn</code></a><small>Alias: syn</small></th><td><code>^2.0.27</code><small>Default features: enabled</small><small>Requests: full</small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/curve25519-dalek/versions/5.0.0/">crates-io/curve25519-dalek 5.0.0</a><span>Requires ^0.1 · alias curve25519-dalek-derive · cfg(all(not(curve25519_dalek_backend = &quot;fiat&quot;), not(curve25519_dalek_backend = &quot;serial&quot;), target_arch = &quot;x86_64&quot;))</span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:f91301353efadf38b59413cce9cddc3cc1790bcac94d504e2ea408becb62af9d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:786a7c826af092382426adb439f8e7ecd18552aa257991664fff9c7d00cd0074</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:846bd9fbfc783f099a5fd144d2b70638bc2fcc25a09578f7950717443132ecd4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:b99cfe4a1e372843ad197b562e788e505b7dcd7a35afe2ff1604f5921f179393</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1494ced78008efd1c0f073252034e1144f5b9ea7219de74e23517faa9fc520ad</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:4da502a2870d1c9eecb9aac4240eabeaf94b76415e743581f581240d980582da</small></li><li><code>sha256:cb8f7984435f52a86823f9d69bcfddfefe44991f132ec2b82250fc053c4f8bf6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:f16aa5156d7959623e7700aa4bcfe8d60b6b72f984e5079532999b9044e60d42</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:592e47e9ab0ed9258b4dc6a75fafd2d7d2d1c78d0536d454241b2702a529c9e4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:8b243593c4572077dee8676dc26e2fe387a464a5e521250273da4feada924d41</small></li><li><code>sha256:ab9d261ee04c552605f4cf99d11ba24057706d03271f9e533b8dae8982483f17</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:29221e9e76f2975ca19d120cf60d2a928b5fa2536589ff591d27d71d8fb0402d</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/curve25519-dalek-derive/versions/0.1.1/">0.1.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/curve25519-dalek-derive/0.1.1">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>Entries are listed in reverse chronological order per undeprecated
+major series.</p>
+<h5>0.1.1</h5>
+<ul>
+<li>Copied over license files from <a href="https://github.com/koute/unsafe_target_feature/tree/389ae00d34cf0ff589cb8d9b38a85ae1b05ebfdc">original</a> repo</li>
+</ul>
+</div><p class="table-note">sha256:2996880440a6a5bcad117d8beea9ae3508ae2707c9a040949d4264bdbe33ed6c</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT/Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:8b3e84a9eb3ea13b22157bb930f4f968978874b36792c7945a4ccbce6c2d05d0</code></dd><dt>Upstream checksum</dt><dd><code>sha256:f46882e17999c6cc590af592290432be3bce0428cb0d5f8b6715e4dc7b383eb3</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/curve25519-dalek-derive&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1.1&quot;</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;curve25519_dalek_derive&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;proc-macro&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">proc-macro2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/proc-macro2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.66&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">quote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/quote&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.31&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syn&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.0.27&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;full&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/curve25519-dalek-derive/0.1.1">crates.io package</a></li><li><a href="https://github.com/dalek-cryptography/curve25519-dalek">Source repository</a></li><li><a href="https://docs.rs/curve25519-dalek-derive">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">curve25519-dalek-derive</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/curve25519-dalek-derive"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.1.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

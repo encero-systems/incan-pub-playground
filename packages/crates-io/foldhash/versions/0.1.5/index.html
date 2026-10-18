@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>foldhash 0.1.5 · Incan.pub</title><meta name="description" content="A fast, non-cryptographic, minimally DoS-resistant hashing algorithm."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/foldhash</p><div class="title-row"><h1>foldhash</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/foldhash/versions/0.2.0/">0.2.0</option><option value="../../../../../packages/crates-io/foldhash/versions/0.1.5/" selected>0.1.5</option></select></label></div><p class="description">A fast, non-cryptographic, minimally DoS-resistant hashing algorithm.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Zlib</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><p class="version-warning">Viewing an older indexed version. <a href="../../../../../packages/crates-io/foldhash/">View latest indexed version 0.2.0 →</a></p><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Foldhash</h3>
+<p>This repository contains foldhash, a fast, non-cryptographic, minimally
+DoS-resistant hashing algorithm implemented in Rust designed for computational
+uses such as hash maps, bloom filters, count sketching, etc.</p>
+<p>When should you <strong>not</strong> use foldhash:</p>
+<ul>
+<li>
+<p>You are afraid of people studying your long-running program's behavior to
+reverse engineer its internal random state and using this knowledge to create
+many colliding inputs for computational complexity attacks. For more details
+see the section &quot;HashDoS resistance&quot;.</p>
+</li>
+<li>
+<p>You expect foldhash to have a consistent output across versions or
+platforms, such as for persistent file formats or communication protocols.</p>
+</li>
+<li>
+<p>You are relying on foldhash's properties for any kind of security.
+Foldhash is <strong>not appropriate for any cryptographic purpose</strong>.</p>
+</li>
+</ul>
+<p>Foldhash has two variants, one optimized for speed which is ideal for data
+structures such as hash maps and bloom filters, and one optimized for
+statistical quality which is ideal for algorithms such as
+<a href="https://en.wikipedia.org/wiki/HyperLogLog">HyperLogLog</a> and
+<a href="https://en.wikipedia.org/wiki/MinHash">MinHash</a>.</p>
+<p>Foldhash can be used in a <code>#![no_std]</code> environment by disabling its default
+<code>&quot;std&quot;</code> feature.</p>
+<h4>Performance</h4>
+<p>We evaluated foldhash against three commonly used hashes in Rust:
+<a href="https://github.com/tkaitchuck/aHash">aHash</a> v0.8.11,
+<a href="https://github.com/cbreeden/fxhash">fxhash</a> v0.2.1, and
+<a href="https://en.wikipedia.org/wiki/SipHash">SipHash-1-3</a>, the default hash algorithm
+in Rust at the time of writing. We evaluated both variants foldhash provides,
+<code>foldhash-f</code> and <code>foldhash-q</code>, which correspond to <code>foldhash::fast</code> and
+<code>foldhash::quality</code> in the crate respectively.</p>
+<p>First we note that hashers with random state inflate the size of your <code>HashMap</code>,
+which may or may not be important for your performance:</p>
+<pre><code class="syntax-highlight language-rust"><span class="n">std</span><span class="p">::</span><span class="n">mem</span><span class="p">::</span><span class="n">size_of</span><span class="p">::</span><span class="o">&lt;</span><span class="n">foldhash</span><span class="p">::</span><span class="n">HashMap</span><span class="o">&lt;</span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="o">&gt;&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">40</span><span class="w">  </span><span class="c1">// (both variants)</span>
+<span class="n">std</span><span class="p">::</span><span class="n">mem</span><span class="p">::</span><span class="n">size_of</span><span class="p">::</span><span class="o">&lt;</span><span class="n">ahash</span><span class="p">::</span><span class="n">HashMap</span><span class="o">&lt;</span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="o">&gt;&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span>
+<span class="n">std</span><span class="p">::</span><span class="n">mem</span><span class="p">::</span><span class="n">size_of</span><span class="p">::</span><span class="o">&lt;</span><span class="n">fxhash</span><span class="p">::</span><span class="n">FxHashMap</span><span class="o">&lt;</span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="o">&gt;&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span>
+<span class="n">std</span><span class="p">::</span><span class="n">mem</span><span class="p">::</span><span class="n">size_of</span><span class="p">::</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="o">&lt;</span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="o">&gt;&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">48</span>
+</code></pre>
+<p>We tested runtime performance on two machines, one with a 2023 Apple M2 CPU, one
+with a 2023 Intel Xeon Platinum 8481C server CPU, both with stable Rust 1.80.1.
+Since one of our competitors (aHash) is reliant on AES-based instructions for
+optimal performance we have included both a benchmark with and without
+<code>-C target-cpu=native</code> for the Intel machine.</p>
+<p>We tested across a wide variety of data types we consider representative of
+types / distributions one might hash in the real world, in the context of a hash
+table key:</p>
+<ul>
+<li><code>u32</code> - random 32-bit unsigned integers,</li>
+<li><code>u32pair</code> - pairs of random 32-bit unsigned integers,</li>
+<li><code>u64</code> - random 64-bit unsigned integers,</li>
+<li><code>u64pair</code> - pairs of random 64-bit unsigned integers,</li>
+<li><code>u64lobits</code> - 64-bit unsigned integers where only the bottom 16 bits vary,</li>
+<li><code>u64hibits</code> - 64-bit unsigned integers where only the top 16 bits vary,</li>
+<li><code>ipv4</code> - <a href="https://doc.rust-lang.org/std/net/struct.Ipv4Addr.html"><code>std::net::Ipv4Addr</code></a>, which is equivalent to <code>[u8; 4]</code>,</li>
+<li><code>ipv6</code> - <a href="https://doc.rust-lang.org/std/net/struct.Ipv6Addr.html"><code>std::net::Ipv6Addr</code></a>, which is equivalent to <code>[u8; 16]</code>,</li>
+<li><code>rgba</code> - random <code>(u8, u8, u8, u8)</code> tuples,</li>
+<li><code>strenglishword</code> - strings containing words sampled uniformly from the top 10,000 most common English words,</li>
+<li><code>struuid</code> - random UUIDs, hashed in string representation,</li>
+<li><code>strurl</code> - strings containing URLs sampled uniformly from a corpus of 10,000 URLs,</li>
+<li><code>strdate</code> - random <code>YYYY-MM-DD</code> date strings,</li>
+<li><code>accesslog</code> - <code>(u128, u32, chrono::NaiveDate, bool)</code>, meant to simulate a typical
+larger compound type, in this case <code>(resource_id, user_id, date, success)</code>
+for an access log.</li>
+<li><code>kilobyte</code> - random bytestrings one kilobyte in length,</li>
+<li><code>tenkilobyte</code> - random bytestrings ten kilobytes in length.</li>
+</ul>
+<p>We tested the performance of hashing the above data types in the following four contexts:</p>
+<ul>
+<li><code>hashonly</code> - only the time it takes to hash the value,</li>
+<li><code>lookupmiss</code> - the time it takes to do a lookup in a 1,000 element hash map
+of random elements, only sampling keys of which we know that are not in the hash map,</li>
+<li><code>lookuphit</code> - similar to <code>lookupmiss</code>, except the keys are sampled from keys
+known to be in the hash map,</li>
+<li><code>setbuild</code> - the time it takes to construct a <code>HashSet</code> of 1,000 elements
+from 1,000 randomly sampled elements each repeated 10 times (so 10,000 inserts,
+with ~90% duplicates).</li>
+</ul>
+<p>All times are reported as expected time per operation, so one hash, one lookup,
+or one insert respectively. The full results <a href="https://gist.github.com/orlp/1271ad5b8b775c651cc55773888858eb">can be found
+here</a>. To
+summarize, we will only show the results for <code>u64</code> and <code>strenglishword</code> here, as
+well as the observed geometric mean and average rank over the full benchmark.</p>
+<pre><code>Xeon 8481c
+
+┌────────────────┬────────────┬────────────┬────────────┬─────────┬─────────┬─────────┐
+│              avg_rank       ┆       1.58 ┆       2.66 ┆    2.09 ┆    3.70 ┆    4.97 │
+│        geometric_mean       ┆       6.21 ┆       7.01 ┆    7.56 ┆    8.74 ┆   28.70 │
+╞════════════════╪════════════╪════════════╪════════════╪═════════╪═════════╪═════════╡
+│          distr ┆      bench ┆ foldhash-f ┆ foldhash-q ┆  fxhash ┆   ahash ┆ siphash │
+╞════════════════╪════════════╪════════════╪════════════╪═════════╪═════════╪═════════╡
+│            u64 ┆   hashonly ┆       0.79 ┆       1.03 ┆    0.67 ┆    1.23 ┆    9.09 │
+│            u64 ┆ lookupmiss ┆       2.01 ┆       2.44 ┆    1.73 ┆    2.73 ┆   12.03 │
+│            u64 ┆  lookuphit ┆       3.04 ┆       3.59 ┆    2.64 ┆    3.84 ┆   12.65 │
+│            u64 ┆   setbuild ┆       6.13 ┆       6.52 ┆    4.88 ┆    6.66 ┆   17.80 │
+|            ... ┆        ... ┆        ... ┆        ... ┆     ... ┆     ... ┆     ... |
+│ strenglishword ┆   hashonly ┆       2.63 ┆       2.98 ┆    3.24 ┆    3.57 ┆   11.87 │
+│ strenglishword ┆ lookupmiss ┆       4.63 ┆       5.03 ┆    4.51 ┆    5.86 ┆   15.19 │
+│ strenglishword ┆  lookuphit ┆       8.62 ┆       9.25 ┆    8.28 ┆   10.06 ┆   21.35 │
+│ strenglishword ┆   setbuild ┆      14.77 ┆      15.57 ┆   18.86 ┆   15.72 ┆   35.36 │
+└────────────────┴────────────┴────────────┴────────────┴─────────┴─────────┴─────────┘
+
+Xeon 8481c with RUSTFLAGS="-C target-cpu=native"
+
+┌────────────────┬────────────┬────────────┬────────────┬─────────┬─────────┬─────────┐
+│              avg_rank       ┆       1.89 ┆       3.12 ┆    2.25 ┆    2.77 ┆    4.97 │ 
+│        geometric_mean       ┆       6.00 ┆       6.82 ┆    7.39 ┆    6.94 ┆   29.49 │ 
+╞════════════════╪════════════╪════════════╪════════════╪═════════╪═════════╪═════════╡
+│          distr ┆      bench ┆ foldhash-f ┆ foldhash-q ┆  fxhash ┆   ahash ┆ siphash │
+╞════════════════╪════════════╪════════════╪════════════╪═════════╪═════════╪═════════╡
+│            u64 ┆   hashonly ┆       0.79 ┆       1.01 ┆    0.67 ┆    1.34 ┆    9.24 │
+│            u64 ┆ lookupmiss ┆       1.68 ┆       2.12 ┆    1.62 ┆    1.96 ┆   12.04 │
+│            u64 ┆  lookuphit ┆       2.68 ┆       3.19 ┆    2.28 ┆    3.16 ┆   13.09 │
+│            u64 ┆   setbuild ┆       6.16 ┆       6.42 ┆    4.75 ┆    7.03 ┆   18.88 │
+|            ... ┆        ... ┆        ... ┆        ... ┆     ... ┆     ... ┆     ... |
+│ strenglishword ┆   hashonly ┆       2.60 ┆       2.97 ┆    3.25 ┆    3.04 ┆   11.58 │
+│ strenglishword ┆ lookupmiss ┆       4.41 ┆       4.96 ┆    4.82 ┆    4.79 ┆   32.31 │
+│ strenglishword ┆  lookuphit ┆       8.68 ┆       9.35 ┆    8.46 ┆    8.63 ┆   21.48 │
+│ strenglishword ┆   setbuild ┆      15.01 ┆      16.34 ┆   19.34 ┆   15.37 ┆   35.22 │
+└────────────────┴────────────┴────────────┴────────────┴─────────┴─────────┴─────────┘
+
+Apple M2
+
+┌────────────────┬────────────┬────────────┬────────────┬─────────┬─────────┬─────────┐
+│              avg_rank       ┆       1.62 ┆       2.81 ┆    2.02 ┆    3.58 ┆    4.97 │
+│        geometric_mean       ┆       4.41 ┆       4.86 ┆    5.39 ┆    5.71 ┆   21.94 │
+╞════════════════╪════════════╪════════════╪════════════╪═════════╪═════════╪═════════╡
+│          distr ┆      bench ┆ foldhash-f ┆ foldhash-q ┆  fxhash ┆   ahash ┆ siphash │
+╞════════════════╪════════════╪════════════╪════════════╪═════════╪═════════╪═════════╡
+│            u64 ┆   hashonly ┆       0.60 ┆       0.70 ┆    0.41 ┆    0.78 ┆    6.61 │
+│            u64 ┆ lookupmiss ┆       1.50 ┆       1.61 ┆    1.23 ┆    1.65 ┆    8.28 │
+│            u64 ┆  lookuphit ┆       1.78 ┆       2.10 ┆    1.57 ┆    2.25 ┆    8.53 │
+│            u64 ┆   setbuild ┆       4.74 ┆       5.19 ┆    3.61 ┆    5.38 ┆   15.36 │
+|            ... ┆        ... ┆        ... ┆        ... ┆     ... ┆     ... ┆     ... |
+│ strenglishword ┆   hashonly ┆       1.84 ┆       2.13 ┆    1.85 ┆    2.13 ┆   11.61 │
+│ strenglishword ┆ lookupmiss ┆       2.71 ┆       2.96 ┆    2.47 ┆    2.99 ┆    9.27 │
+│ strenglishword ┆  lookuphit ┆       7.54 ┆       8.77 ┆    7.83 ┆    8.77 ┆   18.65 │
+│ strenglishword ┆   setbuild ┆      16.61 ┆      17.09 ┆   14.83 ┆   16.52 ┆   26.42 │
+└────────────────┴────────────┴────────────┴────────────┴─────────┴─────────┴─────────┘
+</code></pre>
+<p>We note from the above benchmark that for hash table performance the extra
+quality that <code>foldhash-q</code> provides is almost never actually worth the small but
+also non-negligible computational overhead it has over <code>foldhash-f</code>. This is our
+justification for providing <code>foldhash::fast</code> as a default choice for hash
+tables, even though it has measurable biases (see also the &quot;Quality&quot; section).</p>
+<p>fxhash generally does fairly well for small inputs on the benchmarks, however it
+has structural weaknesses as a hash which makes it ill-advised to use as a
+general-purpose hash function in our opinion. For example the <code>lookuphit</code>
+benchmark on Apple M2 for <code>u64hibits</code> takes 1.77 nanoseconds per lookup for
+foldhash, but 67.72 nanoseconds for fxhash (due to everything colliding - the
+effects would be even worse with a larger hash map). In our opinion foldhash-f
+strikes the right balance between quality and performance for hash tables,
+whereas fxhash flies a bit too close to the sun.</p>
+<p>aHash is faster than foldhash for medium-long strings when compiled with
+AES instruction support, but is slower in almost every other scenario or when
+AES instructions are unavailable.</p>
+<h4>Quality</h4>
+<p>Foldhash-f is a fairly strong hash in terms of collisions <em>on its full 64-bit
+output</em>. However, statistical tests such as
+<a href="https://gitlab.com/fwojcik/smhasher3">SMHasher3</a> can distinguish it from an ideal
+hash function in tests that focus on the relationship between individual
+input/output bits. One such property is avalanching: changing a single bit in
+the input does not flip every other bit with 50% probability when using
+foldhash-f like it should if it behaved like a proper random oracle.</p>
+<p>As the benchmarks above show, spending more effort in foldhash-f to improve the
+hash quality does not lead to better hash table performance. However, there are
+also use cases for hash functions where it is important that (each bit of) the
+hash is unbiased and a random function of all bits of the input, such as in
+algorithms as HyperLogLog or MinHash.</p>
+<p>For this purpose we also provide foldhash-q, which is simply a post-processed
+version of foldhash-f to properly avalanche all the bits. Foldhash-q passes the
+<a href="https://gitlab.com/fwojcik/smhasher3">SMHasher3</a> test suite <a href="https://github.com/orlp/foldhash_smhasher3">without any
+failures</a>. You can also plot the
+worst-case probability (where 50% is ideal) that any particular output bit flips
+if you flip an input bit, which nicely visualizes how fxhash and foldhash-f
+fail this avalanche property but foldhash-q and SipHash-1-3 pass:</p>
+<table>
+<thead>
+<tr>
+<th>FxHash</th>
+<th>Foldhash-f</th>
+<th>Foldhash-q</th>
+<th>SipHash-1-3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&lt;img src=&quot;assets/avalanche-fxhash.png&quot; width=300&gt;</td>
+<td>&lt;img src=&quot;assets/avalanche-foldhash-fast.png&quot; width=300&gt;</td>
+<td>&lt;img src=&quot;assets/avalanche-foldhash-quality.png&quot; width=300&gt;</td>
+<td>&lt;img src=&quot;assets/avalanche-siphash.png&quot; width=300&gt;</td>
+</tr>
+</tbody>
+</table>
+<h4>Background</h4>
+<p>The name foldhash is derived from the <em>folded multiply</em>. This technique
+compresses two 64-bit words into a single 64-bit word while simultaneously
+thoroughly mixing the bits. It does this using a 64 x 64 bit -&gt; 128 bit
+multiplication followed by folding the two halves of the 128-bit product
+together using a XOR operation:</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">full</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u128</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">y</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u128</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">lo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">full</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u64</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">hi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">full</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="mi">64</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u64</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">folded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lo</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="n">hi</span><span class="p">;</span>
+</code></pre>
+<p>We're not aware of a formal analysis of this operation, but empirically it works
+very well. An informal intuition for why it should work is that multiplication
+can be seen as the sum of many shifted copies of one of the arguments, only
+including those shifted copies where the other argument has set bits, e.g. for
+multiplying 4-bit words <code>abcd</code> and <code>efgh</code>:</p>
+<pre><code>abcd * efgh =
+
+  abcd    * e
+   abcd   * f
+    abcd  * g
+     abcd * h
+--------------- +
+</code></pre>
+<p>Note that the middle bits of the product are a function of many of the input
+bits, whereas the top-most and bottom-most bits are impacted by fewer of the
+input bits. By folding the top half back onto the bottom half these effects
+compensate each other, making all the output bits affected by much of the input.</p>
+<p>We did not invent the folded multiply, it was previously used in essentially the
+same way in <a href="https://github.com/tkaitchuck/aHash">aHash</a>,
+<a href="https://github.com/wangyi-fudan/wyhash">wyhash</a>, and
+<a href="https://github.com/Cyan4973/xxHash">xxhash3</a>. The operation was also used
+in <a href="https://github.com/vnmakarov/mum-hash">mum-hash</a>, and probably others.
+We do not know who originally invented it, the earliest reference
+we could find was Steven Fuerst <a href="https://web.archive.org/web/20121213174842/http://locklessinc.com/articles/crypto_hash/">blogging about it</a>
+in 2012.</p>
+<h4>HashDoS resistance</h4>
+<p>The folded multiply has a fairly glaring flaw: if one of the halves is zero, the
+output is zero. This makes it trivial to create a large number of hash
+collisions (even by accident, as zeroes are a common input to hashes). To combat
+this, every folded multiply in foldhash has the following form:</p>
+<pre><code class="syntax-highlight language-rust"><span class="n">folded_multiply</span><span class="p">(</span><span class="n">input1</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="n">secret1</span><span class="p">,</span><span class="w"> </span><span class="n">input2</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="n">secret2</span><span class="p">)</span>
+</code></pre>
+<p>Here <code>secret1</code> or <code>secret2</code> are either secret random numbers generated by
+foldhash beforehand, or partial hash results influenced by such a secret prior.
+This (plus other careful design throughout the hash function) ensures that it is
+not possible to create a list of inputs that collide for every instance of
+foldhash, and also prevents certain access patterns on hash tables going
+quadratric by ensuring that each hash table uses a different seed and thus a
+different access pattern. It is these two properties that we refer to when we
+claim foldhash is &quot;minimally DoS-resistant&quot;: it does the bare minimum to defeat
+very simple attacks.</p>
+<p>However, to be crystal clear, <strong>foldhash does not claim to provide HashDoS
+resistance against interactive attackers</strong>. For a student of cryptography it
+should be trivial to derive the secret values from direct observation of hash
+outputs, and feasible to derive the secret values from indirect observation of
+hashes, such as through timing attacks or hash table iteration. Once an attacker
+knows the secret values, they can once again create infinite hash collisions
+with ease.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p>No dependencies declared.</p></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/fastbloom/versions/0.17.0/">crates-io/fastbloom 0.17.0</a><span>Requires ^0.2.0 · alias foldhash · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.17.1/">crates-io/hashbrown 0.17.1</a><span>Requires ^0.2.0 · alias foldhash · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.17.0/">crates-io/hashbrown 0.17.0</a><span>Requires ^0.2.0 · alias foldhash · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.16.1/">crates-io/hashbrown 0.16.1</a><span>Requires ^0.2.0 · alias foldhash · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.15.5/">crates-io/hashbrown 0.15.5</a><span>Requires ^0.1.2 · alias foldhash · </span></li><li><a href="../../../../../packages/crates-io/toml/versions/1.1.6+spec-1.1.0/">crates-io/toml 1.1.6+spec-1.1.0</a><span>Requires ^0.2.0 · alias foldhash · </span></li><li><a href="../../../../../packages/crates-io/toml/versions/0.9.12+spec-1.1.0/">crates-io/toml 0.9.12+spec-1.1.0</a><span>Requires ^0.2.0 · alias foldhash · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:024618650d1b997e826befc34969293ae2e022ff3cd5bed54656585a0df08e3f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:7cc86d6bc848c0d3d8ff0de1dafb1de8a253b83a310b40110dd3c093387916e3</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7db6d2bae03acfa042a6d99020218c35c85fa9e4849cc6ad1dccaf5cefd0062f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:6a3de9b055a9f3443979786f2f162f4293aa1291f8e37e604af4b17936e264ae</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:c595e6111e9d3046c9fce1dd4a8fe5366a3c742c8a7d58e7c343d2dc8d4298c8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:894e5d28eb513f2d9868c00c2d4d84f0178a8535fa4afae4a76261820bfe1dd2</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8b435bd09d0f5170758f56f7f21838bd7e65ea260d7f4baaad293a963b6ca07d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:f537c6cc915b68e6ff7fa19c296b2304c3429a579296e47156189b159ec0e28e</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td></td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/foldhash/versions/0.2.0/">0.2.0</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/foldhash/0.2.0">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/foldhash/versions/0.1.5/">0.1.5</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/foldhash/0.1.5">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Zlib</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2024 Orson Peters
+
+This software is provided 'as-is', without any express or implied warranty. In
+no event will the authors be held liable for any damages arising from the use of
+this software.
+
+Permission is granted to anyone to use this software for any purpose, including
+commercial applications, and to alter it and redistribute it freely, subject to
+the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not claim
+    that you wrote the original software. If you use this software in a product,
+    an acknowledgment in the product documentation would be appreciated but is
+    not required.
+
+2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source distribution.</code></pre></div><p class="table-note">sha256:b1181a40b2a7b25cf66fd01481713bc1005df082c53ef73e851e55071b102744</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:0a7dd6e4c4961d11cb618e8bee630d5d3a26bcf32274e7cf04a874609e9ed5c1</code></dd><dt>Upstream checksum</dt><dd><code>sha256:d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/foldhash&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1.5&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;foldhash&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Orson Peters &lt;orsonpeters@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.60</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/foldhash/0.1.5">crates.io package</a></li><li><a href="https://github.com/orlp/foldhash">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">foldhash</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/foldhash"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.1.5"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

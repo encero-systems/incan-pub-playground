@@ -1,0 +1,553 @@
+"""Registry-backed static publication. All package selection and projection is authored in Incan."""
+from std.fs import Path
+from std.json import JsonValue
+from host import read, json, mkdir, run, write_json
+from values import field, text, array, entries
+from features import feature_paths, activated_dependencies
+
+
+def get(item: JsonValue, key: str) -> str:
+    match item.get(key):
+        Some(value) =>
+            match value.as_str():
+                Some(string) => return string
+                None => pass
+        None => pass
+    return ""
+
+
+def items(item: JsonValue, key: str) -> Result[list[JsonValue], str]:
+    return array(field(item, key)?)
+
+
+def esc(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;")
+
+
+def checked(s: str) -> Result[str, str]:
+    if len(s) == 0 or s == "." or s == "..":
+        return Err("empty or escaping path component")
+    for c in s:
+        if not "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.+".contains(c):
+            return Err("unsafe path component: " + s)
+    return Ok(s)
+
+
+def identity(id: str) -> Result[str, str]:
+    parts = id.split("/")
+    if len(parts) != 2:
+        return Err("expected scoped package identity")
+    checked(parts[0])?
+    checked(parts[1])?
+    return Ok(id)
+
+
+def write(path: str, body: str) -> Result[None, str]:
+    match Path(path).write_text(body, "utf-8", "strict", None):
+        Ok(_) => return Ok(None)
+        Err(error) => return Err(error.message())
+
+
+def joined(values: JsonValue) -> Result[str, str]:
+    mut out: list[str] = []
+    for value in array(values)?:
+        out.append(text(value)?)
+    return Ok(", ".join(out))
+
+
+def link(url: str, label: str) -> str:
+    if url.startswith("https://"):
+        return "<a href=\"" + esc(url) + "\">" + esc(label) + "</a>"
+    return esc(label)
+
+
+def expand(template: str, values: Dict[str, str]) -> Result[str, str]:
+    chunks = template.split("{{")
+    mut out = chunks[0]
+    for chunk in chunks[1:]:
+        parts = chunk.split("}}")
+        if len(parts) < 2 or not (parts[0] in values):
+            return Err("unknown registry template token: " + parts[0])
+        out += values[parts[0]] + "}}".join(parts[1:])
+    return Ok(out)
+
+
+pub def snapshot(source: str, destination: str) -> Result[None, str]:
+    if len(run("git", ["-C", source, "status", "--porcelain"])?.strip()) > 0:
+        return Err("snapshot requires a clean registry index checkout")
+    pin = run("git", ["-C", source, "rev-parse", "HEAD"])?.strip()
+    catalog = json(read(source + "/catalog/index.json")?)?
+    if get(catalog, "schema") != "incan.pub/catalog/1":
+        return Err("unsupported catalog schema")
+    mkdir(destination + "/catalog/crates-io")?
+    mkdir(destination + "/content/sha256")?
+    mkdir(destination + "/manifests")?
+    mut copied: Dict[str, bool] = {}
+    mut jobs: Dict[str, JsonValue] = {}
+    mut seen: list[str] = []
+    for summary in items(catalog, "packages")?:
+        id = identity(get(summary, "name"))?
+        if seen.contains(id):
+            return Err("duplicate package " + id)
+        seen.append(id)
+        if not id.startswith("crates-io/"):
+            return Err("unsupported registry facet; a producer contract is required for " + id)
+        mut path = "catalog/" + id + ".json"
+        if get(summary, "page") != path:
+            return Err("unexpected package feed path")
+        package = json(read(source + "/" + path)?)?
+        if get(package, "schema") != "incan.pub/catalog-package/1" or get(package, "name") != id:
+            return Err("package schema or identity mismatch")
+        mut versions: list[str] = []
+        for version in items(package, "versions")?:
+            number = checked(get(version, "version"))?
+            if versions.contains(number):
+                return Err("duplicate package version")
+            versions.append(number)
+            manifest = id + "/" + number + "/loaf.toml"
+            if get(version, "manifest") != manifest:
+                return Err("unexpected manifest path")
+            mkdir(destination + "/manifests/" + id + "/" + number)?
+            write(destination + "/manifests/" + manifest, read(source + "/" + manifest)?)?
+            for document in items(version, "documents")?:
+                digest = get(document, "digest")
+                if not digest.startswith("sha256:") or len(digest) != 71:
+                    return Err("invalid document digest")
+                hex = digest[7:]
+                for c in hex:
+                    if not "0123456789abcdef".contains(c):
+                        return Err("invalid digest hex")
+                content = "content/sha256/" + hex
+                if get(document, "content") != content:
+                    return Err("unexpected content path")
+                if not (content in copied):
+                    match Path(source + "/" + content).read_bytes():
+                        Err(error) => return Err(error.message())
+                        Ok(data) =>
+                            match Path(destination + "/" + content).write_bytes(data):
+                                Err(error) => return Err(error.message())
+                                Ok(_) => pass
+                    copied[content] = true
+                # Hash and byte checks are also enforced by the pinned formatting boundary before publication.
+                jobs[digest + ":" + get(document, "format")] = document
+        if not versions.contains(get(summary, "latest")):
+            return Err("selected version is absent")
+        write(destination + "/" + path, read(source + "/" + path)?)?
+    write(destination + "/catalog/index.json", read(source + "/catalog/index.json")?)?
+    write_json(destination + "/documents.json", JsonValue.object(jobs))?
+    write_json(destination + "/snapshot.json", JsonValue.object({
+        "schema": JsonValue.string("incan.pub/site-snapshot/1"), "index": JsonValue.string(pin),
+        "counts": field(catalog, "counts")?, "log": field(catalog, "log")?,
+    }))?
+    println("Pinned " + str(len(seen)) + " packages at " + pin)
+    return Ok(None)
+
+
+def section(id: str, title: str, label: str, body: str) -> str:
+    return "<section id=\"" + id + "\"><div class=\"section-heading\"><h2>" + title + "</h2><span class=\"eyebrow\">" + label + "</span></div>" + body + "</section>"
+
+
+def table(headings: list[str], body: str) -> str:
+    mut heads = ""
+    for heading in headings:
+        heads += "<th scope=\"col\">" + heading + "</th>"
+    return "<div class=\"table-scroll\" tabindex=\"0\" role=\"region\" aria-label=\"Package records\"><table><thead><tr>" + heads + "</tr></thead><tbody>" + body + "</tbody></table></div>"
+
+
+def document_html(version: JsonValue, role: str, formatted: str) -> Result[str, str]:
+    mut body = ""
+    about = field(version, "about")?
+    vcs = field(version, "vcs")?
+    mut repository = get(about, "repository")
+    if repository.startswith("https://github.com/") or repository.startswith("https://gitlab.com/"):
+        coordinates = repository.split("/")
+        if len(coordinates) >= 5:
+            repository = "/".join(coordinates[0:5])
+            if repository.endswith(".git"):
+                repository = repository[0:len(repository) - 4]
+    commit = get(vcs, "commit")
+    for document in items(version, "documents")?:
+        if get(document, "role") != role:
+            continue
+        fragment = read(formatted + "/" + get(document, "digest")[7:] + "." + get(document, "format") + ".html")?
+        mut rewritten = ""
+        chunks = fragment.split("href=\"")
+        rewritten = chunks[0]
+        for chunk in chunks[1:]:
+            parts = chunk.split("\"")
+            mut url = parts[0]
+            mut destination = url + ""
+            if not url.contains(":") and not url.startswith("//"):
+                if len(commit) > 0 and (repository.startswith("https://github.com/") or repository.startswith("https://gitlab.com/")):
+                    source_path = get(document, "path")
+                    mut full_path = source_path + ""
+                    if len(get(vcs, "path")) > 0:
+                        full_path = get(vcs, "path") + "/" + source_path
+                    mut directory = get(vcs, "path")
+                    mut path = get(document, "path").split("/")
+                    if len(path) > 1:
+                        if len(directory) > 0:
+                            directory += "/"
+                        directory += "/".join(path[0:len(path) - 1])
+                    if len(directory) > 0:
+                        directory += "/"
+                    destination = repository + "/blob/" + commit + "/" + full_path + url
+                    if not url.startswith("#"):
+                        destination = repository + "/blob/" + commit + "/" + directory + url
+                else:
+                    destination = "https://crates.io/crates/" + get(field(version, "upstream")?, "package") + "/" + get(version, "version")
+            rewritten += "href=\"" + esc(destination) + "\"" + "\"".join(parts[1:])
+        mut origin = "Author-provided"
+        if get(document, "origin") == "registry":
+            origin = "Registry-generated".to_string()
+        mut label = esc(get(document, "path")) + " · " + origin
+        if role == "readme":
+            body += "<p class=\"document-source\">" + label + "</p><div class=\"readme\">" + rewritten + "</div>"
+        else:
+            body += "<details class=\"document-file\"><summary>" + label + "</summary><div class=\"readme\">" + rewritten + "</div><p class=\"table-note\">" + esc(get(document, "digest")) + "</p></details>"
+    return Ok(body)
+
+
+def feature_rows(version: JsonValue) -> Result[str, str]:
+    features = field(version, "features")?
+    paths = feature_paths(features)?
+    mapping = entries(features)?
+    mut keys: list[str] = []
+    for name in mapping.keys():
+        keys.append(name)
+    mut body = ""
+    for name in sorted(keys):
+        mut state = "No"
+        if name in paths:
+            state = "Yes<small>" + esc(paths[name]) + "</small>"
+        mut edges = ""
+        for edge in array(mapping[name])?:
+            edges += "<li><code>" + esc(text(edge)?) + "</code></li>"
+        if len(edges) == 0:
+            edges = "<li class=\"muted\">No additional activation edges declared.</li>".to_string()
+        body += "<tr><th scope=\"row\"><code>" + esc(name) + "</code></th><td>" + state + "</td><td><ul class=\"effects\">" + edges + "</ul></td></tr>"
+    if len(body) == 0:
+        return Ok("<p>No feature declarations recorded.</p>")
+    return Ok("<p class=\"section-intro\">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p>" + table(["Feature", "Default", "Activation edges"], body))
+
+
+def dependency_rows(version: JsonValue, root: str, known: Dict[str, bool]) -> Result[str, str]:
+    features = field(version, "features")?
+    active = activated_dependencies(features, feature_paths(features)?)?
+    mut body = ""
+    for dependency in items(version, "dependencies")?:
+        id = get(dependency, "loaf")
+        mut label = "<code>" + esc(id) + "</code>"
+        if id in known:
+            label = "<a href=\"" + root + "packages/" + esc(id) + "/\">" + label + "</a>"
+        mut state = "Required"
+        match field(dependency, "optional")?.as_bool():
+            Some(true) =>
+                state = "Optional · not enabled by defaults".to_string()
+                if get(dependency, "name") in active:
+                    state = "Enabled through " + active[get(dependency, "name")]
+            _ => pass
+        target = get(dependency, "target")
+        if len(target) > 0:
+            state += " · when " + target
+        requested = joined(field(dependency, "features")?)?
+        mut defaults = "enabled"
+        match field(dependency, "default-features")?.as_bool():
+            Some(false) => defaults = "disabled".to_string()
+            _ => pass
+        body += "<tr><th scope=\"row\">" + label + "<small>Alias: " + esc(get(dependency, "name")) + "</small></th><td><code>" + esc(get(dependency, "req")) + "</code><small>Default features: " + defaults + "</small><small>Requests: " + esc(requested) + "</small></td><td>" + esc(state) + "</td></tr>"
+    if len(body) == 0:
+        return Ok("<p>No dependencies declared.</p>")
+    return Ok("<p class=\"section-intro\">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p>" + table(["Dependency", "Requirement &amp; features", "Activation"], body))
+
+
+def build_rows(version: JsonValue) -> Result[str, str]:
+    mut groups: Dict[str, JsonValue] = {}
+    mut assets: Dict[str, str] = {}
+    for asset in items(version, "assets")?:
+        binding = field(asset, "binding")?
+        key = get(binding, "target") + "|" + get(binding, "toolchain") + "|" + get(binding, "profile") + "|" + joined(field(binding, "features")?)?
+        groups[key] = binding
+        if not (key in assets):
+            assets[key] = ""
+        assets[key] += "<li><code>" + esc(get(asset, "unit_identity")) + "</code> · " + link(get(asset, "attestation"), "Attestation reference") + "<small>Archive: " + esc(get(asset, "archive")) + "</small></li>"
+    mut keys: list[str] = []
+    for key in groups.keys():
+        keys.append(key)
+    mut body = ""
+    for key in sorted(keys):
+        binding = groups[key]
+        body += "<tr><th scope=\"row\"><code>" + esc(get(binding, "target")) + "</code><small>" + esc(get(binding, "profile")) + "</small></th><td>" + esc(get(binding, "toolchain")) + "<small>" + esc(joined(field(binding, "features")?)?) + "</small></td><td><details><summary>Inspect units</summary><ul class=\"unit-list\">" + assets[key] + "</ul></details></td></tr>"
+    mut facts = ""
+    for fact in items(version, "facts")?:
+        facts += "<tr><th scope=\"row\">" + esc(get(fact, "target")) + "</th><td>" + esc(get(fact, "profile")) + "</td><td>" + esc(get(fact, "status")) + "</td><td>" + esc(joined(field(fact, "features")?)?) + "</td></tr>"
+    if len(facts) > 0:
+        facts = "<details class=\"document-file\"><summary>Recorded build-fact bindings</summary>" + table(["Target", "Profile", "Status", "Features"], facts) + "</details>"
+    if len(body) == 0:
+        return Ok("<p class=\"notice\">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p>" + facts)
+    return Ok("<p class=\"section-intro\">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p>" + table(["Target / profile", "Toolchain / features", "Evidence"], body) + facts)
+
+
+def popularity(id: str, root: str, contexts: JsonValue) -> Result[str, str]:
+    if not contexts.contains_key(id[10:]):
+        return Ok("<p class=\"muted\">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p>")
+    context = field(contexts, id[10:])?
+    mut body = "<p class=\"section-intro\">Historical observations across all versions, not unique users or installs. Statistics refresh independently of the index.</p>"
+    for source in ["popularity", "registry"]:
+        stat = field(context, source)?
+        mut kind = "upstream"
+        mut label = "crates.io · upstream"
+        mut metric = "periodTotal"
+        mut caption = "30 complete UTC days · all versions"
+        if source == "registry":
+            kind = "registry".to_string()
+            label = "Incan registry · GitHub Packages".to_string()
+            metric = "total".to_string()
+            caption = "All-time pulls · all build tags".to_string()
+        mut total = ""
+        match field(stat, metric)?.as_int():
+            Some(number) => total = str(number)
+            None => return Err("invalid download count")
+        mut daily = ""
+        for day in items(stat, "daily")?:
+            daily += "<tr><th scope=\"row\">" + esc(get(day, "date")) + "</th><td>" + int_text(field(day, "downloads")?) + "</td></tr>"
+        body += "<details class=\"document-file\"><summary>Daily values · " + label + "</summary>" + table(["UTC date", "Downloads"], daily) + "</details>"
+        if source == "registry":
+            body += "<p class=\"table-note\">The last registry day is a partial UTC day.</p>"
+        body += "<div class=\"chart-block\"><h3>" + label + "</h3><strong class=\"download-total\">" + total + "</strong><p>" + caption + "</p><img class=\"large-chart\" src=\"" + root + "assets/site/charts/" + esc(id) + "/" + kind + "-detail.png\" alt=\"Recorded daily downloads\"><p class=\"table-note\">Captured " + esc(get(stat, "capturedAt")) + " · " + link(get(stat, "source"), "Source") + "</p></div>"
+    return Ok(body)
+
+
+def package_page(package: JsonValue, version: JsonValue, latest: str, root: str, pin: str, directory: str, formatted: str, known: Dict[str, bool], reverse: Dict[str, str], contexts: JsonValue, template: str, header: str, footer: str) -> Result[str, str]:
+    id = get(package, "name")
+    name = id.split("/")[1]
+    number = get(version, "version")
+    about = field(version, "about")?
+    mut versions = ""
+    mut releases = ""
+    for choice in items(package, "versions")?:
+        v = get(choice, "version")
+        mut url = root + "packages/" + id + "/versions/" + v + "/"
+        mut selected = ""
+        if v == number:
+            selected = " selected".to_string()
+        versions += "<option value=\"" + esc(url) + "\"" + selected + ">" + esc(v) + "</option>"
+        releases += "<tr><th scope=\"row\"><a href=\"" + esc(url) + "\">" + esc(v) + "</a></th><td>" + esc(get(choice, "adopted")[0:10]) + "</td><td>" + link("https://crates.io/crates/" + name + "/" + v, "Upstream record") + "</td></tr>"
+    readme = document_html(version, "readme", formatted)?
+    licenses = document_html(version, "license", formatted)? + document_html(version, "license-notice", formatted)?
+    mut changelog = document_html(version, "changelog", formatted)?
+    if len(changelog) == 0:
+        changelog = "<p class=\"muted\">No changelog document is recorded for this version.</p>".to_string()
+    mut main = section("readme", "README", "Recorded documentation", "<p class=\"section-intro\">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p>" + readme)
+    main += section("features", "Features", "Declared activation", feature_rows(version)?)
+    main += section("dependencies", "Dependencies", "Version requirements", dependency_rows(version, root, known)?)
+    mut related = "<p>No declared dependents in this checkpoint.</p>"
+    if id in reverse:
+        related = "<ul class=\"relation-list\">" + reverse[id].replace("{{root}}", root) + "</ul>"
+    main += section("dependents", "Dependents", "Whole index", "<p class=\"section-intro\">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p>" + related)
+    main += section("builds", "Indexed builds", "Bound assets", build_rows(version)?)
+    main += section("releases", "Versions &amp; release notes", "Indexed versions", "<p class=\"section-intro\">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p>" + table(["Version", "Adopted", "Upstream"], releases) + changelog)
+    main += section("licenses", "License documents", "Recorded files", "<p>Declared license: <strong>" + esc(get(about, "license")) + "</strong></p>" + licenses)
+    main += section("popularity", "Popularity", "Separate observations", popularity(id, root, contexts)?)
+    main += section("security", "Security", "Coverage", "<p>Yanked: " + text_bool(field(version, "yanked")?) + ". Registry advisory records: " + int_text(field(version, "advisories")?) + ".</p><p class=\"notice\">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p>")
+    upstream = field(version, "upstream")?
+    mut provenance = "<dl class=\"provenance\"><dt>Index checkpoint</dt><dd>" + link("https://github.com/encero-systems/incan.pub/tree/" + pin, pin) + "</dd><dt>Source Loaf</dt><dd><code>" + esc(get(version, "archive")) + "</code></dd><dt>Upstream checksum</dt><dd><code>" + esc(get(upstream, "checksum")) + "</code></dd><dt>Adopted by</dt><dd>" + esc(get(field(version, "registry")?, "adopter")) + "</dd></dl>"
+    manifest = read(directory + "/manifests/" + get(version, "manifest"))?
+    provenance += "<details><summary>Recorded loaf.toml</summary>" + read(formatted + "/manifests/" + id + "/" + number + ".html")? + "</details>"
+    main += section("provenance", "Provenance", "Pinned evidence", provenance)
+    labels: Dict[str, str] = {"readme": "README", "features": "Features", "dependencies": "Dependencies", "dependents": "Dependents", "builds": "Indexed builds", "releases": "Versions &amp; notes", "licenses": "Licenses", "popularity": "Popularity", "security": "Security", "provenance": "Provenance"}
+    mut nav = ""
+    for key in ["readme", "features", "dependencies", "dependents", "builds", "releases", "licenses", "popularity", "security", "provenance"]:
+        nav += "<a href=\"#" + key + "\">" + labels[key] + "</a>"
+    mut authors = joined(field(about, "authors")?)?
+    if len(authors) == 0:
+        authors = "Not declared".to_string()
+    mut metadata = "<div class=\"metadata-block\"><h2>Metadata</h2><dl><dt>Authors</dt><dd>" + esc(authors) + "</dd><dt>Adopted</dt><dd>" + esc(get(version, "adopted")[0:10]) + "</dd><dt>Minimum Rust</dt><dd>" + esc(get(about, "rust-version")) + "</dd></dl><h3 class=\"metadata-label\">Links</h3><ul class=\"source-links\"><li>" + link("https://crates.io/crates/" + name + "/" + number, "crates.io package") + "</li><li>" + link(get(about, "repository"), "Source repository") + "</li><li>" + link(get(about, "documentation"), "Documentation") + "</li></ul></div>"
+    if contexts.contains_key(name):
+        context = field(contexts, name)?
+        metadata += "<div class=\"metadata-block mini-popularity\"><h2>Downloads</h2>"
+        for source in ["popularity", "registry"]:
+            stat = field(context, source)?
+            mut kind = "upstream"
+            mut metric = "periodTotal"
+            mut label = "crates.io · 30 complete days"
+            if source == "registry":
+                kind = "registry".to_string()
+                metric = "total".to_string()
+                label = "Registry · all-time pulls".to_string()
+            metadata += "<a class=\"mini-chart\" href=\"#popularity\"><span>" + label + "</span><strong>" + int_text(field(stat, metric)?) + "</strong><img src=\"" + root + "assets/site/charts/" + esc(id) + "/" + kind + ".png\" alt=\"Recorded download trend\"><small>Captured " + esc(get(stat, "capturedAt")[0:10]) + "</small></a>"
+        metadata += "</div>"
+    metadata += "<div class=\"metadata-block\"><h2>Indexed platforms</h2>"
+    mut targets: list[str] = []
+    for asset in items(version, "assets")?:
+        target = get(field(asset, "binding")?, "target")
+        if not targets.contains(target):
+            targets.append(target)
+    for platform in ["apple", "linux", "windows"]:
+        mut state = "No indexed build"
+        for target in targets:
+            if target.contains(platform):
+                state = "Indexed".to_string()
+        metadata += "<a class=\"platform\" href=\"#builds\"><img src=\"" + root + "assets/platform-" + platform + ".svg\" alt=\"\"><span>" + platform.replace("apple", "macOS").replace("linux", "Linux").replace("windows", "Windows") + "<small>" + state + "</small></span></a>"
+    metadata += "</div><button class=\"text-button\" data-open=\"footer-reporting-dialog\">Report abuse</button>"
+    mut warning = ""
+    if number != latest:
+        warning = "<p class=\"version-warning\">Viewing an older indexed version. <a href=\"" + root + "packages/" + esc(id) + "/\">View latest indexed version " + esc(latest) + " →</a></p>"
+    return expand(template, {"root": root, "header": header.replace("{{root}}", root).replace("{{current}}", ""), "footer": footer.replace("{{root}}", root), "name": esc(name), "id": esc(id), "version": esc(number), "versions": versions, "description": esc(get(about, "description")), "license": esc(get(about, "license")), "main": main, "nav": nav, "metadata": metadata, "warning": warning})
+
+
+def int_text(value: JsonValue) -> str:
+    match value.as_int():
+        Some(number) => return str(number)
+        None => return "Unavailable"
+
+
+def text_bool(value: JsonValue) -> str:
+    match value.as_bool():
+        Some(true) => return "Yes"
+        _ => return "No"
+
+
+pub def build(directory: str, output: str, templates: str) -> Result[None, str]:
+    catalog = json(read(directory + "/catalog/index.json")?)?
+    checkpoint = json(read(directory + "/snapshot.json")?)?
+    pin = get(checkpoint, "index")
+    println(run("node", ["tools/site/format-documents.mjs", directory, "tools/site/target/formatted-documents"])?)
+    formatted = "tools/site/target/formatted-documents"
+    contexts = json(read("assets/package-context.json")?)?
+    header = read(templates + "/header.html")?
+    footer = read(templates + "/footer.html")?.replace("Public design playground · six-package snapshot", "Registry snapshot · " + int_text(field(field(catalog, "counts")?, "packages")?) + " packages")
+    template = read(templates + "/registry-package.html")?
+    mut known: Dict[str, bool] = {}
+    mut summaries: list[JsonValue] = []
+    mut packages: list[JsonValue] = []
+    mut reverse: Dict[str, str] = {}
+    for summary in items(catalog, "packages")?:
+        id = identity(get(summary, "name"))?
+        known[id] = true
+        package = json(read(directory + "/catalog/" + id + ".json")?)?
+        packages.append(package)
+        for version in items(package, "versions")?:
+            number = checked(get(version, "version"))?
+            for dependency in items(version, "dependencies")?:
+                target = get(dependency, "loaf")
+                if not (target in reverse):
+                    reverse[target] = ""
+                condition = get(dependency, "target")
+                reverse[target] += "<li><a href=\"{{root}}packages/" + esc(id) + "/versions/" + esc(number) + "/\">" + esc(id) + " " + esc(number) + "</a><span>Requires " + esc(get(dependency, "req")) + " · alias " + esc(get(dependency, "name")) + " · " + esc(condition) + "</span></li>"
+            if number == get(summary, "latest"):
+                mut enriched = entries(summary)?
+                enriched["categories"] = field(version, "categories")?
+                enriched["keywords"] = field(version, "keywords")?
+                enriched["origin"] = JsonValue.string("adopted")
+                enriched["facets"] = JsonValue.array([JsonValue.string("rust")])
+                summaries.append(JsonValue.object(enriched))
+    mkdir(output + "/assets/registry")?
+    write_json(output + "/assets/registry/search.json", JsonValue.array(summaries))?
+    mut page_count = 0
+    for package in packages:
+        id = identity(get(package, "name"))?
+        mut latest = ""
+        for summary in summaries:
+            if get(summary, "name") == id:
+                latest = get(summary, "latest")
+        for version in items(package, "versions")?:
+            number = checked(get(version, "version"))?
+            mut path = output + "/packages/" + id + "/versions/" + number
+            mkdir(path)?
+            html = package_page(package, version, latest, "../../../../../", pin, directory, formatted, known, reverse, contexts, template, header, footer)?
+            write(path + "/index.html", html)?
+            page_count += 1
+            if number == latest:
+                mkdir(output + "/packages/" + id)?
+                # All internal root prefixes come from the renderer, never from authored documentation.
+                write(output + "/packages/" + id + "/index.html", package_page(package, version, latest, "../../../", pin, directory, formatted, known, reverse, contexts, template, header, footer)?)?
+        if page_count % 100 == 0:
+            println("Rendered " + str(page_count) + " indexed versions")
+    catalog_pages(summaries, output, pin, templates, header, footer)?
+    homepage(summaries, contexts, output, templates, header, footer, pin)?
+    println("Rendered " + str(page_count) + " version-specific pages")
+    return Ok(None)
+
+
+def catalog_row(summary: JsonValue, root: str) -> Result[str, str]:
+    id = get(summary, "name")
+    return Ok("<tr><th scope=\"row\"><a class=\"package-link\" href=\"" + root + "packages/" + esc(id) + "/\">" + esc(id.split("/")[1]) + "</a><small>" + esc(id) + "</small></th><td>" + esc(get(summary, "description")) + "</td><td><code>" + esc(get(summary, "latest")) + "</code><small>" + int_text(field(summary, "versions")?) + " indexed versions</small></td><td><span class=\"origin\">Adopted · Rust library</span><small>" + esc(get(summary, "license")) + "</small></td></tr>")
+
+
+def catalog_pages(summaries: list[JsonValue], output: str, pin: str, templates: str, header: str, footer: str) -> Result[None, str]:
+    template = read(templates + "/registry-catalog.html")?
+    mut categories: list[str] = []
+    mut licenses: list[str] = []
+    for summary in summaries:
+        for category in items(summary, "categories")?:
+            name = text(category)?
+            if not categories.contains(name):
+                categories.append(name)
+        expression = get(summary, "license")
+        if not licenses.contains(expression):
+            licenses.append(expression)
+    mut category_options = "<option value=\"\">All categories</option>"
+    for name in sorted(categories):
+        category_options += "<option>" + esc(name) + "</option>"
+    mut license_options = "<option value=\"\">All licenses</option><optgroup label=\"Contains identifier\"><option value=\"id:MIT\">MIT</option><option value=\"id:Apache-2.0\">Apache-2.0</option><option value=\"id:BSD-3-Clause\">BSD-3-Clause</option><option value=\"id:Unlicense\">Unlicense</option></optgroup><optgroup label=\"Exact expression\">"
+    for name in sorted(licenses):
+        license_options += "<option value=\"expression:" + esc(name) + "\">" + esc(name) + "</option>"
+    license_options += "</optgroup>"
+    size = 50
+    total = len(summaries)
+    pages = (total + size - 1) // size
+    for index in range(pages):
+        page_number = index + 1
+        next_number = index + 2
+        first_number = index * size + 1
+        mut root = "../"
+        mut path = output + "/catalog"
+        if index > 0:
+            root = "../../../".to_string()
+            path += "/page/" + str(page_number)
+        mkdir(path)?
+        mut rows = ""
+        for summary in summaries[index * size:min([(index + 1) * size, total])]:
+            rows += catalog_row(summary, root)?
+        mut pagination = ""
+        if index > 0:
+            mut url = root + "catalog/"
+            if index > 1:
+                url += "page/" + str(index) + "/"
+            pagination += "<a data-page=\"previous\" href=\"" + url + "\">← Previous</a>"
+        pagination += "<span>Page " + str(page_number) + " of " + str(pages) + "</span>"
+        if index + 1 < pages:
+            pagination += "<a data-page=\"next\" href=\"" + root + "catalog/page/" + str(next_number) + "/\">Next →</a>"
+        html = expand(template, {"root": root, "header": header.replace("{{root}}", root).replace("{{current}}", " aria-current=\"page\""), "footer": footer.replace("{{root}}", root), "packages": rows, "categories": category_options, "licenses": license_options, "pagination": pagination, "count": str(first_number) + "–" + str(min([(index + 1) * size, total])) + " of " + str(total) + " packages", "pin": esc(pin), "page": str(page_number)})?
+        write(path + "/index.html", html)?
+    return Ok(None)
+
+
+def starter(summary: JsonValue, contexts: JsonValue) -> Result[str, str]:
+    id = get(summary, "name")
+    mut metrics = ""
+    if contexts.contains_key(id[10:]):
+        context = field(contexts, id[10:])?
+        metrics = " data-upstream=\"" + int_text(field(field(context, "popularity")?, "periodTotal")?) + "\" data-registry=\"" + int_text(field(field(context, "registry")?, "total")?) + "\""
+    return Ok("<a class=\"starter-card\"" + metrics + " href=\"packages/" + esc(id) + "/\"><div class=\"starter-title\"><h3>" + esc(id[10:]) + "</h3><span class=\"version\">" + esc(get(summary, "latest")) + "</span></div><p class=\"starter-description\">" + esc(get(summary, "description")) + "</p><dl><dt>Scope</dt><dd>" + esc(id) + "</dd><dt>License</dt><dd>" + esc(get(summary, "license")) + "</dd></dl><p class=\"starter-origin\">Adopted from crates.io</p><span class=\"starter-link\">View package<img src=\"assets/site/icons/arrow-right.svg\" alt=\"\" aria-hidden=\"true\"></span></a>")
+
+
+def homepage(summaries: list[JsonValue], contexts: JsonValue, output: str, templates: str, header: str, footer: str, pin: str) -> Result[None, str]:
+    selected = ["crates-io/memchr", "crates-io/serde", "crates-io/serde_json", "crates-io/regex", "crates-io/tokio", "crates-io/anyhow", "crates-io/clap", "crates-io/reqwest", "crates-io/sqlx", "crates-io/datafusion", "crates-io/tracing", "crates-io/axum", "crates-io/rayon", "crates-io/uuid", "crates-io/chrono"]
+    mut initial = ""
+    mut pool = ""
+    for summary in summaries:
+        if selected.contains(get(summary, "name")):
+            pool += starter(summary, contexts)?
+    for id in ["crates-io/memchr", "crates-io/serde", "crates-io/serde_json"]:
+        for summary in summaries:
+            if get(summary, "name") == id:
+                initial += starter(summary, contexts)?
+    mut template = read(templates + "/home.html")?.replace("{{header}}", header.replace("{{root}}", "./").replace("{{current}}", "")).replace("{{footer}}", footer.replace("{{root}}", "./"))
+    template = template.replace("<section class=\"landing-starters\"", "<section class=\"landing-starters\" data-index-pin=\"" + pin + "\"")
+    parts = template.split("{{packages}}")
+    if len(parts) != 3:
+        return Err("unexpected homepage projection slots")
+    write(output + "/index.html", parts[0] + initial + parts[1] + pool + parts[2])?
+    return Ok(None)

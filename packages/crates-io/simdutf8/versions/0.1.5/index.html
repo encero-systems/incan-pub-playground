@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>simdutf8 0.1.5 · Incan.pub</title><meta name="description" content="SIMD-accelerated UTF-8 validation."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/simdutf8</p><div class="title-row"><h1>simdutf8</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/simdutf8/versions/0.1.5/" selected>0.1.5</option></select></label></div><p class="description">SIMD-accelerated UTF-8 validation.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><p><a href="https://github.com/rusticstuff/simdutf8/actions/workflows/ci.yml">CI</a>
+<a href="https://crates.io/crates/simdutf8">crates.io</a>
+<a href="https://docs.rs/simdutf8">docs.rs</a></p>
+<h3>simdutf8 – High-speed UTF-8 validation</h3>
+<p>Blazingly fast API-compatible UTF-8 validation for Rust using SIMD extensions, based on the implementation from
+<a href="https://github.com/simdjson/simdjson">simdjson</a>. Originally ported to Rust by the developers of <a href="https://simd-json.rs">simd-json.rs</a>, but now heavily improved.</p>
+<h4>Status</h4>
+<p>This library has been thoroughly tested with sample data as well as fuzzing and there are no known bugs.</p>
+<h4>Features</h4>
+<ul>
+<li><code>basic</code> API for the fastest validation, optimized for valid UTF-8</li>
+<li><code>compat</code> API as a fully compatible replacement for <code>std::str::from_utf8()</code></li>
+<li>Supports AVX 2 and SSE 4.2 implementations on x86 and x86-64</li>
+<li>🆕 ARM64 (aarch64) SIMD is supported since Rust 1.61</li>
+<li>🆕 WASM (wasm32) SIMD is supported</li>
+<li>x86-64: Up to 23 times faster than the std library on valid non-ASCII, up to four times faster on ASCII</li>
+<li>aarch64: Up to eleven times faster than the std library on valid non-ASCII, up to four times faster on ASCII (Apple Silicon)</li>
+<li>Faster than the original simdjson implementation</li>
+<li>Selects the fastest implementation at runtime based on CPU support (on x86)</li>
+<li>Falls back to the excellent std implementation if SIMD extensions are not supported</li>
+<li>Written in pure Rust</li>
+<li>No dependencies</li>
+<li>No-std support</li>
+</ul>
+<h4>Quick start</h4>
+<p>Add the dependency to your Cargo.toml file:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">simdutf8</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1.5&quot;</span>
+</code></pre>
+<p>Use <code>simdutf8::basic::from_utf8()</code> as a drop-in replacement for <code>std::str::from_utf8()</code>.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">simdutf8</span><span class="p">::</span><span class="n">basic</span><span class="p">::</span><span class="n">from_utf8</span><span class="p">;</span>
+
+<span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">from_utf8</span><span class="p">(</span><span class="s">b&quot;I </span><span class="se">\xE2\x9D\xA4\xEF\xB8\x8F</span><span class="s"> UTF-8!&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">());</span>
+</code></pre>
+<p>If you need detailed information on validation failures, use <code>simdutf8::compat::from_utf8()</code>
+instead.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">simdutf8</span><span class="p">::</span><span class="n">compat</span><span class="p">::</span><span class="n">from_utf8</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from_utf8</span><span class="p">(</span><span class="s">b&quot;I </span><span class="se">\xE2\x9D\xA4\xEF\xB8</span><span class="s"> UTF-8!&quot;</span><span class="p">).</span><span class="n">unwrap_err</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">err</span><span class="p">.</span><span class="n">valid_up_to</span><span class="p">(),</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">err</span><span class="p">.</span><span class="n">error_len</span><span class="p">(),</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="mi">2</span><span class="p">));</span>
+</code></pre>
+<h4>APIs</h4>
+<h5>Basic flavor</h5>
+<p>Use the <code>basic</code> API flavor for maximum speed. It is fastest on valid UTF-8, but only checks
+for errors after processing the whole byte sequence and does not provide detailed information if the data
+is not valid UTF-8. <code>simdutf8::basic::Utf8Error</code> is a zero-sized error struct.</p>
+<h5>Compat flavor</h5>
+<p>The <code>compat</code> flavor is fully API-compatible with <code>std::str::from_utf8()</code>. In particular, <code>simdutf8::compat::from_utf8()</code>
+returns a <code>simdutf8::compat::Utf8Error</code>, which has <code>valid_up_to()</code> and <code>error_len()</code> methods. The first is useful for
+verification of streamed data. The second is useful e.g. for replacing invalid byte sequences with a replacement character.</p>
+<p>It also fails early: errors are checked on the fly as the string is processed and once
+an invalid UTF-8 sequence is encountered, it returns without processing the rest of the data.
+This comes at a slight performance penalty compared to the <code>basic</code> API even if the input is valid UTF-8.</p>
+<h4>Implementation selection</h4>
+<h5>X86</h5>
+<p>The fastest implementation is selected at runtime using the <code>std::is_x86_feature_detected!</code> macro, unless the CPU
+targeted by the compiler supports the fastest available implementation.
+So if you compile with <code>RUSTFLAGS=&quot;-C target-cpu=native&quot;</code> on a recent x86-64 machine, the AVX 2 implementation is selected at
+compile-time and runtime selection is disabled.</p>
+<p>For no-std support (compiled with <code>--no-default-features</code>) the implementation is always selected at compile time based on
+the targeted CPU. Use <code>RUSTFLAGS=&quot;-C target-feature=+avx2&quot;</code> for the AVX 2 implementation or <code>RUSTFLAGS=&quot;-C target-feature=+sse4.2&quot;</code>
+for the SSE 4.2 implementation.</p>
+<h5>ARM64</h5>
+<p>The SIMD implementation is used automatically since Rust 1.61.</p>
+<h5>WASM32</h5>
+<p>For wasm32 support, the implementation is selected at compile time based on the presence of the <code>simd128</code> target feature.
+Use <code>RUSTFLAGS=&quot;-C target-feature=+simd128&quot;</code> to enable the WASM SIMD implementation.  WASM, at
+the time of this writing, doesn't have a way to detect SIMD through WASM itself.  Although this capability
+is available in various WASM host environments (e.g., <a href="https://github.com/GoogleChromeLabs/wasm-feature-detect">wasm-feature-detect</a> in the web browser), there is no portable
+way from within the library to detect this.</p>
+<h6>Building/Targeting WASM</h6>
+<p>See <a href="https://github.com/rusticstuff/simdutf8/blob/87ee8d9d20b849eae1974a82b248ee6fe7491bcc/./wasm32-development.md">this document</a> for more details.</p>
+<h5>Access to low-level functionality</h5>
+<p>If you want to be able to call a SIMD implementation directly, use the <code>public_imp</code> feature flag. The validation implementations are then accessible in the <code>simdutf8::{basic, compat}::imp</code> hierarchy. Traits
+facilitating streaming validation are available there as well.</p>
+<h4>Optimisation flags</h4>
+<p>Do not use <a href="https://doc.rust-lang.org/cargo/reference/profiles.html"><code>opt-level = &quot;z&quot;</code></a>, which prevents inlining and makes
+the code quite slow.</p>
+<h4>Minimum Supported Rust Version (MSRV)</h4>
+<p>This crate's minimum supported Rust version is 1.38.0.</p>
+<h4>Benchmarks</h4>
+<p>The benchmarks have been done with <a href="https://bheisler.github.io/criterion.rs/book/index.html">criterion</a>, the tables
+are created with <a href="https://github.com/BurntSushi/critcmp">critcmp</a>. Source code and data are in the
+<a href="https://github.com/rusticstuff/simdutf8/tree/main/bench">bench directory</a>.</p>
+<p>The naming schema is id-charset/size. <em>0-empty</em> is the empty byte slice, <em>x-error/66536</em> is a 64KiB slice where the very
+first character is invalid UTF-8. Library versions are simdutf8 v0.1.2 and simdjson v0.9.2. When comparing
+with simdjson simdutf8 is compiled with <code>#inline(never)</code>.</p>
+<p>Configurations:</p>
+<ul>
+<li>X86-64: PC with an AMD Ryzen 7 PRO 3700 CPU (Zen2) on Linux with Rust 1.52.0</li>
+<li>Aarch64: Macbook Air with an Apple M1 CPU (Apple Silicon) on macOS with Rust rustc 1.54.0-nightly (881c1ac40 2021-05-08).</li>
+</ul>
+<h5>simdutf8 basic vs std library on x86-64 (AMD Zen2)</h5>
+<p>image
+Simdutf8 is up to 23 times faster than the std library on valid non-ASCII, up to four times on pure ASCII.</p>
+<h5>simdutf8 basic vs std library on aarch64 (Apple Silicon)</h5>
+<p>image
+Simdutf8 is up to to eleven times faster than the std library on valid non-ASCII, up to four times faster on
+pure ASCII.</p>
+<h5>simdutf8 basic vs simdjson on x86-64</h5>
+<p>image
+Simdutf8 is faster than simdjson on almost all inputs.</p>
+<h5>simdutf8 basic vs simdutf8 compat UTF-8 on x86-64</h5>
+<p>image
+There is a small performance penalty to continuously checking the error status while processing data, but detecting
+errors early provides a huge benefit for the <em>x-error/66536</em> benchmark.</p>
+<h4>Technical details</h4>
+<p>For inputs shorter than 64 bytes validation is delegated to <code>core::str::from_utf8()</code> except for the direct-access
+functions in <code>simdutf8::{basic, compat}::imp</code>.</p>
+<p>The SIMD implementation is mostly similar to the one in simdjson except that it is has additional optimizations
+for the pure ASCII case. Also it uses prefetch with AVX 2 on x86 which leads to slightly better performance with
+some Intel CPUs on synthetic benchmarks.</p>
+<p>For the compat API, we need to check the error status vector on each 64-byte block instead of just aggregating it. If an
+error is found, the last bytes of the previous block are checked for a cross-block continuation and then
+<code>std::str::from_utf8()</code> is run to find the exact location of the error.</p>
+<p>Care is taken that all functions are properly inlined up to the public interface.</p>
+<h4>Thanks</h4>
+<ul>
+<li>to the authors of simdjson for coming up with the high-performance SIMD implementation and in particular to Daniel Lemire
+for his feedback. It was very helpful.</li>
+<li>to the authors of the simdjson Rust port who did most of the heavy lifting of porting the C++ code to Rust.</li>
+</ul>
+<h4>License</h4>
+<p>This code is dual-licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0.html">Apache License 2.0</a> and the <a href="https://opensource.org/licenses/MIT">MIT License</a>.</p>
+<p>It is based on code distributed with simd-json.rs, the Rust port of simdjson, which is dual-licensed under
+the MIT license and Apache 2.0 license as well.</p>
+<p>simdjson itself is distributed under the Apache License 2.0.</p>
+<h4>References</h4>
+<p>John Keiser, Daniel Lemire, <a href="https://arxiv.org/abs/2010.03090">Validating UTF-8 In Less Than One Instruction Per Byte</a>, Software: Practice and Experience 51 (5), 2021</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>aarch64_neon</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>aarch64_neon_prefetch</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>hints</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>public_imp</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p>No dependencies declared.</p></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/arrow-json/versions/60.0.0/">crates-io/arrow-json 60.0.0</a><span>Requires ^0.1.5 · alias simdutf8 · </span></li><li><a href="../../../../../packages/crates-io/arrow-json/versions/58.4.0/">crates-io/arrow-json 58.4.0</a><span>Requires ^0.1.5 · alias simdutf8 · </span></li><li><a href="../../../../../packages/crates-io/bytecheck/versions/0.8.3/">crates-io/bytecheck 0.8.3</a><span>Requires ^0.1 · alias simdutf8 · </span></li><li><a href="../../../../../packages/crates-io/encoding_rs/versions/0.8.42/">crates-io/encoding_rs 0.8.42</a><span>Requires ^0.1.5 · alias simdutf8 · cfg(any(target_arch = &quot;x86_64&quot;, target_arch = &quot;x86&quot;, target_arch = &quot;aarch64&quot;, all(target_arch = &quot;wasm32&quot;, target_feature = &quot;simd128&quot;)))</span></li><li><a href="../../../../../packages/crates-io/parquet/versions/58.4.0/">crates-io/parquet 58.4.0</a><span>Requires ^0.1.5 · alias simdutf8 · </span></li><li><a href="../../../../../packages/crates-io/simd_cesu8/versions/1.2.0/">crates-io/simd_cesu8 1.2.0</a><span>Requires ^0.1.4 · alias simdutf8 · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:6aece09ed50f38fe9fb9f731c471e174750f4ea54c87a2cf1bfc44fdc29c1a4c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:92f99bb59e8d55f9b4afdf0cea1b848db785cb7f64973c8c3d6f3dd1c04d2814</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>aarch64_neon, public_imp</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:59b675dfcd007a83d494487e4fc3bc3e38c2b0ba17e8c57867af0b1c73452dba</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:ca4e738a3e76f7137949738632549c89d670f389d5b695954af622c23ac89417</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d016bc7f48540dc48209b88103fb90d4567df7783268d61a1961cf2959630443</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:eb78a5513aacfbe204f2a8df9e333a82eca493ebf2de4d6bf155d3a32892a446</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7aeb826dcb152b1d0d8d55b8ce8148c26c8f36e444db1d5eeab29beb80a7a96e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:6277c730b54a19d9ce12584d68ec891ddb1ac40dc93358dfa0da60e9a66c2823</small></li><li><code>sha256:cf6abb7ae733bb180de9ed9c12fd4877785956558e315fbf6f3ab103f8abed92</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:e333dedca17f03467adcecec5bce9cd1031907158e3c9dd720fd4823f7790912</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b72e9f0569dd05cee2e8add03b9ad8cde6f0afedfabb59c46dd5eba801af7bbd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:1ca0afd02b6f7584a323cdae6431811c48f536847a5a0d78a6a1c0001438be91</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>aarch64_neon, public_imp</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:92f4d8b6a23f9d52acda18f362ed297f6dce1c56e26c770b49ce73aa5aee4a01</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:7736b50e5a3959838f4524e245656815a0abadfdf2054233281d6554b9295d1b</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5c6379ffa0791aaf872d6e1b54498f0cd7a442d6749079f82617d7f64cad5a37</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:2ebe2f2f98a0065458c331e3d51615ad430c49d6aaa46e3dfc14df313420047c</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7b452ada8793cc23ddd278087b45d3a4874d8ffbecf71aa0f0c718fa093931c5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:cd055a17c702f247be56b5449ea26522c8abf3bfb709086ffba8784567789c47</small></li><li><code>sha256:cf05d28ad91dbb5625e8b2dc29b2b33abfa7061fdbbe655cc57262f65b3bcecc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:c0aa52b19585f4a37c9fcec534cb4c304abcaed3b9c871b3761b321007a8516e</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:282371906cce01a83aa3758971915018604c305db5377b2e73559fb6f1a0c2c3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:6f109d0096d5cc6cbb0c3bd358a86cc2107e672c9285d13183fafb1e9d29a675</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>aarch64_neon, public_imp</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ca231f28753b127e09ccaf7efc979cfe6f2a4ff658a13b07fa41b450bc02871c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:a945ae03418843fde514dee7512af1ccc56494c5e0d60a89975d6b7ed703406e</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e585c32160e5e600da0a5682f629b3df437e86f6e3ad726b8e2dd776d5da56d7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:3e26d448802603189e6a9c30404233cabd05140ef368dc0e5089be1762c49381</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:776ad9b9ecd8e1153f0b3aa9dd88f5d6189fb52f942933d5732b7a44ae267292</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:eaf6e7ae498f8d5a5ab0759aaa97efbdd4df2090ae7415ace8f9daeae953ef41</small></li><li><code>sha256:77d9cf8dc0c0ba4c72f45cda35b3a43860f31c062d8e2bc2286680fa652e0ee2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:f8e4f6f14379cff1d2be22e113b5cb6c17b79d6c60e3788c720be4921181cdd1</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:9e3298e3cf15bb798ee33eca952eb37399379391be9e9949f0dd8074b640277a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:7546d1d5a5ff97d540f68027b236102a062f1b5ed3297521818eccbe1b9a9b7b</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>aarch64_neon, public_imp</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:34939115903969c8576e4d97f363174ac4da7442d422632efe080a67c34ffbba</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:dc7a394bf82ce2a7a892dcbdc8f8a424fe895601274e0175dcd9c4567f501197</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:c9058e166e0c11d06af63af653141e48b4175b70aa8082839f47e42f40bc2237</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:a9aaeb1069146f166babaecb117dec4aa7210da45344f2ab8cebb0d87e1bd2be</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a14b38f4035729f6384f05fe09f71fa86c5201bf4d638d0ccb01aba67fbaeea0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:bd9d2750732712dc20e66be87acaf0a030f8098f206bc7b224923fa220d1adb8</small></li><li><code>sha256:ffa4e2602acf676740b72aceed3ccc0ef6bdd7a74e6f055104e3222be8515e19</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:4012f0ef77b1979eacc733db13cbfd72436efae47eb86ae3c55e8a1e12c2c505</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td></td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/simdutf8/versions/0.1.5/">0.1.5</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/simdutf8/0.1.5">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<h4><a href="https://github.com/rusticstuff/simdutf8/compare/v0.1.5...HEAD">Unreleased</a></h4>
+<h4><a href="https://github.com/rusticstuff/simdutf8/compare/v0.1.4...v0.1.5">0.1.5</a> - 2024-09-22</h4>
+<h5>Bug fixes</h5>
+<ul>
+<li>Fix Undefined Behavior in WebAssembly SIMD128 (#86) (thanks @CryZe)</li>
+<li>Documentation and clippy fixes (thanks @rtfeldman, @jqnatividad, @rhysd)</li>
+</ul>
+<h5>Performance</h5>
+<ul>
+<li>WASM: Don't use u8x16_bitmask for ASCII Check (#79) (thanks @CryZe)</li>
+</ul>
+<h4><a href="https://github.com/rusticstuff/simdutf8/compare/v0.1.3...v0.1.4">0.1.4</a> - 2022-04-02</h4>
+<h5>New features</h5>
+<ul>
+<li>WASM (wasm32) support</li>
+</ul>
+<h5>Improvements</h5>
+<ul>
+<li>Make aarch64 SIMD implementation work on Rust 1.59/1.60 with create feature <code>aarch64_neon</code></li>
+<li>For Rust Nightly the aarch64 SIMD implementation is enabled out of the box.</li>
+<li>Starting with Rust 1.61 the aarch64 SIMD implementation is expected to be enabled out of the box as well.</li>
+</ul>
+<h5>Performance</h5>
+<ul>
+<li>Prefetch was disabled for aarch64 since the requisite intrinsics have not been stabilized.</li>
+</ul>
+<h4><a href="https://github.com/rusticstuff/simdutf8/compare/v0.1.2...v0.1.3">0.1.3</a> - 2021-05-14</h4>
+<h5>New features</h5>
+<ul>
+<li>Low-level streaming validation API in <code>simdutf8::basic::imp</code></li>
+</ul>
+<h4><a href="https://github.com/rusticstuff/simdutf8/compare/v0.1.1...v0.1.2">0.1.2</a> - 2021-05-09</h4>
+<h5>New features</h5>
+<ul>
+<li>Aarch64 support (e.g. Apple Silicon, Raspberry Pi 4, ...) with nightly Rust and crate feature <code>aarch64_neon</code></li>
+</ul>
+<h5>Performance</h5>
+<ul>
+<li>Another speedup on pure ASCII data</li>
+<li>Aligned reads have been removed as the performance was worse overall.</li>
+<li>Prefetch is used selectively on AVX 2, where it provides a slight benefit on some Intel CPUs.</li>
+</ul>
+<p><a href="https://user-images.githubusercontent.com/3736990/117568946-7a2fdb00-b0c3-11eb-936e-358850f0a9ad.png">Comparison vs v0.1.1 on x86-64</a></p>
+<h5>Other</h5>
+<ul>
+<li>Refactored SIMD integration to allow easy implementation for new architectures</li>
+<li>Full test coverage</li>
+<li>Thoroughly fuzz-tested</li>
+</ul>
+<h4><a href="https://github.com/rusticstuff/simdutf8/compare/v0.1.0...v0.1.1">0.1.1</a> - 2021-04-26</h4>
+<h5>Performance</h5>
+<ul>
+<li>Large speedup on small inputs from delegation to std lib</li>
+<li>Up to 50% better peak throughput on ASCII</li>
+<li><code>#[inline]</code> main entry points for a small general speedup.</li>
+</ul>
+<p><a href="https://user-images.githubusercontent.com/3736990/116128298-12dc5900-a6c9-11eb-8c23-a117b3e57edb.png">Benchmark against v0.1.0</a></p>
+<h5>Other</h5>
+<ul>
+<li>Make both Utf8Error variants implement <code>std::error::Error</code></li>
+<li>Make <code>basic::Utf8Error</code> implement <code>core::fmt::Display</code></li>
+<li>Document Minimum Supported Rust Version (1.38.0).</li>
+<li>Reduce package size.</li>
+<li>Documentation updates</li>
+</ul>
+<h4><a href="https://github.com/rusticstuff/simdutf8/compare/v0.0.3...v0.1.0">0.1.0</a> - 2021-04-21</h4>
+<ul>
+<li>Documentation updates only.</li>
+</ul>
+<p>0.1.x releases will have API compatibility.</p>
+<h4><a href="https://github.com/rusticstuff/simdutf8/compare/v0.0.2...v0.0.3">0.0.3</a> - 2021-04-21</h4>
+<ul>
+<li>Documentation update only.</li>
+</ul>
+<h4><a href="https://github.com/rusticstuff/simdutf8/compare/v0.0.1...v0.0.2">0.0.2</a> - 2021-04-20</h4>
+<ul>
+<li>Documentation update only.</li>
+</ul>
+<h4><a href="https://github.com/rusticstuff/simdutf8/releases/tag/v0.0.1">0.0.1</a> - 2021-04-20</h4>
+<ul>
+<li>Initial release.</li>
+</ul>
+</div><p class="table-note">sha256:4d98971e8b2b655b84b103c1519dd8a857d13a635552cf1afb15dc57de3e8e17</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-Apache · Author-provided</summary><div class="readme"><pre><code>
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS</code></pre></div><p class="table-note">sha256:0cec06e0e55fbc3dc5cee4fca9b607f66cb8f4e4dbcf3b3c013594dd156732e9</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</code></pre></div><p class="table-note">sha256:1847e0e0698142ed4347c1441a9fa81c8fbddd44b1d8bbcd5e3647f991759d7f</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:dc3e406dd3f62108c8cf16b5077705118daacfdda5055fe87aeb2ea7e6297aa3</code></dd><dt>Upstream checksum</dt><dd><code>sha256:e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/simdutf8&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1.5&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">aarch64_neon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">aarch64_neon_prefetch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">hints</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">public_imp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;simdutf8&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Hans Kratz &lt;hans@appfour.com&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/simdutf8/0.1.5">crates.io package</a></li><li><a href="https://github.com/rusticstuff/simdutf8">Source repository</a></li><li><a href="https://docs.rs/simdutf8/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">simdutf8</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/simdutf8"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.1.5"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

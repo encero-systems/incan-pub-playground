@@ -1,19 +1,10 @@
-# Catalog footer placement QA
+# Registry-backed website verification
 
-final result: passed
+Functional result: all 22 automated checks passed, including full byte-identical replay and jsdom catalog/ticker interactions. The local run is recorded in tools/site/target/check.log.
+Visual result: not confirmed. Browser discovery returned no browser surfaces; Safari access timed out. No new screenshots or false visual sign-off are supplied.
 
-## Finding and repair
+The existing Archive Hall homepage, Forge package masthead, shared header/footer, Brawler/Exo 2 fonts, charcoal/brass artwork and warm reading surface remain the visual reference. New controls use the existing styles: a compact version selector, visible catalog search and filter fields, pagination and expandable document/evidence groups. Source CSS review identified and repaired an initially missing Forge masthead/section-rail wrapper before final generation.
 
-[P2, fixed] The catalog ended before the viewport bottom on tall screens, leaving the page background visible beneath its footer. The catalog now uses a viewport-height flex column; its main content absorbs spare height while the header and compact footer retain their natural heights. Long pages continue to scroll normally. The change is scoped to the catalog body class and generated through the authored Incan renderer.
+Functional checks cover all 1,311 packages and 1,707 indexed versions, 27 no-JavaScript catalog pages, recorded document integrity and provenance, complete replay, license expressions, exact-name search, missing observations, route/assets/anchors, HTML safety and catalog interactions in jsdom. jsdom does not establish rendered layout, responsive overflow or native touch behavior.
 
-## Visual comparison
-
-At the same observed 1745 × 1272 CSS viewport, the original footer bottom was 1152.39px; the corrected footer bottom is 1272.73px (fractional viewport/zoom rounding). The existing package rows, typography, colors, assets and footer content are preserved. The paired 1745 × 1272 captures are `qa/catalog-footer/before.png` and `qa/catalog-footer/after.png`. Their combined `comparison.jpg` was opened and inspected. The earlier homepage hero QA is preserved in `design-qa-hero-responsive.md`.
-
-## Verification
-
-- All six results, one Unlicense result and zero Direct publication results keep the footer at the tall viewport bottom.
-- Reset restores all six results.
-- At the observed 354 × 767 CSS phone viewport, the footer follows the 1515px document without covering content; no horizontal document overflow was observed. The table retains its existing horizontal scrolling region. `qa/catalog-footer/phone.png` was opened and inspected.
-- Browser warning/error logs were empty. Temporary viewport overrides were reset.
-- The Incan renderer built successfully; all ten existing checks passed, including deterministic replay and static routes/assets. Diff whitespace checks passed. No actionable P0/P1/P2 issue remains in this scoped repair. The manual CI check workflow was not dispatched.
+The earlier footer screenshot QA is preserved in design-qa-catalog-footer.md. Current data/build/verification boundaries are documented in docs/registry-site.md. The production registry remains unchanged, the Incan.io mockup remains parked, and no manual CI verification workflow is dispatched.

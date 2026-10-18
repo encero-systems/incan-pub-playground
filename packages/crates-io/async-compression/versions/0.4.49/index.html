@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>async-compression 0.4.49 · Incan.pub</title><meta name="description" content="Adaptors between compression crates and Rust&#39;s modern asynchronous IO types."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/async-compression</p><div class="title-row"><h1>async-compression</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/async-compression/versions/0.4.50/">0.4.50</option><option value="../../../../../packages/crates-io/async-compression/versions/0.4.49/" selected>0.4.49</option></select></label></div><p class="description">Adaptors between compression crates and Rust&#39;s modern asynchronous IO types.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><p class="version-warning">Viewing an older indexed version. <a href="../../../../../packages/crates-io/async-compression/">View latest indexed version 0.4.50 →</a></p><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>async-compression</h3>
+<p><a href="https://crates.io/crates/async-compression">crates.io version</a> build status
+<a href="https://crates.io/crates/async-compression">downloads</a> <a href="https://docs.rs/async-compression">docs.rs docs</a>
+MIT or Apache 2.0 licensed
+<a href="https://deps.rs/crate/async-compression">dependency status</a></p>
+<p>This crate provides adaptors between compression crates and Rust's modern
+asynchronous IO types.</p>
+<ul>
+<li><a href="https://docs.rs/async-compression">Documentation</a></li>
+<li><a href="https://crates.io/crates/async-compression">Crates.io</a></li>
+<li><a href="https://github.com/Nullus157/async-compression/releases">Releases</a></li>
+</ul>
+<h4>Development</h4>
+<p>When developing you will need to enable appropriate features for the different
+test cases to run, the simplest is <code>cargo test --all-features</code>, but you can
+enable different subsets of features as appropriate for the code you are
+testing to avoid compiling all dependencies, e.g. <code>cargo test --features tokio,gzip</code>.</p>
+<p>To prepare for a pull request, you can run several other checks:</p>
+<ol>
+<li>
+<p><code>fmt</code></p>
+<pre><code>cargo fmt --all
+cargo clippy --no-deps
+</code></pre>
+</li>
+<li>
+<p><code>build</code></p>
+<pre><code>cargo build --lib --all-features
+</code></pre>
+</li>
+<li>
+<p><code>nextest</code></p>
+<pre><code>cargo --locked nextest run --workspace --all-features
+</code></pre>
+</li>
+<li>
+<p><code>hack check</code></p>
+<pre><code>cargo hack check --workspace --feature-powerset --all-targets --skip 'all,all-algorithms,all-implementations'
+</code></pre>
+</li>
+<li>
+<p><code>wasm32</code> - Linux only</p>
+<pre><code>gh release download --repo WebAssembly/wasi-sdk --pattern 'wasi-sysroot-*.tar.gz'
+mkdir -p wasi-sysroot
+tar xf wasi-sysroot-*.tar.gz --strip-components=1 -C wasi-sysroot
+
+rustup target add wasm32-wasip1-threads
+
+export "CFLAGS_wasm32_wasip1_threads=--sysroot=\"${PWD}/wasi-sysroot\" -I\"${PWD}/wasi-sysroot/include/wasm32-wasip1-threads\" -L-I\"${PWD}/wasi-sysroot/lib/wasm32-wasip1-threads\""
+cargo build --lib --features all-implementations,brotli,bzip2,deflate,gzip,lz4,lzma,xz,zlib,zstd,deflate64 --target wasm32-wasip1-threads
+</code></pre>
+</li>
+</ol>
+<h4>License</h4>
+<p>Licensed under either of</p>
+<ul>
+<li><a href="https://github.com/Nullus157/async-compression/blob/7246ebd079849b0ef7f8e4365546d0d6e2d07771/crates/async-compression/LICENSE-APACHE">Apache License, Version 2.0</a></li>
+<li><a href="https://github.com/Nullus157/async-compression/blob/7246ebd079849b0ef7f8e4365546d0d6e2d07771/crates/async-compression/LICENSE-MIT">MIT license</a></li>
+</ul>
+<p>at your option.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you shall be dual licensed as above, without any
+additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>all</code></th><td>No</td><td><ul class="effects"><li><code>all-implementations</code></li><li><code>all-algorithms</code></li></ul></td></tr><tr><th scope="row"><code>all-algorithms</code></th><td>No</td><td><ul class="effects"><li><code>brotli</code></li><li><code>bzip2</code></li><li><code>deflate</code></li><li><code>deflate64</code></li><li><code>gzip</code></li><li><code>lz4</code></li><li><code>lzma</code></li><li><code>xz</code></li><li><code>xz-parallel</code></li><li><code>zlib</code></li><li><code>zstd</code></li></ul></td></tr><tr><th scope="row"><code>all-implementations</code></th><td>No</td><td><ul class="effects"><li><code>futures-io</code></li><li><code>tokio</code></li></ul></td></tr><tr><th scope="row"><code>brotli</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/brotli</code></li></ul></td></tr><tr><th scope="row"><code>brotli-mbrotli</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/brotli-mbrotli</code></li></ul></td></tr><tr><th scope="row"><code>bzip2</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/bzip2</code></li></ul></td></tr><tr><th scope="row"><code>deflate</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/deflate</code></li></ul></td></tr><tr><th scope="row"><code>deflate64</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/deflate64</code></li></ul></td></tr><tr><th scope="row"><code>futures-io</code></th><td>No</td><td><ul class="effects"><li><code>dep:futures-io</code></li></ul></td></tr><tr><th scope="row"><code>gzip</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/gzip</code></li></ul></td></tr><tr><th scope="row"><code>lz4</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/lz4</code></li></ul></td></tr><tr><th scope="row"><code>lzma</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/lzma</code></li></ul></td></tr><tr><th scope="row"><code>tokio</code></th><td>No</td><td><ul class="effects"><li><code>dep:tokio</code></li></ul></td></tr><tr><th scope="row"><code>xz</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/xz</code></li><li><code>lzma</code></li></ul></td></tr><tr><th scope="row"><code>xz-parallel</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/xz-parallel</code></li><li><code>xz</code></li></ul></td></tr><tr><th scope="row"><code>xz2</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/xz2</code></li><li><code>xz</code></li></ul></td></tr><tr><th scope="row"><code>zlib</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/zlib</code></li></ul></td></tr><tr><th scope="row"><code>zstd</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/zstd</code></li></ul></td></tr><tr><th scope="row"><code>zstdmt</code></th><td>No</td><td><ul class="effects"><li><code>compression-codecs/zstdmt</code></li><li><code>zstd</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/compression-codecs/"><code>crates-io/compression-codecs</code></a><small>Alias: compression-codecs</small></th><td><code>^0.4.44</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/compression-core/"><code>crates-io/compression-core</code></a><small>Alias: compression-core</small></th><td><code>^0.4.33</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/futures-io/"><code>crates-io/futures-io</code></a><small>Alias: futures-io</small></th><td><code>^0.3</code><small>Default features: disabled</small><small>Requests: std</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/pin-project-lite/"><code>crates-io/pin-project-lite</code></a><small>Alias: pin-project-lite</small></th><td><code>^0.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/tokio/"><code>crates-io/tokio</code></a><small>Alias: tokio</small></th><td><code>^1.24.2</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/datafusion-datasource/versions/53.1.0/">crates-io/datafusion-datasource 53.1.0</a><span>Requires ^0.4.40 · alias async-compression · </span></li><li><a href="../../../../../packages/crates-io/tower-http/versions/0.7.1/">crates-io/tower-http 0.7.1</a><span>Requires ^0.4 · alias async-compression · </span></li><li><a href="../../../../../packages/crates-io/tower-http/versions/0.6.11/">crates-io/tower-http 0.6.11</a><span>Requires ^0.4 · alias async-compression · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="notice">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>bzip2, gzip, lzma, tokio, xz, zstd</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/async-compression/versions/0.4.50/">0.4.50</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/async-compression/0.4.50">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/async-compression/versions/0.4.49/">0.4.49</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/async-compression/0.4.49">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>[Unreleased]</h4>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.48...async-compression-v0.4.49">0.4.49</a> - 2026-09-29</h4>
+<h5>Added</h5>
+<ul>
+<li><em>(brotli)</em> add optional mbrotli backend (<a href="https://github.com/Nullus157/async-compression/pull/492">#492</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.47...async-compression-v0.4.48">0.4.48</a> - 2026-09-16</h4>
+<h5>Fixed</h5>
+<ul>
+<li><em>(gzip)</em> reject invalid header before the full 10 bytes arrive (<a href="https://github.com/Nullus157/async-compression/pull/489">#489</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.46...async-compression-v0.4.47">0.4.47</a> - 2026-09-14</h4>
+<h5>Fixed</h5>
+<ul>
+<li><em>(zstd)</em> avoid no-progress errors while awaiting input (<a href="https://github.com/Nullus157/async-compression/pull/486">#486</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.45...async-compression-v0.4.46">0.4.46</a> - 2026-09-09</h4>
+<h5>Other</h5>
+<ul>
+<li>Return UnexpectedEof when deflate64 does not progress (<a href="https://github.com/Nullus157/async-compression/pull/483">#483</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.44...async-compression-v0.4.45">0.4.45</a> - 2026-09-07</h4>
+<h5>Other</h5>
+<ul>
+<li><em>(deps)</em> update zstd requirement from 0.13 to 0.14 (<a href="https://github.com/Nullus157/async-compression/pull/481">#481</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.43...async-compression-v0.4.44">0.4.44</a> - 2026-09-02</h4>
+<h5>Other</h5>
+<ul>
+<li>updated the following local packages: compression-core, compression-codecs</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.42...async-compression-v0.4.43">0.4.43</a> - 2026-07-28</h4>
+<h5>Other</h5>
+<ul>
+<li>Fix hang when decoding a corrupt subsequent zstd frame (<a href="https://github.com/Nullus157/async-compression/pull/470">#470</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.41...async-compression-v0.4.42">0.4.42</a> - 2026-04-21</h4>
+<h5>Other</h5>
+<ul>
+<li>Include license files in published crates (<a href="https://github.com/Nullus157/async-compression/pull/467">#467</a>)</li>
+<li>Fix async-compression CHANGELOG ordering (<a href="https://github.com/Nullus157/async-compression/pull/463">#463</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.40...async-compression-v0.4.41">0.4.41</a> - 2026-02-25</h4>
+<h5>Fixed</h5>
+<ul>
+<li>On error the encoder/decoder now emit everything it was able to decode. (<a href="https://github.com/Nullus157/async-compression/pull/454">#454</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.39...async-compression-v0.4.40">0.4.40</a> - 2026-02-18</h4>
+<h5>Other</h5>
+<ul>
+<li>Fix update of bytes read in the encoder state machine. (<a href="https://github.com/Nullus157/async-compression/pull/456">#456</a>)</li>
+<li><em>(deps)</em> update rand requirement from 0.9 to 0.10 (<a href="https://github.com/Nullus157/async-compression/pull/449">#449</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.38...async-compression-v0.4.39">0.4.39</a> - 2026-02-07</h4>
+<h5>Other</h5>
+<ul>
+<li>Revert &quot;Fix decoding of empty response streams.&quot; (<a href="https://github.com/Nullus157/async-compression/pull/446">#446</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.37...async-compression-v0.4.38">0.4.38</a> - 2026-02-06</h4>
+<h5>Other</h5>
+<ul>
+<li>Fix decoding of empty response streams. (<a href="https://github.com/Nullus157/async-compression/pull/444">#444</a>)</li>
+<li><em>(deps)</em> update proptest-derive requirement from 0.7 to 0.8 (<a href="https://github.com/Nullus157/async-compression/pull/442">#442</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.36...async-compression-v0.4.37">0.4.37</a> - 2026-01-10</h4>
+<h5>Other</h5>
+<ul>
+<li>Set async-compression msrv (<a href="https://github.com/Nullus157/async-compression/pull/440">#440</a>)</li>
+<li>Fix BufWriter::flush_buf: propagate error before reset (<a href="https://github.com/Nullus157/async-compression/pull/438">#438</a>)</li>
+<li>Switch futures_core::ready to standard library api (<a href="https://github.com/Nullus157/async-compression/pull/436">#436</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.35...async-compression-v0.4.36">0.4.36</a> - 2025-12-11</h4>
+<h5>Other</h5>
+<ul>
+<li>updated the following local packages: compression-codecs</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.34...async-compression-v0.4.35">0.4.35</a> - 2025-12-07</h4>
+<h5>Other</h5>
+<ul>
+<li>updated the following local packages: compression-codecs</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.33...async-compression-v0.4.34">0.4.34</a> - 2025-11-21</h4>
+<h5>Added</h5>
+<ul>
+<li>Add uninitialized output buffer support (<a href="https://github.com/Nullus157/async-compression/pull/414">#414</a>)</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>Simplify <code>AsyncBufWrite</code> (<a href="https://github.com/Nullus157/async-compression/pull/423">#423</a>)</li>
+<li>Refactor <code>bufread::decoder</code>: Extract poll ready check (<a href="https://github.com/Nullus157/async-compression/pull/418">#418</a>)</li>
+<li>Optimize condition for removing written data in BufWriter (<a href="https://github.com/Nullus157/async-compression/pull/415">#415</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.32...async-compression-v0.4.33">0.4.33</a> - 2025-11-06</h4>
+<h5>Fixed</h5>
+<ul>
+<li><code>UnexpectedEof</code> on truncated input (<a href="https://github.com/Nullus157/async-compression/pull/412">#412</a>)</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>Update async-compression to use codecs v2 (<a href="https://github.com/Nullus157/async-compression/pull/410">#410</a>)</li>
+<li>Dedup <code>write::Encoder</code> and simplify <code>write::Decoder</code> impl (<a href="https://github.com/Nullus157/async-compression/pull/409">#409</a>)</li>
+<li>Dedup <code>write::Decoder::poll_write</code> (<a href="https://github.com/Nullus157/async-compression/pull/408">#408</a>)</li>
+<li>Optimize <code>BufWriter::poll_*</code> method (<a href="https://github.com/Nullus157/async-compression/pull/407">#407</a>)</li>
+<li>Dedup <code>write::{AsyncBufWriter, BufWriter, Decoder}</code> (<a href="https://github.com/Nullus157/async-compression/pull/406">#406</a>)</li>
+<li>Early return in <code>do_poll_read</code> instead of keep polling (<a href="https://github.com/Nullus157/async-compression/pull/404">#404</a>)</li>
+<li>Deduplicate <code>bufread::Encoder</code> impl (<a href="https://github.com/Nullus157/async-compression/pull/402">#402</a>)</li>
+<li>Rename <code>impl_do_poll_read!</code> to <code>impl_decoder!</code> (<a href="https://github.com/Nullus157/async-compression/pull/403">#403</a>)</li>
+<li><em>(deps)</em> update proptest-derive requirement from 0.6 to 0.7 (<a href="https://github.com/Nullus157/async-compression/pull/399">#399</a>)</li>
+<li>Deduplicate <code>generic::bufread::Decoder</code> impl of tokio/futures-io (<a href="https://github.com/Nullus157/async-compression/pull/391">#391</a>)</li>
+<li>Disable nightly feature <code>doc_auto_cfg</code> on docsrs (<a href="https://github.com/Nullus157/async-compression/pull/392">#392</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.31...async-compression-v0.4.32">0.4.32</a> - 2025-09-25</h4>
+<h5>Other</h5>
+<ul>
+<li>updated the following local packages: compression-codecs</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.30...async-compression-v0.4.31">0.4.31</a> - 2025-09-25</h4>
+<h5>Other</h5>
+<ul>
+<li>Flush compressed data out of encoders more often (<a href="https://github.com/Nullus157/async-compression/pull/383">#383</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.29...async-compression-v0.4.30">0.4.30</a> - 2025-08-31</h4>
+<h5>Other</h5>
+<ul>
+<li>rm unused dep from async-compression and compression-codecs (<a href="https://github.com/Nullus157/async-compression/pull/381">#381</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.28...async-compression-v0.4.29">0.4.29</a> - 2025-08-28</h4>
+<h5>Other</h5>
+<ul>
+<li>Update Deps.rs badge (<a href="https://github.com/Nullus157/async-compression/pull/380">#380</a>)</li>
+<li>move async-compression to crates/ (<a href="https://github.com/Nullus157/async-compression/pull/379">#379</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/async-compression-v0.4.27...async-compression-v0.4.28">0.4.28</a> - 2025-08-23</h4>
+<h5>Fixed</h5>
+<ul>
+<li>fix wasi ci testing and update doc in README (<a href="https://github.com/Nullus157/async-compression/pull/367">#367</a>)</li>
+</ul>
+<h5>Other</h5>
+<ul>
+<li>Fix Cargo.toml: add back version for async-compression (<a href="https://github.com/Nullus157/async-compression/pull/372">#372</a>)</li>
+<li>Have separate package.version field for compression-* (<a href="https://github.com/Nullus157/async-compression/pull/369">#369</a>)</li>
+<li>Re-export compression_codecs as codecs (<a href="https://github.com/Nullus157/async-compression/pull/368">#368</a>)</li>
+<li>Fix breaking API change (<a href="https://github.com/Nullus157/async-compression/pull/366">#366</a>)</li>
+<li>Fix docs.rs build for compression-codecs (<a href="https://github.com/Nullus157/async-compression/pull/365">#365</a>)</li>
+<li>Separate codecs as a separate crate, allow direct configuration (<a href="https://github.com/Nullus157/async-compression/pull/363">#363</a>)</li>
+<li><em>(deps)</em> bump actions/checkout from 4 to 5 (<a href="https://github.com/Nullus157/async-compression/pull/360">#360</a>)</li>
+<li>Fix doc link for futures-io (<a href="https://github.com/Nullus157/async-compression/pull/361">#361</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.26...v0.4.27">0.4.27</a> - 2025-07-13</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Zstd fastest level now does compression. (<a href="https://github.com/Nullus157/async-compression/pull/357">#357</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.25...v0.4.26">0.4.26</a> - 2025-07-13</h4>
+<h5>Features</h5>
+<ul>
+<li>Add multi-thread support for XZ. (<a href="https://github.com/Nullus157/async-compression/pull/353">#353</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.24...v0.4.25">0.4.25</a> - 2025-06-17</h4>
+<h5>Changed</h5>
+<ul>
+<li>Update <code>bzip2</code> dependency to <code>0.6</code>. (<a href="https://github.com/Nullus157/async-compression/pull/350">#350</a>)</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.23...v0.4.24">0.4.24</a> - 2025-06-09</h4>
+<h5>Other</h5>
+<ul>
+<li>Fix clippy error</li>
+<li>narrow tokio requirement to account for RUSTSEC-2025-0023</li>
+<li>move constructors back to top of rustdoc pages</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.22...v0.4.23">0.4.23</a> - 2025-04-21</h4>
+<h5>Changed</h5>
+<ul>
+<li>Update <code>brotli</code> dependency to <code>8.0</code>.</li>
+<li>Update <code>liblzma</code> dependency to <code>0.4</code>.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.21...v0.4.22">0.4.22</a> - 2025-03-25</h4>
+<h5>Added</h5>
+<ul>
+<li>Add LZ4 encoders and decoders.</li>
+<li>Expose <code>DeflateEncoder::{total_in, total_out}()</code> methods.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.20...v0.4.21">0.4.21</a> - 2025-03-15</h4>
+<h5>Fixed</h5>
+<ul>
+<li>When flate encoding, do not mark internal state as flushed if it ran out of buffer space.</li>
+<li>Add debug assertion in <code>produce</code> method to check buffer capacity in implementations for <code>BufWriter</code>.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.19...v0.4.20">0.4.20</a> - 2025-02-28</h4>
+<h5>Added</h5>
+<ul>
+<li>Add support for <code>wasm32-wasip1-*</code> targets.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.18...v0.4.19">0.4.19</a> - 2025-02-27</h4>
+<h5>Changed</h5>
+<ul>
+<li>Update <code>bzip2</code> dependency to <code>0.5</code>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Ensure that flush finishes before continuing.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.17...v0.4.18">0.4.18</a> - 2024-11-23</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Adjust <code>Level::Precise</code> clamp range for flate2.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.16...v0.4.17">0.4.17</a> - 2024-10-20</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix occasional panics when consuming from pending buffers.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.15...v0.4.16">0.4.16</a> - 2024-10-16</h4>
+<h5>Other</h5>
+<ul>
+<li>Implement pass-through <code>AsyncBufRead</code> on write-based encoders &amp; decoders.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.14...v0.4.15">0.4.15</a> - 2024-10-13</h4>
+<h5>Feature</h5>
+<ul>
+<li>Implement pass-through <code>AsyncRead</code> or <code>AsyncWrite</code> where appropriate.</li>
+<li>Relax <code>AsyncRead</code>/<code>AsyncWrite</code> bounds on <code>*::{get_ref, get_mut, get_pin_mut, into_inner}()</code> methods.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.13...v0.4.14">0.4.14</a> - 2024-10-10</h4>
+<h5>Fixed</h5>
+<ul>
+<li>In Tokio-based decoders, attempt to decode from internal state even if nothing was read.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.12...v0.4.13">0.4.13</a> - 2024-10-02</h4>
+<h5>Feature</h5>
+<ul>
+<li>Update <code>brotli</code> dependency to to <code>7</code>.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.11...v0.4.12">0.4.12</a> - 2024-07-21</h4>
+<h5>Feature</h5>
+<ul>
+<li>Enable customizing Zstd decoding parameters.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.10...v0.4.11">0.4.11</a> - 2024-05-30</h4>
+<h5>Other</h5>
+<ul>
+<li>Expose total_in/total_out from underlying flate2 encoder types.</li>
+</ul>
+<h4><a href="https://github.com/Nullus157/async-compression/compare/v0.4.9...v0.4.10">0.4.10</a> - 2024-05-09</h4>
+<h5>Other</h5>
+<ul>
+<li><em>(deps)</em> update brotli requirement from 5.0 to 6.0 (<a href="https://github.com/Nullus157/async-compression/pull/274">#274</a>)</li>
+<li>Fix pipeline doc: Warn on unexpected cfgs instead of error (<a href="https://github.com/Nullus157/async-compression/pull/276">#276</a>)</li>
+<li>Update name of release-pr.yml</li>
+<li>Create release.yml</li>
+<li>Create release-pr.yml</li>
+</ul>
+<h4>0.4.9</h4>
+<ul>
+<li>bump dep brotli from 4.0 to 5.0</li>
+</ul>
+<h4>0.4.8</h4>
+<ul>
+<li>bump dep brotli from 3.3 to 4.0</li>
+</ul>
+<h4>0.4.7</h4>
+<ul>
+<li>Flush available data in decoder even when there's no incoming input.</li>
+</ul>
+<h4>0.4.6</h4>
+<ul>
+<li>Return errors instead of panicking in all encode and decode operations.</li>
+</ul>
+<h4>0.4.5</h4>
+<ul>
+<li>Add <code>{Lzma, Xz}Decoder::with_mem_limit()</code> methods.</li>
+</ul>
+<h4>0.4.4</h4>
+<ul>
+<li>Update <code>zstd</code> dependency to <code>0.13</code>.</li>
+</ul>
+<h4>0.4.3</h4>
+<ul>
+<li>Implement <code>Default</code> for <code>brotli::EncoderParams</code>.</li>
+</ul>
+<h4>0.4.2</h4>
+<ul>
+<li>Add top-level <code>brotli</code> module containing stable <code>brotli</code> crate wrapper types.</li>
+<li>Add <code>BrotliEncoder::with_quality_and_params()</code> constructors.</li>
+<li>Add <code>Deflate64Decoder</code> behind new crate feature <code>deflate64</code>.</li>
+</ul>
+<h4>0.4.1 - 2023-07-10</h4>
+<ul>
+<li>Add <code>Zstd{Encoder,Decoder}::with_dict()</code> constructors.</li>
+<li>Add <code>zstdmt</code> crate feature that enables <code>zstd-safe/zstdmt</code>, allowing multi-threaded functionality to work as expected.</li>
+</ul>
+<h4>0.4.0 - 2023-05-10</h4>
+<ul>
+<li><code>Level::Precise</code> variant now takes a <code>i32</code> instead of <code>u32</code>.</li>
+<li>Add top-level <code>zstd</code> module containing stable <code>zstd</code> crate wrapper types.</li>
+<li>Add <code>ZstdEncoder::with_quality_and_params()</code> constructors.</li>
+<li>Update <code>zstd</code> dependency to <code>0.12</code>.</li>
+<li>Remove deprecated <code>stream</code>, <code>futures-bufread</code> and <code>futures-write</code> crate features.</li>
+<li>Remove Tokio 0.2.x and 0.3.x support (<code>tokio-02</code> and <code>tokio-03</code> crate features).</li>
+</ul>
+<h4>0.3.15 - 2022-10-08</h4>
+<ul>
+<li><code>Level::Default::into_zstd()</code> now returns zstd's default value <code>3</code>.</li>
+<li>Fix endianness when reading the <code>extra</code> field of a gzip header.</li>
+</ul>
+</div><p class="table-note">sha256:59ebed143baef824176fb706fa7ce4547bb38483f38539c4c7d57ef057d4fab6</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>The MIT License (MIT)
+
+Copyright (c) 2018 the rustasync developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:88d1e3160df48926ad3310a8ec5699b502889565908f1be7e77cd21282c7a709</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:1bad41dd50a48cc75320f09ccc8f8fb57e2995fc342d29e8152b7cea38031bd5</code></dd><dt>Upstream checksum</dt><dd><code>sha256:a3789ca2cd1c4e8ce71fe9bd6312566014e20ff3016fc87bc71c59ff93b5fa61</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-compression&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.4.49&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">all</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;all-implementations&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;all-algorithms&quot;</span><span class="p">]</span>
+<span class="n">all-algorithms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;brotli&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;bzip2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;deflate64&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gzip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;lz4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;lzma&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;xz&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;xz-parallel&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;zlib&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;zstd&quot;</span><span class="p">]</span>
+<span class="n">all-implementations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;futures-io&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tokio&quot;</span><span class="p">]</span>
+<span class="n">brotli</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/brotli&quot;</span><span class="p">]</span>
+<span class="n">brotli-mbrotli</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/brotli-mbrotli&quot;</span><span class="p">]</span>
+<span class="n">bzip2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/bzip2&quot;</span><span class="p">]</span>
+<span class="n">deflate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/deflate&quot;</span><span class="p">]</span>
+<span class="n">deflate64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/deflate64&quot;</span><span class="p">]</span>
+<span class="n">futures-io</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:futures-io&quot;</span><span class="p">]</span>
+<span class="n">gzip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/gzip&quot;</span><span class="p">]</span>
+<span class="n">lz4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/lz4&quot;</span><span class="p">]</span>
+<span class="n">lzma</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/lzma&quot;</span><span class="p">]</span>
+<span class="n">tokio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tokio&quot;</span><span class="p">]</span>
+<span class="n">xz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/xz&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;lzma&quot;</span><span class="p">]</span>
+<span class="n">xz-parallel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/xz-parallel&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;xz&quot;</span><span class="p">]</span>
+<span class="n">xz2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/xz2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;xz&quot;</span><span class="p">]</span>
+<span class="n">zlib</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/zlib&quot;</span><span class="p">]</span>
+<span class="n">zstd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/zstd&quot;</span><span class="p">]</span>
+<span class="n">zstdmt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;compression-codecs/zstdmt&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;zstd&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;async_compression&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">compression-codecs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/compression-codecs&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4.44&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">compression-core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/compression-core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4.33&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">futures-io</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/futures-io&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">pin-project-lite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/pin-project-lite&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tokio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tokio&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.24.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;bzip2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gzip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;lzma&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tokio&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;xz&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;zstd&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Wim Looman &lt;wim@nemo157.com&gt;, Allen Bui &lt;fairingrey@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.83</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/async-compression/0.4.49">crates.io package</a></li><li><a href="https://github.com/Nullus157/async-compression">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">async-compression</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/async-compression"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.4.49"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

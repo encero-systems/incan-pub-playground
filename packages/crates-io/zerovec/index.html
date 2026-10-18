@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>zerovec 0.11.8 · Incan.pub</title><meta name="description" content="Zero-copy vector backed by a byte array"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/zerovec</p><div class="title-row"><h1>zerovec</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/zerovec/versions/0.11.8/" selected>0.11.8</option><option value="../../../packages/crates-io/zerovec/versions/0.11.5/">0.11.5</option></select></label></div><p class="description">Zero-copy vector backed by a byte array</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Unicode-3.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>zerovec <a href="https://crates.io/crates/zerovec">crates.io</a></h3>
+<p></p>
+<p>Zero-copy vector abstractions for arbitrary types, backed by byte slices.</p>
+<p><code>zerovec</code> enables a far wider range of types — beyond just <code>&amp;[u8]</code> and <code>&amp;str</code> — to participate in
+zero-copy deserialization from byte slices. It is <code>serde</code> compatible and comes equipped with
+proc macros</p>
+<p>Clients upgrading to <code>zerovec</code> benefit from zero heap allocations when deserializing
+read-only data.</p>
+<p>This crate has four main types:</p>
+<ul>
+<li><a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/ZeroVec"><code>ZeroVec&lt;'a, T&gt;</code></a> (and <a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/ZeroSlice"><code>ZeroSlice&lt;T&gt;</code></a>) for fixed-width types like <code>u32</code></li>
+<li><a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/VarZeroVec"><code>VarZeroVec&lt;'a, T&gt;</code></a> (and <a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/ZeroSlice"><code>VarZeroSlice&lt;T&gt;</code></a>) for variable-width types like <code>str</code></li>
+<li><a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/ZeroMap"><code>ZeroMap&lt;'a, K, V&gt;</code></a> to map from <code>K</code> to <code>V</code></li>
+<li><a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/ZeroMap2d"><code>ZeroMap2d&lt;'a, K0, K1, V&gt;</code></a> to map from the pair <code>(K0, K1)</code> to <code>V</code></li>
+</ul>
+<p>The first two are intended as close-to-drop-in replacements for <code>Vec&lt;T&gt;</code> in Serde structs. The third and fourth are
+intended as a replacement for <code>HashMap</code> or <a href="https://docs.rs/litemap"><code>LiteMap</code></a>. When used with Serde derives, <strong>be sure to apply
+<code>#[serde(borrow)]</code> to these types</strong>, same as one would for <a href="alloc::borrow::Cow"><code>Cow&lt;'a, T&gt;</code></a>.</p>
+<p><a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/ZeroVec"><code>ZeroVec&lt;'a, T&gt;</code></a>, <a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/VarZeroVec"><code>VarZeroVec&lt;'a, T&gt;</code></a>, <a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/ZeroMap"><code>ZeroMap&lt;'a, K, V&gt;</code></a>, and <a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/ZeroMap2d"><code>ZeroMap2d&lt;'a, K0, K1, V&gt;</code></a> all behave like
+<a href="alloc::borrow::Cow"><code>Cow&lt;'a, T&gt;</code></a> in that they abstract over either borrowed or owned data. When performing deserialization
+from human-readable formats (like <code>json</code> and <code>xml</code>), typically these types will allocate and fully own their data, whereas if deserializing
+from binary formats like <code>bincode</code> and <code>postcard</code>, these types will borrow data directly from the buffer being deserialized from,
+avoiding allocations and only performing validity checks. As such, this crate can be pretty fast (see <a href="https://github.com/unicode-org/icu4x/blob/c56bbb5a7b47409759113903764c456f13b418e5/utils/zerovec/README.md#Performance">below</a> for more information)
+on deserialization.</p>
+<p>See <a href="https://github.com/unicode-org/icu4x/blob/main/utils/zerovec/design_doc.md">the design doc</a> for details on how this crate
+works under the hood.</p>
+<h4>Cargo features</h4>
+<p>This crate has several optional Cargo features:</p>
+<ul>
+<li><code>serde</code>: Allows serializing and deserializing <code>zerovec</code>'s abstractions via <a href="https://docs.rs/serde"><code>serde</code></a></li>
+<li><code>yoke</code>: Enables implementations of <code>Yokeable</code> from the <a href="https://docs.rs/yoke/"><code>yoke</code></a> crate, which is also useful
+in situations involving a lot of zero-copy deserialization.</li>
+<li><code>derive</code>: Makes it easier to use custom types in these collections by providing the <code>#[make_ule]</code> and
+<code>#[make_varule]</code> proc macros, which generate appropriate <a href="https://docs.rs/zerovec/latest/zerovec/ule/trait.ULE.html"><code>ULE</code></a> and
+<a href="https://docs.rs/zerovec/latest/zerovec/ule/trait.VarULE.html"><code>VarULE</code></a>-conformant types for a given &quot;normal&quot; type.</li>
+<li><code>std</code>: Enabled <code>std::Error</code> implementations for error types. This crate is by default <code>no_std</code> with a dependency on <code>alloc</code>.</li>
+</ul>
+<h4>Examples</h4>
+<p>Serialize and deserialize a struct with [<code>ZeroVec</code>] and [<code>VarZeroVec</code>] with Bincode:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">zerovec</span><span class="p">::{</span><span class="n">VarZeroVec</span><span class="p">,</span><span class="w"> </span><span class="n">ZeroVec</span><span class="p">};</span>
+
+<span class="c1">// This example requires the &quot;serde&quot; feature</span>
+<span class="cp">#[derive(serde::Serialize, serde::Deserialize)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">DataStruct</span><span class="o">&lt;&#39;</span><span class="na">data</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(borrow)]</span>
+<span class="w">    </span><span class="n">nums</span><span class="p">:</span><span class="w"> </span><span class="nc">ZeroVec</span><span class="o">&lt;&#39;</span><span class="na">data</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[serde(borrow)]</span>
+<span class="w">    </span><span class="n">chars</span><span class="p">:</span><span class="w"> </span><span class="nc">ZeroVec</span><span class="o">&lt;&#39;</span><span class="na">data</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[serde(borrow)]</span>
+<span class="w">    </span><span class="n">strs</span><span class="p">:</span><span class="w"> </span><span class="nc">VarZeroVec</span><span class="o">&lt;&#39;</span><span class="na">data</span><span class="p">,</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DataStruct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">nums</span><span class="p">:</span><span class="w"> </span><span class="nc">ZeroVec</span><span class="p">::</span><span class="n">from_slice_or_alloc</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="mi">211</span><span class="p">,</span><span class="w"> </span><span class="mi">281</span><span class="p">,</span><span class="w"> </span><span class="mi">421</span><span class="p">,</span><span class="w"> </span><span class="mi">461</span><span class="p">]),</span>
+<span class="w">    </span><span class="n">chars</span><span class="p">:</span><span class="w"> </span><span class="nc">ZeroVec</span><span class="p">::</span><span class="n">alloc_from_slice</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="sc">&#39;ö&#39;</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;冇&#39;</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;म&#39;</span><span class="p">]),</span>
+<span class="w">    </span><span class="n">strs</span><span class="p">:</span><span class="w"> </span><span class="nc">VarZeroVec</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="s">&quot;hello&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;world&quot;</span><span class="p">]),</span>
+<span class="p">};</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">bincode_bytes</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">bincode</span><span class="p">::</span><span class="n">serialize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;Serialization should be successful&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">bincode_bytes</span><span class="p">.</span><span class="n">len</span><span class="p">(),</span><span class="w"> </span><span class="mi">63</span><span class="p">);</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">deserialized</span><span class="p">:</span><span class="w"> </span><span class="nc">DataStruct</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bincode</span><span class="p">::</span><span class="n">deserialize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bincode_bytes</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;Deserialization should be successful&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">deserialized</span><span class="p">.</span><span class="n">nums</span><span class="p">.</span><span class="n">first</span><span class="p">(),</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="mi">211</span><span class="p">));</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">deserialized</span><span class="p">.</span><span class="n">chars</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="sc">&#39;冇&#39;</span><span class="p">));</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">deserialized</span><span class="p">.</span><span class="n">strs</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="s">&quot;world&quot;</span><span class="p">));</span>
+<span class="c1">// The deserialization will not have allocated anything</span>
+<span class="fm">assert!</span><span class="p">(</span><span class="o">!</span><span class="n">deserialized</span><span class="p">.</span><span class="n">nums</span><span class="p">.</span><span class="n">is_owned</span><span class="p">());</span>
+</code></pre>
+<p>Use custom types inside of [<code>ZeroVec</code>]:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">zerovec</span><span class="p">::{</span><span class="n">ZeroVec</span><span class="p">,</span><span class="w"> </span><span class="n">VarZeroVec</span><span class="p">,</span><span class="w"> </span><span class="n">ZeroMap</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">borrow</span><span class="p">::</span><span class="n">Cow</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">zerovec</span><span class="p">::</span><span class="n">ule</span><span class="p">::</span><span class="n">encode_varule_to_box</span><span class="p">;</span>
+
+<span class="c1">// custom fixed-size ULE type for ZeroVec</span>
+<span class="cp">#[zerovec::make_ule(DateULE)]</span>
+<span class="cp">#[derive(Copy, Clone, PartialEq, Eq, Ord, PartialOrd, serde::Serialize, serde::Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Date</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="kt">u64</span><span class="p">,</span>
+<span class="w">    </span><span class="n">m</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">d</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span>
+<span class="p">}</span>
+
+<span class="c1">// custom variable sized VarULE type for VarZeroVec</span>
+<span class="cp">#[zerovec::make_varule(PersonULE)]</span>
+<span class="cp">#[zerovec::derive(Serialize, Deserialize)]</span><span class="w"> </span><span class="c1">// add Serde impls to PersonULE</span>
+<span class="cp">#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, serde::Serialize, serde::Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Person</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">birthday</span><span class="p">:</span><span class="w"> </span><span class="nc">Date</span><span class="p">,</span>
+<span class="w">    </span><span class="n">favorite_character</span><span class="p">:</span><span class="w"> </span><span class="kt">char</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[serde(borrow)]</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nc">Cow</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="p">,</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[derive(serde::Serialize, serde::Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Data</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cp">#[serde(borrow)]</span>
+<span class="w">    </span><span class="n">important_dates</span><span class="p">:</span><span class="w"> </span><span class="nc">ZeroVec</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="p">,</span><span class="w"> </span><span class="n">Date</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">// note: VarZeroVec always must reference the ULE type directly</span>
+<span class="w">    </span><span class="cp">#[serde(borrow)]</span>
+<span class="w">    </span><span class="n">important_people</span><span class="p">:</span><span class="w"> </span><span class="nc">VarZeroVec</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="p">,</span><span class="w"> </span><span class="n">PersonULE</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="cp">#[serde(borrow)]</span>
+<span class="w">    </span><span class="n">birthdays_to_people</span><span class="p">:</span><span class="w"> </span><span class="nc">ZeroMap</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="p">,</span><span class="w"> </span><span class="n">Date</span><span class="p">,</span><span class="w"> </span><span class="n">PersonULE</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+
+<span class="kd">let</span><span class="w"> </span><span class="n">person1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Person</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">birthday</span><span class="p">:</span><span class="w"> </span><span class="nc">Date</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="mi">1990</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">},</span>
+<span class="w">    </span><span class="n">favorite_character</span><span class="p">:</span><span class="w"> </span><span class="o">&#39;</span><span class="err">π</span><span class="o">&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nc">Cow</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;Kate&quot;</span><span class="p">)</span>
+<span class="p">};</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">person2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Person</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">birthday</span><span class="p">:</span><span class="w"> </span><span class="nc">Date</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="mi">1960</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">:</span><span class="w"> </span><span class="mi">25</span><span class="p">},</span>
+<span class="w">    </span><span class="n">favorite_character</span><span class="p">:</span><span class="w"> </span><span class="o">&#39;</span><span class="err">冇</span><span class="o">&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nc">Cow</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;Jesse&quot;</span><span class="p">)</span>
+<span class="p">};</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">important_dates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ZeroVec</span><span class="p">::</span><span class="n">alloc_from_slice</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="n">Date</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="mi">1943</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">},</span><span class="w"> </span><span class="n">Date</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="mi">1976</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">},</span><span class="w"> </span><span class="n">Date</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="mi">1998</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">:</span><span class="w"> </span><span class="mi">15</span><span class="p">}]);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">important_people</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VarZeroVec</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="o">&amp;</span><span class="n">person1</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">person2</span><span class="p">]);</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">birthdays_to_people</span><span class="p">:</span><span class="w"> </span><span class="nc">ZeroMap</span><span class="o">&lt;</span><span class="n">Date</span><span class="p">,</span><span class="w"> </span><span class="n">PersonULE</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ZeroMap</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="c1">// `.insert_var_v()` is slightly more convenient over `.insert()` for custom ULE types</span>
+<span class="n">birthdays_to_people</span><span class="p">.</span><span class="n">insert_var_v</span><span class="p">(</span><span class="o">&amp;</span><span class="n">person1</span><span class="p">.</span><span class="n">birthday</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">person1</span><span class="p">);</span>
+<span class="n">birthdays_to_people</span><span class="p">.</span><span class="n">insert_var_v</span><span class="p">(</span><span class="o">&amp;</span><span class="n">person2</span><span class="p">.</span><span class="n">birthday</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">person2</span><span class="p">);</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Data</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">important_dates</span><span class="p">,</span><span class="w"> </span><span class="n">important_people</span><span class="p">,</span><span class="w"> </span><span class="n">birthdays_to_people</span><span class="w"> </span><span class="p">};</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">bincode_bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bincode</span><span class="p">::</span><span class="n">serialize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;Serialization should be successful&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">bincode_bytes</span><span class="p">.</span><span class="n">len</span><span class="p">(),</span><span class="w"> </span><span class="mi">160</span><span class="p">);</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">deserialized</span><span class="p">:</span><span class="w"> </span><span class="nc">Data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bincode</span><span class="p">::</span><span class="n">deserialize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bincode_bytes</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;Deserialization should be successful&quot;</span><span class="p">);</span>
+
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">deserialized</span><span class="p">.</span><span class="n">important_dates</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">unwrap</span><span class="p">().</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="mi">1943</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="o">&amp;</span><span class="n">deserialized</span><span class="p">.</span><span class="n">important_people</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">unwrap</span><span class="p">().</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Jesse&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="o">&amp;</span><span class="n">deserialized</span><span class="p">.</span><span class="n">important_people</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">unwrap</span><span class="p">().</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Kate&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="o">&amp;</span><span class="n">deserialized</span><span class="p">.</span><span class="n">birthdays_to_people</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">person1</span><span class="p">.</span><span class="n">birthday</span><span class="p">).</span><span class="n">unwrap</span><span class="p">().</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Kate&quot;</span><span class="p">);</span>
+
+<span class="p">}</span><span class="w"> </span><span class="c1">// feature = serde and derive</span>
+</code></pre>
+<h4>Performance</h4>
+<p><code>zerovec</code> is designed for fast deserialization from byte buffers with zero memory allocations
+while minimizing performance regressions for common vector operations.</p>
+<p>Benchmark results on <code>x86_64</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th><code>Vec&lt;T&gt;</code></th>
+<th><code>zerovec</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deserialize vec of 100 <code>u32</code></td>
+<td>233.18 ns</td>
+<td>14.120 ns</td>
+</tr>
+<tr>
+<td>Compute sum of vec of 100 <code>u32</code> (read every element)</td>
+<td>8.7472 ns</td>
+<td>10.775 ns</td>
+</tr>
+<tr>
+<td>Binary search vec of 1000 <code>u32</code> 50 times</td>
+<td>442.80 ns</td>
+<td>472.51 ns</td>
+</tr>
+<tr>
+<td>Deserialize vec of 100 strings</td>
+<td>7.3740 μs*</td>
+<td>1.4495 μs</td>
+</tr>
+<tr>
+<td>Count chars in vec of 100 strings (read every element)</td>
+<td>747.50 ns</td>
+<td>955.28 ns</td>
+</tr>
+<tr>
+<td>Binary search vec of 500 strings 10 times</td>
+<td>466.09 ns</td>
+<td>790.33 ns</td>
+</tr>
+</tbody>
+</table>
+<p>* <em>This result is reported for <code>Vec&lt;String&gt;</code>. However, Serde also supports deserializing to the partially-zero-copy <code>Vec&lt;&amp;str&gt;</code>; this gives 1.8420 μs, much faster than <code>Vec&lt;String&gt;</code> but a bit slower than <code>zerovec</code>.</em></p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th><code>HashMap&lt;K,V&gt;</code></th>
+<th><code>LiteMap&lt;K,V&gt;</code></th>
+<th><code>ZeroMap&lt;K,V&gt;</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deserialize a small map</td>
+<td>2.72 μs</td>
+<td>1.28 μs</td>
+<td>480 ns</td>
+</tr>
+<tr>
+<td>Deserialize a large map</td>
+<td>50.5 ms</td>
+<td>18.3 ms</td>
+<td>3.74 ms</td>
+</tr>
+<tr>
+<td>Look up from a small deserialized map</td>
+<td>49 ns</td>
+<td>42 ns</td>
+<td>54 ns</td>
+</tr>
+<tr>
+<td>Look up from a large deserialized map</td>
+<td>51 ns</td>
+<td>155 ns</td>
+<td>213 ns</td>
+</tr>
+</tbody>
+</table>
+<p>Small = 16 elements, large = 131,072 elements. Maps contain <code>&lt;String, String&gt;</code>.</p>
+<p>The benches used to generate the above table can be found in the <code>benches</code> directory in the project repository.
+<code>zeromap</code> benches are named by convention, e.g. <code>zeromap/deserialize/small</code>, <code>zeromap/lookup/large</code>. The type
+is appended for baseline comparisons, e.g. <code>zeromap/lookup/small/hashmap</code>.</p>
+<p></p>
+<h4>More Information</h4>
+<p>For more information on development, authorship, contributing etc. please visit <a href="https://github.com/unicode-org/icu4x"><code>ICU4X home page</code></a>.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>alloc</code></th><td>No</td><td><ul class="effects"><li><code>serde?/alloc</code></li></ul></td></tr><tr><th scope="row"><code>databake</code></th><td>No</td><td><ul class="effects"><li><code>dep:databake</code></li></ul></td></tr><tr><th scope="row"><code>derive</code></th><td>No</td><td><ul class="effects"><li><code>dep:zerovec-derive</code></li></ul></td></tr><tr><th scope="row"><code>hashmap</code></th><td>No</td><td><ul class="effects"><li><code>dep:twox-hash</code></li><li><code>alloc</code></li></ul></td></tr><tr><th scope="row"><code>schemars</code></th><td>No</td><td><ul class="effects"><li><code>dep:schemars</code></li><li><code>alloc</code></li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>yoke</code></th><td>No</td><td><ul class="effects"><li><code>dep:yoke</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><code>crates-io/databake</code><small>Alias: databake</small></th><td><code>^0.2.0</code><small>Default features: disabled</small><small>Requests: derive</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/schemars/"><code>crates-io/schemars</code></a><small>Alias: schemars</small></th><td><code>^1.0.4</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0.220</code><small>Default features: disabled</small><small>Requests: derive</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/twox-hash/"><code>crates-io/twox-hash</code></a><small>Alias: twox-hash</small></th><td><code>^2.0.0</code><small>Default features: disabled</small><small>Requests: xxhash64</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/yoke/"><code>crates-io/yoke</code></a><small>Alias: yoke</small></th><td><code>^0.8.3</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zerofrom/"><code>crates-io/zerofrom</code></a><small>Alias: zerofrom</small></th><td><code>^0.1.6</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zerovec-derive/"><code>crates-io/zerovec-derive</code></a><small>Alias: zerovec-derive</small></th><td><code>^0.11.5</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/icu_collections/versions/2.3.0/">crates-io/icu_collections 2.3.0</a><span>Requires ^0.11.7 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_collections/versions/2.1.1/">crates-io/icu_collections 2.1.1</a><span>Requires ^0.11.3 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_locale_core/versions/2.3.0/">crates-io/icu_locale_core 2.3.0</a><span>Requires ^0.11.7 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_locale_core/versions/2.1.1/">crates-io/icu_locale_core 2.1.1</a><span>Requires ^0.11.3 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_locale_fallback/versions/2.3.0/">crates-io/icu_locale_fallback 2.3.0</a><span>Requires ^0.11.7 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_normalizer/versions/2.3.0/">crates-io/icu_normalizer 2.3.0</a><span>Requires ^0.11.7 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_normalizer/versions/2.1.1/">crates-io/icu_normalizer 2.1.1</a><span>Requires ^0.11.3 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_properties/versions/2.3.0/">crates-io/icu_properties 2.3.0</a><span>Requires ^0.11.7 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_properties/versions/2.1.2/">crates-io/icu_properties 2.1.2</a><span>Requires ^0.11.3 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_provider/versions/2.3.1/">crates-io/icu_provider 2.3.1</a><span>Requires ^0.11.8 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_provider/versions/2.1.1/">crates-io/icu_provider 2.1.1</a><span>Requires ^0.11.3 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/icu_segmenter/versions/2.3.0/">crates-io/icu_segmenter 2.3.0</a><span>Requires ^0.11.7 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/potential_utf/versions/0.1.6/">crates-io/potential_utf 0.1.6</a><span>Requires ^0.11.7 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/potential_utf/versions/0.1.4/">crates-io/potential_utf 0.1.4</a><span>Requires ^0.11.3 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/tinystr/versions/0.8.4/">crates-io/tinystr 0.8.4</a><span>Requires ^0.11.7 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/tinystr/versions/0.8.2/">crates-io/tinystr 0.8.2</a><span>Requires ^0.11.3 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/zerotrie/versions/0.2.5/">crates-io/zerotrie 0.2.5</a><span>Requires ^0.11.7 · alias zerovec · </span></li><li><a href="../../../packages/crates-io/zerotrie/versions/0.2.3/">crates-io/zerotrie 0.2.3</a><span>Requires ^0.11.3 · alias zerovec · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:4760ad9043977f4d8a78ed5ee07c7c3e6b35a89007729c0e828a8e104f1c78f7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:784a9741d8ef56b302a001650c8ab5b4be48c57c7fc7bf61ba00a0cf54f01915</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, derive, yoke</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d3820c3b3e36ee343145004e46f15168e8bbd7b217beff6669802cbd1201e871</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636611">Attestation reference</a><small>Archive: sha256:934998d7079259fc63c3c72d27acbde88d70f110f8d302bc1b1012fb63105cac</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>derive</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:86a6f1aee24f89d8156936977cc0c01fe58f3a088501dccc2eccaab449915ec1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:44afc643bfd99e5a247402406af1fb742ee58992dff25a28d3699d4e7c63c29f</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>derive, yoke</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:11fbd915389e67bd80867c3fc10edc6586f60a1191be8406a8333c2bb0f73f4d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:087afbd015c1b075b267b438b7924d87047439c9d80ce4e2a1fee1caad2c3793</small></li><li><code>sha256:2aba7039094135d4738c916d792fe2fefb3b12a70d213f2e73ddc09d9e2116a1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:33371bb28434ca8b02a0a1379328c6a56cd7adfa1d70477e0ee3b9bf1c9338b1</small></li><li><code>sha256:e044eeb8f5c74294eef8d060152a7341ce37baca4e086cfb6d9bd6c3d878735d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:077a2554f3d8fe63e53a56427736afcb49480d67c4aeff86356e604d854200b8</small></li><li><code>sha256:f48dd3db6aed19629ef28127f811d307f9e20fff7c73d21149d947a128f0eed0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:c6bbb30decef2c0db7add93b432d8521dc07634c7335a3217c8f61a038c0139c</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:9e606ae91f16569e80a258861e14b1e3130327e76b0581409de56306c1599351</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:badb5d50a18f5d4d51540ee7e1af6f88a02f19550686179273cfc0823bbc7483</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, derive, yoke</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e7c4be04174db81b986ef883e462ca2f1c976819e886acaeb3e52db64b6cbf11</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:b8a37248d5821bbb7ed5a4068304fc2bec4b333b191cb7dce8ff028334721d6a</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>derive</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:376d777e09c61d5bd9a0a0ef94549f95918c3babbef2fb17dd55e2464f71fc8a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:570f329da4c454e27391c2929226e431ed3b798f89563c740937b5959bc158bd</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>derive, yoke</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:073e3f8676cbdb62b8ffd3d7ecd8033c63ba4ba2047dda9ce6a4af696a084e66</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:6e73abdb265f6f3a47438c244b6963d120c41ab2e547705670a9077c434fb728</small></li><li><code>sha256:11995d02575c3cf98154123c31326a05f6c27a02e63a200b3506bfc6f73a6135</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:e55f86e10cf131b4258f4e1e777e8d278eebdee48d35b10cd69d20d90ee607a6</small></li><li><code>sha256:7faeef1910bf02f11e9228d8046fcd2fb9e52ad78e0fa23bf23f842634a3bcd1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:b928f02d6f73d69b2f18b2c8510182e91bfe15b01685ac23b63e69a2b326f791</small></li><li><code>sha256:c775f132a7b8abf3dfd811a097538397ca59e81794adc1626a0f7cbb189321f7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:8c8ef4ccbed9eb3a127f45deef0443baa476dff3d4b3c07c8dc0e1e7ad598e64</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ec187a8c903c40cf694688075dac0b74cddea38ee852b4391fca022295db8db5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:3bb94ced161ee5c4c86e97ff8a08deb93afbc52894d2e8b6b4fdc1bda59553d9</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, derive, yoke</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8baead14ca186591870a47e9e8286cdbb13ef83663cfade2149ef6ecd020bcb6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:d03fbbbe0a3d67425515b4c3c66886b1d56681b0e31d0da7ce24f05b496c042d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>derive</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e7530491001d5b0632705337224581c09207a005254d3afb02bdd85180e214b2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674983">Attestation reference</a><small>Archive: sha256:9555bd5330bcbd47cc56cec4b95b88b536e7958a0279dec4b9d26fe3bc7422e0</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>derive, yoke</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a5008094f7a73230422aafe4341ccea304b9d24c19480604547e5ac238b84a67</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:ea4ea81886c6f156068a7af7da39267b03bc7d3bd3506b16ca6b95c9192ae8ca</small></li><li><code>sha256:adbfabae16a04c376fe930675ea414d4c74a246c01ac5cf433393b6156adc6dc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:3531bc76bcc4ee549683cdc1956b009540268e47dcdcb6e3527027077338d77d</small></li><li><code>sha256:cd76e3c3783ac8a06099a86d26d8260532d7d20c9f7b6bdc2be326665d592b34</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:f82145779109a9e5cca0eb2416dab9269332c6ad198c6906845b8d63b27c75e1</small></li><li><code>sha256:f91c14521bd35296baaef02c87712ed05c733aed71ffc43d41fe84f8bbceb73b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:adf4124eee0d42bb1c44e0c94b93318d4ebb7fe8b9a06c821170e3b164085861</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:17cfcb01d6ca4df592b9efecdf1f7881b1c381adaec23c22de0cddf57fba42d6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:8e87c401034235966005604579000108a5ef9ce7a1da5e5ec34522adbd21384d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, derive, yoke</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:262f82b8ca4c002ef85d214d5e2cdaf1ff8d881543572c345141fca896b4739b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:1d6e38c8ae578b0edb4d898c2977ab6fc94862093682cdf7e3072a98304fa0e9</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>derive</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:69d9f5401ba7d8c811d5b1a93bcebfd9f5f5806539a2cba0c699c85abdcb8e52</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:9ed3668033ff469b19b76a5cf1b8a160c2d96aece9de3da7797600f04dd445e1</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>derive, yoke</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:4471e326d63e2dba86f6b90cd3190e726360c07e7a75c42262acc336a1ac60cf</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:8b7cc1ee23a7385b010d4e49e352497fbb014fe582633bbf0f5d4028a000c418</small></li><li><code>sha256:8c2766c50d29f17f1e8e843a87524bba7fdd63453b665c2a78f49d76cf5137b0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:ad27f99a5bca7b4da2295f20c37fe6c53db0392c8465fe00c1c8d6a07423be6a</small></li><li><code>sha256:8d7dc829b3245417b5a397e9c53e15c18fddba09a8e9bfe4c4e11e4172e2753a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:46c36d253fac335b062e596db119afb696bcc3772bdb542ecc114230a2a83bc0</small></li><li><code>sha256:cb3d42afa5e6e9843c9187c20da2fa16ae7fb1d84ffaa6e59cc1f0632461776a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:f5b58ba1a0e1258565882a102eeb71006942257a68d817bc183e5d6592f17c7c</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>derive, yoke</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/zerovec/versions/0.11.8/">0.11.8</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/zerovec/0.11.8">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/zerovec/versions/0.11.5/">0.11.5</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/zerovec/0.11.5">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Unicode-3.0</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>UNICODE LICENSE V3
+
+COPYRIGHT AND PERMISSION NOTICE
+
+Copyright © 2020-2024 Unicode, Inc.
+
+NOTICE TO USER: Carefully read the following legal agreement. BY
+DOWNLOADING, INSTALLING, COPYING OR OTHERWISE USING DATA FILES, AND/OR
+SOFTWARE, YOU UNEQUIVOCALLY ACCEPT, AND AGREE TO BE BOUND BY, ALL OF THE
+TERMS AND CONDITIONS OF THIS AGREEMENT. IF YOU DO NOT AGREE, DO NOT
+DOWNLOAD, INSTALL, COPY, DISTRIBUTE OR USE THE DATA FILES OR SOFTWARE.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of data files and any associated documentation (the "Data Files") or
+software and any associated documentation (the "Software") to deal in the
+Data Files or Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, and/or sell
+copies of the Data Files or Software, and to permit persons to whom the
+Data Files or Software are furnished to do so, provided that either (a)
+this copyright and permission notice appear with all copies of the Data
+Files or Software, or (b) this copyright and permission notice appear in
+associated Documentation.
+
+THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF
+THIRD PARTY RIGHTS.
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE
+BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES,
+OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THE DATA
+FILES OR SOFTWARE.
+
+Except as contained in this notice, the name of a copyright holder shall
+not be used in advertising or otherwise to promote the sale, use or other
+dealings in these Data Files or Software without prior written
+authorization of the copyright holder.
+
+SPDX-License-Identifier: Unicode-3.0
+
+—
+
+Portions of ICU4X may have been adapted from ICU4C and/or ICU4J.
+ICU 1.8.1 to ICU 57.1 © 1995-2016 International Business Machines Corporation and others.
+</code></pre></div><p class="table-note">sha256:f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:2e49fc69b6d2d083cd546b1215c00a8f08b0b9ed2fe6aeca943ccff0f9b84cfc</code></dd><dt>Upstream checksum</dt><dd><code>sha256:bb0464e17806c1d976d5cba29399c7f08e516e279e2ba493f63123b5fca67dd8</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zerovec&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.11.8&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde?/alloc&quot;</span><span class="p">]</span>
+<span class="n">databake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:databake&quot;</span><span class="p">]</span>
+<span class="n">derive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:zerovec-derive&quot;</span><span class="p">]</span>
+<span class="n">hashmap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:twox-hash&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+<span class="n">schemars</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:schemars&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">yoke</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:yoke&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;zerovec&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">databake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/databake&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">schemars</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/schemars&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.220&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">twox-hash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/twox-hash&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;xxhash64&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">yoke</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/yoke&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zerofrom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zerofrom&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.6&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zerovec-derive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zerovec-derive&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.11.5&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;derive&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;yoke&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>The ICU4X Project Developers</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.83</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/zerovec/0.11.8">crates.io package</a></li><li><a href="https://github.com/unicode-org/icu4x">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">zerovec</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/zerovec"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.11.8"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>rustls-platform-verifier 0.7.1 · Incan.pub</title><meta name="description" content="rustls-platform-verifier supports verifying TLS certificates in rustls with the operating system verifier"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/rustls-platform-verifier</p><div class="title-row"><h1>rustls-platform-verifier</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/rustls-platform-verifier/versions/0.7.1/" selected>0.7.1</option></select></label></div><p class="description">rustls-platform-verifier supports verifying TLS certificates in rustls with the operating system verifier</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>rustls-platform-verifier</h3>
+<p><a href="https://crates.io/crates/rustls-platform-verifier">crates.io version</a>
+<a href="https://docs.rs/rustls-platform-verifier">crate documentation</a>
+MSRV
+<a href="https://crates.io/crates/rustls-platform-verifier">crates.io downloads</a>
+CI</p>
+<p>A Rust library to verify the validity of TLS certificates based on the operating system's certificate facilities.
+On operating systems that don't have these, <code>webpki</code> and/or <code>rustls-native-certs</code> is used instead.</p>
+<p>This crate is advantageous over <code>rustls-native-certs</code> on its own for a few reasons:</p>
+<ul>
+<li>Improved correctness and security, as the OSes <a href="https://support.apple.com/en-us/HT212865">CA constraints</a> will be taken into account.</li>
+<li>Better integration with OS certificate stores and enterprise CA deployments.</li>
+<li>Revocation support via verifying validity via OCSP and CRLs.</li>
+<li>Less I/O and memory overhead because all the platform CAs don't need to be loaded and parsed.</li>
+</ul>
+<p>This library supports the following platforms and flows:</p>
+<table>
+<thead>
+<tr>
+<th>OS</th>
+<th>Certificate Store</th>
+<th>Verification Method</th>
+<th>Revocation Support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Windows</td>
+<td>Windows platform certificate store</td>
+<td>Windows API certificate verification</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>macOS (10.14+)</td>
+<td>macOS platform roots and keychain certificate</td>
+<td>macOS <code>Security.framework</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>iOS</td>
+<td>iOS platform roots and keychain certificates</td>
+<td>iOS <code>Security.framework</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Android</td>
+<td>Android System Trust Store</td>
+<td>Android Trust Manager</td>
+<td>Sometimes[^1]</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td>System CA bundle, or user-provided certs[^3]</td>
+<td>webpki</td>
+<td>No[^2]</td>
+</tr>
+<tr>
+<td>WASM</td>
+<td>webpki roots</td>
+<td>webpki</td>
+<td>No[^2]</td>
+</tr>
+</tbody>
+</table>
+<p>[^1]: On Android, revocation checking requires API version &gt;= 24 (e.g. at least Android 7.0, August 2016).
+When available, revocation checking is only performed for the end-entity certificate. If a stapled OCSP
+response for the end-entity cert isn't provided, and the certificate omits both a OCSP responder URL and
+CRL distribution point to fetch revocation information from, revocation checking may fail.</p>
+<p>[^2]: The fall-back webpki verifier configured for Linux/WASM does not support providing CRLs for revocation
+checking. If you require revocation checking on these platforms, prefer constructing your own
+<code>WebPkiServerVerifier</code>, providing necessary CRLs. See the Rustls <a href="https://docs.rs/rustls/latest/rustls/client/struct.ServerCertVerifierBuilder.html"><code>ServerCertVerifierBuilder</code></a> docs for more
+information.</p>
+<p>[^3]: On Linux the <a href="https://github.com/rustls/rustls-native-certs">rustls-native-certs</a> and <a href="https://github.com/alexcrichton/openssl-probe">openssl-probe</a> crates are used to try and discover the system CA bundle.
+Users may wish to augment these certificates with <a href="https://github.com/rustls/webpki-roots">webpki-roots</a> using <a href="https://docs.rs/rustls-platform-verifier/latest/rustls_platform_verifier/struct.Verifier.html#method.new_with_extra_roots"><code>Verifier::new_with_extra_roots</code></a> in case
+a system CA bundle is unavailable.</p>
+<h4>Deployment Considerations</h4>
+<p>When choosing to use <code>rustls-platform-verifier</code> or another trust store option, these differences are important to consider. They
+are primarily about root certificate availability:</p>
+<table>
+<thead>
+<tr>
+<th>Backend</th>
+<th>Updates</th>
+<th>Roots used</th>
+<th>Supports system-local roots</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rustls-platform-verifier</code> (non-Linux/BSD)</td>
+<td>Updated by OS</td>
+<td>System store, with full (dis)trust decisions from every source available.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>rustls-native-certs</code> + <code>webpki</code></td>
+<td>Updated by OS</td>
+<td>System store, with no (dis)trust decisions. All roots are treated equally regardless of their status.</td>
+<td>Yes, with exceptions</td>
+</tr>
+<tr>
+<td><code>webpki-roots</code> + <code>webpki</code></td>
+<td>Static, manual updates required</td>
+<td>Hardcoded Mozilla CA roots, limited support for constrained roots.</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p><strong>In general</strong>: It is the opinion of the <code>rustls</code> and <code>rustls-platform-verifier</code> teams that this is the best default available for client-side libraries and applications
+making connections to TLS servers when running on common operating systems. This is because it gets both live trust information (new roots, explicit markers, and auto-managed CRLs)
+and better matches the common expectation of apps running on that platform (to use proxies, for example). Otherwise, it becomes your maintenance burden to
+ship updates right away in order to handle increasing numbers of positive and negative trust events in the WebPKI/certificate ecosystem, or risk availability and security concerns.</p>
+<h6>Linux/BSD</h6>
+<p>As of the time of writing, <code>rustls-platform-verifier</code> on these OSes only loads the trust stores from the OS once upon startup. This is the same behavior as <code>rustls-native-certs</code>, but the
+abstraction allows better behavior on the other platforms without extra work for downstreams.</p>
+<h6>Other</h6>
+<p>Alternatively, there is a clear answer to use static <code>webpki-roots</code> in your application instead if you are deploying containerized applications frequently, where root store changes
+will make it to production faster and any possibly used trust root is static by definition.</p>
+<p>Even though platform verifiers are sometimes implemented in memory-unsafe languages, it is very unlikely that Rust apps using this library will become a point of weakness.
+This is due to either using a smaller set of servers or just being less exposed then other critical functions of the operating system, default web browser, etc.
+But if your activity is identical or close to one of the following examples that process large amounts of untrusted input, a 100% Rust option like <code>webpki</code> is a more secure option:</p>
+<ul>
+<li>Seeing how many TLS servers <code>rustls</code> with a specific configuration can connect to.</li>
+<li>Harvesting data from various untrusted TLS endpoints exposed on the internet.</li>
+<li>Extracting info from a known-evil endpoint.</li>
+<li>Scanning all TLS certificates on the open internet.</li>
+</ul>
+<p><code>rustls-platform-verifier</code> is widely deployed by several applications that use the <code>rustls</code> stack, such as 1Password, Bitwarden, Signal, and <code>rustup</code>, on a wide set of OSes.
+This means that it has received lots of exposure to edge cases and has real-world experience/expertise invested into it to ensure optimal compatibility and security.</p>
+<h4>Installation and setup</h4>
+<p>On most platforms, no setup should be required beyond adding the dependency via <code>cargo</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="n">rustls-platform-verifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.5&quot;</span>
+</code></pre>
+<p>To get a rustls <code>ClientConfig</code> configured to use the platform verifier use:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">rustls</span><span class="p">::</span><span class="n">ClientConfig</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">rustls_platform_verifier</span><span class="p">::</span><span class="n">ConfigVerifierExt</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ClientConfig</span><span class="p">::</span><span class="n">with_platform_verifier</span><span class="p">();</span>
+</code></pre>
+<p>This crate will use the <a href="https://docs.rs/rustls/latest/rustls/crypto/struct.CryptoProvider.html#using-the-per-process-default-cryptoprovider">rustls process-default crypto provider</a>. To construct a <code>ClientConfig</code> with a different <code>CryptoProvider</code>, use:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">rustls</span><span class="p">::</span><span class="n">ClientConfig</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">rustls_platform_verifier</span><span class="p">::</span><span class="n">BuilderVerifierExt</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">arc_crypto_provider</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">Arc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">rustls</span><span class="p">::</span><span class="n">crypto</span><span class="p">::</span><span class="n">aws_lc_rs</span><span class="p">::</span><span class="n">default_provider</span><span class="p">());</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ClientConfig</span><span class="p">::</span><span class="n">builder_with_provider</span><span class="p">(</span><span class="n">arc_crypto_provider</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">with_safe_default_protocol_versions</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="n">unwrap</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="n">with_platform_verifier</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="n">unwrap</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="n">with_no_client_auth</span><span class="p">();</span>
+</code></pre>
+<h5>Android</h5>
+<p>Some manual setup is required, outside of <code>cargo</code>, to use this crate on Android. In order to
+use Android's certificate verifier, the crate needs to call into the JVM. A small Kotlin
+component must be included in your app's build to support <code>rustls-platform-verifier</code>.</p>
+<h6>Gradle Setup</h6>
+<p><code>rustls-platform-verifier</code> distributes the required native components in a Maven-compatible format via GitHub, but the project must be setup to locate them
+automatically and correctly. These steps assume you are using <code>.gradle</code> Groovy files because they're the most common, but if you are using
+Kotlin scripts (<code>.gradle.kts</code>) for configuration instead, an example snippet is included towards the end of this section.</p>
+<p>Each snippet includes a <a href="https://docs.gradle.org/current/javadoc/org/gradle/api/provider/ValueSource.html"><code>ValueSource</code></a> implementation that obtains a
+Cargo-synchronized dependency version performantly, and is also friendly to Gradle's configuration cache. The version can be be selected manually instead,
+but runtime crashes may occur if a SemVer incompatible version is used.</p>
+<p>Inside of your project's <code>build.gradle</code> file, add the following code and Maven repository definition:</p>
+<p><code>$PATH_TO_LOCK_FILE</code> is the relative path to the Cargo lockfile of your crate or workspace (<code>Cargo.lock</code>).</p>
+<pre><code>
+repositories {
+    maven {
+        url = "https://github.com/rustls/rustls-platform-verifier/raw/maven-archive/android-release-support/maven/"
+    }
+}
+
+abstract class RustlsVersion implements ValueSource&lt;String, RustlsVersion.Params&gt; {
+    interface Params extends ValueSourceParameters {
+        RegularFileProperty getLockFile()
+    }
+
+    static final String CRATE_NAME = "rustls-platform-verifier-android"
+
+    @Override
+    String obtain() {
+        def lockFile = parameters.lockFile.get().asFile
+        def lines = lockFile.readLines()
+        def idx = lines.findIndexOf { it.trim() == "name = \"$CRATE_NAME\"" }
+        def version = idx &lt; 0 ? null : lines.drop(idx + 1)
+            .find { it.stripLeading().startsWith("version = ") }
+            ?.find(/"([^"]*)"/) { match, v -&gt; v }
+        if (!version) throw new GradleException("$CRATE_NAME not found in $lockFile")
+        return version
+    }
+}
+
+def rustlsPlatformVerifierVersion = providers.of(RustlsVersion) { spec -&gt;
+    spec.parameters.lockFile.set(layout.projectDirectory.file($PATH_TO_LOCK_FILE))
+}
+
+configurations.configureEach { configuration -&gt;
+    configuration.resolutionStrategy.eachDependency { details -&gt;
+        if (details.requested.group == "org.rustls" &amp;&amp; details.requested.name == "rustls-platform-verifier") {
+            details.useVersion(rustlsPlatformVerifierVersion.get())
+            details.because("native component version must be identical to version of ${RustlsVersion.CRATE_NAME}")
+        }
+    }
+}
+</code></pre>
+<p>Then, wherever you declare your dependencies, add the following:</p>
+<pre><code>implementation "rustls:rustls-platform-verifier"
+</code></pre>
+<p>The dependency intentionally has no static version, it is only resolved dynamically at configuration time by the build script.</p>
+<p>Cargo automatically handles finding the downloaded crate in the correct location for your project. It also handles updating the version when
+new releases of <code>rustls-platform-verifier</code> are published. If you only use published releases, no extra maintenance should be required.</p>
+<p>These script snippets can be tweaked as best suits your project, but the <code>cargo metadata</code> invocation must be included so that the Android
+implementation part can be located on-disk.</p>
+<h6>Kotlin and Gradle</h6>
+<p><code>build.gradle.kts</code>:</p>
+<pre><code>
+repositories {
+    maven {
+        url = uri("https://github.com/rustls/rustls-platform-verifier/raw/maven-archive/android-release-support/maven/")
+    }
+}
+
+abstract class RustlsVersion : ValueSource&lt;String, RustlsVersion.Params&gt; {
+    interface Params : ValueSourceParameters {
+        val lockFile: RegularFileProperty
+    }
+
+    companion object {
+        const val CRATE_NAME = "rustls-platform-verifier-android"
+    }
+
+    override fun obtain(): String {
+        val version = parameters.lockFile.get().asFile.readLines().let { lines -&gt;
+            val nameIdx = lines.indexOfFirst { it.trim() == "name = \"$CRATE_NAME\"" }
+            if (nameIdx &lt; 0) {
+                null
+            } else {
+                lines.drop(nameIdx + 1)
+                    .firstOrNull { it.trimStart().startsWith("version = ") }
+                    ?.substringAfter('"', "")
+                    ?.substringBefore('"', "")
+                    ?.takeIf { it.isNotEmpty() }
+            }
+        }
+        return version?: error("$CRATE_NAME not found in Cargo.lock")
+    }
+}
+
+val rustlsPlatformVerifierVersion = providers.of(RustlsVersion::class.java) {
+    parameters.lockFile.set(layout.projectDirectory.file($PATH_TO_LOCK_FILE))
+}
+
+configurations.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.rustls" &amp;&amp; requested.name == "rustls-platform-verifier") {
+            useVersion(rustlsPlatformVerifierVersion.get())
+            because("native component version must be identical to version of ${RustlsVersion.CRATE_NAME}")
+        }
+    }
+}
+
+dependencies {
+    // `rustls-platform-verifier` is a Rust crate, but it also has a Kotlin component.
+    implementation(libs.rustls.platform.verifier)
+}
+</code></pre>
+<p><code>libs.version.toml</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="c1"># We keep the dependency unversioned because its version is selected dynamically during configuration.</span>
+<span class="n">rustls-platform-verifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;rustls&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;rustls-platform-verifier&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<h6>Proguard</h6>
+<p>If your Android application makes use of Proguard for optimizations, its important to make sure that the Android verifier component isn't optimized
+out because it looks like dead code. Proguard is unable to see any JNI usage, so your rules must manually opt into keeping it. The following rule
+can do this for you:</p>
+<pre><code>-keep, includedescriptorclasses class org.rustls.platformverifier.** { *; }
+</code></pre>
+<h6>Crate initialization</h6>
+<p>In order for the crate to call into the JVM, it needs handles from Android. These
+are provided by one of the <code>init_with_env</code>, <code>init_with_refs</code> or <code>init_with_runtime</code> functions. These give <code>rustls-platform-verifier</code>
+the resources it needs to make calls into the Android certificate verifier.</p>
+<p>As an example, if your Rust Android component which the &quot;native&quot; Android
+part of your app calls at startup has an initialization, like this:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">jni</span><span class="p">::</span><span class="n">jni_mangle</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">jni</span><span class="p">::</span><span class="n">objects</span><span class="p">::{</span><span class="n">JClass</span><span class="p">,</span><span class="w"> </span><span class="n">JObject</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">jni</span><span class="p">::</span><span class="n">EnvUnowned</span><span class="p">;</span>
+
+<span class="cp">#[jni_mangle(</span><span class="s">&quot;com.orgname.application.Application&quot;</span><span class="cp">)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">init</span><span class="o">&lt;&#39;</span><span class="na">caller</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">    </span><span class="k">mut</span><span class="w"> </span><span class="n">unowned_env</span><span class="p">:</span><span class="w"> </span><span class="nc">EnvUnowned</span><span class="o">&lt;&#39;</span><span class="na">caller</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">_class</span><span class="p">:</span><span class="w"> </span><span class="nc">JClass</span><span class="o">&lt;&#39;</span><span class="na">caller</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">context</span><span class="p">:</span><span class="w"> </span><span class="nc">JObject</span><span class="o">&lt;&#39;</span><span class="na">caller</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ... initialize your app&#39;s other parts here.</span>
+<span class="p">}</span>
+</code></pre>
+<p>In the simplest case, you should to insert a call to <code>rustls_platform_verifier::android::init_with_env()</code> here,
+before any networking has a chance to run. This only needs to be called once and
+the verifier will be valid for the lifetime of your app's process.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">jni</span><span class="p">::</span><span class="n">errors</span><span class="p">::</span><span class="n">ThrowRuntimeExAndDefault</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">jni</span><span class="p">::</span><span class="n">jni_mangle</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">jni</span><span class="p">::</span><span class="n">objects</span><span class="p">::{</span><span class="n">JClass</span><span class="p">,</span><span class="w"> </span><span class="n">JObject</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">jni</span><span class="p">::</span><span class="n">EnvUnowned</span><span class="p">;</span>
+
+<span class="cp">#[jni_mangle(</span><span class="s">&quot;com.orgname.application.Application&quot;</span><span class="cp">)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">init</span><span class="o">&lt;&#39;</span><span class="na">caller</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">    </span><span class="k">mut</span><span class="w"> </span><span class="n">unowned_env</span><span class="p">:</span><span class="w"> </span><span class="nc">EnvUnowned</span><span class="o">&lt;&#39;</span><span class="na">caller</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">_class</span><span class="p">:</span><span class="w"> </span><span class="nc">JClass</span><span class="o">&lt;&#39;</span><span class="na">caller</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">context</span><span class="p">:</span><span class="w"> </span><span class="nc">JObject</span><span class="o">&lt;&#39;</span><span class="na">caller</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ... initialize your app&#39;s other parts here.</span>
+
+<span class="w">    </span><span class="c1">// Then, initialize the certificate verifier for future use.</span>
+<span class="w">    </span><span class="n">unowned_env</span>
+<span class="w">        </span><span class="p">.</span><span class="n">with_env</span><span class="p">(</span><span class="o">|</span><span class="n">env</span><span class="o">|</span><span class="w"> </span><span class="n">rustls_platform_verifier</span><span class="p">::</span><span class="n">android</span><span class="p">::</span><span class="n">init_with_env</span><span class="p">(</span><span class="n">env</span><span class="p">,</span><span class="w"> </span><span class="n">context</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">resolve</span><span class="p">::</span><span class="o">&lt;</span><span class="n">ThrowRuntimeExAndDefault</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>In more advanced cases, such as where your code already stores long-lived handles into
+the Android environment, you can alternatively use <code>init_with_runtime</code>. This function takes
+a <code>&amp;'static</code> reference to something that implements the <code>android::Runtime</code> trait, which the
+crate then uses to obtain the access when required to the JVM.</p>
+<h4>Credits</h4>
+<p>Made with ❤️ by the <a href="https://1password.com/">1Password</a> and <code>rustls</code> teams. Portions of the Android and Windows verifier
+implementations were adapted and referenced from Chromium's previous verifier implementations as well.</p>
+<h6>License</h6>
+<p>&lt;sup&gt;
+Licensed under either of &lt;a href=&quot;LICENSE-APACHE&quot;&gt;Apache License, Version
+2.0&lt;/a&gt; or &lt;a href=&quot;LICENSE-MIT&quot;&gt;MIT license&lt;/a&gt; at your option.
+&lt;/sup&gt;</p>
+<p>&lt;br&gt;</p>
+<p>&lt;sub&gt;
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this crate by you, as defined in the Apache-2.0 license, shall
+be dual licensed as above, without any additional terms or conditions.
+&lt;/sub&gt;</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>android_logger</code></th><td>No</td><td><ul class="effects"><li><code>dep:android_logger</code></li></ul></td></tr><tr><th scope="row"><code>base64</code></th><td>No</td><td><ul class="effects"><li><code>dep:base64</code></li></ul></td></tr><tr><th scope="row"><code>cert-logging</code></th><td>No</td><td><ul class="effects"><li><code>base64</code></li></ul></td></tr><tr><th scope="row"><code>dbg</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>docsrs</code></th><td>No</td><td><ul class="effects"><li><code>jni</code></li><li><code>once_cell</code></li></ul></td></tr><tr><th scope="row"><code>ffi-testing</code></th><td>No</td><td><ul class="effects"><li><code>android_logger</code></li><li><code>rustls/aws-lc-rs</code></li></ul></td></tr><tr><th scope="row"><code>jni</code></th><td>No</td><td><ul class="effects"><li><code>dep:jni</code></li></ul></td></tr><tr><th scope="row"><code>once_cell</code></th><td>No</td><td><ul class="effects"><li><code>dep:once_cell</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><code>crates-io/android_logger</code><small>Alias: android_logger</small></th><td><code>^0.15</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults · when cfg(target_os = &quot;android&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/base64/"><code>crates-io/base64</code></a><small>Alias: base64</small></th><td><code>^0.22</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/core-foundation/"><code>crates-io/core-foundation</code></a><small>Alias: core-foundation</small></th><td><code>^0.10</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(any(target_vendor = &quot;apple&quot;))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/core-foundation-sys/"><code>crates-io/core-foundation-sys</code></a><small>Alias: core-foundation-sys</small></th><td><code>^0.8</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(any(target_vendor = &quot;apple&quot;))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/jni/"><code>crates-io/jni</code></a><small>Alias: jni</small></th><td><code>^0.22</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required · when cfg(target_os = &quot;android&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/jni/"><code>crates-io/jni</code></a><small>Alias: jni</small></th><td><code>^0.22.4</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/log/"><code>crates-io/log</code></a><small>Alias: log</small></th><td><code>^0.4</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/once_cell/"><code>crates-io/once_cell</code></a><small>Alias: once_cell</small></th><td><code>^1.9</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(target_os = &quot;android&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/once_cell/"><code>crates-io/once_cell</code></a><small>Alias: once_cell</small></th><td><code>^1.9</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rustls/"><code>crates-io/rustls</code></a><small>Alias: rustls</small></th><td><code>^0.23.27</code><small>Default features: disabled</small><small>Requests: std</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rustls-native-certs/"><code>crates-io/rustls-native-certs</code></a><small>Alias: rustls-native-certs</small></th><td><code>^0.8</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(all(unix, not(target_os = &quot;android&quot;), not(target_vendor = &quot;apple&quot;), not(target_arch = &quot;wasm32&quot;)))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rustls-platform-verifier-android/"><code>crates-io/rustls-platform-verifier-android</code></a><small>Alias: rustls-platform-verifier-android</small></th><td><code>^0.2.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(target_os = &quot;android&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/security-framework/"><code>crates-io/security-framework</code></a><small>Alias: security-framework</small></th><td><code>^3.5.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(any(target_vendor = &quot;apple&quot;))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/security-framework-sys/"><code>crates-io/security-framework-sys</code></a><small>Alias: security-framework-sys</small></th><td><code>^2.15</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(any(target_vendor = &quot;apple&quot;))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rustls-webpki/"><code>crates-io/rustls-webpki</code></a><small>Alias: webpki</small></th><td><code>^0.103</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required · when cfg(all(unix, not(target_os = &quot;android&quot;), not(target_vendor = &quot;apple&quot;), not(target_arch = &quot;wasm32&quot;)))</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rustls-webpki/"><code>crates-io/rustls-webpki</code></a><small>Alias: webpki</small></th><td><code>^0.103</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required · when cfg(target_arch = &quot;wasm32&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rustls-webpki/"><code>crates-io/rustls-webpki</code></a><small>Alias: webpki</small></th><td><code>^0.103</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required · when cfg(target_os = &quot;android&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/webpki-root-certs/"><code>crates-io/webpki-root-certs</code></a><small>Alias: webpki-root-certs</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required · when cfg(target_arch = &quot;wasm32&quot;)</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/windows-sys/"><code>crates-io/windows-sys</code></a><small>Alias: windows-sys</small></th><td><code>&gt;=0.52.0, &lt;0.62.0</code><small>Default features: disabled</small><small>Requests: Win32_Foundation, Win32_Security_Cryptography</small></td><td>Required · when cfg(windows)</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/hickory-net/versions/0.26.3/">crates-io/hickory-net 0.26.3</a><span>Requires ^0.7 · alias rustls-platform-verifier · </span></li><li><a href="../../../../../packages/crates-io/hyper-rustls/versions/0.27.10/">crates-io/hyper-rustls 0.27.10</a><span>Requires ^0.7 · alias rustls-platform-verifier · </span></li><li><a href="../../../../../packages/crates-io/kube-client/versions/4.2.0/">crates-io/kube-client 4.2.0</a><span>Requires ^0.7.0 · alias rustls-platform-verifier · </span></li><li><a href="../../../../../packages/crates-io/quinn-proto/versions/0.11.19/">crates-io/quinn-proto 0.11.19</a><span>Requires ^0.7 · alias rustls-platform-verifier · </span></li><li><a href="../../../../../packages/crates-io/reqwest/versions/0.13.5/">crates-io/reqwest 0.13.5</a><span>Requires &gt;=0.6.0, &lt;0.8.0 · alias rustls-platform-verifier · cfg(not(all(target_arch = &quot;wasm32&quot;, any(target_os = &quot;unknown&quot;, target_os = &quot;none&quot;))))</span></li><li><a href="../../../../../packages/crates-io/ureq/versions/3.4.2/">crates-io/ureq 3.4.2</a><span>Requires ^0.7.0 · alias rustls-platform-verifier · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:58622a4614a110cc1c0581c8fe6447def7de3909b14eadb10fd5993d061ea6f0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:66cdd3a963a4006f980520c28ed5488124ba9b55c6d00b2bf775a50f98a374d0</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:6119dbbd5333b4a413c2e02dab1bcfdbc3c50814f4188e8fe32d314a1453b88b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:d6fd75e6d29c2a2b3a593e40fbc3c89cdd281e7c3312f4a6dfe57f61bda6dd0f</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:01de32e6868290d532259acf5a67ff8b84ac66b352cea61ff9c7a3e518004fcd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:8fcd8946a27a37e808ab0297c153bc5e956fbbc5703b4848ad4f345b58464ee6</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:9fcf2d511636acc7f3b1a3599fb77c781fbaac5b31dd30c46a5782bb00bb1169</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:48b153338f6ed8821e220eac2ba4c6a2d355a792758e0fae690f3d64cc3dd6d0</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/rustls-platform-verifier/versions/0.7.1/">0.7.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/rustls-platform-verifier/0.7.1">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+</code></pre></div><p class="table-note">sha256:c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2022 1Password
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:1c7cf76689c837a68ed8d704994e52a0f2940c087958f860d17f3186afbdcc0c</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:bab0a6a314d3e35135ebf8da9f91aea3b3f54bc50008bdd96bea225a7e5a26d9</code></dd><dt>Upstream checksum</dt><dd><code>sha256:1167586491e2b18b8bfbb293e8180ec17c201c4f076d7cb3070ca964e7598f98</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustls-platform-verifier&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.7.1&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">android_logger</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:android_logger&quot;</span><span class="p">]</span>
+<span class="n">base64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:base64&quot;</span><span class="p">]</span>
+<span class="n">cert-logging</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;base64&quot;</span><span class="p">]</span>
+<span class="n">dbg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">docsrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;jni&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;once_cell&quot;</span><span class="p">]</span>
+<span class="n">ffi-testing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;android_logger&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rustls/aws-lc-rs&quot;</span><span class="p">]</span>
+<span class="n">jni</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:jni&quot;</span><span class="p">]</span>
+<span class="n">once_cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:once_cell&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustls_platform_verifier&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">android_logger</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/android_logger&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.15&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_os = </span><span class="se">\&quot;</span><span class="s2">android</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">base64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/base64&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.22&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">core-foundation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/core-foundation&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.10&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(target_vendor = </span><span class="se">\&quot;</span><span class="s2">apple</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">core-foundation-sys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/core-foundation-sys&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(target_vendor = </span><span class="se">\&quot;</span><span class="s2">apple</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">jni</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/jni&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.22&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_os = </span><span class="se">\&quot;</span><span class="s2">android</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/jni&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.22.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}]</span>
+<span class="n">log</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/log&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">once_cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/once_cell&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_os = </span><span class="se">\&quot;</span><span class="s2">android</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/once_cell&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}]</span>
+<span class="n">rustls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustls&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.23.27&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rustls-native-certs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustls-native-certs&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(all(unix, not(target_os = </span><span class="se">\&quot;</span><span class="s2">android</span><span class="se">\&quot;</span><span class="s2">), not(target_vendor = </span><span class="se">\&quot;</span><span class="s2">apple</span><span class="se">\&quot;</span><span class="s2">), not(target_arch = </span><span class="se">\&quot;</span><span class="s2">wasm32</span><span class="se">\&quot;</span><span class="s2">)))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rustls-platform-verifier-android</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustls-platform-verifier-android&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_os = </span><span class="se">\&quot;</span><span class="s2">android</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">security-framework</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/security-framework&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^3.5.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(target_vendor = </span><span class="se">\&quot;</span><span class="s2">apple</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">security-framework-sys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/security-framework-sys&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.15&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(target_vendor = </span><span class="se">\&quot;</span><span class="s2">apple</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">webpki</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustls-webpki&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.103&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(all(unix, not(target_os = </span><span class="se">\&quot;</span><span class="s2">android</span><span class="se">\&quot;</span><span class="s2">), not(target_vendor = </span><span class="se">\&quot;</span><span class="s2">apple</span><span class="se">\&quot;</span><span class="s2">), not(target_arch = </span><span class="se">\&quot;</span><span class="s2">wasm32</span><span class="se">\&quot;</span><span class="s2">)))&quot;</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustls-webpki&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.103&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_arch = </span><span class="se">\&quot;</span><span class="s2">wasm32</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustls-webpki&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.103&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_os = </span><span class="se">\&quot;</span><span class="s2">android</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">}]</span>
+<span class="n">webpki-root-certs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/webpki-root-certs&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(target_arch = </span><span class="se">\&quot;</span><span class="s2">wasm32</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">windows-sys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/windows-sys&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.52.0, &lt;0.62.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Win32_Foundation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Security_Cryptography&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(windows)&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/rustls-platform-verifier/0.7.1">crates.io package</a></li><li><a href="https://github.com/rustls/rustls-platform-verifier">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">rustls-platform-verifier</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/rustls-platform-verifier"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.7.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

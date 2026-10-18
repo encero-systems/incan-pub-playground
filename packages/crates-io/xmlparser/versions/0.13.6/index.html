@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>xmlparser 0.13.6 · Incan.pub</title><meta name="description" content="Pull-based, zero-allocation XML parser."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/xmlparser</p><div class="title-row"><h1>xmlparser</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/xmlparser/versions/0.13.6/" selected>0.13.6</option></select></label></div><p class="description">Pull-based, zero-allocation XML parser.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT/Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h4>xmlparser</h4>
+<p>Build Status
+<a href="https://crates.io/crates/xmlparser">Crates.io</a>
+<a href="https://docs.rs/xmlparser">Documentation</a>
+<a href="https://www.rust-lang.org">Rust 1.31+</a>
+</p>
+<p><em>xmlparser</em> is a low-level, pull-based, zero-allocation
+<a href="https://www.w3.org/TR/xml/">XML 1.0</a> parser.</p>
+<h5>Example</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">for</span><span class="w"> </span><span class="n">token</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">xmlparser</span><span class="p">::</span><span class="n">Tokenizer</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;&lt;tagname name=&#39;value&#39;/&gt;&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">token</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h5>Why a new library?</h5>
+<p>This library is basically a low-level XML tokenizer that preserves the positions of the tokens
+and is not intended to be used directly.
+If you are looking for a higher level solution, check out
+<a href="https://github.com/RazrFalcon/roxmltree">roxmltree</a>.</p>
+<h5>Benefits</h5>
+<ul>
+<li>All tokens contain <code>StrSpan</code> structs which represent the position of the substring
+in the original document.</li>
+<li>Good error processing. All error types contain the position (line:column) where it occurred.</li>
+<li>No heap allocations.</li>
+<li>No dependencies.</li>
+<li>Tiny. ~1400 LOC and ~30KiB in the release build according to <code>cargo-bloat</code>.</li>
+<li>Supports <code>no_std</code> builds. To use without the standard library, disable the default features.</li>
+</ul>
+<h5>Limitations</h5>
+<ul>
+<li>Currently, only ENTITY objects are parsed from the DOCTYPE. All others are ignored.</li>
+<li>No tree structure validation. So an XML like <code>&lt;root&gt;&lt;child&gt;&lt;/root&gt;&lt;/child&gt;</code>
+or a string without root element
+will be parsed without errors. You should check for this manually.
+On the other hand <code>&lt;a/&gt;&lt;a/&gt;</code> will lead to an error.</li>
+<li>Duplicated attributes is not an error. So XML like <code>&lt;item a=&quot;v1&quot; a=&quot;v2&quot;/&gt;</code>
+will be parsed without errors. You should check for this manually.</li>
+<li>UTF-8 only.</li>
+</ul>
+<h5>Safety</h5>
+<ul>
+<li>The library must not panic. Any panic is considered a critical bug
+and should be reported.</li>
+<li>The library forbids unsafe code.</li>
+</ul>
+<h5>License</h5>
+<p>Licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0
+(<a href="https://github.com/RazrFalcon/xmlparser/blob/28ce4a6b52c6b4abba07dd7d6c7f8cc39cc842aa/LICENSE-APACHE">LICENSE-APACHE</a> or http://www.apache.org/licenses/LICENSE-2.0)</li>
+<li>MIT license
+(<a href="https://github.com/RazrFalcon/xmlparser/blob/28ce4a6b52c6b4abba07dd7d6c7f8cc39cc842aa/LICENSE-MIT">LICENSE-MIT</a> or http://opensource.org/licenses/MIT)</li>
+</ul>
+<p>at your option.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p>No dependencies declared.</p></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/aws-smithy-xml/versions/0.62.1/">crates-io/aws-smithy-xml 0.62.1</a><span>Requires ^0.13.5 · alias xmlparser · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2eb178f37be2c63b761ac949aa72df34dcaaf311afdbbbbfa43c7c5c0e28ec52</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:c972bb815a11606de88d634ae9c7a867285e2d981f062c539fc76ef5245d9603</small></li><li><code>sha256:b136b41b361bbaad7d679cfa9e01c3029a0a6f142851617537ba5335eb1e47e4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:9ebeaabdac5d4352218255c6277e4ad367c1487a475392da7622f86bdd1000ca</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:dcfddd20b81747c9f2af85dd2b7962fa4ae6f982a689aa7a0b51c510bfb71a19</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:3cebc9a28e5d83d719d24a48cf5ef84c2862c50b7fba0b242385e612606a4667</small></li><li><code>sha256:fbb2539ea612ec16bf9a9fde7f69f88f54e5f7c66112c54209b560c45dc1c8ac</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:21547a58f12b17bb1db16768fa3a41e72d6d682de6f0e33968dad81b4c4d4b31</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:262bb45480afb30ba56e90154defef69ca0f5586b94047e94d534cfef75a9627</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:8ef0ba52ed4065d18844e52471df49aa33612d5f8c9c23ca4755371091fe0da3</small></li><li><code>sha256:5950637950eeda0f201877ac08a69da2dcfb9f048061547028a42daab704f689</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:7d8ec28c3bc87f391f4eaa8ceb916f649f853519d1185caea86050b93594817f</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0757034e66037389c65a3f94f925a1bdd690f91262c9fad284829b2a85a57760</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:e0ea21ff0556dd128f61ee8e1ec126faf24d03fd99a4a080181d1edd6d8f6fc1</small></li><li><code>sha256:53298c313c09a3f92cc66fffdab7ce29c98a2f7eae0a0e32990a7ba27709b783</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:d773c229aa5819f5e646023dce8760d1a496f1e918010ac4241ff665854c3417</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/xmlparser/versions/0.13.6/">0.13.6</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/xmlparser/0.13.6">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Change Log</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="http://keepachangelog.com/">Keep a Changelog</a>
+and this project adheres to <a href="http://semver.org/">Semantic Versioning</a>.</p>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.13.6...HEAD">Unreleased</a></h4>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.13.5...v0.13.6">0.13.6</a> - 2023-09-30</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Token::span</code>, <code>Tokenizer::stream</code> and allow cloning of <code>Tokenizer</code>.
+Thanks to <a href="https://github.com/krtab">@krtab</a>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Optimize <code>is_xml_char</code> function. Makes parsing 5-10% faster.
+Thanks to <a href="https://github.com/Simon-Martens">@Simon-Martens</a>.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.13.4...v0.13.5">0.13.5</a> - 2022-10-18</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Do no use recursive calls during parsing. Could lead to stack overflow on some input.</li>
+<li>Revert <em>Do not expand predefined references in <code>Stream::consume_reference</code>.</em></li>
+<li>Tests on Rust 1.61. Thanks to <a href="https://github.com/krtab">@krtab</a>.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.13.3...v0.13.4">0.13.4</a> - 2021-06-24</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Do not expand predefined references in <code>Stream::consume_reference</code>.
+Thanks to <a href="https://github.com/Jesse-Bakker">@Jesse-Bakker</a>.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.13.2...v0.13.3">0.13.3</a> - 2020-09-02</h4>
+<h5>Changed</h5>
+<ul>
+<li>Documentation fixes by <a href="https://github.com/kneasle">@kneasle</a>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>DtdEnd</code> token parsing when <code>]</code> and <code>&gt;</code> are separated by a whitespace.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.13.1...v0.13.2">0.13.2</a> - 2020-06-15</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Allow processing instruction before DTD.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.13.0...v0.13.1">0.13.1</a> - 2020-03-12</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Allow comments before DTD.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.12.0...v0.13.0">0.13.0</a> - 2020-01-07</h4>
+<h5>Changed</h5>
+<ul>
+<li>Moved to Rust 2018.</li>
+<li>Completely new <code>Error</code> enum.</li>
+<li>New error messages.</li>
+<li>10-20% faster parsing.</li>
+<li>Use <code>Tokenizer::from_fragment</code> instead of <code>Tokenizer::enable_fragment_mode</code>.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>TokenType</code>.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.11.0...v0.12.0">0.12.0</a> - 2019-12-21</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>]]&gt;</code> is no longer allowed inside a Text node.</li>
+<li>Only <a href="https://www.w3.org/TR/xml/#char32">XML characters</a> are allowed now.
+Otherwise, <code>StreamError::NonXmlChar</code> will occur.</li>
+<li>Disallow <code>-</code> at the end of a comment. <code>&lt;!--a---&gt;</code> is an error now.</li>
+<li>A missing space between attributes is an error now.</li>
+<li><code>StreamError::InvalidQuote</code> and <code>StreamError::InvalidSpace</code> signature changed.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.10.0...v0.11.0">0.11.0</a> - 2019-11-18</h4>
+<h5>Added</h5>
+<ul>
+<li><code>no_std</code> support thanks to <a href="https://github.com/hugwijst">hugwijst</a>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>StreamError::InvalidString</code> doesn't store an actual string now.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.9.0...v0.10.0">0.10.0</a> - 2019-09-14</h4>
+<h5>Changed</h5>
+<ul>
+<li>10-15% faster parsing.</li>
+<li>Merge <code>ByteStream</code> and <code>Stream</code>.</li>
+<li><code>StreamError::InvalidChar</code> signature changed.</li>
+<li><code>StreamError::InvalidChar</code> was split into <code>InvalidChar</code> and <code>InvalidCharMultiple</code>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>
+<p>Check for <a href="https://www.w3.org/TR/xml/#NT-NameStartChar">NameStartChar</a>
+during qualified name parsing.</p>
+<p>E.g. <code>&lt;-p&gt;</code> is an invalid tag name from now.</p>
+</li>
+<li>
+<p>Qualified name with multiple <code>:</code> is an error now.</p>
+</li>
+<li>
+<p><code>]&gt;</code> is a valid text/<code>CharData</code> now. Previously it was parsed as <code>DoctypeEnd</code>.</p>
+</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>StreamError::InvalidAttributeValue</code>. <code>StreamError::InvalidChar</code> will be emitted instead.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.8.1...v0.9.0">0.9.0</a> - 2019-02-27</h4>
+<h5>Added</h5>
+<ul>
+<li><code>span</code> field to all <code>Token</code> variants, which contains a whole token span in bytes.</li>
+<li><code>Stream::try_consume_byte</code>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>
+<p>All <code>Token</code> variants are structs now and not tuples.</p>
+</li>
+<li>
+<p><code>StrSpan</code> contains an actual string span an not only region now.</p>
+<p>So we can use a non-panic and zero-cost <code>StrSpan::as_str</code> instead
+of <code>StrSpan::to_str</code>, that was performing slicing each time.</p>
+</li>
+<li>
+<p>Split <code>Stream</code> into <code>ByteStream</code> and <code>Stream</code>.</p>
+</li>
+<li>
+<p><code>Stream::skip_spaces</code> will parse only ASCII whitespace now.</p>
+</li>
+<li>
+<p>Rename <code>StrSpan::to_str</code> into <code>StrSpan::as_str</code>.</p>
+</li>
+<li>
+<p>Rename <code>Reference::EntityRef</code> into <code>Reference::Entity</code>.</p>
+</li>
+<li>
+<p>Rename <code>Reference::CharRef</code> into <code>Reference::Char</code>.</p>
+</li>
+<li>
+<p><code>StrSpan::from_substr</code> and <code>StrSpan::slice_region</code> are private now.</p>
+</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>Token::Whitespaces</code>. Will be parsed as <code>Token::Text</code>.</li>
+<li><code>Stream::curr_char</code>.</li>
+<li><code>Stream::is_curr_byte_eq</code>.</li>
+<li><code>Stream::consume_either</code>.</li>
+<li><code>Stream::skip_ascii_spaces</code>. Use <code>Stream::skip_spaces</code> instead.</li>
+<li><code>StrSpan::trim</code>.</li>
+<li><code>StrSpan::len</code>.</li>
+<li><code>StrSpan::full_len</code>.</li>
+<li><code>StrSpan::as_bytes</code>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Declaration attributes with mixed quotes parsing.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.8.0...v0.8.1">0.8.1</a> - 2019-01-02</h4>
+<h5>Changed</h5>
+<ul>
+<li>Changed the crate category in the Cargo.toml</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.7.0...v0.8.0">0.8.0</a> - 2018-12-13</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Error::pos()</code>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Rename <code>Stream::gen_error_pos</code> into <code>Stream::gen_text_pos</code>.</li>
+<li>Rename <code>Stream::gen_error_pos_from</code> into <code>Stream::gen_text_pos_from</code>.</li>
+<li><code>Stream::gen_text_pos</code> speed up.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>TextPos</code> is Unicode aware now.</li>
+<li>XML declaration parsing when file has a BOM.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.6.1...v0.7.0">0.7.0</a> - 2018-10-29</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>&lt;</code> inside an attribute value is an error now.</li>
+<li><code>Token::Declaration</code> represents <em>standalone</em> as <code>bool</code> now.</li>
+<li>XML declaration must be defined only once now.</li>
+<li>XML declaration must start at 0 position.</li>
+<li>DTD must be defined only once now.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.6.0...v0.6.1">0.6.1</a> - 2018-10-08</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Stream::curr_byte_unchecked</code>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>UTF-8 BOM processing.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.5.0...v0.6.0">0.6.0</a> - 2018-08-31</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>Reference::EntityRef</code> contains <code>&amp;str</code> and not <code>StrSpan</code> now.</li>
+<li>Rename <code>Stream::try_consume_char_reference</code> into <code>try_consume_reference</code>.
+And it will return <code>Reference</code> and not <code>char</code> now.</li>
+<li>Rename <code>Tokenizer::set_fragment_mode</code> into <code>enable_fragment_mode</code>.</li>
+<li>Rename <code>ErrorPos</code> into <code>TextPos</code>.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>TextPos</code> calculation via <code>Stream::gen_error_pos</code>.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>TextUnescape</code> and <code>XmlSpace</code> because useless.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.4.1...v0.5.0">0.5.0</a> - 2018-06-14</h4>
+<h5>Added</h5>
+<ul>
+<li><code>StreamError::InvalidChar</code>.</li>
+<li><code>StreamError::InvalidSpace</code>.</li>
+<li><code>StreamError::InvalidString</code>.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>Stream::consume_reference</code> will return only <code>InvalidReference</code> error from now.</li>
+<li><code>Error::InvalidTokenWithCause</code> merged into <code>Error::InvalidToken</code>.</li>
+<li><code>Stream::gen_error_pos_from</code> does not require <code>mut self</code> from now.</li>
+<li><code>StreamError::InvalidChar</code> requires <code>Vec&lt;u8&gt;</code> and not <code>String</code> from now.</li>
+<li><code>ErrorPos</code> uses <code>u32</code> and not <code>usize</code> from now.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>failure</code> dependency.</li>
+<li><code>log</code> dependency.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.4.0...v0.4.1">0.4.1</a> - 2018-05-23</h4>
+<h5>Added</h5>
+<ul>
+<li>An ability to parse an XML fragment.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.3.0...v0.4.0">0.4.0</a> - 2018-04-21</h4>
+<h5>Changed</h5>
+<ul>
+<li>Relicense from MIT to MIT/Apache-2.0.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>FromSpan</code> trait.</li>
+<li><code>from_str</code> and <code>from_span</code> methods are removed. Use the <code>From</code> trait instead.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.2.0...v0.3.0">0.3.0</a> - 2018-04-10</h4>
+<h5>Changed</h5>
+<ul>
+<li>Use <code>failure</code> instead of <code>error-chain</code>.</li>
+<li>Minimum Rust version is 1.18.</li>
+<li>New error messages.</li>
+<li><code>TokenType</code> is properly public now.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li><code>ChainedError</code></li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.1.2...v0.2.0">0.2.0</a> - 2018-03-11</h4>
+<h5>Added</h5>
+<ul>
+<li>Qualified name parsing.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><strong>Breaking</strong>. <code>Token::ElementStart</code> and <code>Token::Attribute</code> contains prefix
+and local part of the qualified name now.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.1.1...v0.1.2">0.1.2</a> - 2018-02-12</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Stream::skip_ascii_spaces</code>.</li>
+<li>Small performance optimizations.</li>
+</ul>
+<h4><a href="https://github.com/RazrFalcon/xmlparser/compare/v0.1.0...v0.1.1">0.1.1</a> - 2018-01-17</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>log</code> 0.3 -&gt; 0.4</li>
+</ul>
+</div><p class="table-note">sha256:3b2162359344d36a778814835c6a33094de5244440486536dff975aa9d6beea0</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT/Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>The MIT License (MIT)
+
+Copyright (c) 2018 Reizner Evgeniy
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:0b5f24524360e15bcf9fb79bca875f5aa62f01f94f2988e23238c7ec0e6e8784</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:c1646533985c7a6de410a79b39670443afe6300e55bedb6cc13f559f9f411e89</code></dd><dt>Upstream checksum</dt><dd><code>sha256:66fee0b777b0f5ac1c69bb06d361268faafa61cd4682ae064a171c16c433e9e4</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/xmlparser&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.13.6&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;xmlparser&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Yevhenii Reizner &lt;razrfalcon@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/xmlparser/0.13.6">crates.io package</a></li><li><a href="https://github.com/RazrFalcon/xmlparser">Source repository</a></li><li><a href="https://docs.rs/xmlparser/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">xmlparser</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/xmlparser"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.13.6"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>fancy-regex 0.19.2 · Incan.pub</title><meta name="description" content="An implementation of regexes, supporting a relatively rich set of features, including backreferences and look-around. Aims to be compatible with Oniguruma syntax when the relevant flag is set."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/fancy-regex</p><div class="title-row"><h1>fancy-regex</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/fancy-regex/versions/0.19.2/" selected>0.19.2</option></select></label></div><p class="description">An implementation of regexes, supporting a relatively rich set of features, including backreferences and look-around. Aims to be compatible with Oniguruma syntax when the relevant flag is set.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>fancy-regex</h3>
+<p>A Rust library for compiling and matching regular expressions. It uses a hybrid
+regex implementation designed to support a relatively rich set of features.
+In particular, it uses backtracking to implement &quot;fancy&quot; features such as
+look-around and backtracking, which are not supported in purely
+NFA-based implementations (exemplified by
+<a href="https://github.com/google/re2">RE2</a>, and implemented in Rust in the
+<a href="https://crates.io/crates/regex">regex</a> crate).</p>
+<p>Aims to be compatible with Oniguruma syntax when the relevant flag is set.</p>
+<p>Try it online in the <strong><a href="https://fancy-regex.github.io/fancy-regex/">fancy-regex playground</a></strong> - test and explore regular expressions with advanced features in your browser.</p>
+<p><a href="https://docs.rs/fancy-regex">docs</a>
+<a href="https://crates.io/crates/fancy-regex">crate</a>
+<a href="https://github.com/fancy-regex/fancy-regex/actions?query=workflow%3Aci">ci</a>
+<a href="https://codecov.io/gh/fancy-regex/fancy-regex">codecov</a></p>
+<p>A goal is to be as efficient as possible. For a given regex, the NFA
+implementation has asymptotic running time linear in the length of the
+input, while in the general case a backtracking implementation has
+exponential blowup. An example given in <a href="https://arxiv.org/pdf/1405.7058.pdf">Static Analysis for Regular
+Expression Exponential Runtime via Substructural
+Logics</a> is:</p>
+<pre><code>import re
+re.compile('(a|b|ab)*bc').match('ab' * 28 + 'ac')
+</code></pre>
+<p>In Python (tested on both 2.7 and 3.5), this match takes 91s, and
+doubles for each additional repeat of 'ab'.</p>
+<p>Thus, many proponents
+<a href="https://swtch.com/~rsc/regexp/regexp1.html">advocate</a> a purely NFA
+(nondeterministic finite automaton) based approach. Even so,
+backreferences and look-around do add richness to regexes, and they
+are commonly used in applications such as syntax highlighting for text
+editors. In particular, TextMate's <a href="https://manual.macromates.com/en/language_grammars">syntax
+definitions</a>,
+based on the <a href="https://github.com/kkos/oniguruma">Oniguruma</a>
+backtracking engine, are now used in a number of other popular
+editors, including Sublime Text and Atom. These syntax definitions
+routinely use backreferences and look-around. For example, the
+following regex captures a single-line Rust raw string:</p>
+<pre><code>r(#*)".*?"\1
+</code></pre>
+<p>There is no NFA that can express this simple and useful pattern. Yet,
+a backtracking implementation handles it efficiently.</p>
+<p>This package is one of the first that handles both cases well. The
+exponential blowup case above is run in 258ns. Thus, it should be a
+very appealing alternative for applications that require both richness
+and performance.</p>
+<h4>A warning about worst-case performance</h4>
+<p>NFA-based approaches give strong guarantees about worst-case
+performance. For regexes that contain &quot;fancy&quot; features such as
+backreferences and look-around, this module gives no corresponding
+guarantee. If an attacker can control the regular expressions that
+will be matched against, they will be able to successfully mount a
+denial-of-service attack. Be warned.</p>
+<p>See <a href="https://github.com/fancy-regex/fancy-regex/blob/e2684857abcfd723562864077c6bc5f3f70ecedf/PERFORMANCE.md">PERFORMANCE.md</a> for some examples.</p>
+<h4>A hybrid approach</h4>
+<p>One workable approach is to detect the presence of &quot;fancy&quot; features,
+and choose either an NFA implementation or a backtracker depending on
+whether they are used.</p>
+<p>However, this module attempts to be more fine-grained. Instead, it
+implements a true hybrid approach. In essence, it is a backtracking VM
+(as well explained in <a href="https://swtch.com/~rsc/regexp/regexp2.html">Regular Expression Matching: the Virtual
+Machine Approach</a>) in
+which one of the &quot;instructions&quot; in the VM delegates to an inner NFA
+implementation (in Rust, the regex crate, though a similar approach
+would certainly be possible using RE2 or the Go
+<a href="https://golang.org/pkg/regexp/">regexp</a> package). Then there's an
+analysis which decides for each subexpression whether it is &quot;hard&quot;, or
+can be delegated to the NFA matcher. At the moment, it is eager, and
+delegates as much as possible to the NFA engine.</p>
+<h4>Theory</h4>
+<p>The core concept behind this library is to implement a backtracking virtual machine (VM) for regular expression matching, similar to PCRE.
+However, whenever possible, this VM delegates work to an underlying regular expression engine - the Rust regex crate - which does not otherwise support &quot;fancy&quot; features like lookarounds and backreferences, but has other desirable design goals - specifically, the regex crate has runtime linear to input length.</p>
+<p>For regular expressions that do not use &quot;fancy&quot; features, the library acts primarily as a lightweight wrapper around the underlying engine.
+When such features are present, the library performs an analysis to determine which parts of the expression must be handled by the backtracking engine and which can be safely delegated.</p>
+<p>This analysis operates in two phases:</p>
+<h5>Phase 1 - Bottom-Up Analysis</h5>
+<p>Each subexpression is analyzed to determine three key properties:</p>
+<ul>
+<li><em>hard</em>: Whether the subexpression requires backtracking features (backreferences, look-around, atomic groups, conditionals)</li>
+<li><em>minimum size</em>: The minimum number of characters this subexpression will match</li>
+<li><em>constant size</em>: Whether the subexpression always matches the same number of characters</li>
+</ul>
+<h5>Phase 2 - Top-Down Compilation</h5>
+<p>The compilation phase proceeds from the root of the expression, passing a &quot;hard context&quot; that flows from parent to child expressions. This context indicates whether match length variations will affect backtracking decisions.</p>
+<p><em>Delegation Strategy</em>: If both the subexpression and context are &quot;easy&quot;, the compiler generates a <code>Delegate</code> instruction to offload work to the high-performance NFA engine. Otherwise, it generates explicit VM instructions.</p>
+<p><em>Concatenation Optimization</em>: For sequences of subexpressions, the compiler employs a sophisticated strategy:</p>
+<ol>
+<li>Identify a prefix of constant-size, easy subexpressions that can be safely delegated (because they won't affect backtracking)</li>
+<li>If the context is easy, identify a suffix of easy subexpressions for delegation</li>
+<li>Compile the remaining &quot;hard&quot; middle section with explicit backtracking instructions</li>
+<li>The hard context flows from right to left - only the rightmost hard subexpression gets an easy context</li>
+</ol>
+<p>This ensures maximum delegation while preserving correct backtracking semantics.</p>
+<h5>Summary</h5>
+<p>In summary, the system efficiently combines backtracking and automaton-based matching by delegating as much work as possible to the underlying high-performance NFA engine, only resorting to backtracking where strictly necessary. This hybrid approach provides both expressive power and performance for advanced regular expression features.</p>
+<h4>Current status</h4>
+<p>Still in development, though the basic ideas are in place. Currently,
+the following features are missing:</p>
+<ul>
+<li>Backreferences at recursion levels</li>
+</ul>
+<h5>Experimental optimizations</h5>
+<p>fancy-regex now has a <strong>Seek</strong> pre-filter optimization (currently disabled by default) for hard (backtracking) patterns. It derives a regular approximation of the pattern and uses it to skip directly to the earliest plausible match position in the haystack, so the backtracking VM only needs to run from that position.
+This helps greatly when working with anchored matches or searching large haystacks for literals etc.
+It is considered experimental because it hasn't been field tested much yet - it is expected that everything should be fine because it was designed to be conservative, but there is a chance that the seek will accidentally skip over possible match positions.</p>
+<h4>Acknowledgements</h4>
+<p>Many thanks to <a href="http://blog.burntsushi.net/about/">Andrew Gallant</a> for
+stimulating conversations that inspired this approach, as well as for
+creating the excellent regex crate.</p>
+<h4>Authors</h4>
+<p>The main authors are Raph Levien, Robin Stocker and Keith Hall.</p>
+<h4>Contributions</h4>
+<p>We gladly accept contributions via GitHub pull requests. Please see
+<a href="https://github.com/fancy-regex/fancy-regex/blob/e2684857abcfd723562864077c6bc5f3f70ecedf/CONTRIBUTING.md">CONTRIBUTING.md</a> for more details.</p>
+<p>This project started out as a Google 20% project, but none of the authors currently
+work at Google so it has been forked to be community-maintained.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>unicode</code></li><li><code>perf</code></li><li><code>std</code></li><li><code>variable-lookbehinds</code></li></ul></td></tr><tr><th scope="row"><code>leftmost_longest</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>perf</code></th><td>Yes<small>default → perf</small></td><td><ul class="effects"><li><code>regex-automata/perf</code></li></ul></td></tr><tr><th scope="row"><code>perf-dfa-full</code></th><td>No</td><td><ul class="effects"><li><code>regex-automata/dfa-build</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>regex-automata/std</code></li><li><code>regex-syntax/std</code></li><li><code>bit-set/std</code></li></ul></td></tr><tr><th scope="row"><code>track_caller</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>unicode</code></th><td>Yes<small>default → unicode</small></td><td><ul class="effects"><li><code>regex-automata/unicode</code></li><li><code>regex-syntax/unicode</code></li></ul></td></tr><tr><th scope="row"><code>variable-lookbehinds</code></th><td>Yes<small>default → variable-lookbehinds</small></td><td><ul class="effects"><li><code>regex-automata/dfa-search</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/bit-set/"><code>crates-io/bit-set</code></a><small>Alias: bit-set</small></th><td><code>^0.8</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/regex-automata/"><code>crates-io/regex-automata</code></a><small>Alias: regex-automata</small></th><td><code>^0.4.16</code><small>Default features: disabled</small><small>Requests: alloc, dfa-onepass, dfa-search, hybrid, meta, nfa, syntax</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/regex-syntax/"><code>crates-io/regex-syntax</code></a><small>Alias: regex-syntax</small></th><td><code>^0.8</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/jsonschema/versions/0.58.6/">crates-io/jsonschema 0.58.6</a><span>Requires ^0.19 · alias fancy-regex · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, perf, std, unicode, variable-lookbehinds</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2f703fb64ae68251d7985fd868009c33e3cda99eebf026523fde3bcf37d48c0d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:4589a6699be58bbc8b4581f7529cdc6061e6c70956991b25222101f3a0ab3bbb</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, perf, std, unicode, variable-lookbehinds</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2e3a0bc2d1311fb458c7843902faf778de44272d7dc42d4693be749fc19359a1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:fa28f1cf1c590d05c2b669fa61f3135e2bbf7b90355d7d3f429cf16e027db2db</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, perf, std, unicode, variable-lookbehinds</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5873f10d2acfb6940dce72070339677ee37cff23fac53790515d3300375ae3fb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:ddb4600691e36cc4cd619f46d345b6bb90b4ba1c65289dac3a8ec033a30ef650</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, perf, std, unicode, variable-lookbehinds</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:110afbabfcf833cf4158142d063587bd5dc8f58785a1e3626265afd945a74013</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:ee3353e376fc7412b4f24ab7e709194f1796c82f84f9096c4ce6a09365e5609c</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/fancy-regex/versions/0.19.2/">0.19.2</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/fancy-regex/0.19.2">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="http://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>.
+This project adheres to <a href="http://semver.org/spec/v2.0.0.html">Semantic Versioning</a>,
+with the exception that 0.x versions can break between minor versions.</p>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.19.2...HEAD">Unreleased</a></h4>
+<h5>Added</h5>
+<h5>Changed</h5>
+<h5>Fixed</h5>
+<h4>[0.19.2] - 2026-09-13</h4>
+<h5>Added</h5>
+<ul>
+<li>Add a <code>leftmost_longest</code> feature (off by default) that adds a method to the <code>RegexBuilder</code>/<code>RegexOptionsBuilder</code> for building a VM which would operate in leftmost-longest match mode instead of the regular leftmost-first mode. Useful for POSIX compliance. (#281)</li>
+</ul>
+<h5>Changed</h5>
+<h5>Fixed</h5>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.19.1...0.19.2">0.19.1</a> - 2026-09-06</h4>
+<h5>Added</h5>
+<ul>
+<li>Add a <code>perf-dfa-full</code> feature (off by default, mirroring the <code>regex</code> crate) that lets regex-automata eagerly build fully compiled dense DFAs for small patterns, for workloads that compile few regexes and match them very heavily (#272)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Add VM instruction for case insensitive literals when in Unicode mode, to keep the build cost bounded (#268) and ensured the toy example graph output remains readable instead of being super verbose (#269)</li>
+<li>Compilation performance: the <code>regex-automata</code> dependency no longer enables the <code>dfa-build</code> feature by default. With <code>dfa-build</code> enabled, <code>meta::Regex</code> eagerly determinizes a full dense DFA for every small pattern, which dominated build time of simple class-containing patterns (e.g. <code>\b(extern)\s+(crate)</code> compiled ~4x slower than with the <code>regex</code> crate, which also ships without <code>dfa-build</code>); searches use the lazy DFA instead, with no measurable match-time difference (#272)</li>
+<li>Compilation performance: identical delegated fragments within one compile now share a single regex-automata engine instead of each building their own. Alternation-heavy patterns (TextMate grammar lookbehinds especially) often repeat the same fragment many times; on such patterns this removes a large share of build time (#277)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>The playground didn't show when a literal or backreference was being matched case insensitively in the analysis tree view (#269)</li>
+<li>Seek patterns could become very large when recursive backrefs and subroutine calls were inlined, without bringing much benefit (#270)</li>
+<li>The <code>optimize_nested_repeats</code> pass could rewrite an optional capture group like <code>(\w+)?</code> into <code>(\w*)</code>, causing an unmatched optional group to be reported as an empty match (<code>Some(&quot;&quot;)</code>) instead of <code>None</code> (#276)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.18.0...0.19.0">0.19.0</a> - 2026-07-28</h4>
+<h5>Added</h5>
+<ul>
+<li>Add <code>BytesMode</code> and the <code>RegexInput</code> trait so the matching and capture APIs can operate on strings or bytes, and allows to opt out of unicode handling if desired (#248)
+<ul>
+<li>Also allows searching within a range without slicing (#253)</li>
+<li>Assertions can be overridden at runtime, if the regex builder <code>allow_input_assertion_overrides</code> option was used (#254)</li>
+<li>Search can be performed in anchored mode, searching only at the start position specified (#263)</li>
+</ul>
+</li>
+<li>Add experimental seek optimization to only invoke the VM at candidate positions where a match could occur (#246)</li>
+<li>Add <code>RegexBuilder::disallow_empty_match_at_eof_after_newline</code> to reject empty matches at the end of the haystack following a trailing newline, to match Oniguruma behavior (#247)</li>
+<li>Add <code>RegexSet</code> API for efficiently matching multiple patterns against the same text (#255)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Case-insensitive backreference comparison of non-ASCII text now uses direct Unicode simple case folding instead of building a regex engine per comparison, which makes patterns like <code>(?i)(\w+)\1</code> orders of magnitude faster on non-ASCII haystacks. The comparison is now strict fold equality over the captured text's byte-length window: a case-folded <em>prefix</em> of the window no longer counts as a match (previously a substring search could accept one and misalign the match end)</li>
+<li>Compilation performance: delegated regex-automata engines (including the whole pattern in the easy case) are now built from a directly-constructed <code>Hir</code> instead of a re-serialized pattern string, and <code>RegexSet</code> parses each pattern once for both of its set-wide engines instead of three times. This reduces compile time and peak compile memory, especially for <code>RegexSet</code> and small easy patterns</li>
+<li>Match performance: the backtracking VM's working memory (saves, backtrack stack, delegate slots) is pooled and reused across runs, making <code>is_match</code>/<code>find</code>/<code>find_iter</code> and <code>RegexSet</code> candidate verification allocation-free per call; <code>RegexSet::find_input</code> no longer allocates at failed candidate positions. Short and repeated matches improve substantially (up to ~30% for small patterns, ~10% for <code>find_iter</code> over many matches); single very long backtracking runs, where per-run setup is fully amortized anyway, can be a few percent slower</li>
+<li><code>Matches</code>, <code>CaptureMatches</code>, <code>Captures</code>, and <code>SubCaptureMatches</code> are now generic over <code>RegexInput</code>, which is a breaking change for code that named these types explicitly (#248)</li>
+<li>Patterns no longer force Unicode mode during parsing, and inline <code>(?u)</code> / <code>(?-u)</code> flags are accepted when they agree with the builder configuration</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix bug whereby inline flags were not overriding the builder options (#247)</li>
+<li>Fix bug whereby <code>\G</code> optimizations were applying where they shouldn't, giving wrong results (#256)</li>
+<li>Support Oniguruma quantifier parsing rules, whereby swapped ordering causes possessiveness, <code>+</code> only causes possessiveness after <code>?</code>, <code>*</code> or <code>+</code> (#258)</li>
+</ul>
+<h5>Upgrade guide</h5>
+<p>If you previously stored i.e. <code>Captures</code>, you would need to change the type to <code>Captures&lt;str&gt;</code> to get the code to compile.</p>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.17.0...0.18.0">0.18.0</a> - 2026-04-24</h4>
+<h5>Added</h5>
+<ul>
+<li>Add support for <code>\N</code> to mean any character except newline, for Oniguruma compatibility (#206)</li>
+<li>Add support for <code>(*FAIL)</code> backtracking control verb (#210)</li>
+<li>Add support for more <code>\p{...}</code> and <code>\P{...}</code> aliases, for Oniguruma compatibility (#207)</li>
+<li>Add support for word boundaries and zero-length fancy patterns inside variable lookbehinds (at top level) (#216)</li>
+<li>Add support for <code>\R</code> to mean general newline, matching all common line break characters, treating <code>\r\n</code> atomically (#220)</li>
+<li>Add support for the regex crate's <code>(?R)</code> CRLF mode flag (#238)</li>
+<li>Add support for subroutine calls (including recursion up to 20 levels deep, matching Oniguruma behavior) <code>\g&lt;1&gt;</code> (#230)</li>
+<li>Add support for Oniguruma's absent repeater <code>(?~abc)</code> (#233)</li>
+<li>Add support for ignoring empty matches (#240)</li>
+<li>Add support for treating unnamed capture groups as non-capturing when named groups exist (#241)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>RegexBuilder</code> can now build multiple patterns with the same options (#213)</li>
+<li>Parsing of capture group names is now more lenient (#241)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed bug with parsing nested character classes containing unescaped <code>]</code> (#211)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.16.2...0.17.0">0.17.0</a> - 2025-12-13</h4>
+<h5>Added</h5>
+<ul>
+<li>Add support for &quot;easy&quot; variable-length lookbehinds (enabled via new feature flag) (#194, #196)</li>
+<li>Add support for more word boundaries: <code>\b{start}</code>, <code>\b{end}</code>, <code>\b{start-half}</code>, <code>\b{end-half}</code> (#193)</li>
+<li>Allow <code>{...}</code> repetition syntax after assertions (except in Oniguruma mode) (#193)</li>
+<li>Add Oniguruma mode flag to playground (#199)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Rewrite Theory section of Readme in a more formal style (#187)</li>
+<li>Box <code>CompileError</code> in <code>Error</code> enum to reduce size (#204)</li>
+<li>Bail out early when <code>\G</code> fails to match for increased performance (#198)</li>
+<li>Handle <code>ignore_whitespace</code> case in parsing escape sequences (#193)</li>
+<li>Add tests to ensure that <code>Regex</code> is <code>Send</code> and <code>Sync</code> (#195)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix clippy lint warnings (#204)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.16.1...0.16.2">0.16.2</a> - 2025-09-19</h4>
+<h5>Added</h5>
+<ul>
+<li>Add an &quot;oniguruma mode&quot; flag to control whether <code>\&lt;</code> and <code>\&gt;</code> are treated as literals or word-boundary assertions. (#186)</li>
+<li>Add support for const-size backrefs in lookbehinds. (#182)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>A few small internal changes which allowed us to expose a web-based playground for fancy-regex. (#181)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix behavior of repetition on an empty match. (#179)</li>
+<li>Always return the original input pattern when <code>as_str</code> is called. (#185)</li>
+<li>Fix panic when matching non-ascii text as part of a case insensitive backref. (#189)</li>
+<li>The <code>toy</code> example wasn't always showing the correct analysis or compiled program when optimizations were applied. (#181)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.16.0...0.16.1">0.16.1</a> - 2025-08-02</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed a bug whereby sometimes a backreference to a non-existing capture group would compile successfully
+when it should fail, causing a panic in the VM when trying to match the regex. (#174)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.15.0...0.16.0">0.16.0</a> - 2025-08-01</h4>
+<h5>Added</h5>
+<ul>
+<li>Add an optimization step after the pattern is parsed but before it is analyzed.
+Currently it only optimizes one specific use-case - where the expression is easy except
+for a trailing positive lookahead whose contents are also easy. The optimization is to delegate to the regex crate instead of using the backtracking VM. (#171)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Patterns which are anchored to the start of the text (i.e. with <code>^</code> when not in multiline mode) should now fail faster when there is no match, because <code>fancy-regex</code> no longer tries to match at other positions. (#170)</li>
+<li>The <code>CompileError</code> for an invalid (numbered) backref has been updated to mention which backref was invalid (#170)</li>
+<li>Removed dependency on derivative (#169)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed a bug whereby sometimes a capture group containing a backref to itself would cause a compile error, when it is valid - this fixes a few Oniguruma test cases (#170)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.14.0...0.15.0">0.15.0</a> - 2025-07-06</h4>
+<h5>Added</h5>
+<ul>
+<li>Support <code>\Z</code> - anchor to the end of the text before any trailing newlines. (#148)</li>
+<li>Support <code>\O</code> - any character including newlines. (#158)</li>
+<li>The parser can now parse subroutine calls and relative backreferences (but execution is still unsupported). This is preparation for future work. Some new error variants have been added for features which can be parsed but are still otherwise unsupported.</li>
+<li>Backreferences can now be case insensitive. (#160)</li>
+<li><code>RegexBuilder</code>: Add options for <code>multi_line</code>, <code>ignore_whitespace</code>, <code>dot_matches_new_line</code> (#165)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix infinite loop when backtracking limit is hit (#153)</li>
+<li>Fix <code>RegexBuilder.case_insensitive</code> not always applying when it should. (#163)</li>
+<li>The <code>toy</code> example has had various bugfixes, and unit tests added. (#152, #159)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.13.0...0.14.0">0.14.0</a> - 2024-10-24</h4>
+<h5>Added</h5>
+<ul>
+<li>Add <code>split</code>, <code>splitn</code> methods to <code>Regex</code> to split a string into substrings (#140)</li>
+<li>Add <code>case_insensitive</code> method to <code>RegexBuilder</code> to force case-insensitive mode (#132)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Bump bit-set dependency to 0.8 (#139)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.12.0...0.13.0">0.13.0</a> - 2023-12-22</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for relative backreferences using <code>\k&lt;-1&gt;</code> (-1 references the
+previous group) (#121)</li>
+<li>Add <code>try_replacen</code> to <code>Regex</code> which returns a <code>Result</code> instead of panicking
+when matching errors (#130)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Switch from regex crate to regex-automata and regex-syntax (lower level APIs)
+to simplify internals (#121)</li>
+<li><strong>Note:</strong> Due to above change, more backtracking is done in fancy-regex itself
+instead of regex-automata, and you might get a <code>BacktrackLimitExceeded</code> with
+some patterns that you didn't get before. You can increase the backtrack limit
+using <code>RegexBuilder::backtrack_limit</code> to help with that.</li>
+<li>Allow escaping some letters in character classes, e.g. <code>[\A]</code> used to error
+but now matches the same as <code>[A]</code> (for compatibility with Oniguruma)</li>
+<li>MSRV (minimum supported Rust version) is now 1.66.1 (from 1.61.0)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix index out of bounds panic when parsing unclosed <code>(?(</code> (#125)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.11.0...0.12.0">0.12.0</a> - 2023-11-11</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for <code>no_std</code> (the <code>std</code> feature is enabled by default but can be
+disabled if desired) (#111)</li>
+<li><code>TryFrom</code> <code>&amp;str</code> and <code>String</code> impl for <code>Regex</code> (#115)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>Error</code> and its components are now <code>Clone</code> (#116)</li>
+<li>MSRV (minimum supported Rust version) is now 1.61.0 (from 1.42.0)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.10.0...0.11.0">0.11.0</a> - 2023-01-12</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for <a href="https://www.regular-expressions.info/conditional.html">conditionals</a>: using a regex like
+<code>(?&lt;test&gt;a)?b(?(test)c|d)</code> will try to match <code>c</code> after <code>b</code> if <code>a</code> matched in the capture group named
+<code>test</code>, otherwise <code>d</code> after <code>b</code> if <code>a</code> wasn't captured into the <code>test</code> group.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Updated parse errors to show the position they occurred at.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix panic when backref is used within referenced group itself and
+group end index is not known yet (#103)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.9.0...0.10.0">0.10.0</a> - 2022-04-28</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for <code>\G</code> (<a href="https://www.regular-expressions.info/continue.html">anchor to end of previous match</a>): Using a regex
+like <code>\G\w</code> will match each letter of <code>foo</code> in <code>foo bar</code> but
+nothing else.</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.8.0...0.9.0">0.9.0</a> - 2022-04-21</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for <code>\K</code> (<a href="https://www.regular-expressions.info/keep.html">keep out</a>): Using a regex like <code>@\K\w+</code> will match
+things like <code>@foo</code> but the resulting match text will only include
+<code>foo</code>, keeping out the <code>@</code>.</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.7.1...0.8.0">0.8.0</a> - 2022-02-22</h4>
+<h5>Added</h5>
+<ul>
+<li>Allow users to disable any of the <code>unicode</code> and <code>perf-*</code> features of
+the regex crate. Disabling these features can reduce compile time
+and/or binary size for use cases where these features are not needed.
+(All features remain enabled by default.)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>MSRV (minimum supported Rust version) is now 1.42.0 (from 1.41.1)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.7.0...0.7.1">0.7.1</a> - 2021-07-29</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Fix panic on incomplete escape sequences in input regexes</li>
+<li>Disallow quantifers on lookarounds and other zero-width assertion
+expressions, e.g. the <code>+</code> in <code>(?=hello)+</code></li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.6.0...0.7.0">0.7.0</a> - 2021-07-12</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Regex</code> now has replace methods like the regex crate:
+<ul>
+<li><code>replace</code> - single replacement</li>
+<li><code>replace_all</code> - replace all non-overlapping matches</li>
+<li><code>replacen</code> - configurable number of replacements</li>
+</ul>
+</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.5.0...0.6.0">0.6.0</a> - 2021-05-17</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Regex</code> now implements <code>Clone</code>, <code>Display</code>, <code>FromStr</code></li>
+<li><code>Captures</code> now implements <code>Index&lt;usize&gt;</code> to access captures by number
+and <code>Index&lt;&amp;str&gt;</code> to access by name</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.4.1...0.5.0">0.5.0</a> - 2021-02-15</h4>
+<h5>Added</h5>
+<ul>
+<li>Methods <code>find_iter</code> and <code>captures_iter</code> to iterate over all
+non-overlapping matches for a string</li>
+<li>Method <code>find_from_pos</code> to <code>find</code> starting from a specific position</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>MSRV (minimum supported Rust version) is now 1.41.1 (from 1.32.0)</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.4.0...0.4.1">0.4.1</a> - 2020-11-09</h4>
+<h5>Added</h5>
+<ul>
+<li><code>escape</code> function to escape special characters in a string so that it
+matches literally</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.3.5...0.4.0">0.4.0</a> - 2020-09-27</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for named groups and backrefs:
+<ul>
+<li>Capture with <code>(?&lt;name&gt;...)</code> or <code>(?P&lt;name&gt;...)</code></li>
+<li>Backref with <code>\k&lt;name&gt;</code> or <code>(?P=name)</code></li>
+<li><code>Captures::name</code> to get matched group by name</li>
+<li><code>Regex::capture_names</code> to get capture names in regex</li>
+</ul>
+</li>
+<li>Support for expanding matches using a replacement template string
+<ul>
+<li><code>Captures::expand</code> for regex crate compatible syntax</li>
+<li>See <code>Expander</code> for python-compatible syntax and advanced usage</li>
+</ul>
+</li>
+<li><code>Match::range</code> and some <code>From</code> impls for convenience</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.3.4...0.3.5">0.3.5</a> - 2020-04-28</h4>
+<h5>Changed</h5>
+<ul>
+<li>Include string snippet in errors for unknown group and invalid escape
+to make it easier to identify the problem.</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.3.3...0.3.4">0.3.4</a> - 2020-04-28</h4>
+<h5>Added</h5>
+<ul>
+<li>Support comments using <code>(?# comment)</code> syntax</li>
+<li>Support unicode escapes like <code>\u21D2</code> and <code>\U0001F60A</code></li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.3.2...0.3.3">0.3.3</a> - 2020-02-28</h4>
+<h5>Changed</h5>
+<ul>
+<li>Optimization: Delegate const-sized suffixes in more cases</li>
+<li>Optimization: Use <code>captures_read_at</code> when delegating to regex crate</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.3.1...0.3.2">0.3.2</a> - 2020-02-05</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Some regexes with fancy parts in the beginning/middle didn't match
+when they should have, e.g. <code>((?!x)(a|ab))c</code> didn't match <code>abc</code>.</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.3.0...0.3.1">0.3.1</a> - 2019-12-09</h4>
+<h5>Added</h5>
+<ul>
+<li>Add <code>delegate_size_limit</code> and <code>delegate_dfa_size_limit</code> to
+<code>RegexBuilder</code> to allow configuring these limits for regex crate.</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.2.0...0.3.0">0.3.0</a> - 2019-11-27</h4>
+<h5>Added</h5>
+<ul>
+<li>Add limit for backtracking so that execution errors instead of running
+for a long time in case of catastrophic backtracking.</li>
+<li>Add <code>RegexBuilder</code> with <code>backtrack_limit</code> to configure the new
+backtrack limit per regex.</li>
+<li><code>Error</code> now implements <code>std::error::Error</code> trait</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix panic in backref matching with multibyte chars</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/compare/0.1.0...0.2.0">0.2.0</a> - 2019-10-19</h4>
+<h5>Added</h5>
+<ul>
+<li>More documentation and examples</li>
+<li>Support character class nesting and intersections (implemented in
+regex crate)</li>
+<li>Support atomic groups, both the the <code>(?&gt;foo)</code> group syntax and the
+<code>a++</code>, <code>a*+</code> and <code>a?+</code> possessive syntax</li>
+<li>Support <code>\b</code>, <code>\f</code>, <code>\t</code>, <code>\n</code>, <code>\r</code>, <code>\v</code></li>
+<li>Support look-behind with variable sized alternative</li>
+<li>Implement <code>Debug</code> for <code>Regex</code></li>
+<li>More test coverage including running one of Oniguruma's test suites</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Change <code>find</code> to return a <code>Match</code> struct (breaking change)</li>
+<li>Change <code>Captures</code> API (breaking change):
+<ul>
+<li>Replace <code>at</code> and <code>pos</code> with <code>get</code> that returns a <code>Match</code> struct</li>
+<li>Remove <code>is_empty</code> (use <code>len</code>)</li>
+</ul>
+</li>
+<li>Allow unescaped <code>]</code> and <code>}</code> as literals</li>
+<li>Allow unescaped <code>{</code> as literal when not after atom</li>
+<li>Allow escapes such as <code>\&lt;</code> or <code>\e</code> inside character classes</li>
+<li>Allow up to 8 characters in <code>\x{...}</code> escape</li>
+<li>Allow escaping of space to make literal space</li>
+<li>Allow <code>(a|)</code></li>
+<li>Reject invalid backreferences</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Multiple fixes for alternatives in look-arounds</li>
+<li>Fix hex escape to not include letters after &quot;F&quot;</li>
+<li>Fix handling of unescaped <code>]</code> in character classes</li>
+<li>Fix case insensitive character classes and other escapes</li>
+<li>Don't ignore spaces in character classes even with &quot;comment mode&quot;</li>
+</ul>
+<h4><a href="https://github.com/fancy-regex/fancy-regex/commits/0.1.0">0.1.0</a> - 2017-02-06</h4>
+<h5>Added</h5>
+<ul>
+<li>Initial release</li>
+</ul>
+</div><p class="table-note">sha256:8c0f61315af04d199af00e96ba890a86203ba5499bbf39943c04955257e6fc28</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>The MIT License
+
+Copyright 2015 The Fancy Regex Authors.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:3bc70e239e91272782006c638fc0452a714d384224f11f0923036b7be07cf9b5</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:5c48b2c866ad941418d86b489efcfa94a153cd7c35db513704948f1a88ff133e</code></dd><dt>Upstream checksum</dt><dd><code>sha256:d301f5bf187b3c295fce6468d3875037a0bccc5f6b151c63cac2f85babf21912</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/fancy-regex&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.19.2&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;unicode&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;perf&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;variable-lookbehinds&quot;</span><span class="p">]</span>
+<span class="n">leftmost_longest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">perf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;regex-automata/perf&quot;</span><span class="p">]</span>
+<span class="n">perf-dfa-full</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;regex-automata/dfa-build&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;regex-automata/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;regex-syntax/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;bit-set/std&quot;</span><span class="p">]</span>
+<span class="n">track_caller</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">unicode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;regex-automata/unicode&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;regex-syntax/unicode&quot;</span><span class="p">]</span>
+<span class="n">variable-lookbehinds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;regex-automata/dfa-search&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;fancy_regex&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">bit-set</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/bit-set&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">regex-automata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/regex-automata&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4.16&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dfa-onepass&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dfa-search&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;hybrid&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;meta&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;nfa&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;syntax&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">regex-syntax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/regex-syntax&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Raph Levien &lt;raph@google.com&gt;, Robin Stocker &lt;robin@nibor.org&gt;, Keith Hall &lt;keith.hall@available.systems&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.66</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/fancy-regex/0.19.2">crates.io package</a></li><li><a href="https://github.com/fancy-regex/fancy-regex">Source repository</a></li><li><a href="https://docs.rs/fancy-regex">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">fancy-regex</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/fancy-regex"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.19.2"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

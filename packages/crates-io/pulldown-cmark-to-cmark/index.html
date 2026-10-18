@@ -1,0 +1,2471 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>pulldown-cmark-to-cmark 23.0.0 · Incan.pub</title><meta name="description" content="Convert pulldown-cmark Events back to the string they were parsed from"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/pulldown-cmark-to-cmark</p><div class="title-row"><h1>pulldown-cmark-to-cmark</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/pulldown-cmark-to-cmark/versions/23.0.0/" selected>23.0.0</option><option value="../../../packages/crates-io/pulldown-cmark-to-cmark/versions/22.0.3/">22.0.3</option></select></label></div><p class="description">Convert pulldown-cmark Events back to the string they were parsed from</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><p><a href="https://crates.io/crates/pulldown-cmark-to-cmark">Crates.io</a>
+Rust</p>
+<p>A utility library which translates <a href="https://docs.rs/pulldown-cmark/latest/pulldown_cmark/enum.Event.html"><code>Event</code></a> back to markdown.
+It's the prerequisite for writing markdown filters which can work as
+<a href="https://rust-lang.github.io/mdBook/for_developers/preprocessors.html">mdbook-preprocessors</a>.</p>
+<p>Supports CommonMark and modern <code>pulldown-cmark</code> extensions, including tables,
+footnotes, definition lists, math, and nested blocks. Use the same parser flags
+for parsing and serialization, and validate formatting preferences to select
+a supported configuration.</p>
+<h5>How to use</h5>
+<p>Please have a look at the <a href="https://github.com/Byron/pulldown-cmark-to-cmark/blob/bae0dd3472a2e11d9badf93dc18437dac6197461/examples/stupicat.rs"><code>stupicat</code>-example</a> for a complete tour
+of the API, or have a look at the <a href="https://docs.rs/crate/pulldown-cmark-to-cmark">api-docs</a>.</p>
+<p>It's easiest to get this library into your <code>Cargo.toml</code> using <code>cargo-add</code>:</p>
+<pre><code>cargo add pulldown-cmark-to-cmark
+</code></pre>
+<h5>Migrating to the owning State API</h5>
+<p><code>State</code> now owns its configuration and buffered events. It has no lifetime
+parameter or public fields. The one-shot <code>cmark*</code> helpers remain available and
+return a finished <code>State</code>. Parser flags are now mandatory in every constructor
+and one-shot helper; they determine escaping and whether candidate output
+reparses correctly. <code>State::default()</code> is no longer available.</p>
+<p>The one-shot signatures are <code>cmark(events, writer, parser_options)</code> and
+<code>cmark_with_options(events, writer, parser_options, options)</code>. For source ranges,
+use <code>cmark_with_source_range(events_and_ranges, source, writer, parser_options)</code>
+or append <code>options</code> for <code>cmark_with_source_range_and_options</code>. Pass
+<code>pulldown_cmark::Options::empty()</code> for <code>Parser::new</code> input.</p>
+<p>For incremental output, create one state and call its methods with the same
+logical <code>std::fmt::Write</code> output stream:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">pulldown_cmark</span><span class="p">::</span><span class="n">Parser</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">pulldown_cmark_to_cmark</span><span class="p">::{</span><span class="n">Options</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p">};</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">parser_options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pulldown_cmark</span><span class="p">::</span><span class="n">Options</span><span class="p">::</span><span class="n">empty</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Options</span><span class="p">::</span><span class="n">default</span><span class="p">();</span>
+<span class="n">options</span><span class="p">.</span><span class="n">validate</span><span class="p">(</span><span class="n">parser_options</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">events</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Parser</span><span class="p">::</span><span class="n">new_ext</span><span class="p">(</span><span class="s">&quot;a *b*&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">parser_options</span><span class="p">).</span><span class="n">collect</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">State</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">parser_options</span><span class="p">,</span><span class="w"> </span><span class="n">options</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">first</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">state</span><span class="p">.</span><span class="n">process</span><span class="p">(</span><span class="o">&amp;</span><span class="n">events</span><span class="p">[</span><span class="o">..</span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">output</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">first</span><span class="p">.</span><span class="n">events_consumed</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span>
+<span class="n">state</span><span class="p">.</span><span class="n">process</span><span class="p">(</span><span class="o">&amp;</span><span class="n">events</span><span class="p">[</span><span class="mi">2</span><span class="o">..</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">output</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="n">state</span><span class="p">.</span><span class="n">finish</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">output</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">output</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;a *b*&quot;</span><span class="p">);</span>
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Previous API</th>
+<th>Replacement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmark_resume(events, writer, state)</code></td>
+<td><code>State::new(parser_options, Options::default())</code>, then <code>state.process(events, writer)</code></td>
+</tr>
+<tr>
+<td><code>cmark_resume_with_options(...)</code></td>
+<td><code>State::new(parser_options, options)</code>, then <code>state.process(events, writer)</code></td>
+</tr>
+<tr>
+<td><code>cmark_resume_with_source_range*</code></td>
+<td><code>state.process_with_source_range(events_and_ranges, source, writer)</code></td>
+</tr>
+<tr>
+<td><code>state.finalize(writer)</code></td>
+<td><code>state.finish(writer)</code></td>
+</tr>
+<tr>
+<td><code>State&lt;'a&gt;</code> and its public fields and helper types</td>
+<td>Owned, opaque <code>State</code>; choose formatting through <code>Options</code> when constructing it</td>
+</tr>
+</tbody>
+</table>
+<p><code>process</code>, <code>process_with_source_range</code>, and <code>finish</code> return
+<code>Result&lt;Progress, Error&gt;</code>. On success, <code>events_consumed</code> counts the events
+accepted by that call and <code>bytes_written</code> counts the UTF-8 bytes written by
+that call. Processing consumes all supplied events, but may write no output
+yet. Finishing consumes zero events, flushes the last block and reference
+definitions, and writes nothing on subsequent successful calls.</p>
+<p>The state normally retains one open or completed top-level block, plus reference
+labels and definitions. A list can need its final item's events to determine
+tightness, and its next sibling to keep indented code outside the list.
+Some lists owe their structure to reference definitions that produce no events:
+for example, a loose single-paragraph item or an empty nested item interrupting
+text. These require a fresh, invisible definition in the output. From the first
+such list, the state buffers the remaining document until <code>finish</code>, so it can
+choose a label without changing other references. Input strings and borrowed
+option strings can be dropped after their call returns.</p>
+<p>Source ranges are optional byte ranges, as before. They must be in bounds and
+on UTF-8 boundaries. Source spelling is checked against the supplied events
+after rendering the block; edited or unsafe spelling uses ordinary escaping.
+If a filter changes a shortcut label while retaining its reference ID, the
+serializer can emit an explicit reference to preserve the edit and target.</p>
+<p>Unclosed or mismatched containers are errors. A delimiter block that cannot be
+represented faithfully returns <code>Error::Unrepresentable</code> instead of silently
+changing its events. Input after <code>finish</code> is rejected.
+After any error, discard the state: a failed writer may already have written
+part of its input, so retrying cannot safely resume serialization.</p>
+<p>Formatting can change where syntax needs more context: adjacent lists use
+different markers, multiline headings use setext syntax, and fences are sized
+automatically. Newline accounting also removes redundant blank lines and
+trailing container padding.</p>
+<h5>Validating options</h5>
+<p>Call <code>Options::validate(parser_options)</code> before creating a state or using a
+one-shot helper. Validation is recommended and optional; applications can still
+use unvalidated preferences when deliberately changing Markdown semantics.
+It checks configuration, not whether arbitrary edited events are representable.</p>
+<p><code>SUPPORTED_PARSER_OPTIONS</code> contains twelve independently supported flags:
+tables, modern footnotes, strikethrough, task lists, heading attributes, YAML
+metadata, TOML metadata, math, GFM alerts, definition lists, superscript, and
+subscript. Every subset is accepted. Smart punctuation, legacy footnotes,
+wikilinks, and unknown flags are rejected. Their transformations or syntax
+are outside the supported round-trip contract.</p>
+<p>Validated marker choices are <code>*</code>, <code>-</code>, or <code>+</code> for bullets; <code>.</code> or <code>)</code> for ordered
+lists; backticks or tildes for fences; <code>*</code> or <code>_</code> for emphasis; and <code>**</code> or <code>__</code>
+for strong emphasis. Spacing and fence lengths are preferences, adjusted to
+preserve syntax. Values that cannot fit a Rust string are rejected. Incremented
+ordered markers stop at Markdown's nine-digit maximum.</p>
+<p><code>use_html_for_super_sub_script</code> now defaults to <code>false</code>. Enabling it while the
+parser recognizes symbolic superscripts or subscripts is rejected: HTML would
+produce different event types. Existing HTML events are preserved either way.</p>
+<p>The finite configuration matrix has 32,768 known parser bit patterns and 192
+marker/boolean combinations. <strong>491,520 configurations are accepted; 5,799,936
+are rejected</strong> (5,505,024 for unsupported parser flags and 294,912 for the
+HTML/script conflict). Numeric preferences are checked separately at boundary
+and representative values; they are not part of this finite count.</p>
+<h5>CommonMark conformance</h5>
+<p>The suite uses all <strong>652 examples from <a href="https://spec.commonmark.org/0.31.2/">CommonMark 0.31.2</a></strong>.
+With default formatting, every example preserves the merged parser event
+sequence, including paragraph wrappers, link types, and code block kinds.
+The tests cover ordinary output, source ranges, every event boundary, and
+event-by-event input. Fixture extraction converts the spec's <code>→</code> notation to
+tabs and retains final newlines.</p>
+<p>Run the spec with visible totals:</p>
+<pre><code>cargo test --test integrate spec::commonmark_spec -- --nocapture
+</code></pre>
+<p>The differential suite parses each input, serializes it, and reparses the output
+with the same flags. It compares exact events after merging adjacent text only;
+paragraph wrappers, nesting, link types, and code block kinds must survive.
+Both ordinary and source-range output are checked. The suite retains 860 review
+regressions and generates 91,446 distinct inputs from delimiter runs, Unicode,
+block boundaries, and a fixed random seed. Additional checks cover the repository
+fixtures and 72,030 combinations of symbolic extension delimiters.</p>
+<p>Run configuration counts, numeric and incremental checks, all 652 spec examples
+across 192 formatting combinations, every accepted configuration's interaction
+probes, and the generated corpus under six useful parser profiles:</p>
+<pre><code>cargo test --release --test differential -- --include-ignored --nocapture
+</code></pre>
+<p>Failures print the input, output, flags, preferences, and differing events. Set
+<code>CMARK_DIFFERENTIAL_REPORT=/tmp/cmark-failures.tsv</code> to append all failing cases.
+The checks compare against the original parse, so no baseline executable or
+allowed failure count is needed. CI runs this exhaustive suite.</p>
+<p>Reference-link benchmarks cover shared and distinct labels, edited source, and
+nested emphasis at 1,000–8,000 paragraphs. Each workload verifies its round trip
+before timing. To inspect scaling or compare Criterion baselines:</p>
+<pre><code>cargo bench --bench reference_links
+</code></pre>
+<h5>Supported Rust Versions</h5>
+<p><code>pulldown-cmark-to-cmark</code> follows the MSRV (minimum supported rust version) policy of <a href="https://github.com/pulldown-cmark/pulldown-cmark"><code>pulldown-cmark</code></a>. The current MSRV is 1.71.1.</p>
+<h5>Friends of this project</h5>
+<ul>
+<li><a href="https://github.com/Byron/termbook"><strong>termbook</strong></a>
+<ul>
+<li>A runner for <code>mdbooks</code> to keep your documentation tested.</li>
+</ul>
+</li>
+<li><a href="https://github.com/Byron/share-secrets-safely"><strong>Share Secrets Safely</strong></a>
+<ul>
+<li>share secrets within teams to avoid plain-text secrets from day one</li>
+</ul>
+</li>
+</ul>
+<h5>Maintenance Guide</h5>
+<h6>Making a new release</h6>
+<ul>
+<li><strong>Assure all documentation is up-to-date and tests are green</strong></li>
+<li>update the <code>version</code> in <code>Cargo.toml</code> and <code>git commit</code></li>
+<li>run <code>cargo release --no-dev-version</code></li>
+</ul>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p>No feature declarations recorded.</p></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/pulldown-cmark/"><code>crates-io/pulldown-cmark</code></a><small>Alias: pulldown-cmark</small></th><td><code>^0.13.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/unicase/"><code>crates-io/unicase</code></a><small>Alias: unicase</small></th><td><code>^2.6</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/prost-build/versions/0.14.4/">crates-io/prost-build 0.14.4</a><span>Requires ^22 · alias pulldown-cmark-to-cmark · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ca14b8c6e6269a4886c5e6828c972f1d48667091c178be4fbaad43a0384385e4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:503fdecac71fc6e5f5beae155768132a3967a66bbcc5c5edfb573832468181d7</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ae314ad0862a12d58331e1cb2a370c2546faa032dca436728f2e22d1ac5c0291</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:07ce9c27ca8a1f40a5f01e0b5e78079f1218834a52a152e6f60336d7e752e90d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:51cdebbd7f03008291bebf8250b26865b21693a33562fcfffa0553d02ff08be3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:e058f1311c03f288562b0940174d148d325898ab429c149aa8092f68d2a6d10b</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:bfddc1e5be46d088f577c92402e294847f11628c47e45e809f69be94a10de896</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:fb765683722a629be53b58a9c6b05abc5287b90cd8d4857a419024a7af61bd1a</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/pulldown-cmark-to-cmark/versions/23.0.0/">23.0.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/pulldown-cmark-to-cmark/23.0.0">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/pulldown-cmark-to-cmark/versions/22.0.3/">22.0.3</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/pulldown-cmark-to-cmark/22.0.3">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>23.0.0 (2026-09-29)</h4>
+<p>Beware that this is basically an SI rewrite, which I reviewed from an API perspective.
+It <em>should</em> be way more correct than the previous version, at least tests would
+say so.</p>
+<p>Reason: I wanted to prevent piece-meal SI-PRs to fix individual aspects of the prior
+version, which was pretty sub-par in the correctness department.</p>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>
+<p>&lt;csr-id-a0779808d34ee0672837d9393a8572416bc7ca38/&gt; require parser options and validate round-trip configurations
+</p>
+<p>Checked public API, rest is mostly rubber-stamped</p>
+<p>
+Make the originating parser flags mandatory in State::new and every cmark
+helper so escaping and source validation agree with the parser. Remove
+State::default(), default to symbolic superscripts/subscripts, and add
+optional, recommended Options::validate. Support all subsets of twelve modern
+extensions with standard markers: 491,520 finite configurations are accepted
+and 5,799,936 are explicitly rejected.</p>
+<p>Preserve mandatory list and definition boundaries, nested delimiter runs,
+math/table interactions, and raw blocks ending at EOF or by dedentation.
+Validate delimiter choices before emitting them and report unrepresentable
+blocks instead of silently changing events. Preserve list structure that
+relied on invisible definitions by reserving a collision-free label; these
+exceptional lists buffer the remaining input until finish.</p>
+<p>Keep accumulated reference occurrences and labels out of block-rendering
+snapshots. Criterion benchmarks cover shared, distinct, edited, and nested
+references at 1,000–8,000 paragraphs and show proportional scaling.</p>
+<p>Add permanent differential tests with exact merged-event comparisons across
+both rendering paths, 860 retained regressions, 91,446 generated inputs,
+symbolic extension combinations, numeric preferences, and every accepted
+configuration. Run the exhaustive release suite in CI. Document migration,
+validation, coverage counts, and commands that print the results.</p>
+</li>
+<li>
+<p>&lt;csr-id-c8d91905e9d0ea203492e46a123e264f0d6bfcb4/&gt; round-trip the full CommonMark 0.31.2 spec
+</p>
+<p>Rubber-stamp mostly, and nearly 1000 SLOC less seem to speak a clear language.
+I at least validated the public API which seemed sensible.
+The new API is definitely nicer, the tests are cleaned up.</p>
+<p>
+All 652 CommonMark 0.31.2 examples now round-trip with their parsed
+structure intact under default formatting. This includes paragraph
+boundaries, tight and loose lists, link types, and indented versus fenced
+code blocks. Strict event comparisons cover ordinary and source-range
+serialization, every event boundary, and event-by-event input.</p>
+<p>Markdown decisions often need context that arrives later: a later list
+item can make the entire list loose, and the following block affects how
+the list must end. The serializer now retains one top-level block until
+that context is available. It can therefore keep adjacent lists distinct,
+keep following code outside a list, and choose valid heading, emphasis,
+fence, and reference syntax. Consistent newline and container handling
+also preserves tight HTML lists and loose definitions without introducing
+extra block quotes.</p>
+<p>The new opaque <code>State</code> owns its options and retained input, so borrowed
+event chunks and source strings need not outlive a processing call.
+<code>process</code> and <code>process_with_source_range</code> accept all supplied events on
+success and report consumed events and written UTF-8 bytes through
+<code>Progress</code>. Output uses <code>fmt::Write</code> and may be buffered. <code>finish</code> flushes
+the last block and reference definitions; repeated successful calls write
+nothing. Invalid ranges and unbalanced events are reported as errors,
+and a failed state cannot be reused.</p>
+<p>Source ranges preserve original spelling only when it reparses to the
+supplied events. Edited text uses safe escaping, and edited shortcut
+labels can become explicit references to retain their original targets.</p>
+</li>
+</ul>
+<h5>Test</h5>
+<ul>
+<li>
+<p>&lt;csr-id-c4d4f284a34ddd9974aa6a29082273c8d679a4ca/&gt; print CommonMark conformance totals
+
+Print passed example totals for ordinary/source-range and incremental
+serialization so cargo test --test integrate spec:: -- --nocapture shows
+the number of CommonMark examples covered. Check the expected fixture
+count when running the incremental test on its own as well.</p>
+</li>
+<li>
+<p>&lt;csr-id-f16d71b06c2d888a42dca730cbf7d19fb3031194/&gt; update CommonMark fixtures to 0.31.2
+
+Vendor the latest published specification and record its source and
+checksum. Decode the spec's tab markers and retain final newlines when
+extracting examples, matching the official JSON inputs and HTML.</p>
+<p>The corrected 652-example corpus currently passes 622 round trips.
+Add a focused regression for fixture extraction.</p>
+</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>&lt;csr-id-e173adbc6cf673f68fe67b3f65208e962550646c/&gt; explain migration to the owning State API
+
+Document replacements for resume functions, owned input and configuration,
+progress counts, block buffering, source spelling, terminal errors, and
+idempotent finishing. Describe the strict CommonMark 0.31.2 coverage and
+formatting changes, update fence-count documentation, and add compiled
+incremental and source-range examples.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><strong>Breaking:</strong> require the originating parser flags in <code>State::new</code> and all
+<code>cmark*</code> helpers. Remove <code>State::default()</code> and default to symbolic superscript
+and subscript output so reparsing retains their event types.</li>
+<li>Add optional, recommended <code>Options::validate</code> and <code>SUPPORTED_PARSER_OPTIONS</code>.
+Support every subset of twelve modern parser extensions and standard Markdown
+markers; reject unsupported flags, invalid markers, overflowing lengths, and
+HTML output conflicting with symbolic scripts. The finite matrix accepts
+491,520 configurations and rejects 5,799,936.</li>
+<li>Preserve required list and definition boundaries, delimiter run nesting,
+extension-sensitive punctuation, and raw blocks ending at EOF. Retain list
+structure created by invisible reference definitions with collision-free labels.</li>
+<li>Validate source blocks using only their own reference definitions, keeping
+document-wide reference history out of trial rendering. Add Criterion scaling
+benchmarks for shared, distinct, edited, and nested reference-link workloads.</li>
+<li>Add strict differential tests for all accepted configurations, every CommonMark
+example across standard formatting choices, retained review regressions, and a
+deterministic generated corpus under six parser profiles. Run the full suite
+in CI and document commands that print coverage and failure totals.</li>
+<li><strong>Breaking:</strong> replace <code>cmark_resume*</code> and the public <code>State</code> fields with an
+owning <code>State::new</code>, <code>process</code>, <code>process_with_source_range</code>, and <code>finish</code> API.
+Successful calls return event and UTF-8 byte counts. Finishing is idempotent;
+errors make the state unusable. See the <a href="https://github.com/Byron/pulldown-cmark-to-cmark/blob/bae0dd3472a2e11d9badf93dc18437dac6197461/README.md#migrating-to-the-owning-state-api">migration guide</a>.</li>
+<li>Preserve merged parser events for all 652 CommonMark 0.31.2 examples, including
+source-range serialization and arbitrary event splits. Correct fixture tab
+notation and final newlines, and replace the partial pass-count allowance
+with strict assertions.</li>
+<li>Buffer blocks to choose list spacing and boundaries, heading and emphasis
+delimiters, code fences, and reference labels. Centralize newline and prefix
+handling, retaining tight HTML lists and loose definition spacing.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>8 commits contributed to the release.</li>
+<li>1 day passed between releases.</li>
+<li>5 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Prepare changelog prior to release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c2772f5ab5cf5230a84a14fdd6274721920e9675"><code>c2772f5</code></a>)</li>
+<li>Merge pull request #114 from Byron/more-fixes (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b69f3ea56e723713e75d69131cb06ed01b9dea05"><code>b69f3ea</code></a>)</li>
+<li>Require parser options and validate round-trip configurations (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a0779808d34ee0672837d9393a8572416bc7ca38"><code>a077980</code></a>)</li>
+<li>Merge pull request #113 from Byron/more-fixes (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/96eebbdd5b48b2b12bc6a25f472d0d3537acefad"><code>96eebbd</code></a>)</li>
+<li>Print CommonMark conformance totals (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c4d4f284a34ddd9974aa6a29082273c8d679a4ca"><code>c4d4f28</code></a>)</li>
+<li>Explain migration to the owning State API (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e173adbc6cf673f68fe67b3f65208e962550646c"><code>e173adb</code></a>)</li>
+<li>Round-trip the full CommonMark 0.31.2 spec (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c8d91905e9d0ea203492e46a123e264f0d6bfcb4"><code>c8d9190</code></a>)</li>
+<li>Update CommonMark fixtures to 0.31.2 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f16d71b06c2d888a42dca730cbf7d19fb3031194"><code>f16d71b</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>22.0.3 (2026-09-28)</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>&lt;csr-id-9905181d4721007b27c2ce2a214314450067d28e/&gt; discard quote terminators when definitions end
+Ending a definition emits a newline outside its block quote. Discard
+the pending quote-ending line there so the next tight-list child cannot
+start an extra empty quote. Keep pending lines across item and list ends,
+which do not themselves write outside the quote.</p>
+<p>Cover direct and nested definitions, enclosing block quotes, and resumed
+serialization.</p>
+</li>
+<li>
+<p>&lt;csr-id-a7d1f06907d22b13ec7aad3b62b4c4e049a2e2b9/&gt; preserve paragraph spacing in loose definitions
+Once inline events consume the title's pending newline, a code term no
+longer leaves a blank line before its definition. Defer the definition
+marker until its first child so a paragraph can request the required
+blank line before the marker. Flush a pending marker when finalizing.</p>
+<p>Cover tight and loose terms, multiple definitions, nested containers,
+empty definitions, and serialization resumed at every event boundary.
+Update the definition-list snapshot for the added paragraph spacing.</p>
+</li>
+<li>
+<p>&lt;csr-id-afe8ac6ac5476d4149c9c04b3c88aea16aac5741/&gt; account for HTML newlines in tight list items
+HTML events already emit their trailing newline. Count that line break
+when limiting separators in tight items so following inline content does
+not make the list loose. Keep normal paragraph spacing and remember the
+newline across resumed serialization.</p>
+</li>
+<li>
+<p>&lt;csr-id-64dca630f68c087bc2f58d11e6f73071b74a96d9/&gt; write pending newlines before every inline event
+For <code>Text</code> and <code>InlineHtml</code> events, we'd write out pending newlines, but for
+<code>Code</code>, <code>InlineMath</code>, <code>DisplayMath</code>, <code>FootnoteReference</code>, and <code>TaskListMarker</code>,
+we did not. In a tight list item, inline content can directly follow the
+end of a block, so the input:</p>
+<pre><code>* # heading
+`code`
+</code></pre>
+<p>would roundtrip as:</p>
+<pre><code>* # heading`code`
+</code></pre>
+</li>
+<li>
+<p>&lt;csr-id-2ab730f6e6fb545fbef897e0411e9a0e92aca0e2/&gt; avoid instances of tight lists roundtripping to loose
+This is a somewhat subtle commit because we have to handle tight list block
+quotes carefully, such as:</p>
+<pre><code>* item
+* a
+&gt; q
+&gt;
+text
+</code></pre>
+<p>Most of the commit is about dealing with this case.</p>
+</li>
+<li>
+<p>&lt;csr-id-94382897ed118617b43d5addb98000b95de4d9c0/&gt; in tight list items, start thematic breaks on their own line
+In a tight list item, a thematic break can directly follow the item's text.
+Nothing before the break asks for a newline in that case, so the input:</p>
+<pre><code>* item
+***
+</code></pre>
+<p>would roundtrip as:</p>
+<pre><code>* item---
+</code></pre>
+<p>which parses as a single line of text.</p>
+<p>Start the break on a new line. A <code>---</code> line directly under a line of text is a
+setext heading underline, which would turn <code>item</code> into a heading, so write the
+break as <code>***</code> in this case. Thematic breaks everywhere else are still written
+as <code>---</code>.</p>
+</li>
+<li>
+<p>&lt;csr-id-fcc8237554ab6814b66079e30d7bd4d881402058/&gt; in tight list items, start blocks on a new line after inline content</p>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>9 commits contributed to the release.</li>
+<li>7 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v22.0.3 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a14b105a277e6e23db7778a7d5e4eadef638daf6"><code>a14b105</code></a>)</li>
+<li>Merge pull request #112 from sunshowers/more-fixes (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/299ed9b86fa43d4778037cbf05b30f044928c9c9"><code>299ed9b</code></a>)</li>
+<li>Discard quote terminators when definitions end (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9905181d4721007b27c2ce2a214314450067d28e"><code>9905181</code></a>)</li>
+<li>Preserve paragraph spacing in loose definitions (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a7d1f06907d22b13ec7aad3b62b4c4e049a2e2b9"><code>a7d1f06</code></a>)</li>
+<li>Account for HTML newlines in tight list items (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/afe8ac6ac5476d4149c9c04b3c88aea16aac5741"><code>afe8ac6</code></a>)</li>
+<li>Write pending newlines before every inline event (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/64dca630f68c087bc2f58d11e6f73071b74a96d9"><code>64dca63</code></a>)</li>
+<li>Avoid instances of tight lists roundtripping to loose (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/2ab730f6e6fb545fbef897e0411e9a0e92aca0e2"><code>2ab730f</code></a>)</li>
+<li>In tight list items, start thematic breaks on their own line (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/94382897ed118617b43d5addb98000b95de4d9c0"><code>9438289</code></a>)</li>
+<li>In tight list items, start blocks on a new line after inline content (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/fcc8237554ab6814b66079e30d7bd4d881402058"><code>fcc8237</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>22.0.2 (2026-09-28)</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>&lt;csr-id-b4c3dacd7808a47aa44ff1d0df3fd64cd0426588/&gt; ensure blank lines are emitted after nested lists if necessary
+Previously, the input:</p>
+<pre><code>1. item
+
+* a
+* b
+
+para
+</code></pre>
+<p>would roundtrip as:</p>
+<pre><code>1. item
+
+* a
+* b
+para
+</code></pre>
+<p>This is incorrect, because the CommonMark spec would treat <code>para</code> as part of
+the <code>b</code> item.</p>
+<p>Fix this by tracking the last event, and using that to emit a blank line if
+necessary. This isn't perfect but it should handle the vast majority of cases.</p>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>3 commits contributed to the release.</li>
+<li>49 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v22.0.2 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b438b59f25f266a5175dcc78c49f1eae7a9fdc8a"><code>b438b59</code></a>)</li>
+<li>Merge pull request #111 from sunshowers/blank-lines-after-nested-lists (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a218fb19a097f3a08c86b2d13650adec1a93dc0c"><code>a218fb1</code></a>)</li>
+<li>Ensure blank lines are emitted after nested lists if necessary (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b4c3dacd7808a47aa44ff1d0df3fd64cd0426588"><code>b4c3dac</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>22.0.1 (2026-08-10)</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>&lt;csr-id-e4467422fbb68aff72a96808c3ab62b503897adc/&gt; escape brackets in generated link labels
+
+Shortcut and collapsed link labels are reconstructed from decoded text, so
+bracket escapes were lost when their reference definitions were emitted. This
+made the generated Markdown invalid for labels containing brackets.</p>
+<p>Escape backslashes and square brackets while capturing generated link and image
+labels, while leaving parser-provided explicit reference IDs unchanged to avoid
+double escaping. Add regression coverage for shortcut, explicit, and image
+references and update the CommonMark conformance count from 585 to 586.</p>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>3 commits contributed to the release.</li>
+<li>230 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/109">#109</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/109">#109</a></strong>
+<ul>
+<li>Escape brackets in generated link labels (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e4467422fbb68aff72a96808c3ab62b503897adc"><code>e446742</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v22.0.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/66f7c5d4a99bd312eacc876b81dad1c91f623e4f"><code>66f7c5d</code></a>)</li>
+<li>Merge pull request #110 from Byron/escape-in-links (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/41f854b001017daa44c8a9f6af3b9ab442a7d13a"><code>41f854b</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>22.0.0 (2025-12-23)</h4>
+<h5>New Features</h5>
+<ul>
+<li>&lt;csr-id-9b55c822ae8c824954452d1414e1dc33eadc5b73/&gt; Add #![deny(missing_docs)] attribute to enable missing documentation checks and add comprehensive documentation for all public items</li>
+</ul>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>
+<p>&lt;csr-id-ffa22b3e25ef79aad66774f1c08b1a4a1b1bc4f4/&gt; Add support for super/subscript without html
+Superscript and subscript can be presented in markdown as:
+^superscript^ and ~subscript~ respectively. This is not always turned on,
+and many people prefer the HTML tag form, however in order to round-trip
+markdown which uses the symbolic form we need an option to enable that.</p>
+<p>This feature is enabled via a new field in the <code>Options</code> struct.</p>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>8 commits contributed to the release.</li>
+<li>44 days passed between releases.</li>
+<li>2 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v22.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d04ad95564f332d3953325a74282f17f47988be9"><code>d04ad95</code></a>)</li>
+<li>Merge pull request #107 from kinnison/super-sub-not-html (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/15e7a74364cf05e437029d84ec6b78a6662fd137"><code>15e7a74</code></a>)</li>
+<li>Refactor (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/aba929c5068f69de5ae2e92b397fd901922f2c0d"><code>aba929c</code></a>)</li>
+<li>Add testing support for symbolic super/subscript (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/463b65a0ede1c99d921862645931c8ecc117c159"><code>463b65a</code></a>)</li>
+<li>Add support for super/subscript without html (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ffa22b3e25ef79aad66774f1c08b1a4a1b1bc4f4"><code>ffa22b3</code></a>)</li>
+<li>Merge pull request #108 from Byron/copilot/add-documentation-and-deny-attrs (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/077d5d0f7b464d4fdd251bc4adfe5679fb6a2736"><code>077d5d0</code></a>)</li>
+<li>Refactor (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6d09f445a72555fbd70812b21a38ba65bba0e42b"><code>6d09f44</code></a>)</li>
+<li>Add #![deny(missing_docs)] attribute to enable missing documentation checks and add comprehensive documentation for all public items (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9b55c822ae8c824954452d1414e1dc33eadc5b73"><code>9b55c82</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>21.1.0 (2025-11-09)</h4>
+<p>&lt;csr-id-5b93e7e7b51000632bfecf6d7a49e48d9fb3bc19/&gt;
+&lt;csr-id-942c42ba6fc517b595130603e9fd4aa1309ee755/&gt;
+&lt;csr-id-30b706b719fd2554b664bc7d2c40bcb7e7095a8c/&gt;
+&lt;csr-id-31a49d0d45c1c32bfcf1c653121ee3ca0a1d4fe8/&gt;
+&lt;csr-id-3ab278b9db5546f405bcd13bdf5c3f0d59d2fb8a/&gt;</p>
+<h5>New Features</h5>
+<ul>
+<li>
+<p>&lt;csr-id-91ffc9508b129cd603b870d38fd9bd88240d07fe/&gt; Improve CommonMark conformance testing output
+This is a major improvement to the rendering of the failing
+CommonMark conformance test output, that should make it easier
+to read and understand when pulldown-cmark-to-cmark is producing
+erroneous output.</p>
+<p>Additionally, this introduces a way to force the printing of the
+CommonMark failure report from the command line:</p>
+<p>$ FULL_CMARK_RESULTS=true cargo test</p>
+<p>and documents in CONTRIBUTING.md that new contributors may want
+to start with trying to improve conformance.</p>
+<p>This removes <code>#[should_panic]</code> from the main CommonMark test. Instead,
+we now hard-code in how many of the CommonMark tests are known to pass.</p>
+<p>If the number that actually passes increases or decreases, this test
+will fail, informing the user either that they have introduced a bug
+(decrease), or that they've successfully improved conformance (increase).</p>
+<p>Previously, if a change accidentally reduce the conformance, there was
+no easy way to know, since that information was not stored/tracked
+in any way.</p>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>13 commits contributed to the release.</li>
+<li>264 days passed between releases.</li>
+<li>6 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v21.1.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/4fa1f9eab4754267e2d6580fe7e64f8aa4c113fa"><code>4fa1f9e</code></a>)</li>
+<li>Release pulldown-cmark-to-cmark v21.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d69f748198d26828f74c0e1a0faed6a986cb4b97"><code>d69f748</code></a>)</li>
+<li>Merge pull request #104 from ConnorGray/connorgray/refactor-5 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/bf34a3cac68e6f82a24ee3d44224a9e2ef2bcd0d"><code>bf34a3c</code></a>)</li>
+<li>Add Repeated utility to simplify writing repeated content (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/942c42ba6fc517b595130603e9fd4aa1309ee755"><code>942c42b</code></a>)</li>
+<li>Merge pull request #103 from ConnorGray/connorgray/refactor-4 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3005f1b10548a08a412086ecddc22b907ad0b60d"><code>3005f1b</code></a>)</li>
+<li>Drop comment headers (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/5b93e7e7b51000632bfecf6d7a49e48d9fb3bc19"><code>5b93e7e</code></a>)</li>
+<li>Move and group related code (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/30b706b719fd2554b664bc7d2c40bcb7e7095a8c"><code>30b706b</code></a>)</li>
+<li>Merge pull request #102 from ConnorGray/connorgray/revamp-conformance-testing (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3169307f9dba2683eaa0f425177b2905669cd705"><code>3169307</code></a>)</li>
+<li>Merge pull request #101 from ConnorGray/connorgray/refactor-3 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ac3aaec506e3eb5bdd85ff3a2bc9b1f2cee0f5c9"><code>ac3aaec</code></a>)</li>
+<li>Merge pull request #100 from ConnorGray/connorgray/refactor-2 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/29c8c20bb8632e70d6ed10eb43fa68f673988748"><code>29c8c20</code></a>)</li>
+<li>Improve CommonMark conformance testing output (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/91ffc9508b129cd603b870d38fd9bd88240d07fe"><code>91ffc95</code></a>)</li>
+<li>Add State::set_minimum_newlines_before_start() (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/31a49d0d45c1c32bfcf1c653121ee3ca0a1d4fe8"><code>31a49d0</code></a>)</li>
+<li>Use <code>write_padded_string()</code> in a couple additional places (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3ab278b9db5546f405bcd13bdf5c3f0d59d2fb8a"><code>3ab278b</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>21.0.0 (2025-02-18)</h4>
+<p>&lt;csr-id-05e247e5c7a74ac7bf9a906417724b8a275cabcc/&gt;
+&lt;csr-id-2252ba1d9cf93256a8bcdd721813ed2397e32464/&gt;
+&lt;csr-id-942c42ba6fc517b595130603e9fd4aa1309ee755/&gt;
+&lt;csr-id-30b706b719fd2554b664bc7d2c40bcb7e7095a8c/&gt;
+&lt;csr-id-31a49d0d45c1c32bfcf1c653121ee3ca0a1d4fe8/&gt;
+&lt;csr-id-3ab278b9db5546f405bcd13bdf5c3f0d59d2fb8a/&gt;
+&lt;csr-id-5b93e7e7b51000632bfecf6d7a49e48d9fb3bc19/&gt;</p>
+<p>The breaking release is to avoid side-effects with different <code>pulldown-cmark</code> versions.
+This crate now comes with version 13.</p>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>9 commits contributed to the release.</li>
+<li>6 days passed between releases.</li>
+<li>2 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v21.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c1347d140499a637c98bcb9dc6f324731919dcf6"><code>c1347d1</code></a>)</li>
+<li>Update changelog prior to release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/475478a781fafc42b3e0879d9fe12993c3d89cb4"><code>475478a</code></a>)</li>
+<li>Bump version to 21 for pulldown-cmark 13 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ed16be5ad4d32d3d17a5ac86a60f7e0a2cbf2c91"><code>ed16be5</code></a>)</li>
+<li>Merge pull request #99 from danieleades/cmark-13 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/fb9bbd6a4201f917041e7ca887e1845463be03df"><code>fb9bbd6</code></a>)</li>
+<li>Merge pull request #98 from ConnorGray/connorgray/refactor-1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b47d6c936b2d940107103e6bee3b12ab822f2d0f"><code>b47d6c9</code></a>)</li>
+<li>Update doc-string so <code>State::padding</code> is shown conventionally (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e10010f198a9cba9c0691def19978cf444740aa2"><code>e10010f</code></a>)</li>
+<li>Update to pulldown-cmark 13 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/efbdd3a712119d1899e54ac69b79830bd5a5a541"><code>efbdd3a</code></a>)</li>
+<li>Adjust wording + typos (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/05e247e5c7a74ac7bf9a906417724b8a275cabcc"><code>05e247e</code></a>)</li>
+<li>Add helper to factor out newline + padding pattern (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/2252ba1d9cf93256a8bcdd721813ed2397e32464"><code>2252ba1</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>20.0.1 (2025-02-12)</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-27cbc1635ca77acae37fe4723daf75dd1c8733a0/&gt; definition list block indentation now works correctly.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>8 commits contributed to the release.</li>
+<li>59 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/97">#97</a></li>
+</ul>
+<h5>Thanks Clippy</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p><a href="https://github.com/rust-lang/rust-clippy">Clippy</a> helped 1 time to make code idiomatic.</p>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/97">#97</a></strong>
+<ul>
+<li>Definition list block indentation now works correctly. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/27cbc1635ca77acae37fe4723daf75dd1c8733a0"><code>27cbc16</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v20.0.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/80f82f42e82d050859eb466e9bf5715e67915320"><code>80f82f4</code></a>)</li>
+<li>Merge branch 'definition_list' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/435307d55579296addebb3a4adb9a580728e4148"><code>435307d</code></a>)</li>
+<li>Thanks clippy (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/abb85a61515b1e9ccb9f40fb6f15b409f9d4602e"><code>abb85a6</code></a>)</li>
+<li>Treat definition list entries as blocks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/261c23b18c00a0122bbcc00cb93f16ceb3bd467c"><code>261c23b</code></a>)</li>
+<li>Merge pull request #96 from mgsloan/improve-naming-in-code-escaping-and-add-comments (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1ffd7c86380de1d558d27364168ff2a78de4b4b7"><code>1ffd7c8</code></a>)</li>
+<li>Add comments explaining inline code escaping (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/60e185422a15f3d5e33e889e9874bfb44ff25833"><code>60e1854</code></a>)</li>
+<li>Improve naming in function for counting max consecutive chars (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/32628b3562225a8bec3e7a9ed54467dad5d7c2ef"><code>32628b3</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>20.0.0 (2024-12-15)</h4>
+<h5>Bug Fixes (BREAKING)</h5>
+<ul>
+<li>
+<p>&lt;csr-id-fdc5859ff9823189c6966d5448468bff1d82d899/&gt; Add structured error handling for cmark(), cmark_resume() etc
+When <code>cmark_resume_with_options()</code>, which serves as basis for the other
+<code>cmark*</code> functions, finds an inconsistent event stream (for example, two
+consecutive heading start tags), it panics.</p>
+<p>Introduce a custom error type <code>Error</code> in the crate and change the return
+type of all public functions from <code>fmt::Result&lt;_&gt;</code> to <code>Result&lt;_, Error&gt;</code>.</p>
+<p>The next commit adds an integration test.</p>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>5 commits contributed to the release.</li>
+<li>4 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/91">#91</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/91">#91</a></strong>
+<ul>
+<li>Revert &quot;fix: harden again manufactured input which could previously trigger assertion failures.&quot; (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a442910b6e82f17f0e044ceb2069dd4bd76ffa34"><code>a442910</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v20.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3c850de2d3d1d79f19ca5f375e1089a653cf3ff7"><code>3c850de</code></a>)</li>
+<li>Merge pull request #93 from cip999/resume-error-handling (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/21f0f5d472307f4c8c8403505d90259a922ae624"><code>21f0f5d</code></a>)</li>
+<li>Add integration test for CmarkError::UnexpectedEvent (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/4766cc1c4dc569841e89068d3292b28d3c57e2e6"><code>4766cc1</code></a>)</li>
+<li>Add structured error handling for cmark(), cmark_resume() etc (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/fdc5859ff9823189c6966d5448468bff1d82d899"><code>fdc5859</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>19.0.1 (2024-12-11)</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-a368f0f4ddbfeb8728abf92feaf0d4ed0e81b858/&gt; harden again manufactured input which could previously trigger assertion failures.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>4 commits contributed to the release.</li>
+<li>19 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/91">#91</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/91">#91</a></strong>
+<ul>
+<li>Harden again manufactured input which could previously trigger assertion failures. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a368f0f4ddbfeb8728abf92feaf0d4ed0e81b858"><code>a368f0f</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v19.0.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/aefd5cbea4b79e21a5a1c2836b41a007e750d7ce"><code>aefd5cb</code></a>)</li>
+<li>Merge pull request #92 from Byron/fuzz-test (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c61fdd4917b8ee41af0bae69d99c721d7d337328"><code>c61fdd4</code></a>)</li>
+<li>Refactor tests (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b526d7cf0ad6df2ce8278a5fd634afb2067c484e"><code>b526d7c</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>19.0.0 (2024-11-22)</h4>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>&lt;csr-id-13785fe11cc8851f6f939b1763ae99d655a2d5dc/&gt; Make <code>State</code> struct non-exhaustive
+That way, future additions to the rather internal state won't be a reason for breaking changes anymore.</li>
+</ul>
+<h5>Bug Fixes (BREAKING)</h5>
+<ul>
+<li>
+<p>&lt;csr-id-76c24a16cf34d1675bef52aa8b4c58edebefbfa8/&gt; drasticly improve escaping <code>!</code>, <code>#</code>, and <code>|</code>
+Raises spec tests from 578 to 580. It handles cases that look like these</p>
+<p>Link, not image: !<a href="https://github.com/Byron/pulldown-cmark-to-cmark/blob/bae0dd3472a2e11d9badf93dc18437dac6197461/b">a</a></p>
+<h3>This header ends with hashes, not an ATX trailer ###</h3>
+<table>
+<thead>
+<tr>
+<th>a | b</th>
+<th>a | c</th>
+</tr>
+</thead>
+</table>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>12 commits contributed to the release.</li>
+<li>37 days passed between releases.</li>
+<li>2 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v19.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ccc8a522c738fc69eb937c7c0f7e8564741ee584"><code>ccc8a52</code></a>)</li>
+<li>Merge pull request #90 from chriskrycho/escape-code-in-tables (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/daef56bba9c244c2e08ef28ec09e99fa7b8c309d"><code>daef56b</code></a>)</li>
+<li>Add fixtures for pipes-in-code which should <em>not</em> be escaped (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a85fe394d52c236e25cec640e69df83228041fe1"><code>a85fe39</code></a>)</li>
+<li>Use <code>Cow&lt;'a, str&gt;</code> to minimize allocations for pipe escaping (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/022fa11e3a39c6b6bc0b2dcd9728bf205f00d5d1"><code>022fa11</code></a>)</li>
+<li>Correct comment/note on when pipe characters are/not escaped (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c9ecdd24024c0807ceb424f9dfae3b1b22072336"><code>c9ecdd2</code></a>)</li>
+<li>Make <code>State</code> struct non-exhaustive (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/13785fe11cc8851f6f939b1763ae99d655a2d5dc"><code>13785fe</code></a>)</li>
+<li>Improve test expectations for escaping pipes in inline code (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e7f078461e94c621e817a7f25eece571a0ae90de"><code>e7f0784</code></a>)</li>
+<li>Escape special characters in inline code in tables (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/37e8dcbf9af753542c39bd077d62e6799fac1f83"><code>37e8dcb</code></a>)</li>
+<li>Add fixture for tables with escaped characters (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/edcac270a3d6cc92db9098aa2ce10ea88e52d235"><code>edcac27</code></a>)</li>
+<li>Minor improvements (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f6fba5f43d29fa5a617124dbfcba7fad12bcecbc"><code>f6fba5f</code></a>)</li>
+<li>Merge branch 'notriddle/main' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/469088549b3ff9c665a1e4143498aaf2ebf55414"><code>4690885</code></a>)</li>
+<li>Drasticly improve escaping <code>!</code>, <code>#</code>, and <code>|</code> (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/76c24a16cf34d1675bef52aa8b4c58edebefbfa8"><code>76c24a1</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>18.0.0 (2024-10-16)</h4>
+<p>&lt;csr-id-b3d7df263409e2f9ebdaae843e087c714b994367/&gt;</p>
+<h5>New Features</h5>
+<ul>
+<li>&lt;csr-id-d8f22c18562ebc50c1ca6960bd745adab706a5b6/&gt; angle brackets if link paren is unbalanced
+Increases passing spec tests from 473 to 477.</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-2f75de249b1925dad69a43add3a22ace27e42904/&gt; write block quote kind only once</li>
+</ul>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>&lt;csr-id-db767944612b0e0068d7872ec515e3f0c23865b4/&gt; correctly round-trip code blocks with no trailing newline</li>
+<li>&lt;csr-id-8a9573d0b1b6095248ba2869c63da8399d31acfb/&gt; round-trip indented code blocks
+This raises the number of passing spec tests from 459 to 473.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>11 commits contributed to the release.</li>
+<li>40 days passed between releases.</li>
+<li>5 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v18.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6c8bc4d0e44aeee768d3a4ee8e2b4d500a3c0aeb"><code>6c8bc4d</code></a>)</li>
+<li>Merge pull request #87 from notriddle/notriddle/link-tweaks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/81ac29bb629c79bc7408cba9d5e91314fc5fe618"><code>81ac29b</code></a>)</li>
+<li>Use <code>TextMergeStream</code> for round-trip tests (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b3d7df263409e2f9ebdaae843e087c714b994367"><code>b3d7df2</code></a>)</li>
+<li>Angle brackets if link paren is unbalanced (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d8f22c18562ebc50c1ca6960bd745adab706a5b6"><code>d8f22c1</code></a>)</li>
+<li>Merge branch 'blockquote-kinds' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d5323a8f490649f74a21f158268abbf56fdc9ae9"><code>d5323a8</code></a>)</li>
+<li>Remove allocation (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/33ce10da1ad5fac7d0f87aec1ce3f469ad10c29f"><code>33ce10d</code></a>)</li>
+<li>Write block quote kind only once (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/2f75de249b1925dad69a43add3a22ace27e42904"><code>2f75de2</code></a>)</li>
+<li>Merge branch 'notriddle/main' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/848abc3cee47d139d44eaa951dbbb0e3d1c26d73"><code>848abc3</code></a>)</li>
+<li>Run cargo fmt and assure it doesn't regress anymore. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3fdf308560c7db1046bdca82ccd316cf16082ff5"><code>3fdf308</code></a>)</li>
+<li>Correctly round-trip code blocks with no trailing newline (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/db767944612b0e0068d7872ec515e3f0c23865b4"><code>db76794</code></a>)</li>
+<li>Round-trip indented code blocks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8a9573d0b1b6095248ba2869c63da8399d31acfb"><code>8a9573d</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>17.0.0 (2024-09-06)</h4>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>&lt;csr-id-3170061202dcdbb291abbb467fbee1de970d78bd/&gt; retain more details on reference links
+This raises the number of passing spec tests from 436 to 459.</li>
+</ul>
+<h5>Bug Fixes (BREAKING)</h5>
+<ul>
+<li>&lt;csr-id-c3a0f322dfc3450e1973ea3ed79e55a8c3b8b718/&gt; spurrious code blocks when char escapes start text</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release.</li>
+<li>15 days passed between releases.</li>
+<li>2 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v17.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/55fe0bc8436b3a9241a2c5a5e6884009e6559218"><code>55fe0bc</code></a>)</li>
+<li>Merge branch 'notriddle/reference-links' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/98818faf31c0137d95fd8edfb3bb9158f3a1cb13"><code>98818fa</code></a>)</li>
+<li>Merge branch 'notriddle/main' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ed4ff6fd871277d354867570163a73369b835d7a"><code>ed4ff6f</code></a>)</li>
+<li>Retain more details on reference links (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3170061202dcdbb291abbb467fbee1de970d78bd"><code>3170061</code></a>)</li>
+<li>Spurrious code blocks when char escapes start text (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c3a0f322dfc3450e1973ea3ed79e55a8c3b8b718"><code>c3a0f32</code></a>)</li>
+<li>Fix incorrect variable name (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/210a0be86892446caa2cda11d0f712d6d0ff5078"><code>210a0be</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>16.0.1 (2024-08-22)</h4>
+<p>&lt;csr-id-21a7f26a611e7a5b99ab33e9386acd30f0188960/&gt;</p>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>16 commits contributed to the release.</li>
+<li>2 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v16.0.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ab22a57249aa03f73c4fbd09d4b2fb42572a326f"><code>ab22a57</code></a>)</li>
+<li>Merge pull request #81 from caspermeijn/msrv (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/85ca9d4d63aab14b3193a2438959baa7fc6e4b05"><code>85ca9d4</code></a>)</li>
+<li>Make clear that the rust-version field follows <code>pulldown-cmark</code>'s MSRV. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7269c4f8aabb8ca3fdb63f4ba95b207899f9f845"><code>7269c4f</code></a>)</li>
+<li>Lower MSRV to 1.71.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/21a7f26a611e7a5b99ab33e9386acd30f0188960"><code>21a7f26</code></a>)</li>
+<li>Merge pull request #79 from danieleades/clippy (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c6899bce8ca1b018c03bda2515892762ed53f933"><code>c6899bc</code></a>)</li>
+<li>Use 'Self' keyword (clippy::use_self) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1a3029f41f4b97ddd1d2c0e373c63e1e388c40d9"><code>1a3029f</code></a>)</li>
+<li>Remove unnecessary negation (clippy::if_not_else) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/5745ce5a6574434fd673533586b3cfb6d5123ea3"><code>5745ce5</code></a>)</li>
+<li>Remove unneeded 'ref' bindings (clippy::ref_binding_to_reference) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/820b661395d9855bf8c7a8c58e906f86741ce168"><code>820b661</code></a>)</li>
+<li>Nest or patterns (clippy::unnested_or_patterns) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/43c6e8a3ddffb91277cec72c11f5e9f714266b51"><code>43c6e8a</code></a>)</li>
+<li>Explicitly match unit values (clippy::ignored_unit_patterns) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d636dc68f0b72088d761774d60e8762b26562cc4"><code>d636dc6</code></a>)</li>
+<li>Avoid explicit iter loops (clippy::explicit_iter_loop) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a8c7fa5a77145021fe9d67741e4a00d40851919f"><code>a8c7fa5</code></a>)</li>
+<li>Use inline format args (clippy::uninlined_format_args) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d97f8f5268f67f612474b68613eb5ff2941cb607"><code>d97f8f5</code></a>)</li>
+<li>Remove needless raw string hashes (clippy::needless_raw_string_hashes) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6e2ae15a167e3622993d7a96ca87619b48751281"><code>6e2ae15</code></a>)</li>
+<li>Use semicolons if nothing returned (clippy::semicolon_if_nothing_returned) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8f9d4bff7ca827b61ab1ca4ab7ca08d98721244f"><code>8f9d4bf</code></a>)</li>
+<li>Merge pull request #80 from danieleades/msrv (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/08ffcb896f605eb94d05fc07bd921efbd1b18666"><code>08ffcb8</code></a>)</li>
+<li>Add MSRV check to CI (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/66b9ed28d08fd622f411ce0c9e8720443bda1e0e"><code>66b9ed2</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>16.0.0 (2024-08-20)</h4>
+<p>Add support for <code>pulldown-cmark</code> v0.12, and an understanding of markdown Definition Lists.</p>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>8 commits contributed to the release.</li>
+<li>65 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v16.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/4dd27c5620531d157b0002dde42b9a940c29890d"><code>4dd27c5</code></a>)</li>
+<li>Bump major version to help isolage the <code>pulldown-cmark</code> crate at v0.12 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/17b5308e2592ef593e84a89cebbb28955024769b"><code>17b5308</code></a>)</li>
+<li>Update changelog prior to release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7b74f1b301db131f615b42e7645d413cc6c161cf"><code>7b74f1b</code></a>)</li>
+<li>Merge branch 'cmark-12' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f1f18d44147dfcffee8caf9f46d870f1e651b208"><code>f1f18d4</code></a>)</li>
+<li>Fix test (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/173ae8507f34d4163c735c9ca5f6b4b83a338948"><code>173ae85</code></a>)</li>
+<li>Add failing test case (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7674b549f0fb865c65d432ce4a5acfcc04af9c24"><code>7674b54</code></a>)</li>
+<li>Add test for definition list item start (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e686a8f7ee35fe83fe1b7f8f6466b62d0af35fd9"><code>e686a8f</code></a>)</li>
+<li>Add 'todo' placeholders (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f1a8a3efd57a9bff2073796387d70eba49d93399"><code>f1a8a3e</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>15.0.1 (2024-06-16)</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-2ac74720c4d3fc8ccda8eaae86508bd62c28b43d/&gt; tables render more correctly</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>3 commits contributed to the release.</li>
+<li>1 day passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>2 unique issues were worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/70">#70</a>, <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/76">#76</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/70">#70</a></strong>
+<ul>
+<li>Tables render more correctly (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/2ac74720c4d3fc8ccda8eaae86508bd62c28b43d"><code>2ac7472</code></a>)</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/76">#76</a></strong>
+<ul>
+<li>Tables render more correctly (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/2ac74720c4d3fc8ccda8eaae86508bd62c28b43d"><code>2ac7472</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v15.0.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7cc274e52d44f4901465796f4bfcc69f0a71f01a"><code>7cc274e</code></a>)</li>
+<li>Fix emitting <code>::</code> for centered column in table. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/33811dc085da284c82bb74da590b14066ff44402"><code>33811dc</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>15.0.0 (2024-06-15)</h4>
+<blockquote>
+<p>[!NOTE]
+This release adds support for Math expressions, and notification boxes like the one this text is written in.</p>
+</blockquote>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>&lt;csr-id-bff28af3c51a3a55675d5a64d8f3bda2d37701aa/&gt; Update to pulldown-cmark v0.11 for math-expression support and special block quotes
+Update pulldown cmark</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>20 commits contributed to the release.</li>
+<li>5 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v15.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e6c8c3ec310f79c080fe466183baf6842e66608c"><code>e6c8c3e</code></a>)</li>
+<li>Prepare changelog prior to release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d72bfd376a12412e4c394fa16fc99f8b8fb0e14e"><code>d72bfd3</code></a>)</li>
+<li>Upgrade dev-dependencies (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d8cbd37355cacdf58625e08765cf4000914d1057"><code>d8cbd37</code></a>)</li>
+<li>Update to pulldown-cmark v0.11 for math-expression support and special block quotes (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/bff28af3c51a3a55675d5a64d8f3bda2d37701aa"><code>bff28af</code></a>)</li>
+<li>Merge blockquote kind parsing (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6d05a28029087187bbbbe085aa77689c6ed89a07"><code>6d05a28</code></a>)</li>
+<li>Remove unused import (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/89d5dd56d07fdc373ec901bc535862c5b2fac155"><code>89d5dd5</code></a>)</li>
+<li>Remove support for dollar surrounding backtick (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d55ac5dc61e2b5afc098f817737668acd8743700"><code>d55ac5d</code></a>)</li>
+<li>Generate snapshot (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c8632c4c7c462e5dd6446b8883f527fc8e415ef7"><code>c8632c4</code></a>)</li>
+<li>Add suggested fixture (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f961f7686b24838607e2508bf2ff65f12bed4225"><code>f961f76</code></a>)</li>
+<li>Use escaped comparison (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/74a5b5989c59c3d4dd1bff8f66b79be62bce0052"><code>74a5b59</code></a>)</li>
+<li>Update math tests (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e94e9e4a259aa4747334f123c352a4812a14c42a"><code>e94e9e4</code></a>)</li>
+<li>Fix alternate math notation (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8e09ddb9d0c28873a5ae9c116a0a1f310179dc85"><code>8e09ddb</code></a>)</li>
+<li>Regenerate snapshots (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/153ff68c4ac5e804211f41eb702fa00f7a16a311"><code>153ff68</code></a>)</li>
+<li>Add mathematical expressions (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/42049d99af1bbfda53f5c50a59b56b0fae947b53"><code>42049d9</code></a>)</li>
+<li>Regenerate snapshots (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ea0497047b69fcd962568bce34b55e938d3f5db0"><code>ea04970</code></a>)</li>
+<li>Fix incorrect formatting (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1d047be50ca18ffd5a28ca64475d1100b6068cca"><code>1d047be</code></a>)</li>
+<li>Add blockquote kinds (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/dcf769c1d1f57d7e540e172988d18da84fa95492"><code>dcf769c</code></a>)</li>
+<li>Update tests (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8723b1ffcf2248d8fbad77c044d6eff96dda2fec"><code>8723b1f</code></a>)</li>
+<li>Handle new types and change (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c81d969679b77dd0e9f9bf065190cfddc57f3dd3"><code>c81d969</code></a>)</li>
+<li>Update pulldown-cmark (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/173b8a40761d571772815f4227e3962a619bd7fd"><code>173b8a4</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>14.0.1 (2024-06-10)</h4>
+<p>This release contains a fix to avoid escaping characters within codeblocks.
+See https://github.com/Byron/pulldown-cmark-to-cmark/issues/73 for details.</p>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>4 commits contributed to the release.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/73">#73</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/73">#73</a></strong>
+<ul>
+<li>Fixdo not disturb code block detection when preventing escape (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7376d42ae3599c907061eba6b3a7676f79408bdb"><code>7376d42</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v14.0.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/fd7815a480181fa2f442ce8969111038927f49b6"><code>fd7815a</code></a>)</li>
+<li>Prepare changelog prior to release. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/857ff07f8ae962de7d287008d875cc3ca342e510"><code>857ff07</code></a>)</li>
+<li>Merge pull request #74 from SichangHe/fix-unnecessary-range-escape (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a6045c664fda1c56edf8d749601a6562d94a3871"><code>a6045c6</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>14.0.0 (2024-06-10)</h4>
+<p>This release adds support for keeping escapes in the original source for the input events,
+assuming the new <code>cmark_resume_with_source_range_and_options()</code> function is used.</p>
+<p>Please also note that for most this won't be a breaking change as only a field was added
+to <code>State</code>, which isn't used unless you do incremental event serialization.</p>
+<h5>Bug Fixes (BREAKING)</h5>
+<ul>
+<li>&lt;csr-id-6c8297c03eb82ac95fa9dd559e3337e470d70c72/&gt; clarify what <code>last_event_end_index</code> indices into and how it's used
+This is marked as breaking change as the field itself is new in <code>State</code>
+and could be breaking for some.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>17 commits contributed to the release.</li>
+<li>85 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v14.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1978c0c0fb42e20bc0d015611c1336975bd1965c"><code>1978c0c</code></a>)</li>
+<li>Fix manifest includes to allow publishing (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/cfcabc44bf5b73ab1567f062787be917d1933877"><code>cfcabc4</code></a>)</li>
+<li>Release pulldown-cmark-to-cmark v14.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8c6bee4c037c3aff3c211c87146909ab0cd85aaf"><code>8c6bee4</code></a>)</li>
+<li>Fix doc-links (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d9d81c0bcac2471a26be35e21414f51b4a136b45"><code>d9d81c0</code></a>)</li>
+<li>Prepare changelog prior to release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c332f98d21c2f35638e88145ee224d5511ddc2d4"><code>c332f98</code></a>)</li>
+<li>Merge pull request #71 from SichangHe/no-unnecessary-escape (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/386e6634421373c6b9841a59c7639e416215566c"><code>386e663</code></a>)</li>
+<li>Clarify what <code>last_event_end_index</code> indices into and how it's used (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6c8297c03eb82ac95fa9dd559e3337e470d70c72"><code>6c8297c</code></a>)</li>
+<li>Dedup test code (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f66724b2f74814fe6a8ddb168425b9097bb84135"><code>f66724b</code></a>)</li>
+<li>Attempt to address @Bryon first comments https://github.com/Byron/pulldown-cmark-to-cmark/pull/71#pullrequestreview-2081814286 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/bebff1e520f2da982cb1a7f9ba97ce13c9accab0"><code>bebff1e</code></a>)</li>
+<li>Test <code>&lt;</code> escape handling (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/542bc1fad3d06d39d59c8842225afc864d7539c3"><code>542bc1f</code></a>)</li>
+<li>Restore <code>State</code> derives (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ea17e2763d066bd454cfab0ae0a0768fdaf83bd1"><code>ea17e27</code></a>)</li>
+<li>Rm test that fail for old implementation (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/78965c4520e031930e232758d942077ed40b7a1d"><code>78965c4</code></a>)</li>
+<li>Better explain why <code>cmark_resume_with_source_range_and_options</code> is different (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/49f60d58ae2a1fd868797191c47d968f11c913df"><code>49f60d5</code></a>)</li>
+<li><code>source_range</code> persist special character escape by peeking source (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/92ad2c8f291df7e165e1110d05c638661627c5d6"><code>92ad2c8</code></a>)</li>
+<li>Placeholder functions not using source range (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a234ed5ece9d02eb8e9cb3c03432ca2a73165b5e"><code>a234ed5</code></a>)</li>
+<li>Extract nested functionalities (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/93cbb33bad931ac3f787cd13438a812c6adb3b7a"><code>93cbb33</code></a>)</li>
+<li>Failing rustdoc test <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/51">https://github.com/Byron/pulldown-cmark-to-cmark/issues/51</a> (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8c6ccdbb01e015acc3a7e688bac2dad8319d03f8"><code>8c6ccdb</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>13.0.0 (2024-03-17)</h4>
+<p>&lt;csr-id-5d940367d7d720a176c361b99ab8699897a53313/&gt;</p>
+<h5>New Features</h5>
+<ul>
+<li>&lt;csr-id-8d39a30b20b621a0db6274ee6bb58755c5198d01/&gt; add newlines_after_metadata option</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-7b27baad538570400eeb651b2e9b2b786ad43189/&gt; set correct yaml metablock end tag</li>
+</ul>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>&lt;csr-id-834c74b9df9b9451000b069988d8259e2b881692/&gt; support for controlling the amount of newlines after metadata blocks.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release.</li>
+<li>1 day passed between releases.</li>
+<li>4 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v13.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/daeb61841f171b1fdc1a51c6cc1a48adafa852ff"><code>daeb618</code></a>)</li>
+<li>Support for controlling the amount of newlines after metadata blocks. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/834c74b9df9b9451000b069988d8259e2b881692"><code>834c74b</code></a>)</li>
+<li>Refactor (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b8ae35906a62e5e6d69b5412fff6a9a93918925e"><code>b8ae359</code></a>)</li>
+<li>Add frontmatter snapshot (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/5d940367d7d720a176c361b99ab8699897a53313"><code>5d94036</code></a>)</li>
+<li>Add newlines_after_metadata option (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8d39a30b20b621a0db6274ee6bb58755c5198d01"><code>8d39a30</code></a>)</li>
+<li>Set correct yaml metablock end tag (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7b27baad538570400eeb651b2e9b2b786ad43189"><code>7b27baa</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>12.0.0 (2024-03-16)</h4>
+<p>&lt;csr-id-b90defbf6ade8b3c1c0585f7933421f086eeb123/&gt;</p>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>
+<p>&lt;csr-id-640148b354eb7325e1fbeec2acbd4867d3c536fc/&gt; upgrade to pulldown-cmark v0.10
+This comes with a variety of changes to the <code>State</code> type, which is the reason
+this is a breaking release.</p>
+<p>The overall correctness is improved though, bringing the amount of successful
+tests of the spec to 435/649 (up by 4).</p>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>18 commits contributed to the release.</li>
+<li>49 days passed between releases.</li>
+<li>2 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v12.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/002be03e5ec58fce34879e26118689b0e9269441"><code>002be03</code></a>)</li>
+<li>Upgrade to pulldown-cmark v0.10 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/640148b354eb7325e1fbeec2acbd4867d3c536fc"><code>640148b</code></a>)</li>
+<li>Avoid allocations (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/366f304104ec27e96f185ead57658532ecaecaa7"><code>366f304</code></a>)</li>
+<li>Allow State to borrow from events (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b3bfd404951c19314e110ee2764ea69b8cd4a9e2"><code>b3bfd40</code></a>)</li>
+<li>Remove State::last_was_html (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/42739b5996a2490c61b792cfc32b980614892ae0"><code>42739b5</code></a>)</li>
+<li>Test custom attributes (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8152f815f8692feec1a5b194feb77028a39bc5dd"><code>8152f81</code></a>)</li>
+<li>Adjust snapshots (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1c21b70685bd1e85a9c0ed2862d6f6fb2f97f142"><code>1c21b70</code></a>)</li>
+<li>Remove trailing whitespace in snapshots (seems to be a pulldown-cmark parsing change) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b09ce73a997f4bbb0abe237bfc603980f532753d"><code>b09ce73</code></a>)</li>
+<li>Fix handling of HTML blocks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6afb4cdf66344b3701cdc30d393aec7d0356480a"><code>6afb4cd</code></a>)</li>
+<li>Clippy (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/4a6629280441b14f85222f133efda26ae8ec46b0"><code>4a66292</code></a>)</li>
+<li>Fix EndTag tests (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/38bb5dddc8b5603849c6ce006f96d4f93f83784c"><code>38bb5dd</code></a>)</li>
+<li>Comment out end tag tests that aren't triviably updateable (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/82110a4cc62d2fac7fa5d12842807b9264e45deb"><code>82110a4</code></a>)</li>
+<li>Support heading attributes (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/fc30c6dbc2457bf2c68ea70b66be80fd64016d5a"><code>fc30c6d</code></a>)</li>
+<li>Fix test (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ea2608e88cabcbc9962b08360e624e176b780c19"><code>ea2608e</code></a>)</li>
+<li>Fix easily-updateable tests (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ebf9b6914c9eccbc0efc9bfed3d26ccfb64ff3c5"><code>ebf9b69</code></a>)</li>
+<li>Add link/image stacks and track current header (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3090b8a7c3026e2a5fa3b2fbaf4fe9753ec662a9"><code>3090b8a</code></a>)</li>
+<li>Metadata blocks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a26731caaaa89960528b8c72d6c051c7c30d4660"><code>a26731c</code></a>)</li>
+<li>Update pulldown-cmark dependency (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b90defbf6ade8b3c1c0585f7933421f086eeb123"><code>b90defb</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>11.2.0 (2024-01-27)</h4>
+<h5>New Features</h5>
+<ul>
+<li>&lt;csr-id-e33936543e4db169fb7734cc0ce83127a0c04e8b/&gt; introduce <code>calculate_code_block_token_count()</code>, along with <code>DEFAULT_CODE_BLOCK_TOKEN_COUNT</code>.
+That way it's possible to correctly determine the amount of fenced code-block tokens
+needed to render all given events such that code-blocks are retained.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>4 commits contributed to the release.</li>
+<li>2 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v11.2.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/11344a70243c5affbc0861669db9575209a6f612"><code>11344a7</code></a>)</li>
+<li>Merge branch 'fix_count_code_block_tokens' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ee4233527dd46b963d5a553c18bcc7b876f75fa1"><code>ee42335</code></a>)</li>
+<li>Introduce <code>calculate_code_block_token_count()</code>, along with <code>DEFAULT_CODE_BLOCK_TOKEN_COUNT</code>. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e33936543e4db169fb7734cc0ce83127a0c04e8b"><code>e339365</code></a>)</li>
+<li>Change the return type of count_code_block_tokens (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ef1c2766c1f91ba226063e4f914646f0d32172da"><code>ef1c276</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>11.1.0 (2024-01-25)</h4>
+<h5>New Features</h5>
+<ul>
+<li>&lt;csr-id-10b855fc6433ba1aa70add57be261d8be3fc2249/&gt; add <code>count_code_block_tokens()</code> function.
+It allows to calculate the amount of backticks around a code block for given events
+to assure code-blocks are reproduced correctly when rendering the same events.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release.</li>
+<li>62 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v11.1.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d236e29395304f40c988813b4bf7b76e8dd2bfbe"><code>d236e29</code></a>)</li>
+<li>Add <code>count_code_block_tokens()</code> function. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/10b855fc6433ba1aa70add57be261d8be3fc2249"><code>10b855f</code></a>)</li>
+<li>Refactor (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c0f631d68a9373bf662302296044d90eaac4c8b6"><code>c0f631d</code></a>)</li>
+<li>Add check_code_block_token_count function (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f119d7735fa1ed762fedf4a614a76bd0c7fbb33f"><code>f119d77</code></a>)</li>
+<li>Merge pull request #64 from max-heller/readme-links (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b9262648473b2ec8c0aaf5fc2f23c41ccdfcc58a"><code>b926264</code></a>)</li>
+<li>Update pulldown-cmark and mdbook links in README (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/31e8bb56781633b25dbe685d622f209afaa097ec"><code>31e8bb5</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>11.0.2 (2023-11-24)</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-9a64f6bc8fafe22bfd4d3fc6704a097719a10566/&gt; Escape double quotes in link titles.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>5 commits contributed to the release.</li>
+<li>5 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/62">#62</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/62">#62</a></strong>
+<ul>
+<li>Escape double quotes in link titles. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9a64f6bc8fafe22bfd4d3fc6704a097719a10566"><code>9a64f6b</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v11.0.2 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/befdaabc5c024d6d22332cf6e6e65baaa3b92a72"><code>befdaab</code></a>)</li>
+<li>Address code review comments (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/4767b2fe2dea1c4f0a563d3e71cdb54bd8efc8bc"><code>4767b2f</code></a>)</li>
+<li>Escape double quotes in link titles (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/74f0abee0dcfde1148af57e2acc0451b12ce1308"><code>74f0abe</code></a>)</li>
+<li>Failing test for link titles with interior punctuation (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e891ea423ee7e1425dd4866e0d6e0fd74554a9e6"><code>e891ea4</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>11.0.1 (2023-11-19)</h4>
+<h5>Fix</h5>
+<ul>
+<li>properly format multi-line footnotes. Merge branch 'multiline-footnotes' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f6b53488417f65a30bf833c165c9112a37b393b7"><code>f6b5348</code></a>)</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>5 commits contributed to the release.</li>
+<li>93 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/61">#61</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/61">#61</a></strong>
+<ul>
+<li>Fix: properly format multi-line footnotes. Merge branch 'multiline-footnotes' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f6b53488417f65a30bf833c165c9112a37b393b7"><code>f6b5348</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v11.0.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b1f77e0526b59a04234c0874cf00493720da550a"><code>b1f77e0</code></a>)</li>
+<li>Prepare changelog (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/323cbc077267bb7ef370687d5c9d589758853e32"><code>323cbc0</code></a>)</li>
+<li>Multiline footnote fix (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/4768ad54fee48046974dc7b76d3768b62161e959"><code>4768ad5</code></a>)</li>
+<li>Failing multiline footnote test (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e18731327065297e4d2ac9d8e24bb6b6db5bbaf0"><code>e187313</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>11.0.0 (2023-08-18)</h4>
+<h5>New Features</h5>
+<ul>
+<li>&lt;csr-id-d9eb45477fc23da0960cdb24f9f20d67bfac0784/&gt; add apache-2 license text to crate as well</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-c2a0113cc649af32288c916026c47e63fbccb6ec/&gt; improve handling of inline code spans with multiple backticks
+Merge pull request #56 from mgeisler/inline-code</li>
+</ul>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>&lt;csr-id-2263c2f33d9fb546881c0837f391bf266528f8d2/&gt; Options to choose the ordered list marker and to auto-increment the ordered list numbers.
+<ul>
+<li>Based on the commonmark list spec an ordered list can use <code>.</code> or <code>)</code>
+as the ordered list marker. Now users can configure the marker they want
+to use with the <code>ordered_list_token</code> option.</li>
+</ul>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>14 commits contributed to the release.</li>
+<li>342 days passed between releases.</li>
+<li>3 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Thanks Clippy</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p><a href="https://github.com/rust-lang/rust-clippy">Clippy</a> helped 2 times to make code idiomatic.</p>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v11.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6f23621a4f9ab79c7eeb10f7f2c201dccef8dffd"><code>6f23621</code></a>)</li>
+<li>Merge branch 'lic' (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b889953135053db9763458cb471d5b7bd55c3272"><code>b889953</code></a>)</li>
+<li>Add apache-2 license text to crate as well (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d9eb45477fc23da0960cdb24f9f20d67bfac0784"><code>d9eb454</code></a>)</li>
+<li>Add license text (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9ea32f403d250ee5f3dc68373b3e37c8f690436b"><code>9ea32f4</code></a>)</li>
+<li>Improve handling of inline code spans with multiple backticks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c2a0113cc649af32288c916026c47e63fbccb6ec"><code>c2a0113</code></a>)</li>
+<li>Refactor (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1cd68a41be3079b55179507ca3ececa385b59698"><code>1cd68a4</code></a>)</li>
+<li>Thanks clippy (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8f81a30c659f21a14d814a6a4505699ac4eda757"><code>8f81a30</code></a>)</li>
+<li>Use necessary amount of backticks for inline code (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/343773455fb08f20817f6de74b0bf8f067a90ba1"><code>3437734</code></a>)</li>
+<li>Always use backticks for inline code blocks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1e76c955ebd59190a3198ff5a62cd840023486d1"><code>1e76c95</code></a>)</li>
+<li>Options to choose the ordered list marker and to auto-increment the ordered list numbers. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/2263c2f33d9fb546881c0837f391bf266528f8d2"><code>2263c2f</code></a>)</li>
+<li>Thanks clippy (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6bde37483b7578ef554952775e9e0c3332ecf4aa"><code>6bde374</code></a>)</li>
+<li>Correct indentation for a nested list in a doc comment (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ce1fb72ab7d9db2647e142916e8af0bccc0ec97e"><code>ce1fb72</code></a>)</li>
+<li>Add option to increment ordered list number (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f2fae4b5c64d44d624cb2dff16a70b31306e60ce"><code>f2fae4b</code></a>)</li>
+<li>Allow users to specify a custom ordered list marker (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/981c86adc847eb8df0c1616b0e7377536f7f59e2"><code>981c86a</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>10.0.4 (2022-09-10)</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-f3b43705ecf5c3760f964680c2975b14cf92a990/&gt; add newlines where needed to produce valid codeblocks</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release.</li>
+<li>1 day passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/48">#48</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/48">#48</a></strong>
+<ul>
+<li>Add newlines where needed to produce valid codeblocks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f3b43705ecf5c3760f964680c2975b14cf92a990"><code>f3b4370</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v10.0.4 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/5f6ec453d5c44d45d09100749d1c1e2891e05bf7"><code>5f6ec45</code></a>)</li>
+<li>Cargo fmt (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/89b557a46786f2efebccec010f8c115ad21910e3"><code>89b557a</code></a>)</li>
+<li>Fix typo (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1833cfb3f45591cc866851ebd0ca22d4cf6b4819"><code>1833cfb</code></a>)</li>
+<li>Inserts a newline if there is no newline before code block termination fence (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ef4c4014b4bc2d6e26240a99a9afd49e60b320f3"><code>ef4c401</code></a>)</li>
+<li>Add a test case to verify that indented code blocks without trailing <code>\n</code> are rendered correctly (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6c6f4926df13496bf307f7059af6342647e889d3"><code>6c6f492</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>10.0.3 (2022-09-09)</h4>
+<p>&lt;csr-id-e214cc1be5305f9b43738affff4d1ca22242af37/&gt;</p>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-ff4050f4981f300d79b4d3214bdfe6c3c99ef205/&gt; duplicated shortcut link definitions are only printed once.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>5 commits contributed to the release.</li>
+<li>73 days passed between releases.</li>
+<li>2 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/46">#46</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/46">#46</a></strong>
+<ul>
+<li>Duplicated shortcut link definitions are only printed once. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ff4050f4981f300d79b4d3214bdfe6c3c99ef205"><code>ff4050f</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v10.0.3 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/4e7c91bb7d032921d56330663c3f4a9f6027e722"><code>4e7c91b</code></a>)</li>
+<li>De-duplicate shortcut link definitions (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/32d94668ec4c294f5161ccc8cdba94ada78713d4"><code>32d9466</code></a>)</li>
+<li>Add a test case to verify that repeated reference links are rendered correctly (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/eb6ab631b1dac766012625db44384eeb3df74f70"><code>eb6ab63</code></a>)</li>
+<li>Replace <code>.travis.yml</code> with <code>.github/workflows/rust.yml</code> (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e214cc1be5305f9b43738affff4d1ca22242af37"><code>e214cc1</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>10.0.2 (2022-06-28)</h4>
+<h5>Fixes</h5>
+<ul>
+<li>support for backticks within inline-backticks, see this <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/20#issuecomment-1165798752">this
+comment</a>
+for details.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>4 commits contributed to the release.</li>
+<li>108 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v10.0.2 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/341f46e63d7a4276cda013251bf43b18b493494f"><code>341f46e</code></a>)</li>
+<li>Update changelog (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/0fa8688e422cd18839d06d400660df9a457ed34c"><code>0fa8688</code></a>)</li>
+<li>Add space aroudn backticks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6f683310f2e6965c6d1d3ee09c3b36eefff5c1a3"><code>6f68331</code></a>)</li>
+<li>Fix double-backtick issue (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/09a35a96002cb2ca00e0769c0ae4cc8927698ccd"><code>09a35a9</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>10.0.1 (2022-03-12)</h4>
+<h5>Fixes</h5>
+<ul>
+<li>add <code>cmark_resume()</code>, completing the API transition started with the major version change.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release.</li>
+<li>43 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v10.0.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d2d1e6ee90543aba85d83a7a08f1adda6c8ba0da"><code>d2d1e6e</code></a>)</li>
+<li>Update changelog (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/eb88b2e2f3c4de46bff0c55418f3359eb62bf747"><code>eb88b2e</code></a>)</li>
+<li>Add clippy to Makefile/CI (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7bb9a68a98bcec55879379dcda669593129a006a"><code>7bb9a68</code></a>)</li>
+<li>Fix misc Clippy lints (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/118df1747be21cd4b323bf76d22c6736117af0f9"><code>118df17</code></a>)</li>
+<li>Re-order to logically group cmark* functions (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/16f06eb10bfc084c7e79e6d6e76703452517ae0f"><code>16f06eb</code></a>)</li>
+<li>Add cmark_with_options() and fix comments (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/53efeb83c158978331303d6889a24f6192e40dea"><code>53efeb8</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>10.0.0 (2022-01-28)</h4>
+<p>Note that the breaking change is fixable by removing the last parameter from the <code>cmark()</code> function if it was <code>None</code>,
+or using <code>cmark_resume</code> instead.</p>
+<h5>New Features</h5>
+<ul>
+<li>Formatting within links is no being preserved.</li>
+</ul>
+<h5>New Features (BREAKING)</h5>
+<ul>
+<li>
+<p>&lt;csr-id-7166abeb0f89ee1dfb7790923d0d5fc6edc394c5/&gt; Simplify <code>cmark(…)</code> by removing <code>State</code> parameter, introduce <code>cmark_resume(…)</code>.</p>
+<p>The reason for doing it this way around causing a breaking change is
+the change of behaviour for <code>cmark_resume</code>, which now returns a state
+instance that needs a <code>finalize()</code> call to flush certain caches.</p>
+<p>Currently this is only used to write link blocks, after which the state
+is still usable for future invocations if necessary.</p>
+<p>That way the caller has control over where to put link blocks, or other
+items that should be placed at the end of a logical section.</p>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release over the course of 28 calendar days.</li>
+<li>28 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v10.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/44c52860ab7300f47b60ae72f9760f302c9d5758"><code>44c5286</code></a>)</li>
+<li>Write changelog prior to release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e9f809f45f637a385d8b4db248409195df1c9380"><code>e9f809f</code></a>)</li>
+<li>Merge pull request #41 from aogier/bugfix/40-shortcut_code (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7ee11da6906bbc59c2bd91413ba617bf8104685e"><code>7ee11da</code></a>)</li>
+<li>Simplify <code>cmark(…)</code> by removing <code>State</code> parameter, introduce <code>cmark_resume(…)</code>. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7166abeb0f89ee1dfb7790923d0d5fc6edc394c5"><code>7166abe</code></a>)</li>
+<li>Properly render shortcut links w/ code formatting (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6a423123f409612ba7798f6fcbd91373562e6aa7"><code>6a42312</code></a>)</li>
+<li>Fix changelog (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/84acaf3c4f0c77f774aa38f96ccee661d6bfe5d8"><code>84acaf3</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>9.0.0 (2021-12-31)</h4>
+<p>&lt;csr-id-93f2d11e467221418748c672a3c493dcfbf9d6e7/&gt;</p>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>&lt;csr-id-0a6f80d67eed9234170c95d8282cbc76ae66d47c/&gt; Shortcut handling is now using the <code>State</code>.</p>
+<p>This makes resumable event processing work as expected, even though
+the output won't be similar as it will print shortcuts right after
+all events have been processed and it's impossible to know
+how often it will be called.</p>
+</li>
+<li>
+<p>Simplify <code>State</code>.</p>
+<p>Use an <code>Option</code> to get rid ofa  boolean and make isuse impossible.</p>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release.</li>
+<li>5 days passed between releases.</li>
+<li>2 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/39">#39</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/39">#39</a></strong>
+<ul>
+<li>Shortcut handling is now using the <code>State</code> (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/0a6f80d67eed9234170c95d8282cbc76ae66d47c"><code>0a6f80d</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v9.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c14d0840bcef5fe1e5f9bb5df96a12e29e0ca81b"><code>c14d084</code></a>)</li>
+<li>Write changelog (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ddff11953a25c9c77bd741371328a810ca678bfb"><code>ddff119</code></a>)</li>
+<li>Simplify <code>State</code> (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/93f2d11e467221418748c672a3c493dcfbf9d6e7"><code>93f2d11</code></a>)</li>
+<li>Refactor (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c0f14c058f3639e37ef9cd7971d9fb3965320fe7"><code>c0f14c0</code></a>)</li>
+<li>Refactor (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9283d487546bdcef57b602a782c777462d7caa19"><code>9283d48</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>8.0.0 (2021-12-26)</h4>
+<p>This release adds support for <code>pulldown-cmark v0.9</code>, <a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/37">see the tracking issue</a> for more information.</p>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>4 commits contributed to the release.</li>
+<li>21 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v8.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/cf469e28f829864350d9838424370e85ac30329c"><code>cf469e2</code></a>)</li>
+<li>Adjust changelog prior to release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/0ed0c6960de20934ceebc11f8d54719c90516a45"><code>0ed0c69</code></a>)</li>
+<li>Cargo fmt (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c696de36d0d4a1dc6cfd0c86704844366009697a"><code>c696de3</code></a>)</li>
+<li>Support the new Heading tag in pulldown-cmark 0.9 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1c9ea447a3a43a19a93382fc8d3304556b79641e"><code>1c9ea44</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>7.1.1 (2021-12-05)</h4>
+<h5>Fixes</h5>
+<ul>
+<li>Multiple shortcut links are now separated by newline.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>3 commits contributed to the release.</li>
+<li>10 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v7.1.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e95115e066a3a8bdbc1a5ca2cc422a03ba9c4f9b"><code>e95115e</code></a>)</li>
+<li>Update changelog prior to patch release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e540024bec698b7ebd28e76c1673f0b90c553f36"><code>e540024</code></a>)</li>
+<li>Fix shortcuts rendering (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3bbc7638fa3210efa09e78d7ac423710fe9ea68e"><code>3bbc763</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>7.1.0 (2021-11-25)</h4>
+<h5>New Features</h5>
+<ul>
+<li>Shortcut links are now printed at the end of the stream like one would expect (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/pull/33">#33</a>)</li>
+<li>email links are retained (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/pull/34">#34</a>)</li>
+<li>Now 422 of 649 common mark spec tests pass, up from 402.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release.</li>
+<li>7 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v7.1.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/68a9b6a1cd58e60b31f989c8c5b25654f923dbeb"><code>68a9b6a</code></a>)</li>
+<li>Update changelog (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/bbc22fee8fbde87c23647704d253656585e97eeb"><code>bbc22fe</code></a>)</li>
+<li>Use match as expression (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/2d5d4e1e78c36a8188a79cc5aac944d4ee2f291b"><code>2d5d4e1</code></a>)</li>
+<li>Merge branch 'feature/32-shortcut-links' of https://github.com/aogier/pulldown-cmark-to-cmark into aogier-feature/32-shortcut-links (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/81b1eb46509047430dde0efa0874ec4fdecf82af"><code>81b1eb4</code></a>)</li>
+<li>Retain autolink/email link format (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/e25f14df072ac4f700d097136069331e61fb781e"><code>e25f14d</code></a>)</li>
+<li>Shortcut links implementation (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/25cc3d1afd6d6d675d6d29ebcdd40c0d22d992fe"><code>25cc3d1</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>7.0.0 (2021-11-18)</h4>
+<p>The <code>Options</code> type was updated in a <strong>breaking</strong> fashion to allow configuring certain tokens, e.g. the <code>*</code> list token can now be configured as <code>-</code> if desired.</p>
+<p>Thanks to the author of <a href="https://github.com/Byron/pulldown-cmark-to-cmark/pull/31">this PR</a>.</p>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>7 commits contributed to the release over the course of 53 calendar days.</li>
+<li>54 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v7.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/cc82b0fdcc020aece451f0feeee1d941ce79097e"><code>cc82b0f</code></a>)</li>
+<li>Update changelog prior to release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/0b795a70379f334c0dc08a8208691ee824c2ee87"><code>0b795a7</code></a>)</li>
+<li>Refactor (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/06fe6cb1e35e8aca0cd8a4bfe9daacbdd2771698"><code>06fe6cb</code></a>)</li>
+<li>More efficient handling of reconfigured characters (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/fa147502384bf82fe192719d0c8cc81ba125cc7f"><code>fa14750</code></a>)</li>
+<li>Cleanup typing for special characters (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9aef43ff21d41bc66df6096d392d0e8a035d11fc"><code>9aef43f</code></a>)</li>
+<li>Change options to support custom syntax and add test (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/db6e12c57753cfeccb010ecdb3104e3d0bc48b41"><code>db6e12c</code></a>)</li>
+<li>Format with nightly (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9313bac4d0946a2e8bd0c8ca68d5fd3573891e45"><code>9313bac</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v6.0.4 (2021-09-25)</h4>
+<ul>
+<li>Improves newline handling when line ends with
+<a href="https://github.com/Byron/pulldown-cmark-to-cmark/issues/28">inline HTML</a></li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>3 commits contributed to the release.</li>
+<li>18 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v6.0.4 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/72e5ca549d0acb9bd59f1d8b1c1c8f55eac604ef"><code>72e5ca5</code></a>)</li>
+<li>Prepare changelog (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/50b4188dafcf1b61b7103861b733e7b886fc8da9"><code>50b4188</code></a>)</li>
+<li>Don't output extra newlines after HTML before a SoftBreak (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1a407920006e554a4533c2ed9de1fe3bae57f146"><code>1a40792</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v6.0.3 (2021-09-07)</h4>
+<ul>
+<li>handle spaces in links <a href="https://github.com/Byron/pulldown-cmark-to-cmark/pull/27">better</a></li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>3 commits contributed to the release.</li>
+<li>76 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release pulldown-cmark-to-cmark v6.0.3 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/100c41a1106032ee84c8fcdbcf788cd4426573a5"><code>100c41a</code></a>)</li>
+<li>Prepare release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b3015aa080aab57b2f15920bce1cc2fd8eb0e1a9"><code>b3015aa</code></a>)</li>
+<li>Handle spaces in link URIs (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9f8f17ba67b6f2c6d0ed1eb849f5cadc7c6fcef0"><code>9f8f17b</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v6.0.2 (2021-06-23)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>4 commits contributed to the release.</li>
+<li>19 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>(cargo-release) version 6.0.2 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c1cd8ce70ce1f7cda2f1f55afb60ea92676b223b"><code>c1cd8ce</code></a>)</li>
+<li>Prepare patch release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/187295308f3632cf31b73c31ce54596320625892"><code>1872953</code></a>)</li>
+<li>Adjust test expecations - it's probably more correct now (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6bc1f11eeb311183ff3537f60d324177a6d10bfa"><code>6bc1f11</code></a>)</li>
+<li>Don't add a newline after an HTML block if we're just ending another tag (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/89cc1ec8d4f41d3b251ed08fe5127a8b81463ef0"><code>89cc1ec</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v6.0.1 (2021-06-04)</h4>
+<ul>
+<li>handline <a href="https://github.com/Byron/pulldown-cmark-to-cmark/pull/26">html in tables correctly</a>.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>14 commits contributed to the release over the course of 133 calendar days.</li>
+<li>233 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Thanks Clippy</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p><a href="https://github.com/rust-lang/rust-clippy">Clippy</a> helped 1 time to make code idiomatic.</p>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>(cargo-release) version 6.0.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/77821898001b0a89e030464719256b943218b810"><code>7782189</code></a>)</li>
+<li>Adjust test expectations - it's OK to degenerate information I suppose (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f733496f82a67faae140cc8a1c090e4eec4f87b8"><code>f733496</code></a>)</li>
+<li>Prepare release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/874edba1715ca045c5ae6e97a656dc3fa0256137"><code>874edba</code></a>)</li>
+<li>Also escape closing brackets (oversight); fixes #25 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7fdf0dac696e609be6cbb6c0cd78c0f9c4f24b64"><code>7fdf0da</code></a>)</li>
+<li>Merge remote-tracking branch 'origin/main' into crlf0710/main (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/934cfab09843e306a336d5324fc5c106fd9c0ce4"><code>934cfab</code></a>)</li>
+<li>Allow the commonmark-spec test to fail right now… (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/65f59491389db1ac5e820412455c810ecda019f9"><code>65f5949</code></a>)</li>
+<li>Re-enable test-suite :D (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c2a2de3825dda8d899ef2e5795f63f81ba0fb120"><code>c2a2de3</code></a>)</li>
+<li>Add a test that verify current implementation against all the examples from CommonMark spec. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f27acced939680713f613b90aa878351f15eb8a0"><code>f27acce</code></a>)</li>
+<li>Dependency update (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/59db24fb51c2e0a441a083b0129cfae9cce1f48f"><code>59db24f</code></a>)</li>
+<li>Use <code>make</code> in CI (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/4b53d20a79ee83b09e768b35654c850d502f3651"><code>4b53d20</code></a>)</li>
+<li>Use modern doc string type links (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/cac031a3b4acd3a179c56e2537217c3c4c27a16c"><code>cac031a</code></a>)</li>
+<li>Thanks clippy (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/16e66da8308f66e38d9821f51c09b1cde1d5802b"><code>16e66da</code></a>)</li>
+<li>Cargo fmt (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9d2dc9082088845a9eecdae9ac7b1c4a4a096f78"><code>9d2dc90</code></a>)</li>
+<li>Add makefile for convenience (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/45bfb5ec52d8ce407be96885053c61bd1dda8549"><code>45bfb5e</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v6.0.1 (2021-06-04)</h4>
+<ul>
+<li>also escape ']' characters</li>
+</ul>
+<h4>v6.0.0 (2020-10-14)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>2 commits contributed to the release over the course of 42 calendar days.</li>
+<li>73 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Bump pulldown-cmark (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3ae8ddc6d04806adc68bf7474b18afba11c06d06"><code>3ae8ddc</code></a>)</li>
+<li>Update dependencies (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ba51fdae86390a2db7324a2d469d79de541ffdfa"><code>ba51fda</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v5.0.0 (2020-08-02)</h4>
+<ul>
+<li>Allow configuring the <a href="https://github.com/Byron/pulldown-cmark-to-cmark/pull/18">amount of backticks used in code blocks</a>.
+May <strong>break</strong> code relying on the amount of fields in the configuration struct.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>3 commits contributed to the release.</li>
+<li>58 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>(cargo-release) version 5.0.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a5f644a904bc2e343dd2d8e88235eba0a4ab6345"><code>a5f644a</code></a>)</li>
+<li>Update changelog (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/5f7be5e541491091dae331123296a1acd95d996c"><code>5f7be5e</code></a>)</li>
+<li>Make the number of backticks in codeblocks configurable (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c9267b55bebaff48f27e04d64da239607b7fdb4d"><code>c9267b5</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v4.0.2 (2020-06-05)</h4>
+<ul>
+<li>Fixed table header handling (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/pull/15">see PR for details</a>)</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>4 commits contributed to the release over the course of 9 calendar days.</li>
+<li>21 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Bump patch level (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/1240a5925cc6dad0201348f4b4f157f7c77e9807"><code>1240a59</code></a>)</li>
+<li>Avoid integer underflow (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8774c4397676673db370ac1cafdbacfb81bdf02c"><code>8774c43</code></a>)</li>
+<li>Capture inline-code as table header (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/025d8c297f845c3b89296a1e962e04aa18503168"><code>025d8c2</code></a>)</li>
+<li>Run <code>cargo diet</code> (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8618b3dcc1380efd6215a1bd53e3e3817d34b1df"><code>8618b3d</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v4.0.1 (2020-05-15)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>2 commits contributed to the release.</li>
+<li>23 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Bump patch level (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/03f4ab8cde0172fa21d0419eec54fd72294df64d"><code>03f4ab8</code></a>)</li>
+<li>Add a newline before code blocks if necessary (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/061f7b84bea240f3fa2ba53f7793c21fdf3ab274"><code>061f7b8</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v4.0.0 (2020-04-22)</h4>
+<ul>
+<li>BREAKING: Move all types from <code>pulldown_cmark_to_cmark::fmt::*</code> into <code>pulldown_cmark_to_cmark::*</code> for simplicity.
+For most common use-cases, this means that users of <code>pulldown_cmark_to_cmark::fmt::cmark</code> now use <code>pulldown_cmark_to_cmark::cmark</code> instead.</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>1 commit contributed to the release.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Simplify library layout: move fmt::* into crate root (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7070f334ca796d85c3ea9bb164c42939daad6314"><code>7070f33</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v3.0.1 (2020-04-22)</h4>
+<ul>
+<li>
+<p>support for markdown embedded in HTML tags, like</p>
+<pre><code>&lt;article&gt;
+  
+  * list
+  * list
+
+  **bold**
+
+&lt;/article&gt;
+</code></pre>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>10 commits contributed to the release over the course of 15 calendar days.</li>
+<li>82 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Bump patch level; add changelog (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b53fbe529d68146e6a0185ffea868d0efb90b02a"><code>b53fbe5</code></a>)</li>
+<li>Use Rust Edition 2018 QoL improvements (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/0b414d08b65ac1a7ccdf16994beb5d02a10b6044"><code>0b414d0</code></a>)</li>
+<li>Move last_was_html into state definition (allowing resumes) (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/59c5a3b8466c7967f1aa04d2c1fd9e42b366017d"><code>59c5a3b</code></a>)</li>
+<li>Add newlines after HTML elemets if followed by more markdown (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/fcd32d02c3a87c5d07d66efe69d2607b874d87bc"><code>fcd32d0</code></a>)</li>
+<li>Bye bye travis, we had a good time (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/2ea28f76ce02b3a1331e243e7147a00dcd210595"><code>2ea28f7</code></a>)</li>
+<li>Add github actions (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6b3f51c8be99ab10f80cef12348dc8d8635bdc06"><code>6b3f51c</code></a>)</li>
+<li>Update minor version of pulldown-cmark (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/3e856c997530d4f136e097aeb0f5f19d23b7c512"><code>3e856c9</code></a>)</li>
+<li>Update tests to use new code block kind (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/5b1c7c6cabf79d193b73b5a6d16218c59c94e727"><code>5b1c7c6</code></a>)</li>
+<li>Expose pulldown_cmark dependency to users (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/01746716d7256c9e2251abd5f10cb25d8ab3034e"><code>0174671</code></a>)</li>
+<li>Upgrade cmark dependency and handle new code block (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/5786f7e491770f5b050c62394179b7a648dd1271"><code>5786f7e</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v2.0.1 (2020-01-31)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>2 commits contributed to the release.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Bump patch (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/63ac5ca0446734373c2d88d4e7df8417dcc485b2"><code>63ac5ca</code></a>)</li>
+<li>Dumber, byte oriented escape code (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b3dce1a9cc1650f0c354efa35d154231089cb5df"><code>b3dce1a</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v2.0.0 (2020-01-31)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>8 commits contributed to the release.</li>
+<li>60 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Upgrade to edition 2018 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c6fb144d64db6ff1229c0d2d98f789abdfac57b3"><code>c6fb144</code></a>)</li>
+<li>Optimize release (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/17e9f4ed5ec5ae168a41ea6c29ec4b5ccf51369e"><code>17e9f4e</code></a>)</li>
+<li>Add real-world tests, related to #8 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/8d7378f4d233c81ad3c0a43f8d817c45dbc9561d"><code>8d7378f</code></a>)</li>
+<li>Add support for escapes, fixes #8 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/91df9a24c160d32b2cc97fbebb9533fef1e0cc35"><code>91df9a2</code></a>)</li>
+<li>Run cargo fmt (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d68f0335136d1a38f15bbcff2cc31e4bc382a81f"><code>d68f033</code></a>)</li>
+<li>Bump our version to 2.0 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/d64853c519e319b4c74164f3611aa6b54e23bae0"><code>d64853c</code></a>)</li>
+<li>Fix inline-html output (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/63f4e4f215ad238ae1475f9a6f02137d7dd53888"><code>63f4e4f</code></a>)</li>
+<li>Update to pulldown-cmark 0.6.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/49006242485932e9513b981678c6b9c7a8a3d9b2"><code>4900624</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v1.2.4 (2019-12-02)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>5 commits contributed to the release.</li>
+<li>35 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Bump version to 1.2.4 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ebd8e8e7c6b8bfe39f1435876ed7131dc3042ee6"><code>ebd8e8e</code></a>)</li>
+<li>Merge pull request #7 from dylanowen/blockquotes (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/fee90046b84216ede421e8cd467b2a1390ba265e"><code>fee9004</code></a>)</li>
+<li>Updated authors (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/58e51373d1d517fc5e3f71ab1540411d17c87d2d"><code>58e5137</code></a>)</li>
+<li>Better support for blockquotes (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6f0e4b547348da8e9d1f450ccb7183a7f4334287"><code>6f0e4b5</code></a>)</li>
+<li>Added blockquote test cases (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/2dd8024ba73860efcc41f637696dd0b8fdf1c42f"><code>2dd8024</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v1.2.3 (2019-10-28)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>3 commits contributed to the release.</li>
+<li>117 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Bump version (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/6f2382ef118afcbebe558034f63a5825870cf60b"><code>6f2382e</code></a>)</li>
+<li>Better approximation of contained characters (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/83fdbc084d03a85108b13be83cf236f38e9b167e"><code>83fdbc0</code></a>)</li>
+<li>Assure to never have truly empty header fields (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/00442f9df50059c9c2560086dc3c082c763718d4"><code>00442f9</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v1.2.2 (2019-07-03)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>2 commits contributed to the release.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Minor version bump (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/83c6edc8f63c1780985c3c1b80a6e24260da6d58"><code>83c6edc</code></a>)</li>
+<li>Upgrade to pulldown-cmark 0.5.2; with clear regressions (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c8e2b9ba0696aea9acf4165d283a4effd64ac6e7"><code>c8e2b9b</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v1.2.1 (2019-07-03)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release.</li>
+<li>195 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Upgrade to pulldown-cmark 0.4 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/27909e0318095a03b55dab2c81a44601a1f46981"><code>27909e0</code></a>)</li>
+<li>Merge pull request #3 from integer32llc/pulldown-cmark-0.4 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a92f729f872f60fe672c06df0c10923052dc4f5d"><code>a92f729</code></a>)</li>
+<li>Add a test that generated markdown parses equivalently (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/90f134ee042614421da3cafc97bee264cbdda2b3"><code>90f134e</code></a>)</li>
+<li>Update table snapshot to remove whitespace in table cells (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/148c7892011c6ce2d11f7da43d7a19280b9a137f"><code>148c789</code></a>)</li>
+<li>Remove trailing spaces from the table test fixture (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/c6490bc346010af103928569cb67bb05298a1468"><code>c6490bc</code></a>)</li>
+<li>Upgrade to pulldown-cmark 0.4.1 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9a87b4e328766b8754b686a8344f7155aae37c8d"><code>9a87b4e</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v1.2.0 (2018-12-20)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>4 commits contributed to the release over the course of 299 calendar days.</li>
+<li>310 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Bump version after supporting the latest pulldown-cmark 0.2 (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/108c355c252d4b2dd420812ee63cd6f002a66c95"><code>108c355</code></a>)</li>
+<li>Merge pull request #1 from maralorn/master (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/7a4f8a5e72def83496ec695a8c6fa16602954b51"><code>7a4f8a5</code></a>)</li>
+<li>Bump dependency versions (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/5c7ddd5321cc39327d94ea6f9f64c4f6bd750fd5"><code>5c7ddd5</code></a>)</li>
+<li>Add crates badge (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b3ec0d990d2ba83a7fdcf73acd00d0882a5164d4"><code>b3ec0d9</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v1.1.0 (2018-02-13)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>5 commits contributed to the release over the course of 1 calendar day.</li>
+<li>2 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Bump minor (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/ba3d3133105eb5ca98dc808b224d1ad428fedb95"><code>ba3d313</code></a>)</li>
+<li>Support for codeblocks in codeblocks (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/a594c33ec3dd5e399a0fff99faad246eeebdc9a0"><code>a594c33</code></a>)</li>
+<li>Add example for codeblock in codeblock (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/fa9d980cfab8484cff0b23b3cc4043702a956f23"><code>fa9d980</code></a>)</li>
+<li>Some more infos for the README (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/9705eb866be7003a6dff48fb2e7b751e1e27c583"><code>9705eb8</code></a>)</li>
+<li>Add depndency info badge (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/18691296d5fc12e4f05b7a42bfec5ba56d633138"><code>1869129</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>v1.0.0 (2018-02-11)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>6 commits contributed to the release.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Add tests-title (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/34598b8e11b00248a15e234fc981ac71566488cb"><code>34598b8</code></a>)</li>
+<li>Add project affiliations (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/55a5563cf140269f90159196b2ba9b0f0f692bc5"><code>55a5563</code></a>)</li>
+<li>First bunch of API docs (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/f315ab75743e40607acc1010514cad4d8b1eabc3"><code>f315ab7</code></a>)</li>
+<li>Update all links (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/b1e0978fa9f0c5b57a756fd8567eba436daface2"><code>b1e0978</code></a>)</li>
+<li>First minor adjustment before all links change. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/5b4c1ef9617acc3151a862ed1e536809846f0ed2"><code>5b4c1ef</code></a>)</li>
+<li>Move everything from 'termbook'. (<a href="https://github.com/Byron/pulldown-cmark-to-cmark/commit/76667725b61be24890fbdfed5e7ecdb4c1ad1dc8"><code>7666772</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+</div><p class="table-note">sha256:1d4a28b03324654df0edf2e5e3570efffe201cf2836b9bc0d2acd674520f6355</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright 2018 "Sebastian Thiel &lt;byronimo@gmail.com&gt;", "Dylan Owen &lt;dyltotheo@gmail.com&gt;", "Alessandro Ogier &lt;alessandro.ogier@gmail.com&gt;", "Zixian Cai &lt;2891235+caizixian@users.noreply.github.com&gt;"
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+</code></pre></div><p class="table-note">sha256:22bc135e5c4294e66bd84892b18aadeab6f1ec4f49de04236cc63c93d5d316cf</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:4fba23c09330b0fb7141af2eb78be4d1ad48c790c29c311c3bc557f2626cf586</code></dd><dt>Upstream checksum</dt><dd><code>sha256:e9e14cd4ec725b2227ba76d4772169af814438bcf48f6d9b806d1308f40a7413</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/pulldown-cmark-to-cmark&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;23.0.0&quot;</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;pulldown_cmark_to_cmark&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">pulldown-cmark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/pulldown-cmark&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.13.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">unicase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/unicase&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.6&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Sebastian Thiel &lt;byronimo@gmail.com&gt;, Dylan Owen &lt;dyltotheo@gmail.com&gt;, Alessandro Ogier &lt;alessandro.ogier@gmail.com&gt;, Zixian Cai &lt;2891235+caizixian@users.noreply.github.com&gt;, Andrew Lyjak &lt;andrew.lyjak@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.71.1</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/pulldown-cmark-to-cmark/23.0.0">crates.io package</a></li><li><a href="https://github.com/Byron/pulldown-cmark-to-cmark">Source repository</a></li><li><a href="https://docs.rs/crate/pulldown-cmark-to-cmark">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">pulldown-cmark-to-cmark</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/pulldown-cmark-to-cmark"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=23.0.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>tracing 0.1.44 · Incan.pub</title><meta name="description" content="Application-level tracing for Rust."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/tracing</p><div class="title-row"><h1>tracing</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/tracing/versions/0.1.44/" selected>0.1.44</option></select></label></div><p class="description">Application-level tracing for Rust.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><p>Tracing — Structured, application-level diagnostics</p>
+<h3>tracing</h3>
+<p>Application-level tracing for Rust.</p>
+<p><a href="https://crates.io/crates/tracing/0.1.44">Crates.io</a>
+<a href="https://docs.rs/tracing/0.1.44">Documentation</a>
+<a href="https://tracing.rs/tracing">Documentation (v0.2.x)</a>
+<a href="https://github.com/tokio-rs/tracing/blob/2d55f6faf9be83e7e4634129fb96813241aac2b8/tracing/LICENSE">MIT licensed</a>
+<a href="https://github.com/tokio-rs/tracing/actions?query=workflow%3ACI">Build Status</a>
+<a href="https://discord.gg/EeF3cQw">Discord chat</a></p>
+<p><a href="https://docs.rs/tracing/0.1.44">Documentation</a> | <a href="https://discord.gg/EeF3cQw">Chat</a></p>
+<h4>Overview</h4>
+<p><code>tracing</code> is a framework for instrumenting Rust programs to collect
+structured, event-based diagnostic information.</p>
+<p>In asynchronous systems like Tokio, interpreting traditional log messages can
+often be quite challenging. Since individual tasks are multiplexed on the same
+thread, associated events and log lines are intermixed making it difficult to
+trace the logic flow. <code>tracing</code> expands upon logging-style diagnostics by
+allowing libraries and applications to record structured events with additional
+information about <em>temporality</em> and <em>causality</em> — unlike a log message, a span
+in <code>tracing</code> has a beginning and end time, may be entered and exited by the
+flow of execution, and may exist within a nested tree of similar spans. In
+addition, <code>tracing</code> spans are <em>structured</em>, with the ability to record typed
+data as well as textual messages.</p>
+<p>The <code>tracing</code> crate provides the APIs necessary for instrumenting libraries
+and applications to emit trace data.</p>
+<p><em>Compiler support: <a href="https://github.com/tokio-rs/tracing/blob/2d55f6faf9be83e7e4634129fb96813241aac2b8/tracing/README.md#supported-rust-versions">requires <code>rustc</code> 1.65+</a></em></p>
+<h4>Usage</h4>
+<p>(The examples below are borrowed from the <code>log</code> crate's yak-shaving
+<a href="https://docs.rs/log/0.4.10/log/index.html#examples">example</a>, modified to
+idiomatic <code>tracing</code>.)</p>
+<h5>In Applications</h5>
+<p>In order to record trace events, executables have to use a <code>Subscriber</code>
+implementation compatible with <code>tracing</code>. A <code>Subscriber</code> implements a way of
+collecting trace data, such as by logging it to standard output. <a href="https://docs.rs/tracing-subscriber/"><code>tracing_subscriber</code></a>'s
+<a href="https://docs.rs/tracing-subscriber/0.3/tracing_subscriber/fmt/index.html"><code>fmt</code> module</a> provides reasonable defaults.
+Additionally, <code>tracing-subscriber</code> is able to consume messages emitted by <code>log</code>-instrumented libraries and modules.</p>
+<p>The simplest way to use a subscriber is to call the <code>set_global_default</code> function.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">tracing</span><span class="p">::{</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">tracing_subscriber</span><span class="p">::</span><span class="n">FmtSubscriber</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// a builder for `FmtSubscriber`.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">subscriber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FmtSubscriber</span><span class="p">::</span><span class="n">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="c1">// all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)</span>
+<span class="w">        </span><span class="c1">// will be written to stdout.</span>
+<span class="w">        </span><span class="p">.</span><span class="n">with_max_level</span><span class="p">(</span><span class="n">Level</span><span class="p">::</span><span class="n">TRACE</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// completes the builder.</span>
+<span class="w">        </span><span class="p">.</span><span class="n">finish</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">tracing</span><span class="p">::</span><span class="n">subscriber</span><span class="p">::</span><span class="n">set_global_default</span><span class="p">(</span><span class="n">subscriber</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;setting default subscriber failed&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">number_of_yaks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// this creates a new event, outside of any spans.</span>
+<span class="w">    </span><span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="n">number_of_yaks</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;preparing to shave yaks&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">number_shaved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">yak_shave</span><span class="p">::</span><span class="n">shave_all</span><span class="p">(</span><span class="n">number_of_yaks</span><span class="p">);</span>
+<span class="w">    </span><span class="n">info</span><span class="o">!</span><span class="p">(</span>
+<span class="w">        </span><span class="n">all_yaks_shaved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">number_shaved</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">number_of_yaks</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;yak shaving completed.&quot;</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">tracing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1&quot;</span>
+<span class="n">tracing-subscriber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.3.0&quot;</span>
+</code></pre>
+<p>This subscriber will be used as the default in all threads for the remainder of the duration
+of the program, similar to how loggers work in the <code>log</code> crate.</p>
+<p>In addition, you can locally override the default subscriber. For example:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">tracing</span><span class="p">::{</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">tracing_subscriber</span><span class="p">::</span><span class="n">FmtSubscriber</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">subscriber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tracing_subscriber</span><span class="p">::</span><span class="n">FmtSubscriber</span><span class="p">::</span><span class="n">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="c1">// all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)</span>
+<span class="w">        </span><span class="c1">// will be written to stdout.</span>
+<span class="w">        </span><span class="p">.</span><span class="n">with_max_level</span><span class="p">(</span><span class="n">Level</span><span class="p">::</span><span class="n">TRACE</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// builds the subscriber.</span>
+<span class="w">        </span><span class="p">.</span><span class="n">finish</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">tracing</span><span class="p">::</span><span class="n">subscriber</span><span class="p">::</span><span class="n">with_default</span><span class="p">(</span><span class="n">subscriber</span><span class="p">,</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;This will be logged to stdout&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;This will _not_ be logged to stdout&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>This approach allows trace data to be collected by multiple subscribers
+within different contexts in the program. Note that the override only applies to the
+currently executing thread; other threads will not see the change from with_default.</p>
+<p>Any trace events generated outside the context of a subscriber will not be collected.</p>
+<p>Once a subscriber has been set, instrumentation points may be added to the
+executable using the <code>tracing</code> crate's macros.</p>
+<h5>In Libraries</h5>
+<p>Libraries should only rely on the <code>tracing</code> crate and use the provided macros
+and types to collect whatever information might be useful to downstream consumers.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::{</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="p">,</span><span class="w"> </span><span class="n">io</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">tracing</span><span class="p">::{</span><span class="n">debug</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="p">,</span><span class="w"> </span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">span</span><span class="p">,</span><span class="w"> </span><span class="n">warn</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p">};</span>
+
+<span class="c1">// the `#[tracing::instrument]` attribute creates and enters a span</span>
+<span class="c1">// every time the instrumented function is called. The span is named after the</span>
+<span class="c1">// the function or method. Parameters passed to the function are recorded as fields.</span>
+<span class="cp">#[tracing::instrument]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">shave</span><span class="p">(</span><span class="n">yak</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Error</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">&#39;</span><span class="nb">static</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// this creates an event at the DEBUG level with two fields:</span>
+<span class="w">    </span><span class="c1">// - `excitement`, with the key &quot;excitement&quot; and the value &quot;yay!&quot;</span>
+<span class="w">    </span><span class="c1">// - `message`, with the key &quot;message&quot; and the value &quot;hello! I&#39;m gonna shave a yak.&quot;</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// unlike other fields, `message`&#39;s shorthand initialization is just the string itself.</span>
+<span class="w">    </span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="n">excitement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;yay!&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hello! I&#39;m gonna shave a yak.&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">yak</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">warn</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;could not locate yak!&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// note that this is intended to demonstrate `tracing`&#39;s features, not idiomatic</span>
+<span class="w">        </span><span class="c1">// error handling! in a library or application, you should consider returning</span>
+<span class="w">        </span><span class="c1">// a dedicated `YakError`. libraries like snafu or thiserror make this easy.</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">io</span><span class="p">::</span><span class="n">Error</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">io</span><span class="p">::</span><span class="n">ErrorKind</span><span class="p">::</span><span class="n">Other</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;shaving yak failed!&quot;</span><span class="p">).</span><span class="n">into</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;yak shaved successfully&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">shave_all</span><span class="p">(</span><span class="n">yaks</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">usize</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Constructs a new span named &quot;shaving_yaks&quot; at the TRACE level,</span>
+<span class="w">    </span><span class="c1">// and a field whose key is &quot;yaks&quot;. This is equivalent to writing:</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// let span = span!(Level::TRACE, &quot;shaving_yaks&quot;, yaks = yaks);</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// local variables (`yaks`) can be used as field values</span>
+<span class="w">    </span><span class="c1">// without an assignment, similar to struct initializers.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_span_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">span</span><span class="o">!</span><span class="p">(</span><span class="n">Level</span><span class="p">::</span><span class="n">TRACE</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;shaving_yaks&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">yaks</span><span class="p">).</span><span class="n">entered</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;shaving yaks&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">yaks_shaved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">yak</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="o">..=</span><span class="n">yaks</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shave</span><span class="p">(</span><span class="n">yak</span><span class="p">);</span>
+<span class="w">        </span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="n">yak</span><span class="p">,</span><span class="w"> </span><span class="n">shaved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">is_ok</span><span class="p">());</span>
+
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">error</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">res</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// Like spans, events can also use the field initialization shorthand.</span>
+<span class="w">            </span><span class="c1">// In this instance, `yak` is the field being initialized.</span>
+<span class="w">            </span><span class="n">error</span><span class="o">!</span><span class="p">(</span><span class="n">yak</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">error</span><span class="p">.</span><span class="n">as_ref</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;failed to shave yak!&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">yaks_shaved</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="n">yaks_shaved</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">yaks_shaved</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">tracing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1&quot;</span>
+</code></pre>
+<p>Note: Libraries should <em>NOT</em> call <code>set_global_default()</code>, as this will cause
+conflicts when executables try to set the default later.</p>
+<h5>In Asynchronous Code</h5>
+<p>If you are instrumenting code that make use of
+<a href="https://doc.rust-lang.org/stable/std/future/trait.Future.html"><code>std::future::Future</code></a>
+or async/await, avoid using the <code>Span::enter</code> method. The following example
+<em>will not</em> work:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">async</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">span</span><span class="p">.</span><span class="n">enter</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-rust"><span class="k">async</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tracing</span><span class="p">::</span><span class="n">span</span><span class="o">!</span><span class="p">(</span><span class="o">..</span><span class="p">.).</span><span class="n">entered</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<p>The span guard <code>_s</code> will not exit until the future generated by the <code>async</code> block is complete.
+Since futures and spans can be entered and exited <em>multiple</em> times without them completing,
+the span remains entered for as long as the future exists, rather than being entered only when
+it is polled, leading to very confusing and incorrect output.
+For more details, see <a href="https://tracing.rs/tracing/span/index.html#closing-spans">the documentation on closing spans</a>.</p>
+<p>There are two ways to instrument asynchronous code. The first is through the
+<a href="https://docs.rs/tracing/latest/tracing/trait.Instrument.html#method.instrument"><code>Future::instrument</code></a> combinator:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">tracing</span><span class="p">::</span><span class="n">Instrument</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">my_future</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">};</span>
+
+<span class="n">my_future</span>
+<span class="w">    </span><span class="p">.</span><span class="n">instrument</span><span class="p">(</span><span class="n">tracing</span><span class="p">::</span><span class="n">info_span</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;my_future&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="k">await</span>
+</code></pre>
+<p><code>Future::instrument</code> attaches a span to the future, ensuring that the span's lifetime
+is as long as the future's.</p>
+<p>The second, and preferred, option is through the
+<a href="https://docs.rs/tracing/0.1.44/tracing/attr.instrument.html"><code>#[instrument]</code></a>
+attribute:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">tracing</span><span class="p">::{</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="n">instrument</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">tokio</span><span class="p">::{</span><span class="n">io</span><span class="p">::</span><span class="n">AsyncWriteExt</span><span class="p">,</span><span class="w"> </span><span class="n">net</span><span class="p">::</span><span class="n">TcpStream</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">;</span>
+
+<span class="cp">#[instrument]</span>
+<span class="k">async</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="n">stream</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">TcpStream</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">io</span><span class="p">::</span><span class="nb">Result</span><span class="o">&lt;</span><span class="kt">usize</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stream</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="s">b&quot;hello world</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">).</span><span class="k">await</span><span class="p">;</span>
+<span class="w">    </span><span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;wrote to stream; success={:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">is_ok</span><span class="p">());</span>
+<span class="w">    </span><span class="n">result</span>
+<span class="p">}</span>
+</code></pre>
+<p>Under the hood, the <code>#[instrument]</code> macro performs the same explicit span
+attachment that <code>Future::instrument</code> does.</p>
+<h5>Concepts</h5>
+<p>This crate provides macros for creating <code>Span</code>s and <code>Event</code>s, which represent
+periods of time and momentary events within the execution of a program,
+respectively.</p>
+<p>As a rule of thumb, <em>spans</em> should be used to represent discrete units of work
+(e.g., a given request's lifetime in a server) or periods of time spent in a
+given context (e.g., time spent interacting with an instance of an external
+system, such as a database). In contrast, <em>events</em> should be used to represent
+points in time within a span — a request returned with a given status code,
+<em>n</em> new items were taken from a queue, and so on.</p>
+<p><code>Span</code>s are constructed using the <code>span!</code> macro, and then <em>entered</em>
+to indicate that some code takes place within the context of that <code>Span</code>:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">tracing</span><span class="p">::{</span><span class="n">span</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p">};</span>
+
+<span class="c1">// Construct a new span named &quot;my span&quot;.</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">span</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">span</span><span class="o">!</span><span class="p">(</span><span class="n">Level</span><span class="p">::</span><span class="n">INFO</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;my span&quot;</span><span class="p">);</span>
+<span class="n">span</span><span class="p">.</span><span class="n">in_scope</span><span class="p">(</span><span class="o">||</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Any trace events in this closure or code called by it will occur within</span>
+<span class="w">    </span><span class="c1">// the span.</span>
+<span class="p">});</span>
+<span class="c1">// Dropping the span will close it, indicating that it has ended.</span>
+</code></pre>
+<p>The <a href="https://docs.rs/tracing/0.1.44/tracing/attr.instrument.html"><code>#[instrument]</code></a> attribute macro
+can reduce some of this boilerplate:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">tracing</span><span class="p">::{</span><span class="n">instrument</span><span class="p">};</span>
+
+<span class="cp">#[instrument]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">my_function</span><span class="p">(</span><span class="n">my_arg</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// This event will be recorded inside a span named `my_function` with the</span>
+<span class="w">    </span><span class="c1">// field `my_arg`.</span>
+<span class="w">    </span><span class="n">tracing</span><span class="p">::</span><span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;inside my_function!&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<p>The <code>Event</code> type represent an event that occurs instantaneously, and is
+essentially a <code>Span</code> that cannot be entered. They are created using the <code>event!</code>
+macro:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">tracing</span><span class="p">::{</span><span class="n">event</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p">};</span>
+
+<span class="n">event</span><span class="o">!</span><span class="p">(</span><span class="n">Level</span><span class="p">::</span><span class="n">INFO</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;something has happened!&quot;</span><span class="p">);</span>
+</code></pre>
+<p>Users of the <a href="https://docs.rs/log/0.4.6/log/"><code>log</code></a> crate should note that <code>tracing</code> exposes a set of macros for
+creating <code>Event</code>s (<code>trace!</code>, <code>debug!</code>, <code>info!</code>, <code>warn!</code>, and <code>error!</code>) which may
+be invoked with the same syntax as the similarly-named macros from the <code>log</code>
+crate. Often, the process of converting a project to use <code>tracing</code> can begin
+with a simple drop-in replacement.</p>
+<h4>Supported Rust Versions</h4>
+<p>Tracing is built against the latest stable release. The minimum supported
+version is 1.42. The current Tracing version is not guaranteed to build on Rust
+versions earlier than the minimum supported version.</p>
+<p>Tracing follows the same compiler support policies as the rest of the Tokio
+project. The current stable Rust compiler and the three most recent minor
+versions before it will always be supported. For example, if the current stable
+compiler version is 1.45, the minimum supported version will not be increased
+past 1.42, three minor versions prior. Increasing the minimum supported compiler
+version is not considered a semver breaking change as long as doing so complies
+with this policy.</p>
+<h4>Ecosystem</h4>
+<h5>Related Crates</h5>
+<p>In addition to <code>tracing</code> and <code>tracing-core</code>, the <a href="https://github.com/tokio-rs/tracing"><code>tokio-rs/tracing</code></a> repository
+contains several additional crates designed to be used with the <code>tracing</code> ecosystem.
+This includes a collection of <code>Subscriber</code> implementations, as well as utility
+and adapter crates to assist in writing <code>Subscriber</code>s and instrumenting
+applications.</p>
+<p>In particular, the following crates are likely to be of interest:</p>
+<ul>
+<li><a href="https://github.com/tokio-rs/tracing/tree/main/tracing-futures"><code>tracing-futures</code></a> provides a compatibility layer with the <code>futures</code>
+crate, allowing spans to be attached to <code>Future</code>s, <code>Stream</code>s, and <code>Executor</code>s.</li>
+<li><a href="https://github.com/tokio-rs/tracing/tree/main/tracing-subscriber"><code>tracing-subscriber</code></a> provides <code>Subscriber</code> implementations and
+utilities for working with <code>Subscriber</code>s. This includes a <a href="https://docs.rs/tracing-subscriber/latest/tracing_subscriber/fmt/struct.Subscriber.html"><code>FmtSubscriber</code></a>
+<code>FmtSubscriber</code> for logging formatted trace data to stdout, with similar
+filtering and formatting to the <a href="https://crates.io/crates/env_logger"><code>env_logger</code></a> crate.</li>
+<li><a href="https://github.com/tokio-rs/tracing/tree/main/tracing-log"><code>tracing-log</code></a> provides a compatibility layer with the <a href="https://docs.rs/log/0.4.6/log/"><code>log</code></a> crate,
+allowing log messages to be recorded as <code>tracing</code> <code>Event</code>s within the
+trace tree. This is useful when a project using <code>tracing</code> have
+dependencies which use <code>log</code>. Note that if you're using
+<code>tracing-subscriber</code>'s <code>FmtSubscriber</code>, you don't need to depend on
+<code>tracing-log</code> directly.</li>
+</ul>
+<p>Additionally, there are also several third-party crates which are not
+maintained by the <code>tokio</code> project. These include:</p>
+<ul>
+<li><a href="https://crates.io/crates/tracing-timing"><code>tracing-timing</code></a> implements inter-event timing metrics on top of <code>tracing</code>.
+It provides a subscriber that records the time elapsed between pairs of
+<code>tracing</code> events and generates histograms.</li>
+<li><a href="https://crates.io/crates/tracing-opentelemetry"><code>tracing-opentelemetry</code></a> provides a subscriber for emitting traces to
+<a href="https://opentelemetry.io/">OpenTelemetry</a>-compatible distributed tracing systems.</li>
+<li><a href="https://crates.io/crates/tracing-honeycomb"><code>tracing-honeycomb</code></a> Provides a layer that reports traces spanning multiple machines to <a href="https://www.honeycomb.io/">honeycomb.io</a>. Backed by <a href="https://crates.io/crates/tracing-distributed"><code>tracing-distributed</code></a>.</li>
+<li><a href="https://crates.io/crates/tracing-distributed"><code>tracing-distributed</code></a> Provides a generic implementation of a layer that reports traces spanning multiple machines to some backend.</li>
+<li><a href="https://crates.io/crates/tracing-actix"><code>tracing-actix</code></a> provides <code>tracing</code> integration for the <code>actix</code> actor
+framework.</li>
+<li><a href="https://crates.io/crates/axum-insights"><code>axum-insights</code></a> provides <code>tracing</code> integration and Application insights export for the <code>axum</code> web framework.</li>
+<li><a href="https://crates.io/crates/tracing-gelf"><code>tracing-gelf</code></a> implements a subscriber for exporting traces in Greylog
+GELF format.</li>
+<li><a href="https://crates.io/crates/tracing-coz"><code>tracing-coz</code></a> provides integration with the <a href="https://github.com/plasma-umass/coz">coz</a> causal profiler
+(Linux-only).</li>
+<li><a href="https://crates.io/crates/test-log"><code>test-log</code></a> takes care of initializing <code>tracing</code> for tests, based on
+environment variables with an <code>env_logger</code> compatible syntax.</li>
+<li><a href="https://docs.rs/tracing-unwrap"><code>tracing-unwrap</code></a> provides convenience methods to report failed unwraps on <code>Result</code> or <code>Option</code> types to a <code>Subscriber</code>.</li>
+<li><a href="https://crates.io/crates/diesel-tracing"><code>diesel-tracing</code></a> provides integration with <a href="https://crates.io/crates/diesel"><code>diesel</code></a> database connections.</li>
+<li><a href="https://crates.io/crates/tracing-tracy"><code>tracing-tracy</code></a> provides a way to collect <a href="https://github.com/wolfpld/tracy">Tracy</a> profiles in instrumented
+applications.</li>
+<li><a href="https://crates.io/crates/tracing-elastic-apm"><code>tracing-elastic-apm</code></a> provides a layer for reporting traces to <a href="https://www.elastic.co/apm">Elastic APM</a>.</li>
+<li><a href="https://github.com/microsoft/tracing-etw"><code>tracing-etw</code></a> provides a layer for emitting Windows <a href="https://docs.microsoft.com/en-us/windows/win32/etw/about-event-tracing">ETW</a> events.</li>
+<li><a href="https://crates.io/crates/tracing-fluent-assertions"><code>tracing-fluent-assertions</code></a> provides a fluent assertions-style testing
+framework for validating the behavior of <code>tracing</code> spans.</li>
+<li><a href="https://crates.io/crates/sentry-tracing"><code>sentry-tracing</code></a> provides a layer for reporting events and traces to <a href="https://sentry.io/welcome/">Sentry</a>.</li>
+<li><a href="https://crates.io/crates/tracing-loki"><code>tracing-loki</code></a> provides a layer for shipping logs to <a href="https://grafana.com/oss/loki/">Grafana Loki</a>.</li>
+<li><a href="https://crates.io/crates/tracing-logfmt"><code>tracing-logfmt</code></a> provides a layer that formats events and spans into the logfmt format.</li>
+<li><a href="https://crates.io/crates/json-subscriber"><code>json-subscriber</code></a> provides a layer for emitting JSON logs. The output can be customized much more than with <a href="https://docs.rs/tracing-subscriber/latest/tracing_subscriber/fmt/struct.Subscriber.html"><code>FmtSubscriber</code></a>'s JSON output.</li>
+</ul>
+<p>If you're the maintainer of a <code>tracing</code> ecosystem crate not listed above,
+please let us know! We'd love to add your project to the list!</p>
+<p><strong>Note:</strong> that some of the ecosystem crates are currently unreleased and
+undergoing active development. They may be less stable than <code>tracing</code> and
+<code>tracing-core</code>.</p>
+<h4>Supported Rust Versions</h4>
+<p>Tracing is built against the latest stable release. The minimum supported
+version is 1.65. The current Tracing version is not guaranteed to build on Rust
+versions earlier than the minimum supported version.</p>
+<p>Tracing follows the same compiler support policies as the rest of the Tokio
+project. The current stable Rust compiler and the three most recent minor
+versions before it will always be supported. For example, if the current stable
+compiler version is 1.69, the minimum supported version will not be increased
+past 1.66, three minor versions prior. Increasing the minimum supported compiler
+version is not considered a semver breaking change as long as doing so complies
+with this policy.</p>
+<h4>License</h4>
+<p>This project is licensed under the <a href="https://github.com/tokio-rs/tracing/blob/2d55f6faf9be83e7e4634129fb96813241aac2b8/tracing/LICENSE">MIT license</a>.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in Tokio by you, shall be licensed as MIT, without any additional
+terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>async-await</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>attributes</code></th><td>Yes<small>default → attributes</small></td><td><ul class="effects"><li><code>tracing-attributes</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>attributes</code></li></ul></td></tr><tr><th scope="row"><code>log</code></th><td>No</td><td><ul class="effects"><li><code>dep:log</code></li></ul></td></tr><tr><th scope="row"><code>log-always</code></th><td>No</td><td><ul class="effects"><li><code>log</code></li></ul></td></tr><tr><th scope="row"><code>max_level_debug</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>max_level_error</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>max_level_info</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>max_level_off</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>max_level_trace</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>max_level_warn</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>release_max_level_debug</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>release_max_level_error</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>release_max_level_info</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>release_max_level_off</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>release_max_level_trace</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>release_max_level_warn</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>tracing-core/std</code></li></ul></td></tr><tr><th scope="row"><code>tracing-attributes</code></th><td>Yes<small>default → attributes → tracing-attributes</small></td><td><ul class="effects"><li><code>dep:tracing-attributes</code></li></ul></td></tr><tr><th scope="row"><code>valuable</code></th><td>No</td><td><ul class="effects"><li><code>tracing-core/valuable</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/log/"><code>crates-io/log</code></a><small>Alias: log</small></th><td><code>^0.4.17</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/pin-project-lite/"><code>crates-io/pin-project-lite</code></a><small>Alias: pin-project-lite</small></th><td><code>^0.2.9</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/tracing-attributes/"><code>crates-io/tracing-attributes</code></a><small>Alias: tracing-attributes</small></th><td><code>^0.1.31</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → attributes → tracing-attributes</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/tracing-core/"><code>crates-io/tracing-core</code></a><small>Alias: tracing-core</small></th><td><code>^0.1.36</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/async-io/versions/2.6.0/">crates-io/async-io 2.6.0</a><span>Requires ^0.1.37 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/async-process/versions/2.5.0/">crates-io/async-process 2.5.0</a><span>Requires ^0.1.40 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/av-scenechange/versions/0.14.1/">crates-io/av-scenechange 0.14.1</a><span>Requires ^0.1.40 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-config/versions/1.12.0/">crates-io/aws-config 1.12.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-runtime/versions/1.10.0/">crates-io/aws-runtime 1.10.0</a><span>Requires ^0.1.44 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-sdk-s3/versions/1.152.0/">crates-io/aws-sdk-s3 1.152.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-sdk-sso/versions/1.114.0/">crates-io/aws-sdk-sso 1.114.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-sdk-ssooidc/versions/1.116.0/">crates-io/aws-sdk-ssooidc 1.116.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-sdk-sts/versions/1.119.0/">crates-io/aws-sdk-sts 1.119.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-sigv4/versions/1.6.0/">crates-io/aws-sigv4 1.6.0</a><span>Requires ^0.1.44 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-smithy-checksums/versions/0.65.0/">crates-io/aws-smithy-checksums 0.65.0</a><span>Requires ^0.1.44 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-smithy-http/versions/0.64.1/">crates-io/aws-smithy-http 0.64.1</a><span>Requires ^0.1.44 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-smithy-http-client/versions/1.5.0/">crates-io/aws-smithy-http-client 1.5.0</a><span>Requires ^0.1.44 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-smithy-runtime/versions/1.16.0/">crates-io/aws-smithy-runtime 1.16.0</a><span>Requires ^0.1.44 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-smithy-runtime-api/versions/1.19.0/">crates-io/aws-smithy-runtime-api 1.19.0</a><span>Requires ^0.1.44 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/aws-types/versions/1.6.0/">crates-io/aws-types 1.6.0</a><span>Requires ^0.1.44 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/axum/versions/0.8.9/">crates-io/axum 0.8.9</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/axum/versions/0.8.8/">crates-io/axum 0.8.8</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/axum-core/versions/0.5.6/">crates-io/axum-core 0.5.6</a><span>Requires ^0.1.37 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/blocking/versions/1.7.0/">crates-io/blocking 1.7.0</a><span>Requires ^0.1.37 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/h2/versions/0.4.19/">crates-io/h2 0.4.19</a><span>Requires ^0.1.35 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/h2/versions/0.3.27/">crates-io/h2 0.3.27</a><span>Requires ^0.1.35 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/hickory-net/versions/0.26.3/">crates-io/hickory-net 0.26.3</a><span>Requires ^0.1.30 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/hickory-proto/versions/0.26.3/">crates-io/hickory-proto 0.26.3</a><span>Requires ^0.1.30 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/hickory-resolver/versions/0.26.3/">crates-io/hickory-resolver 0.26.3</a><span>Requires ^0.1.30 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/hyper/versions/1.11.1/">crates-io/hyper 1.11.1</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/hyper/versions/1.8.1/">crates-io/hyper 1.8.1</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/hyper/versions/0.14.32/">crates-io/hyper 0.14.32</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/hyper-util/versions/0.1.21/">crates-io/hyper-util 0.1.21</a><span>Requires ^0.1.36 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/hyper-util/versions/0.1.20/">crates-io/hyper-util 0.1.20</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/kube-client/versions/4.2.0/">crates-io/kube-client 4.2.0</a><span>Requires ^0.1.36 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/object_store/versions/0.14.2/">crates-io/object_store 0.14.2</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/object_store/versions/0.13.2/">crates-io/object_store 0.13.2</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/opentelemetry/versions/0.33.0/">crates-io/opentelemetry 0.33.0</a><span>Requires &gt;=0.1.40 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/polling/versions/3.11.0/">crates-io/polling 3.11.0</a><span>Requires ^0.1.37 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/profiling/versions/1.0.18/">crates-io/profiling 1.0.18</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/quinn/versions/0.11.12/">crates-io/quinn 0.11.12</a><span>Requires ^0.1.10 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/quinn-proto/versions/0.11.19/">crates-io/quinn-proto 0.11.19</a><span>Requires ^0.1.10 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/quinn-udp/versions/0.6.3/">crates-io/quinn-udp 0.6.3</a><span>Requires ^0.1.10 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/quinn-udp/versions/0.5.16/">crates-io/quinn-udp 0.5.16</a><span>Requires ^0.1.10 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra-ap-rustc_abi/versions/0.143.0/">crates-io/ra-ap-rustc_abi 0.143.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra-ap-rustc_next_trait_solver/versions/0.143.0/">crates-io/ra-ap-rustc_next_trait_solver 0.143.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra-ap-rustc_pattern_analysis/versions/0.143.0/">crates-io/ra-ap-rustc_pattern_analysis 0.143.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra-ap-rustc_type_ir/versions/0.143.0/">crates-io/ra-ap-rustc_type_ir 0.143.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_base_db/versions/0.0.325/">crates-io/ra_ap_base_db 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_cfg/versions/0.0.325/">crates-io/ra_ap_cfg 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir/versions/0.0.325/">crates-io/ra_ap_hir 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir_def/versions/0.0.325/">crates-io/ra_ap_hir_def 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir_expand/versions/0.0.325/">crates-io/ra_ap_hir_expand 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir_ty/versions/0.0.325/">crates-io/ra_ap_hir_ty 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_ide_db/versions/0.0.325/">crates-io/ra_ap_ide_db 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_load-cargo/versions/0.0.325/">crates-io/ra_ap_load-cargo 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_parser/versions/0.0.325/">crates-io/ra_ap_parser 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_proc_macro_api/versions/0.0.325/">crates-io/ra_ap_proc_macro_api 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_project_model/versions/0.0.325/">crates-io/ra_ap_project_model 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_stdx/versions/0.0.325/">crates-io/ra_ap_stdx 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_syntax/versions/0.0.325/">crates-io/ra_ap_syntax 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_vfs/versions/0.0.325/">crates-io/ra_ap_vfs 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_vfs-notify/versions/0.0.325/">crates-io/ra_ap_vfs-notify 0.0.325</a><span>Requires ^0.1.41 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/rav1e/versions/0.8.1/">crates-io/rav1e 0.8.1</a><span>Requires ^0.1.40 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/salsa/versions/0.25.2/">crates-io/salsa 0.25.2</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/sqlx-core/versions/0.9.0/">crates-io/sqlx-core 0.9.0</a><span>Requires ^0.1.37 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/sqlx-mysql/versions/0.9.0/">crates-io/sqlx-mysql 0.9.0</a><span>Requires ^0.1.37 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/sqlx-postgres/versions/0.9.0/">crates-io/sqlx-postgres 0.9.0</a><span>Requires ^0.1.37 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/sqlx-sqlite/versions/0.9.0/">crates-io/sqlx-sqlite 0.9.0</a><span>Requires ^0.1.37 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/tokio/versions/1.53.2/">crates-io/tokio 1.53.2</a><span>Requires ^0.1.29 · alias tracing · cfg(tokio_unstable)</span></li><li><a href="../../../../../packages/crates-io/tokio/versions/1.53.1/">crates-io/tokio 1.53.1</a><span>Requires ^0.1.29 · alias tracing · cfg(tokio_unstable)</span></li><li><a href="../../../../../packages/crates-io/tokio/versions/1.52.3/">crates-io/tokio 1.52.3</a><span>Requires ^0.1.29 · alias tracing · cfg(tokio_unstable)</span></li><li><a href="../../../../../packages/crates-io/tokio-util/versions/0.7.19/">crates-io/tokio-util 0.7.19</a><span>Requires ^0.1.29 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/tonic/versions/0.14.6/">crates-io/tonic 0.14.6</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/tower/versions/0.5.3/">crates-io/tower 0.5.3</a><span>Requires ^0.1.2 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/tower-http/versions/0.7.1/">crates-io/tower-http 0.7.1</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/tower-http/versions/0.6.11/">crates-io/tower-http 0.6.11</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/tracing-opentelemetry/versions/0.34.0/">crates-io/tracing-opentelemetry 0.34.0</a><span>Requires ^0.1.35 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/tracing-subscriber/versions/0.3.23/">crates-io/tracing-subscriber 0.3.23</a><span>Requires ^0.1.43 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/v_frame/versions/0.3.9/">crates-io/v_frame 0.3.9</a><span>Requires ^0.1.40 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/wasmtime-wasi/versions/36.0.17/">crates-io/wasmtime-wasi 36.0.17</a><span>Requires ^0.1.26 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/which/versions/8.0.6/">crates-io/which 8.0.6</a><span>Requires ^0.1.40 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/wiggle/versions/36.0.17/">crates-io/wiggle 36.0.17</a><span>Requires ^0.1.26 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/x11rb/versions/0.14.0/">crates-io/x11rb 0.14.0</a><span>Requires ^0.1 · alias tracing · </span></li><li><a href="../../../../../packages/crates-io/zbus/versions/5.19.0/">crates-io/zbus 5.19.0</a><span>Requires ^0.1.40 · alias tracing · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:16a22dacba5af3928f07c669a3cac8cf9ba17fa816976ed3a178026479d94e79</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:f04a7b794d91729bb551c3cf6e950c29413936d5566c9db700d7dc57734d2caf</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>attributes, default, log, std, tracing-attributes</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2c94caaef5f25e65586bf68ad4c3603f702e58b83a5aff3acfe47d30f35230d9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:b26c985e10dd159642c89aa38e15f85e386159978f7fd9549b9121902b995055</small></li><li><code>sha256:b04b98da301e6f7cb85dfd88fab8b466ff2488c8e4846a235a80662576dbdb1b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:1c2d8fa817d1e6b7bac0c377e29b0469b34062167a3c5dcc787bbbe0b164fff1</small></li><li><code>sha256:eeba5d1c0066cde26fcfd7c3122f0866b25ec90283ae3f1a72608ad4bf0d1c36</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:8ad1a323581e0ab1eecc632ab8b032da422dc69de18cf72e1143fbfaf51d8b3a</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>attributes, default, std, tracing-attributes</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:3a954042eb0bec52f3bc57acc438010e6a4c3f7a9c63cf3b8eeab88ce8b9e662</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:a67a59ea888879b95c7c5069c6d2575c01e0b3c88a79bb45648f1d259252cc07</small></li><li><code>sha256:6c1b91f08b2bda9c23b56d92de47ecd4584967e854d8a6fb1dbebb698453361b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:2d7cb068f36a93f07d8f9eb85a0ec118c7e85cd954962f6daeaaae62e8e74ad5</small></li><li><code>sha256:a7b66bd2105bc563efea6b5f69a4fb6460e6b904fb0bcfe2666693bfa57bf928</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:38c7dc27a2f92230abfd4dc7009d2de62d31a2dad9004cd764fe2b6ae7477d8a</small></li><li><code>sha256:f2064c908fcbd198a551b9291d1312340ada955e30e471910511501594edc9de</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53510791">Attestation reference</a><small>Archive: sha256:2d201da5f9568b58f402b52f44e83d91541c81e271795c37358ece62add15898</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>log, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:34d0e888e06fbecc90bae07bb95ef01f1318e1feef238d339f832e5a30da5e16</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:6c5456e393c917ec4bbb63fdcb99d7375238a092df8296a2692c532f35915538</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7c035e070c811cc107f8a947e00e2f1015d565c4206e1cfaf5799f54769e6f49</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:a2493588a1a47cff3b088a386d95579849e774ef52058396c62c5fcc52930dfa</small></li><li><code>sha256:ba7cc8ef5f1156c7670f64e5b61ffa3d2cb6a0ff98e628996a5bbb18499cc6ca</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636611">Attestation reference</a><small>Archive: sha256:28e18b27cd77a2c00f9420efab7f181ae01e4777d194a0a698481d4e6f17deba</small></li><li><code>sha256:d464cdbf0df0536b4a1a1e069311d8692573ff2da317e7ce840efb8e472ae259</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:0a1c738d9c6eddc9356a5af3f58b05f4a0800db1883c94e758cb9d8215f527fa</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a96b6c0dfa6d8d75e0472df4218e19cb61e31b97d96a6922214a3f6de5265a30</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:74b83736cb76977152d68a9261f62ea311e3728cfe05089c2d42720cc0d76b56</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>attributes, default, log, std, tracing-attributes</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:170c03a3b770a71964d22ccfe06569bd03957d76d6fd97be92e8b85493a7543e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:61e56d10562440088e4228138a4bba12711109fab06cb9a81e1b89eb3957676d</small></li><li><code>sha256:3b50d1b4b1fd65c887e64b1a0abf527967a70702630566164f8415a264684c52</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:99c24034a5e1c8addf89e7361a8b02bc3c543733258170a497efca679c6fd4a9</small></li><li><code>sha256:890dd6f8349595eaa72d2605084a54d3e1f32d8237eb277aaa7e4be7a3d37fda</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:f89186c67792a410be8eb221a464c7226e832d89cd5a066249f77f6ff2167f67</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>attributes, default, std, tracing-attributes</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1b247cc3e99b7b54994a4b79e65e0a23a27d6517dcc25b48c4f5b262c4b2d147</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:fddc9e3c4120190137f661f5af06c2d3eab52edacc92f8abc5c0bba3a7e2b524</small></li><li><code>sha256:1d5697c24c65da8cd17cbedf7ac7a2bb717ce755e59f7d836e05246a26871f8e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54020554">Attestation reference</a><small>Archive: sha256:5d4206d06c09c8fcd39eb0407cf7c5cb5642a0ac307be9c37e8f8abd3db47398</small></li><li><code>sha256:4bfe9874c8e54a5bd9b05b8fd16951201f68dc8bcf329081456cb974a1a95602</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:69879c2108072461032d6ba11e1761a57e64a64c20b5132b0c0eb7cd620bc43e</small></li><li><code>sha256:a762b24c6cd66aef4e672b6b2e7bea20746e1a1868e6590d24284a4c55922226</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:b2213522e7d1d551fa847ed7c0d0ac3851edf16a66dc2fe33b8b09825c5bc42a</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>log, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1a2d9af36abe7da6b0b8335aab987433b0b45edb7b6ac2d0500bee5435c40b5d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:12c1fa6dc86edb6cf3113a20d65c77f19f5b0d81e611a5b5f12a5b3b2b890223</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:6dafd111dbfa7165dae0fd9b3815f717068f0da6713097ce86f1dd884ed20d90</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:0f09d8b84b34368ac480f353f0740caa87e1c536affbd4e6b980180c087401cc</small></li><li><code>sha256:a380ee8270e7e290c6012767c7b70bd6930fb0db84cf650bef269aca8ce385da</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:c2f313463f840c9935a351c4ce933f1415ebf8d2aebec93e737c8779c846112e</small></li><li><code>sha256:aa8399aeff5645d48a6ca25a4125f05de530726f96323b5248230dc7b69f9948</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:79b0efc0a2a026f83553c24808576a166cfe5e7e939945f3cc5bf37ca2155f54</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:6f5ed33b3d5ee987475c9323950bf4d0fabba1c4ef27aee52488f1cada40f136</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:94b7f4f51804c06131b7f812bc92051d5d031d4aba43c026f56ecd8b7606ab1e</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>attributes, default, log, std, tracing-attributes</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:239b84873ee6dd41a232ce3dd418b3af07bf26a1e03654b60178d60f5b20b87a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:2045ce0560d4523ea5c68a8916b044941e4ccc68565b1cd05cdbb69fe09df886</small></li><li><code>sha256:2ea5ccaa6f924f2fdb242a7ca6f853ac295da8e34a0696c5081e8438e059737b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:d9397a3ea5b308c0d96e2581f3f11ba7cd5e15e3740736abdd9349a58d403625</small></li><li><code>sha256:9558a029c657bf87f87937b38fab7ea56bf1f3e8db618f0feb2301366e4b65e8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:f570b87494fa5a4d4ca6087815ea9b2c199df65a9dba3942d8b72164c9bd5d85</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>attributes, default, std, tracing-attributes</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0d4bf4c7de8b4122b88ebbe69386d0f7b5b53166041fa1216ef0c69e35c929f6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:9548683b25d0561a3af23ff8daa0fc9319d0e20f964ce1a8519351f26143c7d4</small></li><li><code>sha256:217f7a3cc7a91c68ba0ab5a4e93c136d02b405bc5578ff8159e43b59162679b2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:0a1cf6b91aa3c41e735c4396bd7cad401c1e2c1c509d69db86a5d8728a57f296</small></li><li><code>sha256:238af24ebee795915e9caa1ab09af9d04689fdae57298fc862de94cedba92e5d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674109">Attestation reference</a><small>Archive: sha256:bd06c9ad1df9b52f0bcf5c9a84438249a8c89bd88a47f1e923dbe2b6bc231b8b</small></li><li><code>sha256:2fe0970feb5eaa4848f93e207cd3e0b9c3bae7ced44b72632d38f6788643dbdc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53535384">Attestation reference</a><small>Archive: sha256:68e766d6c2665e6218006cdef0b7e8240cca80d5a6c2c614158fa11abc2fc54b</small></li><li><code>sha256:f4790e3b75a61283de190d5b5f88d5243aedb9b896552a539b44401c22e694ad</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:2f05927c2163e8461e5ba0ce30f1f178390d561c21f0f019c69a3510761be26f</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>log, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2f1dc785adc8f3f0c4b64c7423a97f5657cc2a3d8af275d88592c3d24e9491d4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:e7618da97441347e4fe81de3ca3deed794be0f3d0ba1a1b7c18be8482bbc10d1</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1ad62c8730667121e38ea6e5e6ff4f9cbe02349b766e59d9c0d2b37995309a31</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:260c614f8f79ebb27d23a1e38463610bd3bc48ceff2d263ba82a3fb5a7583736</small></li><li><code>sha256:b37817c22e6c38ba07d1acbd2979485c9d04484340ebf6db49d552952901c262</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:aeb161bfa1c6c88675f9adc0f615f8f58db4b1f2d42c6c5513459ee1fe2a4ac2</small></li><li><code>sha256:e8b33f600b1fa2ac110e66d2ec8a0f17405828abb9b10601f9d33a6508fd9fcf</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:f761307a584468d64fc38c0d1d972c426f2004c8fffc3c4b28649f441b6d507f</small></li><li><code>sha256:f8f6bfd89f89e28e46e86805f81053bfc5f0814de5c467ba5862d7dd06613828</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:e5b480d79dde30703c884ae6211c12e437bb9de17a236cdaea82a51369ed0836</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1a2f36e7aab4b523d9e3568115e8b3408dfd4add59bc46e8f7ccb2379a9ad580</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:9ce895bfa83d54a23655c058c1967ec42ec9b452842321ba7505253782037dcc</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>attributes, default, log, std, tracing-attributes</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5f21a6c6fefe2be0f54157c12f126862684eaf88627e69dc94a0b3afd91043e2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:abacbf78eb8bd3b3e8f3c6ad3da862891903d124d4ae760e9eea331c37d5b2b5</small></li><li><code>sha256:a489098e3dfd226db5b3dfb99092d6ad77f07bb8e4c12abbabac11c4c92ab85b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:8345c70cdde2a0eb69c7adbeef953d79c96aa1c818f3f546d54eb5eba1ad3d63</small></li><li><code>sha256:d66dd3549e7df6c6d8dffa6a846fbf18d7b543864f65fe4d488cc0c9631bc2b7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:257e989149de104675709f1f166f3ebfccb4e4624d65afec528069fbd1372052</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>attributes, default, std, tracing-attributes</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2d046a8a363dcaaa0ab7cc450d51536511d6fd6257fb172c15017d1092e82bd6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54075092">Attestation reference</a><small>Archive: sha256:9dacd6e442c8fc504ce31e784fcbbe29bd5309dfc18fc0acba3e67c6cc4b854b</small></li><li><code>sha256:508ae7ba37e8378e26bb65c9ce224df5d063000b9774971ee914bd279f231ec4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:e58a75951e0fd78f6c0f4db9d3cd37ee030ed5320c3859bc2f52f48a04f6a0a5</small></li><li><code>sha256:8cc9740398d5e225a53eb31886f558905f489d9418c4ab539beb4e89dc509adf</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:71c470cb66ef366b4fcb46c3ff140081118519e773f49ba9554a74ad32b366da</small></li><li><code>sha256:eeea44977bded0ce7f9056aa90e140f380193c520854072ba734127ba3372d73</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:cbdf5bf1bce58e2c1e2614961e92a73d63001edccc4873f2399cea76385e978a</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>log, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:9f4f0542961da8bed350f4158b486e0c2959912d9b02ab24ffbac385a6ed60fc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:8a5c68b965234edad37383c5526d99ff2bc34ff4ef62b6271ec49d8848417f97</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:00807ca5b07a358adf28e4ac0ffb27194b3ff02ca0718e30ea016ff361e19717</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:cb84fc565fef62b0e1942f49d5d787fd38e6da4ec0a9e918db286abfeac5509f</small></li><li><code>sha256:c35c14d1b585ad5fab141fa629fc81efbbf16c85ae02734e0ab71adbb054a148</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:4a638dae3dff8e241e0a5ad31173ca1c5ce58ccb733990fdccea9fa332763583</small></li><li><code>sha256:da40796ee7d96b06c92160d7cb1a7ea3cdf4528d893556997c0596daacfa8b3f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:741aaaead4413a75f59db90dfa92cf17e4e44536a3c621d38c1b8eaac747207d</small></li><li><code>sha256:df8dba96b628f7de7733f545e2910bfe0aaaa8933b8216948f288904e5186764</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:d2264fa24e5951aaf352af184239096af4362733fd38510f39798bd327c7f23b</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>log, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>attributes, default, std, tracing-attributes</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>log, std</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/tracing/versions/0.1.44/">0.1.44</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/tracing/0.1.44">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>0.1.44 (December 18, 2025)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Fix <code>record_all</code> panic (<a href="https://github.com/tokio-rs/tracing/pull/3432">#3432</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-core</code>: updated to 0.1.36 (<a href="https://github.com/tokio-rs/tracing/pull/3440">#3440</a>)</li>
+</ul>
+<h3>0.1.43 (November 28, 2025)</h3>
+<h6>Important</h6>
+<p>The previous release <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-0.1.42">0.1.42</a> was yanked because <a href="https://github.com/tokio-rs/tracing/pull/3382">#3382</a> was a breaking change.
+See further details in <a href="https://github.com/tokio-rs/tracing/pull/3424">#3424</a>. This release contains all the changes from that
+version, plus a revert for the problematic part of the breaking PR.</p>
+<h5>Fixed</h5>
+<ul>
+<li>Revert &quot;make <code>valueset</code> macro sanitary&quot; (<a href="https://github.com/tokio-rs/tracing/pull/3425">#3425</a>)</li>
+</ul>
+<h3>0.1.42 (November 26, 2025)</h3>
+<h5>Important</h5>
+<p>The <a href="https://docs.rs/tracing/0.1.41/tracing/struct.Span.html#method.record_all"><code>Span::record_all</code></a> method has been removed from the documented API. It
+was always unsuable via the documented API as it requried a <code>ValueSet</code> which
+has no publically documented constructors. The method remains, but should not
+be used outside of <code>tracing</code> macros.</p>
+<h5>Added</h5>
+<ul>
+<li><strong>attributes</strong>: Support constant expressions as instrument field names (<a href="https://github.com/tokio-rs/tracing/pull/3158">#3158</a>)</li>
+<li>Add <code>record_all!</code> macro for recording multiple values in one call (<a href="https://github.com/tokio-rs/tracing/pull/3227">#3227</a>)</li>
+<li><strong>core</strong>: Improve code generation at trace points significantly (<a href="https://github.com/tokio-rs/tracing/pull/3398">#3398</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-core</code>: updated to 0.1.35 (<a href="https://github.com/tokio-rs/tracing/pull/3414">#3414</a>)</li>
+<li><code>tracing-attributes</code>: updated to 0.1.31 (<a href="https://github.com/tokio-rs/tracing/pull/3417">#3417</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix &quot;name / parent&quot; variant of <code>event!</code> (<a href="https://github.com/tokio-rs/tracing/pull/2983">#2983</a>)</li>
+<li>Remove 'r#' prefix from raw identifiers in field names (<a href="https://github.com/tokio-rs/tracing/pull/3130">#3130</a>)</li>
+<li>Fix perf regression when <code>release_max_level_*</code> not set (<a href="https://github.com/tokio-rs/tracing/pull/3373">#3373</a>)</li>
+<li>Use imported instead of fully qualified path (<a href="https://github.com/tokio-rs/tracing/pull/3374">#3374</a>)</li>
+<li>Make <code>valueset</code> macro sanitary (<a href="https://github.com/tokio-rs/tracing/pull/3382">#3382</a>)</li>
+</ul>
+<h5>Documented</h5>
+<ul>
+<li><strong>core</strong>: Add missing <code>dyn</code> keyword in <code>Visit</code> documentation code sample (<a href="https://github.com/tokio-rs/tracing/pull/3387">#3387</a>)</li>
+</ul>
+<h3>0.1.41 (November 27, 2024)</h3>
+<p>[ <a href="https://crates.io/crates/tracing/0.1.41">crates.io</a> ] | [ <a href="https://docs.rs/tracing/0.1.41/tracing/">docs.rs</a> ]</p>
+<p>This release updates the <code>tracing-core</code> dependency to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-core-0.1.33">v0.1.33</a> and
+the <code>tracing-attributes</code> dependency to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.28">v0.1.28</a>.</p>
+<h5>Added</h5>
+<ul>
+<li><strong>core</strong>: Add index API for <code>Field</code> (<a href="https://github.com/tokio-rs/tracing/pull/2820">#2820</a>)</li>
+<li><strong>core</strong>: Allow <code>&amp;[u8]</code> to be recorded as event/span field (<a href="https://github.com/tokio-rs/tracing/pull/2954">#2954</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Bump MSRV to 1.63 (<a href="https://github.com/tokio-rs/tracing/pull/2793">#2793</a>)</li>
+<li><strong>core</strong>: Use const <code>thread_local</code>s when possible (<a href="https://github.com/tokio-rs/tracing/pull/2838">#2838</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Removed core imports in macros (<a href="https://github.com/tokio-rs/tracing/pull/2762">#2762</a>)</li>
+<li><strong>attributes</strong>: Added missing RecordTypes for instrument (<a href="https://github.com/tokio-rs/tracing/pull/2781">#2781</a>)</li>
+<li><strong>attributes</strong>: Change order of async and unsafe modifier (<a href="https://github.com/tokio-rs/tracing/pull/2864">#2864</a>)</li>
+<li>Fix missing field prefixes (<a href="https://github.com/tokio-rs/tracing/pull/2878">#2878</a>)</li>
+<li><strong>attributes</strong>: Extract match scrutinee (<a href="https://github.com/tokio-rs/tracing/pull/2880">#2880</a>)</li>
+<li>Fix non-simple macro usage without message (<a href="https://github.com/tokio-rs/tracing/pull/2879">#2879</a>)</li>
+<li>Fix event macros with constant field names in the first position (<a href="https://github.com/tokio-rs/tracing/pull/2883">#2883</a>)</li>
+<li>Allow field path segments to be keywords (<a href="https://github.com/tokio-rs/tracing/pull/2925">#2925</a>)</li>
+<li><strong>core</strong>: Fix missed <code>register_callsite</code> error (<a href="https://github.com/tokio-rs/tracing/pull/2938">#2938</a>)</li>
+<li><strong>attributes</strong>: Support const values for <code>target</code> and <code>name</code> (<a href="https://github.com/tokio-rs/tracing/pull/2941">#2941</a>)</li>
+<li>Prefix macro calls with ::core to avoid clashing with local macros (<a href="https://github.com/tokio-rs/tracing/pull/3024">#3024</a>)</li>
+</ul>
+<h3>0.1.40 (October 19, 2023)</h3>
+<p>This release fixes a potential stack use-after-free in the
+<code>Instrument::into_inner</code> method. Only uses of this method are affected by this
+bug.</p>
+<h5>Fixed</h5>
+<ul>
+<li>Use <code>mem::ManuallyDrop</code> instead of <code>mem::forget</code> in <code>Instrument::into_inner</code>
+(<a href="https://github.com/tokio-rs/tracing/pull/2765">#2765</a>)</li>
+</ul>
+<p>Thanks to @cramertj and @manishearth for finding and fixing this issue!</p>
+<h3>0.1.39 (October 12, 2023)</h3>
+<p>This release adds several additional features to the <code>tracing</code> macros. In
+addition, it updates the <code>tracing-core</code> dependency to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-core-0.1.32">v0.1.32</a> and
+the <code>tracing-attributes</code> dependency to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.27">v0.1.27</a>.</p>
+<h5>Added</h5>
+<ul>
+<li>Allow constant field names in macros (<a href="https://github.com/tokio-rs/tracing/pull/2617">#2617</a>)</li>
+<li>Allow setting event names in macros (<a href="https://github.com/tokio-rs/tracing/pull/2699">#2699</a>)</li>
+<li><strong>core</strong>: Allow <code>ValueSet</code>s of any length (<a href="https://github.com/tokio-rs/tracing/pull/2508">#2508</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-attributes</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.27">0.1.27</a></li>
+<li><code>tracing-core</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-core-0.1.32">0.1.32</a></li>
+<li><strong>attributes</strong>: Bump minimum version of proc-macro2 to 1.0.60 (<a href="https://github.com/tokio-rs/tracing/pull/2732">#2732</a>)</li>
+<li><strong>attributes</strong>: Generate less dead code for async block return type hint (<a href="https://github.com/tokio-rs/tracing/pull/2709">#2709</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Use fully qualified names in macros for items exported from std prelude
+(<a href="https://github.com/tokio-rs/tracing/pull/2621">#2621</a>, <a href="https://github.com/tokio-rs/tracing/pull/2757">#2757</a>)</li>
+<li><strong>attributes</strong>: Allow [<code>clippy::let_with_type_underscore</code>] in macro-generated
+code ([#2609])</li>
+<li><strong>attributes</strong>: Allow <code>unknown_lints</code> in macro-generated code (<a href="https://github.com/tokio-rs/tracing/pull/2626">#2626</a>)</li>
+<li><strong>attributes</strong>: Fix a compilation error in <code>#[instrument]</code> when the <code>&quot;log&quot;</code>
+feature is enabled (<a href="https://github.com/tokio-rs/tracing/pull/2599">#2599</a>)</li>
+</ul>
+<h5>Documented</h5>
+<ul>
+<li>Add <code>axum-insights</code> to relevant crates. (<a href="https://github.com/tokio-rs/tracing/pull/2713">#2713</a>)</li>
+<li>Fix link to RAI pattern crate documentation ([#2612])</li>
+<li>Fix docs typos and warnings (<a href="https://github.com/tokio-rs/tracing/pull/2581">#2581</a>)</li>
+<li>Add <code>clippy-tracing</code> to related crates (<a href="https://github.com/tokio-rs/tracing/pull/2628">#2628</a>)</li>
+<li>Add <code>tracing-cloudwatch</code> to related crates (<a href="https://github.com/tokio-rs/tracing/pull/2667">#2667</a>)</li>
+<li>Fix deadlink to <code>tracing-etw</code> repo (<a href="https://github.com/tokio-rs/tracing/pull/2602">#2602</a>)</li>
+</ul>
+<h3>0.1.38 (April 25th, 2023)</h3>
+<p>This <code>tracing</code> release changes the <code>Drop</code> implementation for <code>Instrumented</code>
+<code>Future</code>s so that the attached <code>Span</code> is entered when dropping the <code>Future</code>. This
+means that events emitted by the <code>Future</code>'s <code>Drop</code> implementation will now be
+recorded within its <code>Span</code>. It also adds <code>#[inline]</code> hints to methods called in
+the <code>event!</code> macro's expansion, for an improvement in both binary size and
+performance.</p>
+<p>Additionally, this release updates the <code>tracing-attributes</code> dependency to
+<a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.24">v0.1.24</a>, which updates the <a href="https://crates.io/crates/syn"><code>syn</code></a> dependency to v2.x.x.
+<code>tracing-attributes</code> v0.1.24 also includes improvements to the <code>#[instrument]</code>
+macro; see <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.24">the <code>tracing-attributes</code> 0.1.24 release notes</a> for
+details.</p>
+<h5>Added</h5>
+<ul>
+<li><code>Instrumented</code> futures will now enter the attached <code>Span</code> in their <code>Drop</code>
+implementation, allowing events emitted when dropping the future to occur
+within the span ([#2562])</li>
+<li><code>#[inline]</code> attributes for methods called by the <code>event!</code> macros, making
+generated code smaller (<a href="https://github.com/tokio-rs/tracing/pull/2555">#2555</a>)</li>
+<li><strong>attributes</strong>: <code>level</code> argument to <code>#[instrument(err)]</code> and
+<code>#[instrument(ret)]</code> to override the level of
+the generated return value event (<a href="https://github.com/tokio-rs/tracing/pull/2335">#2335</a>)</li>
+<li><strong>attributes</strong>: Improved compiler error message when <code>#[instrument]</code> is added to a <code>const fn</code>
+(<a href="https://github.com/tokio-rs/tracing/pull/2418">#2418</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-attributes</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.24">0.1.24</a></li>
+<li>Removed unneeded <code>cfg-if</code> dependency (<a href="https://github.com/tokio-rs/tracing/pull/2553">#2553</a>)</li>
+<li><strong>attributes</strong>: Updated <a href="https://crates.io/crates/syn"><code>syn</code></a> dependency to 2.0 (<a href="https://github.com/tokio-rs/tracing/pull/2516">#2516</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><strong>attributes</strong>: Fix <code>clippy::unreachable</code> warnings in <code>#[instrument]</code>-generated code (<a href="https://github.com/tokio-rs/tracing/pull/2356">#2356</a>)</li>
+<li><strong>attributes</strong>: Removed unused &quot;visit&quot; feature flag from <code>syn</code> dependency (<a href="https://github.com/tokio-rs/tracing/pull/2530">#2530</a>)</li>
+</ul>
+<h5>Documented</h5>
+<ul>
+<li><strong>attributes</strong>: Documented default level for <code>#[instrument(err)]</code> (<a href="https://github.com/tokio-rs/tracing/pull/2433">#2433</a>)</li>
+<li><strong>attributes</strong>: Improved documentation for levels in <code>#[instrument]</code> (<a href="https://github.com/tokio-rs/tracing/pull/2350">#2350</a>)</li>
+</ul>
+<p>Thanks to @nitnelave, @jsgf, @Abhicodes-crypto, @LukeMathWalker, @andrewpollack,
+@quad, @klensy, @davidpdrsn, @dbidwell94, @ldm0, @NobodyXu, @ilsv, and @daxpedda
+for contributing to this release!</p>
+<h3>0.1.37 (October 6, 2022)</h3>
+<p>This release of <code>tracing</code> incorporates changes from <code>tracing-core</code>
+<a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-core-0.1.30">v0.1.30</a> and <code>tracing-attributes</code> <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.23">v0.1.23</a>,
+including the new <code>Subscriber::on_register_dispatch</code> method for performing late
+initialization after a <code>Subscriber</code> is registered as a <code>Dispatch</code>, and bugfixes
+for the <code>#[instrument]</code> attribute. Additionally, it fixes instances of the
+<code>bare_trait_objects</code> lint, which is now a warning on <code>tracing</code>'s MSRV and will
+become an error in the next edition.</p>
+<h5>Fixed</h5>
+<ul>
+<li><strong>attributes</strong>: Incorrect handling of inner attributes in <code>#[instrument]</code>ed
+functions (<a href="https://github.com/tokio-rs/tracing/pull/2307">#2307</a>)</li>
+<li><strong>attributes</strong>: Incorrect location of compiler diagnostic spans generated for
+type errors in <code>#[instrument]</code>ed <code>async fn</code>s (<a href="https://github.com/tokio-rs/tracing/pull/2270">#2270</a>)</li>
+<li><strong>attributes</strong>: Updated <code>syn</code> dependency to fix compilation with <code>-Z minimal-versions</code> (<a href="https://github.com/tokio-rs/tracing/pull/2246">#2246</a>)</li>
+<li><code>bare_trait_objects</code> warning in <code>valueset!</code> macro expansion (<a href="https://github.com/tokio-rs/tracing/pull/2308">#2308</a>)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li><strong>core</strong>: <code>Subscriber::on_register_dispatch</code> method (<a href="https://github.com/tokio-rs/tracing/pull/2269">#2269</a>)</li>
+<li><strong>core</strong>: <code>WeakDispatch</code> type and <code>Dispatch::downgrade()</code> function (<a href="https://github.com/tokio-rs/tracing/pull/2293">#2293</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-core</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-core-0.1.30">0.1.30</a></li>
+<li><code>tracing-attributes</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.23">0.1.23</a></li>
+</ul>
+<h5>Documented</h5>
+<ul>
+<li>Added <a href="https://crates.io/crates/tracing-web/"><code>tracing-web</code></a> and <a href="https://crates.io/crates/reqwest-tracing/"><code>reqwest-tracing</code></a> to related crates (<a href="https://github.com/tokio-rs/tracing/pull/2283">#2283</a>,
+<a href="https://github.com/tokio-rs/tracing/pull/2331">#2331</a>)</li>
+</ul>
+<p>Thanks to new contributors @compiler-errors, @e-nomem, @WorldSEnder, @Xiami2012,
+and @tl-rodrigo-gryzinski, as well as @jswrenn and @CAD97, for contributing to
+this release!</p>
+<h3>0.1.36 (July 29, 2022)</h3>
+<p>This release adds support for owned values and fat pointers as arguments to the
+<code>Span::record</code> method, as well as updating the minimum <code>tracing-core</code> version
+and several documentation improvements.</p>
+<h5>Fixed</h5>
+<ul>
+<li>Incorrect docs in <code>dispatcher::set_default</code> (<a href="https://github.com/tokio-rs/tracing/pull/2220">#2220</a>)</li>
+<li>Compilation with <code>-Z minimal-versions</code> (<a href="https://github.com/tokio-rs/tracing/pull/2246">#2246</a>)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li>Support for owned values and fat pointers in <code>Span::record</code> (<a href="https://github.com/tokio-rs/tracing/pull/2212">#2212</a>)</li>
+<li>Documentation improvements (<a href="https://github.com/tokio-rs/tracing/pull/2208">#2208</a>, <a href="https://github.com/tokio-rs/tracing/pull/2163">#2163</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-core</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-core-0.1.29">0.1.29</a></li>
+</ul>
+<p>Thanks to @fredr, @cgbur, @jyn514, @matklad, and @CAD97 for contributing to this
+release!</p>
+<h3>0.1.35 (June 8, 2022)</h3>
+<p>This release reduces the overhead of callsite registration by using new
+<code>tracing-core</code> APIs.</p>
+<h5>Added</h5>
+<ul>
+<li>Use <code>DefaultCallsite</code> to reduce callsite registration overhead ([#2083])</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-core</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-core-0.1.27">0.1.27</a></li>
+</ul>
+<h3>0.1.34 (April 14, 2022)</h3>
+<p>This release includes bug fixes for the &quot;log&quot; support feature and for the use of
+both scoped and global default dispatchers in the same program.</p>
+<h5>Fixed</h5>
+<ul>
+<li>Failure to use the global default dispatcher when a thread sets a local
+default dispatcher before the global default is set (<a href="https://github.com/tokio-rs/tracing/pull/2065">#2065</a>)</li>
+<li><strong>log</strong>: Compilation errors due to <code>async</code> block/fn futures becoming <code>!Send</code>
+when the &quot;log&quot; feature flag is enabled (<a href="https://github.com/tokio-rs/tracing/pull/2073">#2073</a>)</li>
+<li>Broken links in documentation (<a href="https://github.com/tokio-rs/tracing/pull/2068">#2068</a>)</li>
+</ul>
+<p>Thanks to @ben0x539 for contributing to this release!</p>
+<h3>0.1.33 (April 9, 2022)</h3>
+<p>This release adds new <code>span_enabled!</code> and <code>event_enabled!</code> variants of the
+<code>enabled!</code> macro, for testing whether a subscriber would specifically enable a
+span or an event.</p>
+<h5>Added</h5>
+<ul>
+<li><code>span_enabled!</code> and <code>event_enabled!</code> macros (<a href="https://github.com/tokio-rs/tracing/pull/1900">#1900</a>)</li>
+<li>Several documentation improvements (<a href="https://github.com/tokio-rs/tracing/pull/2010">#2010</a>, <a href="https://github.com/tokio-rs/tracing/pull/2012">#2012</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Compilation warning when compiling for &lt;=32-bit targets (including <code>wasm32</code>)
+(<a href="https://github.com/tokio-rs/tracing/pull/2060">#2060</a>)</li>
+</ul>
+<p>Thanks to @guswynn, @arifd, @hrxi, @CAD97, and @name1e5s for contributing to
+this release!</p>
+<h3>0.1.32 (March 8th, 2022)</h3>
+<p>This release reduces the overhead of creating and dropping disabled
+spans significantly, which should improve performance when no <code>tracing</code>
+subscriber is in use or when spans are disabled by a filter.</p>
+<h5>Fixed</h5>
+<ul>
+<li><strong>attributes</strong>: Compilation failure with <code>--minimal-versions</code> due to a
+too-permissive <code>syn</code> dependency (<a href="https://github.com/tokio-rs/tracing/pull/1960">#1960</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Reduced <code>Drop</code> overhead for disabled spans (<a href="https://github.com/tokio-rs/tracing/pull/1974">#1974</a>)</li>
+<li><code>tracing-attributes</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.20">0.1.20</a></li>
+</ul>
+<h3>0.1.31 (February 17th, 2022)</h3>
+<p>This release increases the minimum supported Rust version (MSRV) to 1.49.0. In
+addition, it fixes some relatively rare macro bugs.</p>
+<h5>Added</h5>
+<ul>
+<li>Added <code>tracing-forest</code> to the list of related crates (<a href="https://github.com/tokio-rs/tracing/pull/1935">#1935</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Updated minimum supported Rust version (MSRV) to 1.49.0 (<a href="https://github.com/tokio-rs/tracing/pull/1913">#1913</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed the <code>warn!</code> macro incorrectly generating an event with the <code>TRACE</code> level
+(<a href="https://github.com/tokio-rs/tracing/pull/1930">#1930</a>)</li>
+<li>Fixed macro hygiene issues when used in a crate that defines its own <code>concat!</code>
+macro, for real this time (<a href="https://github.com/tokio-rs/tracing/pull/1918">#1918</a>)</li>
+</ul>
+<p>Thanks to @QnnOkabayashi, @nicolaasg, and @teohhanhui for contributing to this
+release!</p>
+<h3>0.1.30 (February 3rd, 2022)</h3>
+<p>This release adds <em>experimental</em> support for recording structured field
+values using the <a href="https://crates.io/crates/valuable"><code>valuable</code></a> crate. See <a href="https://tokio.rs/blog/2021-05-valuable">this blog post</a> for
+details on <code>valuable</code>.</p>
+<p>Note that <code>valuable</code> support currently requires <code>--cfg tracing_unstable</code>. See
+the documentation for details.</p>
+<p>This release also adds a new <code>enabled!</code> macro for testing if a span or event
+would be enabled.</p>
+<h5>Added</h5>
+<ul>
+<li><strong>field</strong>: Experimental support for recording field values using the
+<a href="https://crates.io/crates/valuable"><code>valuable</code></a> crate (<a href="https://github.com/tokio-rs/tracing/pull/1608">#1608</a>, <a href="https://github.com/tokio-rs/tracing/pull/1888">#1888</a>, <a href="https://github.com/tokio-rs/tracing/pull/1887">#1887</a>)</li>
+<li><code>enabled!</code> macro for testing if a span or event is enabled (<a href="https://github.com/tokio-rs/tracing/pull/1882">#1882</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-core</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-core-0.1.22">0.1.22</a></li>
+<li><code>tracing-attributes</code>: updated to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.19">0.1.19</a></li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><strong>log</strong>: Fixed &quot;use of moved value&quot; compiler error when the &quot;log&quot; feature is
+enabled (<a href="https://github.com/tokio-rs/tracing/pull/1823">#1823</a>)</li>
+<li>Fixed macro hygiene issues when used in a crate that defines its own <code>concat!</code>
+macro (<a href="https://github.com/tokio-rs/tracing/pull/1842">#1842</a>)</li>
+<li>A very large number of documentation fixes and improvements.</li>
+</ul>
+<p>Thanks to @@Vlad-Scherbina, @Skepfyr, @Swatinem, @guswynn, @teohhanhui,
+@xd009642, @tobz, @d-e-s-o@0b01, and @nickelc for contributing to this release!</p>
+<h3>0.1.29 (October 5th, 2021)</h3>
+<p>This release adds support for recording <code>Option&lt;T&gt; where T: Value</code> as typed
+<code>tracing</code> field values. It also includes significant performance improvements
+for functions annotated with the <code>#[instrument]</code> attribute when the generated
+span is disabled.</p>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-core</code>: updated to v0.1.21</li>
+<li><code>tracing-attributes</code>: updated to v0.1.18</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li><strong>field</strong>: <code>Value</code> impl for <code>Option&lt;T&gt; where T: Value</code> (<a href="https://github.com/tokio-rs/tracing/pull/1585">#1585</a>)</li>
+<li><strong>attributes</strong>: - improved performance when skipping <code>#[instrument]</code>-generated
+spans below the max level (<a href="https://github.com/tokio-rs/tracing/pull/1600">#1600</a>, <a href="https://github.com/tokio-rs/tracing/pull/1605">#1605</a>, <a href="https://github.com/tokio-rs/tracing/pull/1614">#1614</a>, <a href="https://github.com/tokio-rs/tracing/pull/1616">#1616</a>, <a href="https://github.com/tokio-rs/tracing/pull/1617">#1617</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><strong>instrument</strong>: added missing <code>Future</code> implementation for <code>WithSubscriber</code>,
+making the <code>WithDispatch</code> extension trait actually useable (<a href="https://github.com/tokio-rs/tracing/pull/1602">#1602</a>)</li>
+<li>Documentation fixes and improvements (<a href="https://github.com/tokio-rs/tracing/pull/1596">#1595</a>, <a href="https://github.com/tokio-rs/tracing/pull/1601">#1601</a>, <a href="https://github.com/tokio-rs/tracing/pull/1597">#1597</a>)</li>
+</ul>
+<p>Thanks to @brianburgers, @mattiast, @DCjanus, @oli-obk, and @matklad for
+contributing to this release!</p>
+<h3>0.1.28 (September 17th, 2021)</h3>
+<p>This release fixes an issue where the RustDoc documentation was rendered
+incorrectly. It doesn't include any actual code changes, and is very boring and
+can be ignored.</p>
+<h5>Fixed</h5>
+<ul>
+<li><strong>docs</strong>: Incorrect documentation rendering due to unclosed <code>&lt;div&gt;</code> tag
+(<a href="https://github.com/tokio-rs/tracing/pull/1572">#1572</a>)</li>
+</ul>
+<h3>0.1.27 (September 13, 2021)</h3>
+<p>This release adds a new <a href="https://docs.rs/tracing/0.1.27/tracing/struct.Span.html#method.or_current"><code>Span::or_current</code></a> method to aid in efficiently
+propagating span contexts to spawned threads or tasks. Additionally, it updates
+the <a href="https://crates.io/crates/tracing-core"><code>tracing-core</code></a> version to <a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-core-0.1.20">0.1.20</a> and the <a href="https://crates.io/crates/tracing-attributes"><code>tracing-attributes</code></a> version to
+<a href="https://github.com/tokio-rs/tracing/releases/tag/tracing-attributes-0.1.16">0.1.16</a>, ensuring that a number of new features in those crates are present.</p>
+<h5>Fixed</h5>
+<ul>
+<li><strong>instrument</strong>: Added missing <code>WithSubscriber</code> implementations for futures and
+other types (<a href="https://github.com/tokio-rs/tracing/pull/1424">#1424</a>)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li><code>Span::or_current</code> method, to help with efficient span context propagation
+(<a href="https://github.com/tokio-rs/tracing/pull/1538">#1538</a>)</li>
+<li><strong>attributes</strong>: add <code>skip_all</code> option to <code>#[instrument]</code> (<a href="https://github.com/tokio-rs/tracing/pull/1548">#1548</a>)</li>
+<li><strong>attributes</strong>: record primitive types as primitive values rather than as
+<code>fmt::Debug</code> (<a href="https://github.com/tokio-rs/tracing/pull/1378">#1378</a>)</li>
+<li><strong>core</strong>: <code>NoSubscriber</code>, a no-op <code>Subscriber</code> implementation
+([#1549])</li>
+<li><strong>core</strong>: Added <code>Visit::record_f64</code> and support for recording floating-point
+values (<a href="https://github.com/tokio-rs/tracing/pull/1507">#1507</a>, <a href="https://github.com/tokio-rs/tracing/pull/1522">#1522</a>)</li>
+<li>A large number of documentation improvements and fixes (<a href="https://github.com/tokio-rs/tracing/pull/1369">#1369</a>, <a href="https://github.com/tokio-rs/tracing/pull/1398">#1398</a>,
+<a href="https://github.com/tokio-rs/tracing/pull/1435">#1435</a>, <a href="https://github.com/tokio-rs/tracing/pull/1442">#1442</a>, <a href="https://github.com/tokio-rs/tracing/pull/1524">#1524</a>, <a href="https://github.com/tokio-rs/tracing/pull/1556">#1556</a>)</li>
+</ul>
+<p>Thanks to new contributors @dzvon and @mbergkvist, as well as @teozkr,
+@maxburke, @LukeMathWalker, and @jsgf, for contributing to this
+release!</p>
+<h3>0.1.26 (April 30, 2021)</h3>
+<h5>Fixed</h5>
+<ul>
+<li><strong>attributes</strong>: Compatibility between <code>#[instrument]</code> and <code>async-trait</code>
+v0.1.43 and newer ([#1228])</li>
+<li>Several documentation fixes (<a href="https://github.com/tokio-rs/tracing/pull/1305">#1305</a>, <a href="https://github.com/tokio-rs/tracing/pull/1344">#1344</a>)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li><code>Subscriber</code> impl for <code>Box&lt;dyn Subscriber + Send + Sync + 'static&gt;</code> (<a href="https://github.com/tokio-rs/tracing/pull/1358">#1358</a>)</li>
+<li><code>Subscriber</code> impl for <code>Arc&lt;dyn Subscriber + Send + Sync + 'static&gt;</code> (<a href="https://github.com/tokio-rs/tracing/pull/1374">#1374</a>)</li>
+<li>Symmetric <code>From</code> impls for existing <code>Into</code> impls on <code>span::Current</code>, <code>Span</code>,
+and <code>Option&lt;Id&gt;</code> (<a href="https://github.com/tokio-rs/tracing/pull/1335">#1335</a>, <a href="https://github.com/tokio-rs/tracing/pull/1338">#1338</a>)</li>
+<li><code>From&lt;EnteredSpan&gt;</code> implementation for <code>Option&lt;Id&gt;</code>, allowing <code>EnteredSpan</code> to
+be used in a <code>span!</code> macro's <code>parent:</code> field (<a href="https://github.com/tokio-rs/tracing/pull/1325">#1325</a>)</li>
+<li><code>Attributes::fields</code> accessor that returns the set of fields defined on a
+span's <code>Attributes</code> (<a href="https://github.com/tokio-rs/tracing/pull/1331">#1331</a>)</li>
+</ul>
+<p>Thanks to @Folyd, @nightmared, and new contributors @rmsc and @Fishrock123 for
+contributing to this release!</p>
+<h3>0.1.25 (February 23, 2021)</h3>
+<h5>Added</h5>
+<ul>
+<li><code>Span::entered</code> method for entering a span and moving it into a guard by value
+rather than borrowing it (<a href="https://github.com/tokio-rs/tracing/pull/1252">#1252</a>)</li>
+</ul>
+<p>Thanks to @matklad for contributing to this release!</p>
+<h3>0.1.24 (February 17, 2021)</h3>
+<h5>Fixed</h5>
+<ul>
+<li><strong>attributes</strong>: Compiler error when using <code>#[instrument(err)]</code> on functions
+which return <code>impl Trait</code> (<a href="https://github.com/tokio-rs/tracing/pull/1236">#1236</a>)</li>
+<li>Fixed broken match arms in event macros (<a href="https://github.com/tokio-rs/tracing/pull/1239">#1239</a>)</li>
+<li>Documentation improvements (<a href="https://github.com/tokio-rs/tracing/pull/1232">#1232</a>)</li>
+</ul>
+<p>Thanks to @bkchr and @lfranke for contributing to this release!</p>
+<h3>0.1.23 (February 4, 2021)</h3>
+<h5>Fixed</h5>
+<ul>
+<li><strong>attributes</strong>: Compiler error when using <code>#[instrument(err)]</code> on functions
+with mutable parameters (<a href="https://github.com/tokio-rs/tracing/pull/1167">#1167</a>)</li>
+<li><strong>attributes</strong>: Missing function visibility modifier when using
+<code>#[instrument]</code> with <code>async-trait</code> (<a href="https://github.com/tokio-rs/tracing/pull/977">#977</a>)</li>
+<li><strong>attributes</strong> Removed unused <code>syn</code> features ([#928])</li>
+<li><strong>log</strong>: Fixed an issue where the <code>tracing</code> macros would generate code for
+events whose levels are disabled statically by the <code>log</code> crate's
+<code>static_max_level_XXX</code> features (<a href="https://github.com/tokio-rs/tracing/pull/1175">#1175</a>)</li>
+<li>Fixed deprecations and clippy lints (<a href="https://github.com/tokio-rs/tracing/pull/1195">#1195</a>)</li>
+<li>Several documentation fixes and improvements (<a href="https://github.com/tokio-rs/tracing/pull/941">#941</a>, <a href="https://github.com/tokio-rs/tracing/pull/965">#965</a>, <a href="https://github.com/tokio-rs/tracing/pull/981">#981</a>, <a href="https://github.com/tokio-rs/tracing/pull/1146">#1146</a>,
+<a href="https://github.com/tokio-rs/tracing/pull/1215">#1215</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><strong>attributes</strong>: <code>tracing-futures</code> dependency is no longer required when using
+<code>#[instrument]</code> on async functions (<a href="https://github.com/tokio-rs/tracing/pull/808">#808</a>)</li>
+<li><strong>attributes</strong>: Updated <code>tracing-attributes</code> minimum dependency to v0.1.12
+(<a href="https://github.com/tokio-rs/tracing/pull/1222">#1222</a>)</li>
+</ul>
+<p>Thanks to @nagisa, @Txuritan, @TaKO8Ki, @okready, and @krojew for contributing
+to this release!</p>
+<h3>0.1.22 (November 23, 2020)</h3>
+<h5>Changed</h5>
+<ul>
+<li>Updated <code>pin-project-lite</code> dependency to 0.2 (<a href="https://github.com/tokio-rs/tracing/pull/1108">#1108</a>)</li>
+</ul>
+<h3>0.1.21 (September 28, 2020)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Incorrect inlining of <code>Span::new</code>, <code>Span::new_root</code>, and <code>Span::new_child_of</code>,
+which could result in  <code>dispatcher::get_default</code> being inlined at the callsite
+(<a href="https://github.com/tokio-rs/tracing/pull/994">#994</a>)</li>
+<li>Regression where using a struct field as a span or event field when other
+fields on that struct are borrowed mutably would fail to compile (<a href="https://github.com/tokio-rs/tracing/pull/987">#987</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Updated <code>tracing-core</code> to 0.1.17 (<a href="https://github.com/tokio-rs/tracing/pull/992">#992</a>)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li><code>Instrument</code> trait and <code>Instrumented</code> type for attaching a <code>Span</code> to a
+<code>Future</code> (<a href="https://github.com/tokio-rs/tracing/pull/808">#808</a>)</li>
+<li><code>Copy</code> implementations for <code>Level</code> and <code>LevelFilter</code> (<a href="https://github.com/tokio-rs/tracing/pull/992">#992</a>)</li>
+<li>Multiple documentation fixes and improvements (<a href="https://github.com/tokio-rs/tracing/pull/964">#964</a>, <a href="https://github.com/tokio-rs/tracing/pull/980">#980</a>, <a href="https://github.com/tokio-rs/tracing/pull/981">#981</a>)</li>
+</ul>
+<p>Thanks to @nagisa, and new contributors @SecurityInsanity, @froydnj, @jyn514 and
+@TaKO8Ki for contributing to this release!</p>
+<h3>0.1.20 (August 24, 2020)</h3>
+<h5>Changed</h5>
+<ul>
+<li>Significantly reduced assembly generated by macro invocations (#943)</li>
+<li>Updated <code>tracing-core</code> to 0.1.15 (#943)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li>Documented minimum supported Rust version policy (#941)</li>
+</ul>
+<h3>0.1.19 (August 10, 2020)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Updated <code>tracing-core</code> to fix incorrect calculation of the global max level
+filter (#908)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li><strong>attributes</strong>: Support for using <code>self</code> in field expressions when
+instrumenting <code>async-trait</code> functions (#875)</li>
+<li>Several documentation improvements (#832, #881, #896, #897, #911, #913)</li>
+</ul>
+<p>Thanks to @anton-dutov, @nightmared, @mystor, and @toshokan for contributing to
+this release!</p>
+<h3>0.1.18 (July 31, 2020)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed a bug where <code>LevelFilter::OFF</code> (and thus also the <code>static_max_level_off</code>
+feature flag) would enable <em>all</em> traces, rather than <em>none</em> (#853)</li>
+<li><strong>log</strong>: Fixed <code>tracing</code> macros and <code>Span</code>s not checking <code>log::max_level</code>
+before emitting <code>log</code> records (#870)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><strong>macros</strong>: Macros now check the global max level (<code>LevelFilter::current</code>)
+before the per-callsite cache when determining if a span or event is enabled.
+This significantly improves performance in some use cases (#853)</li>
+<li><strong>macros</strong>: Simplified the code generated by macro expansion significantly,
+which may improve compile times and/or <code>rustc</code> optimizatation of surrounding
+code (#869, #869)</li>
+<li><strong>macros</strong>: Macros now check the static max level before checking any runtime
+filtering, improving performance when a span or event is disabled by a
+<code>static_max_level_XXX</code> feature flag (#868)</li>
+<li><code>LevelFilter</code> is now a re-export of the <code>tracing_core::LevelFilter</code> type, it
+can now be used interchangeably with the versions in <code>tracing-core</code> and
+<code>tracing-subscriber</code> (#853)</li>
+<li>Significant performance improvements when comparing <code>LevelFilter</code>s and
+<code>Level</code>s (#853)</li>
+<li>Updated the minimum <code>tracing-core</code> dependency to 0.1.12 (#853)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li><strong>macros</strong>: Quoted string literals may now be used as field names, to allow
+fields whose names are not valid Rust identifiers (#790)</li>
+<li><strong>docs</strong>: Several documentation improvements (#850, #857, #841)</li>
+<li><code>LevelFilter::current()</code> function, which returns the highest level that any
+subscriber will enable (#853)</li>
+<li><code>Subscriber::max_level_hint</code> optional trait method, for setting the value
+returned by <code>LevelFilter::current()</code> (#853)</li>
+</ul>
+<p>Thanks to new contributors @cuviper, @ethanboxx, @ben0x539, @dignati,
+@colelawrence, and @rbtcollins for helping out with this release!</p>
+<h3>0.1.17 (July 22, 2020)</h3>
+<h5>Changed</h5>
+<ul>
+<li><strong>log</strong>: Moved verbose span enter/exit log records to &quot;tracing::span::active&quot;
+target, allowing them to be filtered separately (#833)</li>
+<li><strong>log</strong>: All span lifecycle log records without fields now have the <code>Trace</code>
+log filter, to guard against <code>log</code> users enabling them by default with blanket
+level filtering (#833)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><strong>log</strong>/<strong>macros</strong>: Fixed missing implicit imports of the
+<code>tracing::field::debug</code> and <code>tracing::field::display</code> functions inside the
+macros when the &quot;log&quot; feature is enabled (#835)</li>
+</ul>
+<h3>0.1.16 (July 8, 2020)</h3>
+<h5>Added</h5>
+<ul>
+<li><strong>attributes</strong>: Support for arbitrary expressions as fields in <code>#[instrument]</code> (#672)</li>
+<li><strong>attributes</strong>: <code>#[instrument]</code> now emits a compiler warning when ignoring unrecognized
+input (#672, #786)</li>
+<li>Improved documentation on using <code>tracing</code> in async code (#769)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Updated <code>tracing-core</code> dependency to 0.1.11</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><strong>macros</strong>: Excessive monomorphization in macros, which could lead to
+longer compilation times (#787)</li>
+<li><strong>log</strong>: Compiler warnings in macros when <code>log</code> or <code>log-always</code> features
+are enabled (#753)</li>
+<li>Compiler error when <code>tracing-core/std</code> feature is enabled but <code>tracing/std</code> is
+not (#760)</li>
+</ul>
+<p>Thanks to @nagisa for contributing to this release!</p>
+<h3>0.1.15 (June 2, 2020)</h3>
+<h5>Changed</h5>
+<ul>
+<li><strong>macros</strong>: Replaced use of legacy <code>local_inner_macros</code> with <code>$crate::</code> (#740)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li>Docs fixes and improvements (#742, #731, #730)</li>
+</ul>
+<p>Thanks to @bnjjj, @blaenk, and @LukeMathWalker for contributing to this release!</p>
+<h3>0.1.14 (May 14, 2020)</h3>
+<h5>Added</h5>
+<ul>
+<li><strong>log</strong>: When using the <a href="https://crates.io/crates/log"><code>log</code></a> compatibility feature alongside a <code>tracing</code>
+<code>Subscriber</code>, log records for spans now include span IDs (#613)</li>
+<li><strong>attributes</strong>: Support for using <code>#[instrument]</code> on methods that are part of
+<a href="https://crates.io/crates/async-trait"><code>async-trait</code></a> trait implementations (#711)</li>
+<li><strong>attributes</strong>: Optional <code>#[instrument(err)]</code> argument to automatically emit
+an event if an instrumented function returns <code>Err</code> (#637)</li>
+<li>Added <code>#[must_use]</code> attribute to the guard returned by
+<code>subscriber::set_default</code> (#685)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><strong>log</strong>: Made <a href="https://crates.io/crates/log"><code>log</code></a> records emitted by spans much less noisy when span IDs are
+not available (#613)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Several typos in the documentation (#656, #710, #715)</li>
+</ul>
+<p>Thanks to @FintanH, @shepmaster, @inanna-malick, @zekisharif, @bkchr, @majecty,
+@ilana and @nightmared for contributing to this release!</p>
+<h3>0.1.13 (February 26, 2019)</h3>
+<h5>Added</h5>
+<ul>
+<li><strong>field</strong>: <code>field::Empty</code> type for declaring empty fields whose values will be
+recorded later (#548)</li>
+<li><strong>field</strong>: <code>field::Value</code> implementations for <code>Wrapping</code> and <code>NonZero*</code>
+numbers (#538)</li>
+<li><strong>attributes</strong>: Support for adding arbitrary literal fields to spans generated
+by <code>#[instrument]</code> (#569)</li>
+<li><strong>attributes</strong>: <code>#[instrument]</code> now emits a helpful compiler error when
+attempting to skip a function parameter (#600)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><strong>attributes</strong>: The <code>#[instrument]</code> attribute was placed under an on-by-default
+feature flag &quot;attributes&quot; (#603)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Broken and unresolvable links in RustDoc (#595)</li>
+</ul>
+<p>Thanks to @oli-cosmian and @Kobzol for contributing to this release!</p>
+<h3>0.1.12 (January 11, 2019)</h3>
+<h5>Added</h5>
+<ul>
+<li><code>Span::with_subscriber</code> method to access the subscriber that tracks a <code>Span</code>
+(#503)</li>
+<li>API documentation now shows which features are required by feature-flagged
+items (#523)</li>
+<li>Improved README examples (#496)</li>
+<li>Documentation links to related crates (#507)</li>
+</ul>
+<h3>0.1.11 (December 20, 2019)</h3>
+<h5>Added</h5>
+<ul>
+<li><code>Span::is_none</code> method (#475)</li>
+<li><code>LevelFilter::into_level</code> method (#470)</li>
+<li><code>LevelFilter::from_level</code> function and <code>From&lt;Level&gt;</code> impl (#471)</li>
+<li>Documented minimum supported Rust version (#482)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Incorrect parameter type to <code>Span::follows_from</code> that made it impossible to
+call (#467)</li>
+<li>Missing whitespace in <code>log</code> records generated when enabling the <code>log</code> feature
+flag (#484)</li>
+<li>Typos and missing links in documentation (#405, #423, #439)</li>
+</ul>
+<h3>0.1.10 (October 23, 2019)</h3>
+<h5>Added</h5>
+<ul>
+<li>Support for destructuring in arguments to <code>#[instrument]</code>ed functions (#397)</li>
+<li>Generated field for <code>self</code> parameters when <code>#[instrument]</code>ing methods (#397)</li>
+<li>Optional <code>skip</code> argument to <code>#[instrument]</code> for excluding function parameters
+from generated spans (#359)</li>
+<li>Added <code>dispatcher::set_default</code> and <code>subscriber::set_default</code> APIs, which
+return a drop guard (#388)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Some minor documentation errors (#356, #370)</li>
+</ul>
+<h3>0.1.9 (September 13, 2019)</h3>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed <code>#[instrument]</code>ed async functions not compiling on <code>nightly-2019-09-11</code>
+or newer (#342)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Significantly reduced performance impact of skipped spans and events when a
+<code>Subscriber</code> is not in use (#326)</li>
+<li>The <code>log</code> feature will now only cause <code>tracing</code> spans and events to emit log
+records when a <code>Subscriber</code> is not in use (#346)</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li>Added support for overriding the name of the span generated by <code>#[instrument]</code>
+(#330)</li>
+<li><code>log-always</code> feature flag to emit log records even when a <code>Subscriber</code> is set
+(#346)</li>
+</ul>
+<h3>0.1.8 (September 3, 2019)</h3>
+<h5>Changed</h5>
+<ul>
+<li>Reorganized and improved API documentation (#317)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>Dev-dependencies on <code>ansi_term</code> and <code>humantime</code> crates, which were used only
+for examples (#316)</li>
+</ul>
+<h3>0.1.7 (August 30, 2019)</h3>
+<h5>Changed</h5>
+<ul>
+<li>New (curly-brace free) event message syntax to place the message in the first
+field rather than the last (#309)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed a regression causing macro stack exhaustion when the <code>log</code> feature flag
+is enabled (#304)</li>
+</ul>
+<h3>0.1.6 (August 20, 2019)</h3>
+<h5>Added</h5>
+<ul>
+<li><code>std::error::Error</code> as a new primitive type (#277)</li>
+<li>Support for mixing key-value fields and <code>format_args</code> messages without curly
+braces as delimiters (#288)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-core</code> dependency to 0.1.5 (#294)</li>
+<li><code>tracing-attributes</code> dependency to 0.1.2 (#297)</li>
+</ul>
+<h3>0.1.5 (August 9, 2019)</h3>
+<h5>Added</h5>
+<ul>
+<li>Support for <code>no-std</code> + <code>liballoc</code> (#263)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Using the <code>#[instrument]</code> attribute on <code>async fn</code>s no longer requires a
+feature flag (#258)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>The <code>#[instrument]</code> macro now works on generic functions (#262)</li>
+</ul>
+<h3>0.1.4 (August 8, 2019)</h3>
+<h5>Added</h5>
+<ul>
+<li><code>#[instrument]</code> attribute for automatically adding spans to functions (#253)</li>
+</ul>
+<h3>0.1.3 (July 11, 2019)</h3>
+<h5>Added</h5>
+<ul>
+<li>Log messages when a subscriber indicates that a span has closed, when the
+<code>log</code> feature flag is enabled (#180).</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>tracing-core</code> minimum dependency version to 0.1.2 (#174).</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed an issue where event macro invocations with a single field, using local
+variable shorthand, would recur infinitely (#166).</li>
+<li>Fixed uses of deprecated <code>tracing-core</code> APIs (#174).</li>
+</ul>
+<h3>0.1.2 (July 6, 2019)</h3>
+<h5>Added</h5>
+<ul>
+<li><code>Span::none()</code> constructor, which does not require metadata and
+returns a completely empty span (#147).</li>
+<li><code>Span::current()</code> function, returning the current span if it is
+known to the subscriber (#148).</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Broken macro imports when used prefixed with <code>tracing::</code> (#152).</li>
+</ul>
+<h3>0.1.1 (July 3, 2019)</h3>
+<h5>Changed</h5>
+<ul>
+<li><code>cfg_if</code> dependency to 0.1.9.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Compilation errors when the <code>log</code> feature is enabled (#131).</li>
+<li>Unclear wording and typos in documentation (#124, #128, #142).</li>
+</ul>
+<h3>0.1.0 (June 27, 2019)</h3>
+<ul>
+<li>Initial release</li>
+</ul>
+</div><p class="table-note">sha256:ab06fd7a013cf5cf746f516b3789b14af626069efd94994a95f9f7f6bc2cae45</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2019 Tokio Contributors
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:b74c31642bd8a568063d94c7c909a0ff87eab1eaadb920774e61c9ce546976ae</code></dd><dt>Upstream checksum</dt><dd><code>sha256:63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at efce0ce</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tracing&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1.44&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">async-await</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">attributes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;tracing-attributes&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;attributes&quot;</span><span class="p">]</span>
+<span class="n">log</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:log&quot;</span><span class="p">]</span>
+<span class="n">log-always</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;log&quot;</span><span class="p">]</span>
+<span class="n">max_level_debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">max_level_error</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">max_level_info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">max_level_off</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">max_level_trace</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">max_level_warn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">release_max_level_debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">release_max_level_error</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">release_max_level_info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">release_max_level_off</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">release_max_level_trace</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">release_max_level_warn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;tracing-core/std&quot;</span><span class="p">]</span>
+<span class="n">tracing-attributes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tracing-attributes&quot;</span><span class="p">]</span>
+<span class="n">valuable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;tracing-core/valuable&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tracing&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">log</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/log&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.4.17&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">pin-project-lite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/pin-project-lite&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.9&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tracing-attributes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tracing-attributes&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.31&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tracing-core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tracing-core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.36&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;log&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:9ebe09693379e402e89284142b16dc935412d6addfd66c604969e8f15a42d5e0&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tracing-attributes&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;log&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:0c8061b2662bc8ca14686e8ca0bdae3a8ac591e732140705967e33167a5b2d9d&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Eliza Weisman &lt;eliza@buoyant.io&gt;, Tokio Contributors &lt;team@tokio.rs&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.65.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/tracing/0.1.44">crates.io package</a></li><li><a href="https://github.com/tokio-rs/tracing">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">tracing</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/tracing"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.1.44"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

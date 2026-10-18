@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>enum_dispatch 0.3.13 · Incan.pub</title><meta name="description" content="Near drop-in replacement for dynamic-dispatched method calls with up to 10x the speed"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/enum_dispatch</p><div class="title-row"><h1>enum_dispatch</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/enum_dispatch/versions/0.3.13/" selected>0.3.13</option></select></label></div><p class="description">Near drop-in replacement for dynamic-dispatched method calls with up to 10x the speed</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>enum_dispatch</h3>
+<p><a href="https://crates.io/crates/enum_dispatch">crates.io</a>
+<a href="https://docs.rs/enum_dispatch/">Docs</a>
+<a href="https://gitlab.com/antonok/enum_dispatch/blob/c20b482de9bcfd320ff5d0ad6a69e8c379094d9f/">License</a></p>
+<p><code>enum_dispatch</code> transforms your trait objects into concrete compound types, increasing their method call speed up to 10x.</p>
+<h4>example</h4>
+<p>If you have the following code...</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// We already have defined MyImplementorA and MyImplementorB, and implemented MyBehavior for each.</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">MyBehavior</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">my_trait_method</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Any pointer type -- Box, &amp;, etc.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">MyBehavior</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">MyImplementorA</span><span class="p">::</span><span class="n">new</span><span class="p">());</span>
+
+<span class="n">a</span><span class="p">.</span><span class="n">my_trait_method</span><span class="p">();</span><span class="w">    </span><span class="c1">//dynamic dispatch</span>
+</code></pre>
+<p>...then you can improve its performance using <code>enum_dispatch</code> like this:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[enum_dispatch]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">MyBehaviorEnum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">MyImplementorA</span><span class="p">,</span>
+<span class="w">    </span><span class="n">MyImplementorB</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="cp">#[enum_dispatch(MyBehaviorEnum)]</span>
+<span class="k">trait</span><span class="w"> </span><span class="n">MyBehavior</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">my_trait_method</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="nc">MyBehaviorEnum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyImplementorA</span><span class="p">::</span><span class="n">new</span><span class="p">().</span><span class="n">into</span><span class="p">();</span>
+
+<span class="n">a</span><span class="p">.</span><span class="n">my_trait_method</span><span class="p">();</span><span class="w">    </span><span class="c1">//no dynamic dispatch</span>
+</code></pre>
+<p>Notice the differences:</p>
+<ol>
+<li>The new enum, <code>MyBehaviorEnum</code>, whose variants are simply types implementing the trait <code>MyBehavior</code>.</li>
+<li>The new <code>enum_dispatch</code> attributes applied to the enum and trait, linking the two together.</li>
+<li>The removal of the <code>Box</code> allocation.</li>
+<li>Faster trait method calls!</li>
+</ol>
+<h4>how to use</h4>
+<ol start="0">
+<li>Add <code>enum_dispatch</code> as a Cargo.toml dependency, and <code>use enum_dispatch::enum_dispatch</code> in your code.</li>
+<li>Create a new enum whose variants are any in-scope trait implementors you've defined.</li>
+<li>Add an <code>#[enum_dispatch]</code> attribute to either the enum or trait definition. This will &quot;register&quot; it with the <code>enum_dispatch</code> library. Take note of the name of the enum or trait it was applied to -- we'll call it <code>FirstBlockName</code>.</li>
+<li>Add an <code>#[enum_dispatch(FirstBlockName)]</code> attribute to the remaining definition. This will &quot;link&quot; it with the previously registered definition.</li>
+<li>Update your dynamic types to use the new enum instead. You can use <code>.into()</code> from any trait implementor to automatically turn it into an enum variant.</li>
+</ol>
+<h4>performance</h4>
+<p>More information on performance can be found in the <a href="https://docs.rs/enum_dispatch/">docs</a>, and benchmarks are available in the <code>benches</code> directory.
+The following benchmark results give a taste of what can be achieved using <code>enum_dispatch</code>.
+They compare the speed of repeatedly accessing method calls on a <code>Vec</code> of 1024 trait objects of randomized concrete types using either <code>Box</code>ed trait objects, <code>&amp;</code> referenced trait objects, or <code>enum_dispatch</code>ed enum types.</p>
+<pre><code>test benches::boxdyn_homogeneous_vec       ... bench:   5,900,191 ns/iter (+/- 95,169)
+test benches::refdyn_homogeneous_vec       ... bench:   5,658,461 ns/iter (+/- 137,128)
+test benches::enumdispatch_homogeneous_vec ... bench:     479,630 ns/iter (+/- 3,531)
+</code></pre>
+<h4>bonus features</h4>
+<h5>serialization compatibility</h5>
+<p>While <code>enum_dispatch</code> was built with performance in mind, the transformations it applies make all your data structures much more visible to the compiler.
+That means you can use <a href="https://crates.io/crates/serde"><code>serde</code></a> or other similar tools on your trait objects!</p>
+<h5>automatic <code>From</code> and <code>TryInto</code> implementations</h5>
+<p><code>enum_dispatch</code> will generate a <code>From</code> implementation for all inner types to make it easy to instantiate your custom enum.
+In addition, it will generate a <code>TryInto</code> implementation for all inner types to make it easy to convert back into the original, unwrapped types.</p>
+<h5>attribute support</h5>
+<p>You can use use <code>#[cfg(...)]</code> attributes on <code>enum_dispatch</code> variants to conditionally include or exclude their corresponding <code>enum_dispatch</code> implementations.
+Other attributes will be passed straight through to the underlying generated enum, allowing compatibility with other procedural macros.</p>
+<h5><code>no_std</code> support</h5>
+<p><code>enum_dispatch</code> is supported in <code>no_std</code> environments.
+It's a great fit for embedded devices, where it's super useful to be able to allocate collections of trait objects on the stack.</p>
+<h4>tweaks and options</h4>
+<h5>custom variant names</h5>
+<p>By default, <code>enum_dispatch</code> will expand each enum variant into one with a single unnamed field of the same name as the internal type.
+If for some reason you'd like to use a custom name for a particular type in an <code>enum_dispatch</code> variant, you can do so as shown below:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[enum_dispatch]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">MyTypes</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">TypeA</span><span class="p">,</span>
+<span class="w">    </span><span class="n">CustomVariantName</span><span class="p">(</span><span class="n">TypeB</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">mt</span><span class="p">:</span><span class="w"> </span><span class="nc">MyTypes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TypeB</span><span class="p">::</span><span class="n">new</span><span class="p">().</span><span class="n">into</span><span class="p">();</span>
+<span class="k">match</span><span class="w"> </span><span class="n">mt</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">TypeA</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* `a` is a TypeA */</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="n">CustomVariantName</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* `b` is a TypeB */</span><span class="w"> </span><span class="p">},</span>
+<span class="p">}</span>
+</code></pre>
+<p>Custom variant names are required for enums and traits with generic type arguments, which can also be optimized by <code>enum_dispatch</code>.
+Check out <a href="https://gitlab.com/antonok/enum_dispatch/blob/c20b482de9bcfd320ff5d0ad6a69e8c379094d9f/tests/generics.rs">this generics example</a> to see how that works.</p>
+<h5>specify multiple enums at once</h5>
+<p>If you want to use <code>enum_dispatch</code> to implement the same trait for multiple enums, you may specify them all in the same attribute:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[enum_dispatch(Widgets, Tools, Gadgets)]</span>
+<span class="k">trait</span><span class="w"> </span><span class="n">CommonFunctionality</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<h5>specify multiple traits at once</h5>
+<p>Similarly to above, you may use a single attribute to implement multiple traits for a single enum:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[enum_dispatch(CommonFunctionality, WidgetFunctionality)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Widget</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<h5>generic enums and traits</h5>
+<p><code>enum_dispatch</code> can operate on enums and traits with generic parameters.
+When linking these, be sure to include the generic parameters in the attribute argument, like below:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[enum_dispatch]</span>
+<span class="k">trait</span><span class="w"> </span><span class="n">Foo</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="cp">#[enum_dispatch(Foo&lt;T, U&gt;)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Bar</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nb">Clone</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">:</span><span class="w"> </span><span class="nc">Hash</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<p>The names of corresponding generic parameters should match between the definition of the enum and trait.</p>
+<p><a href="https://gitlab.com/antonok/enum_dispatch/blob/c20b482de9bcfd320ff5d0ad6a69e8c379094d9f/tests/complex_generics.rs">This example</a> demonstrates this in more detail.</p>
+<h4>troubleshooting</h4>
+<h5>no impls created?</h5>
+<p>Be careful not to forget an attribute or mistype the name in a linking attribute.
+If parsing is completed before a linking attribute is found, no implementations will be generated.
+Due to technical limitations of the macro system, it's impossible to properly warn the user in this scenario.</p>
+<h5>can't parse enum?</h5>
+<p>Types must be fully in scope to be usable as an enum variant. For example, the following will fail to compile:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[enum_dispatch]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Fails</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">crate</span><span class="p">::</span><span class="n">A</span><span class="p">::</span><span class="n">TypeA</span><span class="p">,</span>
+<span class="w">    </span><span class="k">crate</span><span class="p">::</span><span class="n">B</span><span class="p">::</span><span class="n">TypeB</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<p>This is because the enum must be correctly parsable before macro expansion. Instead, import the types first:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::</span><span class="n">A</span><span class="p">::</span><span class="n">TypeA</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::</span><span class="n">B</span><span class="p">::</span><span class="n">TypeB</span><span class="p">;</span>
+
+<span class="cp">#[enum_dispatch]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Succeeds</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">TypeA</span><span class="p">,</span>
+<span class="w">    </span><span class="n">TypeB</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre>
+<h4>technical details</h4>
+<p><code>enum_dispatch</code> is a procedural macro that implements a trait for a fixed set of types in the form of an enum.
+This is faster than using dynamic dispatch because type information will be &quot;built-in&quot; to each enum, avoiding a costly vtable lookup.</p>
+<p>Since <code>enum_dispatch</code> is a procedural macro, it works by processing and expanding attributed code at compile time.
+The folowing sections explain how the example above might be transformed.</p>
+<h5>enum processing</h5>
+<p>There's no way to define an enum whose variants are actual concrete types.
+To get around this, <code>enum_dispatch</code> rewrites its body by generating a name for each variant and using the provided type as its single tuple-style argument.
+The name for each variant isn't particularly important for most purposes, but <code>enum_dispatch</code> will currently just use the name of the provided type.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">enum</span><span class="w"> </span><span class="nc">MyBehaviorEnum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">MyImplementorA</span><span class="p">(</span><span class="n">MyImplementorA</span><span class="p">),</span>
+<span class="w">    </span><span class="n">MyImplementorB</span><span class="p">(</span><span class="n">MyImplementorB</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h5>trait processing</h5>
+<p><code>enum_dispatch</code> doesn't actually process annotated traits!
+However, it still requires access to the trait definition so it can take note of the trait's name, as well as the function signatures of any methods inside it.</p>
+<h5>trait impl creation</h5>
+<p>Whenever <code>enum_dispatch</code> is able to &quot;link&quot; two definitions together, it will generate an <code>impl</code> block, implementing the trait for the enum.
+In the above example, the linkage is completed by the <code>MyBehavior</code> trait definition, so <code>impl</code> blocks will be generated directly below that trait.
+The generated impl block might look something like this:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">impl</span><span class="w"> </span><span class="n">MyBehavior</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">MyBehaviorEnum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">my_trait_method</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">MyImplementorA</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">inner</span><span class="p">.</span><span class="n">my_trait_method</span><span class="p">(),</span>
+<span class="w">            </span><span class="n">MyImplementorB</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">inner</span><span class="p">.</span><span class="n">my_trait_method</span><span class="p">(),</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>Additional trait methods would be expanded accordingly, and additional enum variants would correspond to additional match arms in each method definition.
+It's easy to see how quickly this can become unmanageable in manually written code!</p>
+<h5>'From' impl creation</h5>
+<p>Normally, it would be impossible to initialize one of the new enum variants without knowing its name.
+However, with implementations of <code>From&lt;T&gt;</code> for each variant, that requirement is alleviated.
+The generated implementations could look like the following:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">impl</span><span class="w"> </span><span class="nb">From</span><span class="o">&lt;</span><span class="n">MyImplementorA</span><span class="o">&gt;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">MyBehaviorEnum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">from</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span><span class="w"> </span><span class="nc">MyImplementorA</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">MyBehaviorEnum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">MyBehaviorEnum</span><span class="p">::</span><span class="n">MyImplementorA</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="nb">From</span><span class="o">&lt;</span><span class="n">MyImplementorB</span><span class="o">&gt;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">MyBehaviorEnum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">from</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span><span class="w"> </span><span class="nc">MyImplementorB</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">MyBehaviorEnum</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">MyBehaviorEnum</span><span class="p">::</span><span class="n">MyImplementorB</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>As with above, having a large number of possible type variants would make this very difficult to maintain by hand.</p>
+<h5>registry and linkage</h5>
+<p>Anyone closely familiar with writing macros will know that they must be processed locally, with no context about the surrounding source code.
+Additionally, parsed syntax items in <code>syn</code> are <code>!Send</code> and <code>!Sync</code>.
+This is for good reason -- with multithreaded compilation and macro expansion, there are no guarantees on the order or lifetime of a reference to any given block of code.
+Unfortunately, it also prevents referencing syntax between separate macro invocations.</p>
+<p>In the interest of convenience, <code>enum_dispatch</code> circumvents these restrictions by converting syntax into a <code>String</code> and storing it in <code>once_cell</code> lazily initialized <code>Mutex&lt;HashMap&lt;String, String&gt;&gt;</code>s whose keys are either the trait or enum names.</p>
+<p>There is also a similar <code>HashMap</code> dedicated to &quot;deferred&quot; links, since definitions in different files could be encountered in arbitrary orders.
+If a linking attribute (with one argument) occurs before the corresponding registry attribute (with no arguments), the argument will be stored as a deferred link.
+Once that argument's definition is encountered, impl blocks can be created as normal.</p>
+<p>Because of the link deferral mechanism, it's not an error to encounter a linking attribute without being able to implement it.
+<code>enum_dispatch</code> will simply expect to find the corresponding registry attribute later in parsing.
+However, there's no way to insert a callback to check that all deferred links have been processed once all the original source code has been parsed, explaining the impossibility of warning the user of unlinked attributes.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p>No feature declarations recorded.</p></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/once_cell/"><code>crates-io/once_cell</code></a><small>Alias: once_cell</small></th><td><code>^1.0.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/proc-macro2/"><code>crates-io/proc-macro2</code></a><small>Alias: proc-macro2</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/quote/"><code>crates-io/quote</code></a><small>Alias: quote</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/syn/"><code>crates-io/syn</code></a><small>Alias: syn</small></th><td><code>^2.0</code><small>Default features: enabled</small><small>Requests: full</small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><p>No declared dependents in this checkpoint.</p></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:4b4cd9771e126f08984f61fce1739663cba9a4b37200ec3bf1d881bcfbe7069c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:363e099df443b2684102f5eb70f6dfd885e872a155168f7627ac552b6302a4bb</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:11f0f105e06ac3e4df79c1e3f04484af033cc90c14774cece581f6a12217d265</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:ffed0b9401c09adcc0253617bb90081f8f5b6983a29574e40059eb68fa6fc8e4</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:4401f56c6646d8082e283d1278dcb4bf9be88309dddff3dfc275ded293da8e8a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:acbf80835bd2c02ed99852a85fcb5fd9e8a52ca5b5168b7d9c4d5dcb3dadf4f1</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b7dac8073e21eb48a11a485cda1fea54c0eee3cfa05b5e7c638332860d9cb2c5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:a6308e4401ee698e2d0b80557889e26eea916a828a7ac2f4f2b8e50abf10dcc5</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/enum_dispatch/versions/0.3.13/">0.3.13</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/enum_dispatch/0.3.13">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<h4>0.3.13</h4>
+<ul>
+<li>Fix namespace collision with imports named <code>core</code> (!35)</li>
+</ul>
+<h4>0.3.12</h4>
+<ul>
+<li>Update to syn 2.0 (#69)</li>
+</ul>
+<h4>0.3.11</h4>
+<ul>
+<li>Add support for trait methods that return <code>Self</code> (#59, !29)</li>
+</ul>
+<h4>0.3.10</h4>
+<ul>
+<li>Add support for async trait methods (#62)</li>
+</ul>
+<h4>0.3.9</h4>
+<ul>
+<li>Add support for const generics (#51, !25)</li>
+</ul>
+<h4>0.3.8</h4>
+<ul>
+<li>Preserve attributes from inner fields of enum variants (!27)</li>
+</ul>
+<h4>0.3.7</h4>
+<ul>
+<li>Support trait methods with late bound lifetime arguments (#34)</li>
+</ul>
+<h4>0.3.6</h4>
+<ul>
+<li>Remove <code>extra-traits</code> feature from <code>syn</code> dependency (!24)</li>
+<li>Support trait methods with pattern arguments (#44)</li>
+</ul>
+<h4>0.3.5</h4>
+<ul>
+<li>Compatibility with <code>syn &gt;= 1.0.58</code> (#37, !21)</li>
+</ul>
+<h4>0.3.4</h4>
+<ul>
+<li>Support enum variants named <code>Error</code> (#36)</li>
+</ul>
+<h4>0.3.3</h4>
+<h5>Compatibility warning</h5>
+<p>Users who had previously used an <code>#[enum_dispatch(...)]</code> attribute containing the name of a generic trait will need to update the attribute to include matching generic arguments.
+See #35 for details.</p>
+<ul>
+<li>Support trait methods with generic type parameters (#28)</li>
+<li>Officially support linking generic traits (#26)</li>
+</ul>
+<h4>0.3.2</h4>
+<ul>
+<li>Support <code>cfg</code> attributes on enum variants and trait items (#24)</li>
+</ul>
+<h4>0.3.1</h4>
+<ul>
+<li>Support multiple comma separated traits or enums in <code>enum_dispatch</code> attributes (#3, !14)</li>
+<li>Pass attributes from trait methods to the generated implementations (!15)</li>
+</ul>
+<h4>0.3.0</h4>
+<p>Rerelease of 0.2.3 to undo unintentional semver incompatibility (#16)</p>
+<h4>0.2.4</h4>
+<p>Rerelease of 0.2.2 to undo unintentional semver incompatibility (#16)</p>
+<h4>0.2.3</h4>
+<ul>
+<li>Support identical method names across traits and base structs (!12)</li>
+</ul>
+<h4>0.2.2</h4>
+<ul>
+<li>Support multiple trait implementations per enum (!13)</li>
+</ul>
+<h4>0.2.1</h4>
+<ul>
+<li>Pass attributes from enum variants to the generated enums (#14)</li>
+<li>Support enum variants with generic parameters (!4)</li>
+</ul>
+<h4>0.2.0</h4>
+<ul>
+<li>Generate implementations of <code>TryInto</code> instead of <code>TryFrom</code>, which cannot be implemented on foreign types (#10)</li>
+</ul>
+</div><p class="table-note">sha256:38203191855569e3bcffa12ddbc483d52d4dc163b1bba8d657e97de819940284</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2019 Anton Lazarev
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:1e5d3ddaf5cbc111c8517df39e6f252e4c16dbda26b7cc1ad54c9e3efb0586be</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:69182d33755ef5eaeee3f9a7a4311e565658b6bb9841fe9095372fd8389498f9</code></dd><dt>Upstream checksum</dt><dd><code>sha256:aa18ce2bc66555b3218614519ac839ddb759a7d6720732f979ef8d13be147ecd</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/enum_dispatch&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.3.13&quot;</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;enum_dispatch&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;proc-macro&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">once_cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/once_cell&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.1&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">proc-macro2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/proc-macro2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">quote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/quote&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syn&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;full&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Anton Lazarev &lt;https://antonok.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/enum_dispatch/0.3.13">crates.io package</a></li><li><a href="https://gitlab.com/antonok/enum_dispatch">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">enum_dispatch</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/enum_dispatch"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.3.13"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

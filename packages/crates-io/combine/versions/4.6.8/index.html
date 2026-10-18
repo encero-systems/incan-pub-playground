@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>combine 4.6.8 · Incan.pub</title><meta name="description" content="Fast parser combinators on arbitrary streams with zero-copy support."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/combine</p><div class="title-row"><h1>combine</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/combine/versions/4.6.8/" selected>4.6.8</option></select></label></div><p class="description">Fast parser combinators on arbitrary streams with zero-copy support.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>combine</h3>
+<p><a href="https://travis-ci.org/Marwes/combine">Build Status</a>
+<a href="https://docs.rs/combine">Docs</a>
+<a href="https://gitter.im/Marwes/combine?utm_source=badge&amp;amp;utm_medium=badge&amp;amp;utm_campaign=pr-badge">Gitter</a></p>
+<p>An implementation of parser combinators for Rust, inspired by the Haskell library <a href="https://hackage.haskell.org/package/parsec">Parsec</a>. As in Parsec the parsers are <a href="https://en.wikipedia.org/wiki/LL_parser">LL(1)</a> by default but they can opt-in to arbitrary lookahead using the <a href="https://docs.rs/combine/*/combine/fn.attempt.html">attempt combinator</a>.</p>
+<h4>Example</h4>
+<pre><code class="syntax-highlight language-rust"><span class="k">extern</span><span class="w"> </span><span class="k">crate</span><span class="w"> </span><span class="n">combine</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">combine</span><span class="p">::{</span><span class="n">many1</span><span class="p">,</span><span class="w"> </span><span class="n">Parser</span><span class="p">,</span><span class="w"> </span><span class="n">sep_by</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">combine</span><span class="p">::</span><span class="n">parser</span><span class="p">::</span><span class="kt">char</span><span class="p">::{</span><span class="n">letter</span><span class="p">,</span><span class="w"> </span><span class="n">space</span><span class="p">};</span>
+
+<span class="c1">// Construct a parser that parses *many* (and at least *1) *letter*s</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">many1</span><span class="p">(</span><span class="n">letter</span><span class="p">());</span>
+
+<span class="c1">// Construct a parser that parses many *word*s where each word is *separated by* a (white)*space*</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">parser</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sep_by</span><span class="p">(</span><span class="n">word</span><span class="p">,</span><span class="w"> </span><span class="n">space</span><span class="p">())</span>
+<span class="w">    </span><span class="c1">// Combine can collect into any type implementing `Default + Extend` so we need to assist rustc</span>
+<span class="w">    </span><span class="c1">// by telling it that `sep_by` should collect into a `Vec` and `many1` should collect to a `String`</span>
+<span class="w">    </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="k">mut</span><span class="w"> </span><span class="n">words</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;|</span><span class="w"> </span><span class="n">words</span><span class="p">.</span><span class="n">pop</span><span class="p">());</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">parser</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&quot;Pick up that word!&quot;</span><span class="p">);</span>
+<span class="c1">// `parse` returns `Result` where `Ok` contains a tuple of the parsers output and any remaining input.</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="w"> </span><span class="nb">Ok</span><span class="p">((</span><span class="nb">Some</span><span class="p">(</span><span class="s">&quot;word&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">()),</span><span class="w"> </span><span class="s">&quot;!&quot;</span><span class="p">)));</span>
+</code></pre>
+<p>Larger examples can be found in the <a href="https://github.com/Marwes/combine/tree/master/examples">examples</a>, <a href="https://github.com/Marwes/combine/tree/master/tests">tests</a> and <a href="https://github.com/Marwes/combine/tree/master/benches">benches</a> folders.</p>
+<h4>Tutorial</h4>
+<p>A tutorial as well as explanations on what goes on inside combine can be found in <a href="https://github.com/Marwes/combine/wiki">the wiki</a>.</p>
+<h5>Translation</h5>
+<p><a href="https://github.com/sadnessOjisan/combine-ja">Japanese</a></p>
+<h4>Links</h4>
+<p><a href="https://docs.rs/crate/combine">Documentation and examples</a></p>
+<p><a href="https://crates.io/crates/combine">crates.io</a></p>
+<h4>Features</h4>
+<ul>
+<li>
+<p><strong>Parse arbitrary streams</strong> - Combine can parse anything from <code>&amp;[u8]</code> and <code>&amp;str</code> to iterators and <code>Read</code> instances. If none of the builtin streams fit your use case you can even implement a couple traits your self to create your own custom <a href="https://docs.rs/combine/*/combine/stream/index.html">stream</a>!</p>
+</li>
+<li>
+<p><strong>zero-copy parsing</strong> - When parsing in memory data, combine can parse without copying. See the <a href="https://docs.rs/combine/*/combine/parser/range/index.html">range module</a> for parsers specialized for zero-copy parsing.</p>
+</li>
+<li>
+<p><strong>partial parsing</strong> - Combine parsers can be stopped at any point during parsing and later be resumed without losing any progress. This makes it possible to start parsing partial data coming from an io device such as a socket without worrying about if enough data is present to complete the parse. If more data is needed the parser will stop and may be resumed at the same point once more data is available. See the <a href="https://github.com/Marwes/combine/blob/master/examples/async.rs">async example</a> for an example and <a href="https://marwes.github.io/2018/02/08/combine-3.html">this post</a> for an introduction.</p>
+</li>
+</ul>
+<h4>About</h4>
+<p>A parser combinator is, broadly speaking, a function which takes several parsers as arguments and returns a new parser, created by combining those parsers. For instance, the <a href="https://docs.rs/combine/*/combine/fn.many.html">many</a> parser takes one parser, <code>p</code>, as input and returns a new parser which applies <code>p</code> zero or more times. Thanks to the modularity that parser combinators gives it is possible to define parsers for a wide range of tasks without needing to implement the low level plumbing while still having the full power of Rust when you need it.</p>
+<p>The library adheres to <a href="https://semver.org/">semantic versioning</a>.</p>
+<p>If you end up trying it I welcome any feedback from your experience with it. I am usually reachable within a day by opening an issue, sending an email or posting a message on Gitter.</p>
+<h4>FAQ</h4>
+<h5>Why does my errors contain inscrutable positions?</h5>
+<p>Since <code>combine</code> aims to crate parsers with little to no overhead, streams over <code>&amp;str</code> and <code>&amp;[T]</code> do not carry any extra position information, but instead, they only rely on comparing the pointer of the buffer to check which <code>Stream</code> is further ahead than another <code>Stream</code>. To retrieve a better position, either call <code>translate_position</code> on the <code>PointerOffset</code> which represents the position or wrap your stream with <code>State</code>.</p>
+<h5>How does it compare to nom?</h5>
+<p>https://github.com/Marwes/combine/issues/73 contains discussion and links to comparisons to <a href="https://github.com/Geal/nom">nom</a>.</p>
+<h4>Parsers written in combine</h4>
+<h5>Formats and protocols</h5>
+<ul>
+<li>GraphQL https://github.com/graphql-rust/graphql-parser (Uses a custom tokenizer as input)</li>
+<li>DiffX https://github.com/brennie/diffx-rs</li>
+<li>Redis https://github.com/mitsuhiko/redis-rs/pull/141 (Uses partial parsing)</li>
+<li>Toml https://github.com/ordian/toml_edit</li>
+<li>Maker Interchange Format https://github.com/aidanhs/frametool (Uses combine as a lexer)</li>
+<li>Javascript https://github.com/freemasen/ress</li>
+<li>JPEG Metadata https://github.com/vadixidav/exifsd</li>
+</ul>
+<h5>Miscellaneous</h5>
+<ul>
+<li>Template language https://github.com/tailhook/trimmer</li>
+<li>Code exercises https://github.com/dgel/adventOfCode2017</li>
+<li>Programming language
+<ul>
+<li>https://github.com/MaikKlein/spire-lang</li>
+<li>https://github.com/vadixidav/typeflow/tree/master/lang</li>
+</ul>
+</li>
+<li>Query parser (+ more) https://github.com/mozilla/mentat</li>
+<li>Query parser https://github.com/tantivy-search/tantivy</li>
+</ul>
+<h4>Extra</h4>
+<p>There is an additional crate which has parsers to lex and parse programming languages in <a href="https://github.com/Marwes/combine-language">combine-language</a>.</p>
+<h4>Contributing</h4>
+<p>The easiest way to contribute is to just open an issue about any problems you encounter using combine but if you are interested in adding something to the library here is a list of some of the easier things to work on to get started.</p>
+<ul>
+<li><strong>Add additional parsers</strong> If you have a suggestion for another parser just open an issue or a PR with an implementation.</li>
+<li><strong>Add additional examples</strong> More examples for using combine will always be useful!</li>
+<li><strong>Add and improve the docs</strong> Not the fanciest of work but one cannot overstate the importance of good documentation.</li>
+</ul>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>alloc</code></th><td>Yes<small>default → std → alloc</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>bytes</code></th><td>Yes<small>default → std → bytes</small></td><td><ul class="effects"><li><code>dep:bytes</code></li></ul></td></tr><tr><th scope="row"><code>bytes_05</code></th><td>No</td><td><ul class="effects"><li><code>dep:bytes_05</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>futures-03</code></th><td>No</td><td><ul class="effects"><li><code>pin-project</code></li><li><code>std</code></li><li><code>futures-core-03</code></li><li><code>futures-io-03</code></li><li><code>pin-project-lite</code></li></ul></td></tr><tr><th scope="row"><code>futures-core-03</code></th><td>No</td><td><ul class="effects"><li><code>dep:futures-core-03</code></li></ul></td></tr><tr><th scope="row"><code>futures-io-03</code></th><td>No</td><td><ul class="effects"><li><code>dep:futures-io-03</code></li></ul></td></tr><tr><th scope="row"><code>mp4</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>pin-project</code></th><td>No</td><td><ul class="effects"><li><code>pin-project-lite</code></li></ul></td></tr><tr><th scope="row"><code>pin-project-lite</code></th><td>No</td><td><ul class="effects"><li><code>dep:pin-project-lite</code></li></ul></td></tr><tr><th scope="row"><code>regex</code></th><td>No</td><td><ul class="effects"><li><code>dep:regex</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>memchr/std</code></li><li><code>bytes</code></li><li><code>alloc</code></li></ul></td></tr><tr><th scope="row"><code>tokio</code></th><td>No</td><td><ul class="effects"><li><code>tokio-dep</code></li><li><code>dep:tokio-util</code></li><li><code>tokio-util/io</code></li><li><code>futures-core-03</code></li><li><code>pin-project-lite</code></li></ul></td></tr><tr><th scope="row"><code>tokio-02</code></th><td>No</td><td><ul class="effects"><li><code>pin-project</code></li><li><code>std</code></li><li><code>tokio-02-dep</code></li><li><code>futures-core-03</code></li><li><code>pin-project-lite</code></li><li><code>bytes_05</code></li></ul></td></tr><tr><th scope="row"><code>tokio-02-dep</code></th><td>No</td><td><ul class="effects"><li><code>dep:tokio-02-dep</code></li></ul></td></tr><tr><th scope="row"><code>tokio-03</code></th><td>No</td><td><ul class="effects"><li><code>pin-project</code></li><li><code>std</code></li><li><code>tokio-03-dep</code></li><li><code>futures-core-03</code></li><li><code>pin-project-lite</code></li></ul></td></tr><tr><th scope="row"><code>tokio-03-dep</code></th><td>No</td><td><ul class="effects"><li><code>dep:tokio-03-dep</code></li></ul></td></tr><tr><th scope="row"><code>tokio-dep</code></th><td>No</td><td><ul class="effects"><li><code>dep:tokio-dep</code></li></ul></td></tr><tr><th scope="row"><code>tokio-util</code></th><td>No</td><td><ul class="effects"><li><code>dep:tokio-util</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/bytes/"><code>crates-io/bytes</code></a><small>Alias: bytes</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → std → bytes</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/bytes/"><code>crates-io/bytes</code></a><small>Alias: bytes_05</small></th><td><code>^0.5</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/futures-core/"><code>crates-io/futures-core</code></a><small>Alias: futures-core-03</small></th><td><code>^0.3.1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/futures-io/"><code>crates-io/futures-io</code></a><small>Alias: futures-io-03</small></th><td><code>^0.3.1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/memchr/"><code>crates-io/memchr</code></a><small>Alias: memchr</small></th><td><code>^2.3</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/pin-project-lite/"><code>crates-io/pin-project-lite</code></a><small>Alias: pin-project-lite</small></th><td><code>^0.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/regex/"><code>crates-io/regex</code></a><small>Alias: regex</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/tokio/"><code>crates-io/tokio</code></a><small>Alias: tokio-02-dep</small></th><td><code>^0.2.3</code><small>Default features: disabled</small><small>Requests: io-util</small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/tokio/"><code>crates-io/tokio</code></a><small>Alias: tokio-03-dep</small></th><td><code>^0.3</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/tokio/"><code>crates-io/tokio</code></a><small>Alias: tokio-dep</small></th><td><code>^1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/tokio-util/"><code>crates-io/tokio-util</code></a><small>Alias: tokio-util</small></th><td><code>^0.7</code><small>Default features: disabled</small><small>Requests: codec</small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/jni/versions/0.22.4/">crates-io/jni 0.22.4</a><span>Requires ^4.1.0 · alias combine · </span></li><li><a href="../../../../../packages/crates-io/redis/versions/1.7.1/">crates-io/redis 1.7.1</a><span>Requires ^4.6.8 · alias combine · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, bytes, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5e978ef170199edf3713f9884c71fdb0cd928c34a31bbff8c26ae4ff7eda6d95</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:042087ee275c65800c0ec69054939c5f0dba961df4a9e0c8ebd8ffa3b40a4f96</small></li><li><code>sha256:f4055f384894d02c44f043dc45158f40daee73c1771a02f53abb78e03e08705a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:5f38404d96e4d8579bb43b7406eb9e8a7bbf3a979ae3949c012c5ecc1cb03aa1</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, bytes, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:5373c88e76567532389dfd391d35bc3b70f1638ddc6b8a7c273ba9050236e569</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:add7a346ba771838798d2f96a0c495077617f67d5cda993558d0d2d8b69e98e1</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, bytes, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:49ec35f8390bd9dd0a52e97f1df8a357ff876f22fc954f191901a0f112950203</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:0588a683e406f2f9678ca747713b03ef61e86fc24dc2c5eeea75341c17510feb</small></li><li><code>sha256:c124eae700dc75f43450851ad90e222d06f64492ccd2ba8a6ee1bb4544116421</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:249586ac5336eb06c14b2d589e4ae1418e00c74d2036caac0139bffeb09469e7</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, bytes, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:23d470c1c0a4230cc7054983cfb7ea0b7ca76bd330541eb01164db4ea191228e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:e77ad1e80d9c92c806a124051585ac2dab72b77f0a725e7e7398e9db25f2e354</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, bytes, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:36ef914b0f8d288c69b5ffaeb54195249a2745aaf3d42a66b2b508a162e05850</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:f76e3cd388f840c332d3dbae042fea4d513bed2499e04eaf2129d58204c2eb2c</small></li><li><code>sha256:671a58e07093530ae70ec62c79f20ccd290264eb3a02dd6fb85aadff18a243a0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:ed8f27c96cae346ac513eef1ed2560383cfcda3c15e68a2cec4948f583543a72</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, bytes, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:6a9ba7cb1d09769020ad6de3071c4e41a625c17355d66cd5fa7463a1ef838de7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:bfab56e4fa7a11a4cbc4839ab35529656ccc4cea14cdf84db452fcca028cdab8</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, bytes, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1eb6e1ecfe5a063c35b0688332660898cfaf039cf984ab419d325ae2d4551447</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:45c5dd1d367a794ec68cf488196b7c7f7e467a1381a9210c2b27a8dd35ef1cb6</small></li><li><code>sha256:cbc3fa492c9d033da8bb988c7ff2a1a1626d9d75e0239027c0eb0e25b5551cc8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:85b451d7459c0f76a0cc507e3ad2a62f2fd9d8ed367d0e010a25e6494b4c20dd</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, bytes, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:3969d5b485538da358637e6aecd1542036418dc413f37c6b9c5b8c7adebfb617</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:59d9102fd025014918fb049bee2e8e401238345111870f00d03d5b973e65dfc3</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/combine/versions/4.6.8/">4.6.8</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/combine/4.6.8">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h4><a href="https://github.com/gluon-lang/gluon/compare/v4.6.7..4.6.8">4.6.8</a> - 2026-08-25</h4>
+<h5>Bug Fixes</h5>
+<ul>
+<li>usage of <code>BytesMut</code> in <code>extend_buf_sync</code> - (<a href="https://github.com/gluon-lang/gluon/commit/b705882f725c18b4c767864a2e7830c5551083ad">b705882</a>) - Paolo Barbolini</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>Add documentation to no_partial - (<a href="https://github.com/gluon-lang/gluon/commit/b3c770f9bd43db7b4197225566bf9d951887c2b3">b3c770f</a>) - Markus Westerlind</li>
+<li>Use from_str in examples/async.rs - (<a href="https://github.com/gluon-lang/gluon/commit/8068d6c472d390fd129cd7da631125bcfe2d3cc5">8068d6c</a>) - Markus Westerlind</li>
+</ul>
+<h5>Parser/combinator</h5>
+<ul>
+<li>Drop superfluous semicolon in <code>opaque</code> - (<a href="https://github.com/gluon-lang/gluon/commit/6a3701d742a80d40cf7907f336c34599821a3353">6a3701d</a>) - Christian Aistleitner</li>
+</ul>
+<p>&lt;a name=&quot;v4.6.7&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.6.7 (2024-04-10)</h5>
+<ul>
+<li>perf: avoid initializing huge buffers in the stream decoder</li>
+</ul>
+<p>&lt;a name=&quot;v4.6.6&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.6.6 (2022-08-09)</h5>
+<ul>
+<li>
+<p>memchr: use non deprecated feature <code>std</code> instead of <code>use_std</code></p>
+</li>
+<li>
+<p>refactor: Extract less-generic code from sequence's add_errors (-5%)</p>
+</li>
+</ul>
+<p>&lt;a name=&quot;v4.6.4&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.6.4 (2022-04-25)</h5>
+<p>&lt;a name=&quot;v4.6.3&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.6.3 (2022-01-12)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li><strong>easy:</strong>  Only back-quote parser tokens (<a href="https://github.com/Marwes/combine/commit/08962d1d4287c03edb84bd73a9eb09a42f294bc8">08962d1d</a>, closes <a href="https://github.com/Marwes/combine/issues/334">#334</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.6.3&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.6.3 (2022-01-12)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li><strong>easy:</strong>  Only back-quote parser tokens (<a href="https://github.com/Marwes/combine/commit/08962d1d4287c03edb84bd73a9eb09a42f294bc8">08962d1d</a>, closes <a href="https://github.com/Marwes/combine/issues/334">#334</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.6.2&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.6.2 (2021-10-28)</h5>
+<h6>Performance</h6>
+<ul>
+<li>Handle restarts better in take_until_byte{,s,2,3} (<a href="https://github.com/Marwes/combine/commit/03b19498189c873cdf8195a207a9f5a747ca40b7">03b19498</a>, closes <a href="https://github.com/Marwes/combine/issues/327">#327</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>warning (<a href="https://github.com/Marwes/combine/commit/08753d3ebf072c0765e99bd6f440b52ef93cab40">08753d3e</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.6.1&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.6.1 (2021-08-25)</h5>
+<h6>Performance</h6>
+<ul>
+<li>Avoid a saturating add in slice_uncons_while (<a href="https://github.com/Marwes/combine/commit/7f330b0cacd61131df88c919074ffa8136100299">7f330b0c</a>)</li>
+<li>Avoid a saturating add in slice_uncons_while (<a href="https://github.com/Marwes/combine/commit/ad4180dd7d3530d47502795ead21e13b7816aed7">ad4180dd</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.6.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v4.6.0 (2021-06-16)</h4>
+<h6>Features</h6>
+<ul>
+<li>Add decode_tokio (<a href="https://github.com/Marwes/combine/commit/aa20bf641bc5deed7e521de289f2b0963034f750">aa20bf64</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.5.2&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.5.2 (2021-01-07)</h5>
+<p>&lt;a name=&quot;v4.5.1&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.5.1 (2020-12-27)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Correct the tokio-02 feature (<a href="https://github.com/Marwes/combine/commit/466a50d3533118cca0bafab48451fd39f92a8233">466a50d3</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.5.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v4.5.0 (2020-12-25)</h4>
+<h6>Features</h6>
+<ul>
+<li>Remove pin-project-lite from the 'std' feature (<a href="https://github.com/Marwes/combine/commit/32ef87b08a643c9814cb9eec6d1f3adfe220c690">32ef87b0</a>)</li>
+<li>Add async decoding for tokio version 1 (<a href="https://github.com/Marwes/combine/commit/8e91f57d1ddaefafcaf244df7a7eea2096c6d6aa">8e91f57d</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.4.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v4.4.0 (2020-11-18)</h4>
+<h6>Features</h6>
+<ul>
+<li>Add support for decoding using tokio_03 (<a href="https://github.com/Marwes/combine/commit/ce1612ffa0a15547bc967474b511ec35eaaf743f">ce1612ff</a>)</li>
+<li>Add a length_prefix combinator (<a href="https://github.com/Marwes/combine/commit/9e343b2a0067ea70b049369ea1023c364c14b19d">9e343b2a</a>, closes <a href="https://github.com/Marwes/combine/issues/297">#297</a>)</li>
+<li>Add a spanned combinator (<a href="https://github.com/Marwes/combine/commit/1a70f3f4219eac71880cbb376e62d3f01c22d981">1a70f3f4</a>)</li>
+<li>Add a spanned combinator (<a href="https://github.com/Marwes/combine/commit/9a8fead85b3eb0d7ee21f80d076af9f59aa408d1">9a8fead8</a>)</li>
+<li>Allow conversion between errors with different token,range,position types (<a href="https://github.com/Marwes/combine/commit/65fe0af27fa560f90da2723160efd2d1782bea4f">65fe0af2</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Allow conversion between errors with different token,range,position types (<a href="https://github.com/Marwes/combine/commit/65fe0af27fa560f90da2723160efd2d1782bea4f">65fe0af2</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.3.2&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.3.2 (2020-09-08)</h5>
+<p>&lt;a name=&quot;v4.3.1&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.3.1 (2020-08-26)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Make the decode macros work for redis (<a href="https://github.com/Marwes/combine/commit/82b908d80ac21aeab27b169a1f1857a68a6bb11c">82b908d8</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.3.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v4.3.0 (2020-07-10)</h4>
+<h6>Features</h6>
+<ul>
+<li>Specialize decoding on BufReader (<a href="https://github.com/Marwes/combine/commit/9559e114658b60a59d570ffd78f4d7ecb597b814">9559e114</a>)</li>
+<li>Add a BufReader abstraction for Decoder (<a href="https://github.com/Marwes/combine/commit/d65a23e81f482c6a5482e53d63c17fcbcf67d623">d65a23e8</a>)</li>
+<li>Allow tuple structs and functions in struct_parser! (<a href="https://github.com/Marwes/combine/commit/48a16f6bf84939da9eacb1f82b4cff6ca7f324e0">48a16f6b</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.2.1&quot;&gt;&lt;/a&gt;</p>
+<h5>v4.2.1 (2020-05-20)</h5>
+<h6>Performance</h6>
+<ul>
+<li>Use size_hint in iterate (<a href="https://github.com/Marwes/combine/commit/b2649e3b467fc84ef48a91d56ec1fcb40291978e">b2649e3b</a>)</li>
+<li>Pre-allocate collections for count* parsers (<a href="https://github.com/Marwes/combine/commit/5f37857c988b81c2b0613d6f2ab14576c794ae99">5f37857c</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.2.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v4.2.0 (2020-05-17)</h4>
+<h6>Features</h6>
+<ul>
+<li>Add any_send_sync_partial_state (<a href="https://github.com/Marwes/combine/commit/7e90807a0949411b6aaf24a677e6530a530a1478">7e90807a</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v4.1.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v4.1.0 (2020-04-22)</h4>
+<p>&lt;a name=&quot;4.0.1&quot;&gt;&lt;/a&gt;</p>
+<h5>4.0.1 (2020-01-23)</h5>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Make the decode macros take read by parameter (<a href="https://github.com/Marwes/combine/commit/aa813fb1b486ecdc5258bf2c89e0b18a8f4fc876">aa813fb1</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Features</h6>
+<ul>
+<li>Make the decode macros take read by parameter (<a href="https://github.com/Marwes/combine/commit/aa813fb1b486ecdc5258bf2c89e0b18a8f4fc876">aa813fb1</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Don't block decoding if there are more data in the buffer (<a href="https://github.com/Marwes/combine/commit/6659f993784876bdc5d6f6145aaffe2844ada760">6659f993</a>)</li>
+<li>Don't try to read into the entire buffer for std decoding (<a href="https://github.com/Marwes/combine/commit/d613dc937de6e0b745f8cbcca974e3cfcb3db723">d613dc93</a>)</li>
+</ul>
+<p>&lt;a name=&quot;4.0.0&quot;&gt;&lt;/a&gt;</p>
+<h4>4.0.0 (2020-01-16)</h4>
+<h6>Features</h6>
+<ul>
+<li>Relax the decode*! macros to no longer need BufRead (<a href="https://github.com/Marwes/combine/commit/bc5b779491c66a18289bc4b237d281bd391b1d69">bc5b7794</a>)</li>
+<li>Add decode_futures_03_buf_read (<a href="https://github.com/Marwes/combine/commit/f403ecda68e5d7c5d5cf89d8feb26aa1b715609e">f403ecda</a>)</li>
+<li>Add the produce parser (<a href="https://github.com/Marwes/combine/commit/ac15b87c4eb23065920b3bb7ad8d590f29937895">ac15b87c</a>)</li>
+</ul>
+<p>&lt;a name=&quot;4.0.0-beta.2&quot;&gt;&lt;/a&gt;</p>
+<h4>4.0.0-beta.2 (2019-12-19)</h4>
+<h6>Features</h6>
+<ul>
+<li>Increase tuple parsers to 20 elements (<a href="https://github.com/Marwes/combine/commit/45781feac3cd2da252fcc999aa69c9a207af5f6a">45781fea</a>)</li>
+<li>Remove deprecated re-exports (<a href="https://github.com/Marwes/combine/commit/b4e23207f9c3e47111c69865389853d89b8ce12d">b4e23207</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Add decode_tokio_buf_read! to parse tokio::io::BufRead (<a href="https://github.com/Marwes/combine/commit/4d38f7c25cb0cde10cdc869955c0a98079b5fa08">4d38f7c2</a>)</li>
+<li>Add <code>decode_buf_read!</code> to parse <code>BufRead</code> without (<a href="https://github.com/Marwes/combine/commit/dbe23ce90803d409c591b02aaeb7005d0f58622a">dbe23ce9</a>)</li>
+<li>Add a macro to incrementally decode std::io::BufRead (<a href="https://github.com/Marwes/combine/commit/6e2f1121203c54b1623f9f5a8b35907867c83874">6e2f1121</a>)</li>
+<li>Rename Consumed to Commit and Empty to Peek (<a href="https://github.com/Marwes/combine/commit/129046e3a555318c3e60f658988f1be8fe83a2fd">129046e3</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Rename Consumed{Ok,Err} to Commit{Ok,Err} and Empty{Ok,Err} to Peek{Ok,Err} (<a href="https://github.com/Marwes/combine/commit/0ac1fd4fee89bd540b38b0d3224e0dcf5260ab77">0ac1fd4f</a>)</li>
+<li>Add a dedicated error for ReadStream (<a href="https://github.com/Marwes/combine/commit/37bbd84383ecaa632df537322426407be7712748">37bbd843</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Handle partial parsing in sep_end_by (<a href="https://github.com/Marwes/combine/commit/281e0d30276cd8d2b730680fb24117bb1b72b198">281e0d30</a>)</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Remove deprecated re-exports (<a href="https://github.com/Marwes/combine/commit/b4e23207f9c3e47111c69865389853d89b8ce12d">b4e23207</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Rename Consumed to Commit and Empty to Peek (<a href="https://github.com/Marwes/combine/commit/129046e3a555318c3e60f658988f1be8fe83a2fd">129046e3</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<p>&lt;a name=&quot;4.0.0-beta.1&quot;&gt;&lt;/a&gt;</p>
+<h4>4.0.0-beta.1 (2019-10-08)</h4>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Handle partial parsing in the num parsers (<a href="https://github.com/Marwes/combine/commit/47764c7feb8becefd1d4c376fc11492ed3f3cd6a">47764c7f</a>)</li>
+<li>Don't bind the input lifetime to the parser with expected/message (<a href="https://github.com/Marwes/combine/commit/618c69e09afc383dadc9af305394ca82948801c3">618c69e0</a>)</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Merge FullRangeStream into RangeStreamOnce (<a href="https://github.com/Marwes/combine/commit/c160a971b47c29a0c8d37fbca6f77cd4a6c85831">c160a971</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Rename <code>StreamOnce::Item</code> to <code>Token</code> (<a href="https://github.com/Marwes/combine/commit/74a0bbd363214047236ae88e76bd7e7a7cdc265f">74a0bbd3</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>, <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Minimum rust version is now 1.32 (<a href="https://github.com/Marwes/combine/commit/7b77508c05f2075e7795b6026e419a2a57666a1c">7b77508c</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Only require <code>&amp;mut I</code> in decode (<a href="https://github.com/Marwes/combine/commit/e154dbc2f2ca3288e6733f29c85f4b1efcd689c7">e154dbc2</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Generalize factory to take the Input (<a href="https://github.com/Marwes/combine/commit/19b1a73ed3516d14b392aefeba0363d01937be22">19b1a73e</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Features</h6>
+<ul>
+<li>Merge FullRangeStream into RangeStreamOnce (<a href="https://github.com/Marwes/combine/commit/c160a971b47c29a0c8d37fbca6f77cd4a6c85831">c160a971</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Rename <code>StreamOnce::Item</code> to <code>Token</code> (<a href="https://github.com/Marwes/combine/commit/74a0bbd363214047236ae88e76bd7e7a7cdc265f">74a0bbd3</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>, <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Allow fmt::Display be used to specify errors in combinators (<a href="https://github.com/Marwes/combine/commit/82796d4ae5ea23290920ae4e1586b20535285d49">82796d4a</a>, closes <a href="https://github.com/Marwes/combine/issues/255">#255</a>)</li>
+<li>Minimum rust version is now 1.32 (<a href="https://github.com/Marwes/combine/commit/7b77508c05f2075e7795b6026e419a2a57666a1c">7b77508c</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Only require <code>&amp;mut I</code> in decode (<a href="https://github.com/Marwes/combine/commit/e154dbc2f2ca3288e6733f29c85f4b1efcd689c7">e154dbc2</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Add RepeatUntil (<a href="https://github.com/Marwes/combine/commit/7f4a310f8edaebe7d3bd450aca7a2823fcf2e5d6">7f4a310f</a>)</li>
+<li>Generalize factory to take the Input (<a href="https://github.com/Marwes/combine/commit/19b1a73ed3516d14b392aefeba0363d01937be22">19b1a73e</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Add the iterate parser (<a href="https://github.com/Marwes/combine/commit/342a45b484240ace2e313138b2818c95cbec3427">342a45b4</a>)</li>
+<li>Add dispatch! (<a href="https://github.com/Marwes/combine/commit/0740ce0fd2ade2bd19981261dfeb89cae1f63120">0740ce0f</a>)</li>
+<li>impl Stream* for &amp;mut T (<a href="https://github.com/Marwes/combine/commit/51e7e2b736f3b3ab8d9ec9877e2afa8fc31f5207">51e7e2b7</a>)</li>
+<li>Add <code>From&lt;S&gt;</code> for <code>easy::Stream&lt;S&gt;</code> (<a href="https://github.com/Marwes/combine/commit/8f695cc62268a855c3c3847661f6ffe8308b745e">8f695cc6</a>)</li>
+<li>Allow ReadStream parsers to use &amp;[u8] in errors (<a href="https://github.com/Marwes/combine/commit/6b62a857f441ab930e2f595aff3e87f992c769b8">6b62a857</a>, closes <a href="https://github.com/Marwes/combine/issues/249">#249</a>)</li>
+</ul>
+<p>&lt;a name=&quot;4.1.0-alpha.2&quot;&gt;&lt;/a&gt;</p>
+<h4>4.0.0-alpha.2 (2019-06-17)</h4>
+<h6>Features</h6>
+<ul>
+<li>impl Stream* for &amp;mut T (<a href="https://github.com/Marwes/combine/commit/51e7e2b736f3b3ab8d9ec9877e2afa8fc31f5207">51e7e2b7</a>)</li>
+<li>Add <code>From&lt;S&gt;</code> for <code>easy::Stream&lt;S&gt;</code> (<a href="https://github.com/Marwes/combine/commit/8f695cc62268a855c3c3847661f6ffe8308b745e">8f695cc6</a>)</li>
+<li>Allow ReadStream parsers to use <code>&amp;[u8]</code> in errors (<a href="https://github.com/Marwes/combine/commit/6b62a857f441ab930e2f595aff3e87f992c769b8">6b62a857</a>, closes <a href="https://github.com/Marwes/combine/issues/249">#249</a>)</li>
+</ul>
+<p>&lt;a name=&quot;4.0.0-alpha.1&quot;&gt;&lt;/a&gt;</p>
+<h4>4.0.0-alpha.1 (2019-05-07)</h4>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Drop support for regex 0.2 (<a href="https://github.com/Marwes/combine/commit/bf6aeb06494abe2f1890c5bf90db86ac01ec9772">bf6aeb06</a>, closes <a href="https://github.com/Marwes/combine/issues/247">#247</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Rename tokens2 to tokens and tokens to tokens_cmp (<a href="https://github.com/Marwes/combine/commit/3dadbb4f2adb0447c883ea56bdbfcfd53c58d384">3dadbb4f</a>, closes <a href="https://github.com/Marwes/combine/issues/166">#166</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Remove the std::result::Result returning parse functions (<a href="https://github.com/Marwes/combine/commit/6ec094efd2eecefeb2281fb99687143e7a5580e8">6ec094ef</a>, closes <a href="https://github.com/Marwes/combine/issues/244">#244</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Make PointerOffset easier to understand and use (<a href="https://github.com/Marwes/combine/commit/5f6d65b30679d39c4c8a41ef0877bca8dc199095">5f6d65b3</a>, closes <a href="https://github.com/Marwes/combine/issues/238">#238</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Allow reset to return errors (<a href="https://github.com/Marwes/combine/commit/3055c810fd4904d2eba3f51ea232ef0232f8fbe7">3055c810</a>, closes <a href="https://github.com/Marwes/combine/issues/231">#231</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Remove the PartialEq bound from Item and Range (<a href="https://github.com/Marwes/combine/commit/24e1087cbff4938d48ae3e5947e2eb0dcbb8cc87">24e1087c</a>, closes <a href="https://github.com/Marwes/combine/issues/219">#219</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Features</h6>
+<ul>
+<li>Drop support for regex 0.2 (<a href="https://github.com/Marwes/combine/commit/bf6aeb06494abe2f1890c5bf90db86ac01ec9772">bf6aeb06</a>, closes <a href="https://github.com/Marwes/combine/issues/247">#247</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Rename tokens2 to tokens and tokens to tokens_cmp (<a href="https://github.com/Marwes/combine/commit/3dadbb4f2adb0447c883ea56bdbfcfd53c58d384">3dadbb4f</a>, closes <a href="https://github.com/Marwes/combine/issues/166">#166</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Remove the std::result::Result returning parse functions (<a href="https://github.com/Marwes/combine/commit/6ec094efd2eecefeb2281fb99687143e7a5580e8">6ec094ef</a>, closes <a href="https://github.com/Marwes/combine/issues/244">#244</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Allow reset to return errors (<a href="https://github.com/Marwes/combine/commit/3055c810fd4904d2eba3f51ea232ef0232f8fbe7">3055c810</a>, closes <a href="https://github.com/Marwes/combine/issues/231">#231</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Remove the PartialEq bound from Item and Range (<a href="https://github.com/Marwes/combine/commit/24e1087cbff4938d48ae3e5947e2eb0dcbb8cc87">24e1087c</a>, closes <a href="https://github.com/Marwes/combine/issues/219">#219</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Don't require macro_use when using parser! in rust 2018 (<a href="https://github.com/Marwes/combine/commit/72e4c70fda2f283e1feadfd926ed9bb0d384cb59">72e4c70f</a>, closes <a href="https://github.com/Marwes/combine/issues/241">#241</a>)</li>
+<li>Make PointerOffset easier to understand and use (<a href="https://github.com/Marwes/combine/commit/5f6d65b30679d39c4c8a41ef0877bca8dc199095">5f6d65b3</a>, closes <a href="https://github.com/Marwes/combine/issues/238">#238</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.8.1&quot;&gt;&lt;/a&gt;</p>
+<h5>3.8.1 (2019-03-13)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Handle partial parsing in <code>take_fn/take_until*</code> (<a href="https://github.com/Marwes/combine/commit/bae1e3bbe476fb3fe7c4ff6cc375e50f3d9cfd45">bae1e3bb</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.8.0&quot;&gt;&lt;/a&gt;</p>
+<h4>3.8.0 (2019-03-12)</h4>
+<h6>Features</h6>
+<ul>
+<li>Add take_fn and take_until_bytes (<a href="https://github.com/Marwes/combine/commit/5f5607806f8e133485c990419a03de8c7531fa14">5f560780</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.6.7&quot;&gt;&lt;/a&gt;</p>
+<h5>3.6.7 (2019-02-13)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Forward is_partial in all Stream adaptors (<a href="https://github.com/Marwes/combine/commit/121b39879543c074924185dfe17d6b4f434ce413">121b3987</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.6.6&quot;&gt;&lt;/a&gt;</p>
+<h5>3.6.6 (2019-01-12)</h5>
+<ul>
+<li>Fix two inconsisties regarding EOI <a href="https://github.com/Marwes/combine/pull/227">#227</a></li>
+</ul>
+<p>&lt;a name=&quot;3.6.5&quot;&gt;&lt;/a&gt;</p>
+<h5>3.6.5 (2019-01-09)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>not_followed_by should fail on empty successful parses (<a href="https://github.com/Marwes/combine/commit/aa17e7d25532eebdb6c447459c8550a4fb6bbe93">aa17e7d2</a>)</li>
+<li>Propagate the PartialState through parser! uses (<a href="https://github.com/Marwes/combine/commit/ae8882449ee935f7ffb0dd3ef7f0e2d8d6932409">ae888244</a>, closes <a href="https://github.com/Marwes/combine/issues/223">#223</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.6.3&quot;&gt;&lt;/a&gt;</p>
+<h5>3.6.3 (2018-11-16)</h5>
+<p>&lt;a name=&quot;3.6.2&quot;&gt;&lt;/a&gt;</p>
+<h5>3.6.2 (2018-11-06)</h5>
+<p>&lt;a name=&quot;3.6.1&quot;&gt;&lt;/a&gt;</p>
+<h5>3.6.1 (2018-10-13)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Allow clippy to run on stable rust (<a href="https://github.com/Marwes/combine/commit/6cb00803d0135a3849a7f0b35dcf635764b32c06">6cb00803</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.6.0&quot;&gt;&lt;/a&gt;</p>
+<h4>3.6.0 (2018-10-07)</h4>
+<h6>Features</h6>
+<ul>
+<li>Deprecates <code>try</code> in favor of <code>attempt</code> (<a href="https://github.com/Marwes/combine/commit/a9c79321b28ea5332d30429936bfca0c034105ca">a9c79321</a>)</li>
+<li>Adds <code>attempt</code>, a 2018-compatible alias for <code>try</code> (<a href="https://github.com/Marwes/combine/commit/18edaec46f67a3803b96bac3762b6f809d0c2724">18edaec4</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.5.3&quot;&gt;&lt;/a&gt;</p>
+<h5>3.5.3 (2018-10-06)</h5>
+<h6>Features</h6>
+<ul>
+<li>Allow regex parsers to use regex-1.0 (<a href="https://github.com/Marwes/combine/commit/77fe362c56efa6ce20e3074388aeda33cfe91c4b">77fe362c</a>)</li>
+<li>pub use unexpected_any (<a href="https://github.com/Marwes/combine/commit/8b2ca55971e01e8a87ec20ec7b9fe8476023117f">8b2ca559</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>use unexpected_any inside <code>then</code> examples (<a href="https://github.com/Marwes/combine/commit/f2018db5cf5487d02488d017c23f6993e6ed6f82">f2018db5</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.5.2&quot;&gt;&lt;/a&gt;</p>
+<h5>3.5.2 (2018-09-12)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Don't report previous errors from expected (<a href="https://github.com/Marwes/combine/commit/0048c5ef4577592df94e0c5296bee3a128117211">0048c5ef</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.5.1&quot;&gt;&lt;/a&gt;</p>
+<h5>3.5.1 (2018-08-13)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Add all errors of nested choice parsers (<a href="https://github.com/Marwes/combine/commit/f2b8fbbfe300e2b219eb72116856c217fcec8b2b">f2b8fbbf</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.5.0&quot;&gt;&lt;/a&gt;</p>
+<h4>3.5.0 (2018-08-13)</h4>
+<h6>Features</h6>
+<ul>
+<li>Add opaque! as convenience over the opaque parser (<a href="https://github.com/Marwes/combine/commit/9855aa1f39b62b09addb1c7a25035616a8cbef42">9855aa1f</a>)</li>
+<li>Add the factory parser (<a href="https://github.com/Marwes/combine/commit/fdd38d46b5dbdeece7f6f3a99b12e470a08e9a92">fdd38d46</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.4.0&quot;&gt;&lt;/a&gt;</p>
+<h4>3.4.0 (2018-08-04)</h4>
+<h6>Features</h6>
+<ul>
+<li>Add the silent combinator (<a href="https://github.com/Marwes/combine/commit/b9bc28d32b80644ba5a7fdc6969e7e8e734ee4de">b9bc28d3</a>)</li>
+<li>Add the <code>opaque</code> parser (<a href="https://github.com/Marwes/combine/commit/1a1123f5b6970c88d99643d87d75c8fb63117607">1a1123f5</a>)</li>
+<li>Add tokens2 as a simpler version of tokens (<a href="https://github.com/Marwes/combine/commit/072a8c13f90c640d2a98910276bc96d5aa27fae9">072a8c13</a>)</li>
+<li>Add the from_str combinator (<a href="https://github.com/Marwes/combine/commit/908f9ebdc3593eda67e8eba8f5b467962076964e">908f9ebd</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Make (many1(p), end) report more expected messages (<a href="https://github.com/Marwes/combine/commit/9e26d38e06c8bac9dbaa547893b8f2aea01f047d">9e26d38e</a>)</li>
+<li>Report more errors in the middle of sequence parsers (<a href="https://github.com/Marwes/combine/commit/f9e404f6840eb4d42016122095416f76bee5abf3">f9e404f6</a>)</li>
+<li>Report more expected information from nested sequence parsers (<a href="https://github.com/Marwes/combine/commit/9aa1db92dcd17a35d5775bf78b6642c4e8c89d1d">9aa1db92</a>)</li>
+<li>Use the message variant in from_str to work on no_std (<a href="https://github.com/Marwes/combine/commit/edf5ff6002d6b6f2f8bd23692dce5084e9fc01dd">edf5ff60</a>)</li>
+<li>Remove redundant Any bound on easy::Errors (<a href="https://github.com/Marwes/combine/commit/16601046f3c2aa8b4ad75ba2390486f7b5306219">16601046</a>, closes <a href="https://github.com/Marwes/combine/issues/177">#177</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.3.6&quot;&gt;&lt;/a&gt;</p>
+<h5>3.3.6</h5>
+<ul>
+<li>Don't forget the state in any_send_partial_state (<a href="https://github.com/Marwes/combine/commit/4e2eb928e6059a4182b2717bf2bfb7cccdc60127">4e2eb928</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.3.5&quot;&gt;&lt;/a&gt;</p>
+<h5>3.3.5 (2018-06-30)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Propagate the ParseMode in range::recognize (<a href="https://github.com/Marwes/combine/commit/c330a73746f6adfa22c6b13b15d796d48f589614">c330a737</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.3.4&quot;&gt;&lt;/a&gt;</p>
+<h5>3.3.4 (2018-06-30)</h5>
+<ul>
+<li>fix: Forward the partial mode through the parser! macro correctly</li>
+</ul>
+<p>&lt;a name=&quot;3.3.3&quot;&gt;&lt;/a&gt;</p>
+<h5>3.3.3 (2018-06-29)</h5>
+<h6>Bug fixes</h6>
+<ul>
+<li>Parse from the start in sequence parsers in first mode</li>
+</ul>
+<p>&lt;a name=&quot;3.3.1&quot;&gt;&lt;/a&gt;</p>
+<h5>3.3.1 (2018-06-01)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>support resuming streams in TakeUntilRange (<a href="https://github.com/Marwes/combine/commit/b54ff0619663aaf7d3c33185b1a4b7ec73cc1f61">b54ff061</a>)</li>
+<li>reset stream on error in take_until_range (<a href="https://github.com/Marwes/combine/commit/27449f2131ecb3d6ef956e2e67b588cae58a9810">27449f21</a>)</li>
+<li>support multi-byte <code>Item</code>s in take_until_range (<a href="https://github.com/Marwes/combine/commit/4a690d65160ea6e1866fd6dbe8865acae4070c3a">4a690d65</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v3.3.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v3.3.0 (2018-05-19)</h4>
+<h6>Features</h6>
+<ul>
+<li>Add the escaped parser (<a href="https://github.com/Marwes/combine/commit/0db58a20f227d923ffcd3451fbb07ace87dba07c">0db58a20</a>)</li>
+<li>Add the lazy parser combinator (<a href="https://github.com/Marwes/combine/commit/496ac83628ba33ee9a886f989f8749388f918652">496ac836</a>)</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Remove redundant state comparison in Iter (<a href="https://github.com/Marwes/combine/commit/9d434c3ff89480aeb9c5552e439b465adc28e31d">9d434c3f</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Performance</h6>
+<ul>
+<li>Specialize uncons_while1 on all streams (<a href="https://github.com/Marwes/combine/commit/c995ad6125996b594b8bf45da078fdebeb41b86a">c995ad61</a>)</li>
+<li>Unroll the loop for &lt;[T]&gt;::uncons_while (<a href="https://github.com/Marwes/combine/commit/f593e85d4d0ecb9c7c91b769685864fda3291646">f593e85d</a>)</li>
+<li>Inline from/into for results (<a href="https://github.com/Marwes/combine/commit/fff248e494361e04cedbf849df959193560416ff">fff248e4</a>)</li>
+<li>Unroll take_while1 (<a href="https://github.com/Marwes/combine/commit/279a4526494e1cd7e90252c3bc1cfc8f8c35ebcb">279a4526</a>)</li>
+<li>Remove redundant state comparison in Iter (<a href="https://github.com/Marwes/combine/commit/9d434c3ff89480aeb9c5552e439b465adc28e31d">9d434c3f</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Add uncons_while1 as a default method on RangeStream (<a href="https://github.com/Marwes/combine/commit/5d154f15a13091c26246627486b309cbdef06d14">5d154f15</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v3.2.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v3.2.0 (2018-04-24)</h4>
+<h6>Features</h6>
+<ul>
+<li>Add any_send_partial_state (<a href="https://github.com/Marwes/combine/commit/d4153d31b074e950f4752f29c8ed188102534e91">d4153d31</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v3.1.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v3.1.0 (2018-03-26)</h4>
+<h6>Features</h6>
+<ul>
+<li>Allow the the <code>num</code> parsers to be used without RangeStream (<a href="https://github.com/Marwes/combine/commit/b1cb0668cc13df3a2f1b6cc35f221089d0279579">b1cb0668</a>)</li>
+<li>Add the take_until parser (<a href="https://github.com/Marwes/combine/commit/7b03b596a58e4cdbe84d6008e277f0cc57394fae">7b03b596</a>)</li>
+<li>Allow try parsers to be used with partial parsing (<a href="https://github.com/Marwes/combine/commit/cb2da7ad74758bc89b17bedd90f2f53ea9f83e7d">cb2da7ad</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v3.0.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v3.0.0 (2018-03-18)</h4>
+<p>3.0.0 is the final stabilization of all the changes made in the 3.x-alpha/beta releases. You can read more about these changes
+at https://marwes.github.io/2018/02/08/combine-3.html and https://www.reddit.com/r/rust/comments/6s792a/combine_250_and_300alpha1/</p>
+<h6>Features</h6>
+<ul>
+<li>Let single element tuples work as sequence and choice parsers (<a href="https://github.com/Marwes/combine/commit/81e34d2d8d823b9962f4036e7576353252f211b9">81e34d2d</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.0.0-beta.1&quot;&gt;&lt;/a&gt;</p>
+<h4>v3.0.0-beta.1 (2018-02-02)</h4>
+<h6>Features</h6>
+<ul>
+<li>Encode parsers as resumable state machines <a href="https://github.com/Marwes/combine/commit/342fc4770ee9dc62df51683ccca2e612d6e1ea33">342fc47</a></li>
+<li>Add the unexpected_any parser (<a href="https://github.com/Marwes/combine/commit/979e0d7e4ac63c41712352bc87b51001aa067879">979e0d7e</a>, closes <a href="https://github.com/Marwes/combine/issues/126">#126</a>)</li>
+<li>Don't have the error type be generic for uncons* (<a href="https://github.com/Marwes/combine/commit/df3e84f0275352fba44672b2701d452f6bb55596">df3e84f0</a>)</li>
+<li>Add a alias which helps to refer to the StreamError type (<a href="https://github.com/Marwes/combine/commit/95eb70cb025aec89925e3f1992a6d1b266328eb2">95eb70cb</a>)</li>
+<li>Add memchr optimized take_until_byte parsers (<a href="https://github.com/Marwes/combine/commit/30cc7d1d39e754d2c2e8491eb2123dacec5d30f3">30cc7d1d</a>)</li>
+<li>Add the <code>then_partial</code> parser (<a href="https://github.com/Marwes/combine/commit/5d402f6be0c1be4d69159d4df1d1d4589f5cd66e">5d402f6b</a>)</li>
+<li>Don't require <code>Clone</code> for <code>Stream</code> (<a href="https://github.com/Marwes/combine/commit/3fc0b540521aff959ce62628df1ac7554a9df861">3fc0b540</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Don't require <code>Clone</code> for <code>Stream</code> (<a href="https://github.com/Marwes/combine/commit/3fc0b540521aff959ce62628df1ac7554a9df861">3fc0b540</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Allow <code>parser!</code> to be used within functions (<a href="https://github.com/Marwes/combine/commit/916bb824741f054ed2f0686dcce316d0a770d9db">916bb824</a>)</li>
+<li>Allow multiple unnamed public parsers to be in the same scope (<a href="https://github.com/Marwes/combine/commit/c04e2247ab04f098ef0eae887c7a7739d99212fc">c04e2247</a>)</li>
+<li>Return the correct distance for slices with larger than 1 byte items (<a href="https://github.com/Marwes/combine/commit/6b3c661af23fd221d2b28c37ed207d37409c2491">6b3c661a</a>)</li>
+<li>Don't add extra expected errors when erroring in the middle of a sequence (<a href="https://github.com/Marwes/combine/commit/44eac24d46f265a1b3a94d5587d4f200ebebc18f">44eac24d</a>)</li>
+</ul>
+<h6>Performance</h6>
+<ul>
+<li>Avoid cloning input in satisfy (<a href="https://github.com/Marwes/combine/commit/9aeaefa95f97bd8b9d186923e16cd8def98d8e81">9aeaefa9</a>)</li>
+</ul>
+<p>&lt;a name=&quot;3.0.0-alpha.4&quot;&gt;&lt;/a&gt;</p>
+<h4>v3.0.0-alpha.4 (2017-10-11)</h4>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Rename EasyStream -&gt; Stream, ParsingError =&gt; ParseError ... (<a href="https://github.com/Marwes/combine/commit/d2f4ab1471cc0616a46bfe965a611d465434d19a">d2f4ab14</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Make the RangeStreamOnce function generic over the returned error (<a href="https://github.com/Marwes/combine/commit/818d8629116fec8eef64494a938f0340c04d6ad6">818d8629</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Re-export the type generated by parser! if it is public (<a href="https://github.com/Marwes/combine/commit/61469f0a2db899a1144d0335dd47b9bb8d3105f2">61469f0a</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Performance</h6>
+<ul>
+<li>Add inline annotations on error traits (<a href="https://github.com/Marwes/combine/commit/c8b495b41a21cd71b62782f62bbae77f13f92fb7">c8b495b4</a>)</li>
+</ul>
+<h6>Features</h6>
+<ul>
+<li>Rename EasyStream -&gt; Stream, ParsingError =&gt; ParseError ... (<a href="https://github.com/Marwes/combine/commit/d2f4ab1471cc0616a46bfe965a611d465434d19a">d2f4ab14</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Make the RangeStreamOnce function generic over the returned error (<a href="https://github.com/Marwes/combine/commit/818d8629116fec8eef64494a938f0340c04d6ad6">818d8629</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Allow combine to be used in no_std environments (<a href="https://github.com/Marwes/combine/commit/9fd310ac6b795f8f4152892a698dcf29d9c72b7b">9fd310ac</a>)</li>
+<li>Re-export the type generated by parser! if it is public (<a href="https://github.com/Marwes/combine/commit/61469f0a2db899a1144d0335dd47b9bb8d3105f2">61469f0a</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<p>&lt;a name=&quot;&quot;&gt;&lt;/a&gt;</p>
+<h4>v3.0.0-alpha.3 (2017-08-20)</h4>
+<ul>
+<li>Implement Copy for more types (<a href="https://github.com/Marwes/combine/commit/e60395d683faf52be772d222f28a5d38aec05f5c">e60395d6</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v3.0.0-alpha.1&quot;&gt;&lt;/a&gt;</p>
+<h4>v3.0.0-alpha.1 (2017-08-07)</h4>
+<h6>Features</h6>
+<ul>
+<li>Remove the old State type and Positioner trait (<a href="https://github.com/Marwes/combine/commit/ae43f8ae2b303aca3b5ae9fbb1a87475349f2745">ae43f8ae</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Teach the choice parser to take tuples (<a href="https://github.com/Marwes/combine/commit/96da7ee0cf8a112e60747a0be8a4dbd90efbecba">96da7ee0</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Add the range_of parser (<a href="https://github.com/Marwes/combine/commit/7e69208650f7fdc75279370b193030b09ccdbc7a">7e692086</a>, closes <a href="https://github.com/Marwes/combine/issues/83">#83</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Add map_token and map_range methods to ParseError (<a href="https://github.com/Marwes/combine/commit/2f92b29669b618535bcd7533b7dd39b7daa8579b">2f92b296</a>, closes <a href="https://github.com/Marwes/combine/issues/86">#86</a>)</li>
+<li>Allow ParseError to be used without the StreamOnce constraint (<a href="https://github.com/Marwes/combine/commit/520da8e89f7162b4d6ba3a3bca05a05f3bd37999">520da8e8</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Remove deprecated items (<a href="https://github.com/Marwes/combine/commit/9107342a89a5efc664bac9c2919a93a992ca6809">9107342a</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Don't forward tuple parsers to frunk to prevent a performance loss (<a href="https://github.com/Marwes/combine/commit/7e27c523da46828b254ee4fc7c1f9750623e5aff">7e27c523</a>)</li>
+<li>Add the correct errors after sequencing has returned EmptyOk (<a href="https://github.com/Marwes/combine/commit/54fecc62938445aae15373a6b1ec7c4419582025">54fecc62</a>, closes <a href="https://github.com/Marwes/combine/issues/95">#95</a>)</li>
+<li>Renamed SharedBufferedStream and BufferedStream to be less confusing (<a href="https://github.com/Marwes/combine/commit/3add407eecf886cc72ce05414d58a2b3b19a0bb9">3add407e</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Add From&lt;u8&gt; for Info (<a href="https://github.com/Marwes/combine/commit/4cf8cff64466519bf2d4a4dc1dcbe8deb449e004">4cf8cff6</a>)</li>
+<li>Make the positions of slice streams harder to misuse (<a href="https://github.com/Marwes/combine/commit/f50ab9e2f42ec2465368bfb11a60b2339b699fc4">f50ab9e2</a>, closes <a href="https://github.com/Marwes/combine/issues/104">#104</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Remove depreceated items (<a href="https://github.com/Marwes/combine/commit/9107342a89a5efc664bac9c2919a93a992ca6809">9107342a</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Renamed SharedBufferedStream and BufferedStream to be less confusing (<a href="https://github.com/Marwes/combine/commit/3add407eecf886cc72ce05414d58a2b3b19a0bb9">3add407e</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Remove the old State type and Positioner trait (<a href="https://github.com/Marwes/combine/commit/ae43f8ae2b303aca3b5ae9fbb1a87475349f2745">ae43f8ae</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Teach the choice parser to take tuples (<a href="https://github.com/Marwes/combine/commit/96da7ee0cf8a112e60747a0be8a4dbd90efbecba">96da7ee0</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Add the range_of parser (<a href="https://github.com/Marwes/combine/commit/7e69208650f7fdc75279370b193030b09ccdbc7a">7e692086</a>, closes <a href="https://github.com/Marwes/combine/issues/83">#83</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Make the positions of slice streams harder to misuse (<a href="https://github.com/Marwes/combine/commit/f50ab9e2f42ec2465368bfb11a60b2339b699fc4">f50ab9e2</a>, closes <a href="https://github.com/Marwes/combine/issues/104">#104</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Allow ParseError to be used without the StreamOnce constraint (<a href="https://github.com/Marwes/combine/commit/520da8e89f7162b4d6ba3a3bca05a05f3bd37999">520da8e8</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v2.5.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v2.5.0 (2017-08-07)</h4>
+<h6>Features</h6>
+<ul>
+<li>Rename captures to captures_many and add a captures parser (<a href="https://github.com/Marwes/combine/commit/9d301e42ee2da23c90ce78982d9dbef6d7586b4c">9d301e42</a>)</li>
+<li>Add regex parsers (match_, find_many) (<a href="https://github.com/Marwes/combine/commit/5ac12b9883c49b345341ad47aeac2c8accd52c33">5ac12b98</a>)</li>
+<li>Add a macro to parse values directly into structs (<a href="https://github.com/Marwes/combine/commit/1656a620960e2b6256e724058cf39892d6e16944">1656a620</a>)</li>
+<li>add count_min_max and skip_count_min_max (<a href="https://github.com/Marwes/combine/commit/8f3413a7431f4459d67695156f0b259df422bf09">8f3413a7</a>)</li>
+<li>Add the skip_count parser (<a href="https://github.com/Marwes/combine/commit/15171d10495a5a221713ca0f67f3afc0b0eaf580">15171d10</a>)</li>
+<li>Add the recognize parser (<a href="https://github.com/Marwes/combine/commit/61c9b269826707e7fa7409512f21122c9fd8f137">61c9b269</a>)</li>
+<li>Add a macro for declaring parsers (<a href="https://github.com/Marwes/combine/commit/7fe1d9f723a14d20c9879849e104283ee24d254e">7fe1d9f7</a>, closes <a href="https://github.com/Marwes/combine/issues/70">#70</a>)</li>
+<li>Provide parsers for decoding big-endian and little-endian numbers (<a href="https://github.com/Marwes/combine/commit/05ec0bc8675a2de0a71268a458ceefa7ee99f7a0">05ec0bc8</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Report and_then errors as if at the start of the parse (<a href="https://github.com/Marwes/combine/commit/b71a78f12a40e90425d59f72d28c628d28aebe1d">b71a78f1</a>)</li>
+<li>Return EmptyErr when the any parser fails (<a href="https://github.com/Marwes/combine/commit/93208e9c6fd92628eb02c0b32a0d6d3120a9af7f">93208e9c</a>, closes <a href="https://github.com/Marwes/combine/issues/99">#99</a>)</li>
+<li><strong>doc:</strong>  regex find consumes input until the end of the first match (<a href="https://github.com/Marwes/combine/commit/d1bbf1d4198cb71d9c4b9e6d13399e38078518f0">d1bbf1d4</a>)</li>
+</ul>
+<p>&lt;a name=&quot;v2.3.0&quot;&gt;&lt;/a&gt;</p>
+<h4>v2.3.0 (2017-02-22)</h4>
+<h6>Performance</h6>
+<ul>
+<li>Don't call parse_stream in optional (<a href="https://github.com/Marwes/combine/blob/678a1b8c9311c4323d7289d7caba8ee9b607100e/a4bf28d2">a4bf28d2</a>)</li>
+</ul>
+<h6>Features</h6>
+<ul>
+<li>Add the choice! macro (<a href="https://github.com/Marwes/combine/blob/678a1b8c9311c4323d7289d7caba8ee9b607100e/6f2cec69">6f2cec69</a>)</li>
+<li>Add map functions for Error&lt;&gt; and Info&lt;&gt; ranges. (#86)</li>
+<li>Add Parser::boxed (<a href="https://github.com/Marwes/combine/blob/678a1b8c9311c4323d7289d7caba8ee9b607100e/3af9c9b3">3af9c9b3</a>)</li>
+</ul>
+<p>&lt;a name=&quot;2.1.0&quot;&gt;&lt;/a&gt;</p>
+<h4>2.1.0 (2016-10-30)</h4>
+<h6>Features</h6>
+<ul>
+<li>Add a read adapter for the stream trait (<a href="https://github.com/Marwes/combine/blob/678a1b8c9311c4323d7289d7caba8ee9b607100e/a2a9f214">a2a9f214</a>)</li>
+</ul>
+<p>&lt;a name=&quot;2.0.0&quot;&gt;&lt;/a&gt;</p>
+<h4>2.0.0 (2016-10-19)</h4>
+<h6>Features</h6>
+<ul>
+<li>Version 2.0.0 (<a href="https://github.com/Marwes/combine/commit/80b24186fb4854d3242f32abc727107545e08c7b">80b24186</a>)</li>
+<li>Add the count parser (<a href="https://github.com/Marwes/combine/commit/a7949f3aef8585523e730e2c1224c3725b360d32">a7949f3a</a>)</li>
+<li>Add the Parser::by_ref method (<a href="https://github.com/Marwes/combine/commit/15554d0c64a2415e8c234708595cc544ada6c585">15554d0c</a>)</li>
+<li>Add the one_of and none_of parsers (<a href="https://github.com/Marwes/combine/commit/941b277c8f4d8e8af804c88678181be7743f912b">941b277c</a>)</li>
+<li>Add the position parser (<a href="https://github.com/Marwes/combine/commit/d6c65f6da5a2af47254abe2db4b04c3ecbd74803">d6c65f6d</a>)</li>
+<li>Add bytes_cmp and string_cmp (<a href="https://github.com/Marwes/combine/commit/ee6b430d17508daf305d5f48fabae2d662a94d34">ee6b430d</a>)</li>
+<li>Add the <code>tokens</code> parser (<a href="https://github.com/Marwes/combine/commit/886c45235be207241874a0a412ebcc0733959466">886c4523</a>)</li>
+<li>Version 2.0.0-beta3 (<a href="https://github.com/Marwes/combine/commit/55c59322f8ead037dad703a41e1f6d769c059f31">55c59322</a>)</li>
+<li>Break out the error formatting into a separate function (<a href="https://github.com/Marwes/combine/commit/b6ccb0c1807f0f182878b68d4dbdcfa739fd5157">b6ccb0c1</a>)</li>
+<li>Rename parse_state to parse_stream (<a href="https://github.com/Marwes/combine/commit/b375df4811570d14bbd8db7cb74a6834e54679cf">b375df48</a>)</li>
+<li>Simplify the flat_map parser (<a href="https://github.com/Marwes/combine/commit/08a91ce201b67f5528a18228bdfb079e7d86dd7f">08a91ce2</a>)</li>
+<li>Merge the ParserExt trait into Parser (<a href="https://github.com/Marwes/combine/commit/26a841540107b79542bb874a60abb83f99c78a58">26a84154</a>)</li>
+<li>Add the bytes parser (<a href="https://github.com/Marwes/combine/commit/9c73c053f37b149c35d60377f6dcbbbfc145dda9">9c73c053</a>)</li>
+<li>Add parsers specialized on byte streams (<a href="https://github.com/Marwes/combine/commit/01ba375929daac2cb81a3e966e529f0909014620">01ba3759</a>)</li>
+<li>Make ctry usable outside the crate (<a href="https://github.com/Marwes/combine/commit/f45740dd71cf9c71e0900e932c2f10ccbefae35e">f45740dd</a>)</li>
+<li>Add versions of parse_* which return an unpacked version of ParseResult (<a href="https://github.com/Marwes/combine/commit/2bbd14abd2b372afbfda56fb73d4aa036bd427e1">2bbd14ab</a>)</li>
+<li>Add the satisy_map parser (<a href="https://github.com/Marwes/combine/commit/4d97d2968c48026e8369e1f0bcee3c6ef5784664">4d97d296</a>)</li>
+<li>Replace the And parser with the pair parser (<a href="https://github.com/Marwes/combine/commit/b1f561139169caa1a5a2e3e2d84248b28f22bb82">b1f56113</a>)</li>
+<li>Remove reexport of the char module from the root module (<a href="https://github.com/Marwes/combine/commit/e39dacb57999c3cfb0bb4ae6d5db0b696da60a3f">e39dacb5</a>)</li>
+<li>Version 2.0.0-beta (<a href="https://github.com/Marwes/combine/commit/5bdbf58484800717c7d7c20b9161562520f425cb">5bdbf584</a>)</li>
+<li>Remove the buffered_stream feature (<a href="https://github.com/Marwes/combine/commit/3fdbf217ec0a66b052b8d11792ce3ff3d13b7463">3fdbf217</a>)</li>
+<li>Version 1.3.0 (<a href="https://github.com/Marwes/combine/commit/acea26cda536ffc681ca4fa9e4c1bf28f5184582">acea26cd</a>)</li>
+<li>Add the eof parser (<a href="https://github.com/Marwes/combine/commit/6a89cbf2ef11ed5bf4145a296c208e5f5f90438c">6a89cbf2</a>)</li>
+<li>Stabilize RangeStream and all functions using it (<a href="https://github.com/Marwes/combine/commit/d932375d13a196fc74602f8e76ad5bd3512ca370">d932375d</a>)</li>
+<li>Reexport Stream and StreamOnce from the crate root (<a href="https://github.com/Marwes/combine/commit/2c2b3f5cd21a04fbc157a95ce76fe72bfdc1a2c3">2c2b3f5c</a>)</li>
+<li>Merge the HasPosition trait into StreamOnce (<a href="https://github.com/Marwes/combine/commit/3bda4a163e8f3b57dd4efa65384c97f9c3554aeb">3bda4a16</a>)</li>
+<li>Add the StreamOnce trait (<a href="https://github.com/Marwes/combine/commit/9ea0ed5d6c8f8cead773a24b968d4a0bbb606721">9ea0ed5d</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+<li>Make Stream::uncons take &amp;mut self (<a href="https://github.com/Marwes/combine/commit/4ddc4257d1e719a9f1c17a49c39f08ebf20d2999">4ddc4257</a>)</li>
+<li>Separate the Position type and position method from Stream (<a href="https://github.com/Marwes/combine/commit/9cfb9a895be34b288ee9fc9f926cd1b9c5b97b03">9cfb9a89</a>)</li>
+<li>Version 1.2.1 (<a href="https://github.com/Marwes/combine/commit/f737af27306160088188900a1cdad255b5ca58d3">f737af27</a>)</li>
+<li>Move the position handling inside the Stream trait (<a href="https://github.com/Marwes/combine/commit/f41f65e9f34b64481f81af078ecdb10a80e75f6f">f41f65e9</a>)</li>
+<li><strong>range_stream:</strong>  Implement RangeStream on State (<a href="https://github.com/Marwes/combine/commit/f5679dc954be093a7a0278d2311cf5a162396833">f5679dc9</a>)</li>
+</ul>
+<h6>Performance</h6>
+<ul>
+<li>Specialize and_then, then and flat_map (<a href="https://github.com/Marwes/combine/commit/9dc7dc6b9bcb638888be448efb7002d362aded16">9dc7dc6b</a>)</li>
+<li>Specialize the tuple parser to avoid unnecessary branches (<a href="https://github.com/Marwes/combine/commit/2b294f8009021897d9652981dfb107dd2102a902">2b294f80</a>)</li>
+<li>Add inline annotations and more forwarding parse functions (<a href="https://github.com/Marwes/combine/commit/0e5ee38e1b15847908f6676c0c4032dc844e3462">0e5ee38e</a>)</li>
+<li>Avoid indirection in Skip and With (<a href="https://github.com/Marwes/combine/commit/52d335caa2e698de9be50e46e8fbcf241d4e3081">52d335ca</a>)</li>
+<li>Optimize Iter by simplifying the state machine (<a href="https://github.com/Marwes/combine/commit/9631700a306cb5546e37dfb8f05d54728fb3bc8c">9631700a</a>)</li>
+<li>Speedup tuple parsers by simplifying the expanded code (<a href="https://github.com/Marwes/combine/commit/5d86dcf2d14f1cae078d1a4b8831d37041eaf7a2">5d86dcf2</a>)</li>
+<li>Avoid creating an error when take_while1 parses no input (<a href="https://github.com/Marwes/combine/commit/9bad15c0f79e3ff897fb92cdca6b92f988c69347">9bad15c0</a>)</li>
+<li>Possibly improve performance of the RangeStream impl for &amp;str (<a href="https://github.com/Marwes/combine/commit/abb1de7f15b65b9bc2c40572319269191bd0819f">abb1de7f</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>Rename the String parser to Str (<a href="https://github.com/Marwes/combine/commit/d846bf0e7ddb3350ce9245b3682d7c054ff5cdd8">d846bf0e</a>)</li>
+<li>Use five copies in the large http test anyway to match nom_benchmarks (<a href="https://github.com/Marwes/combine/commit/eb089f5bef175b96e097286b9c8c3e7d5f6e3922">eb089f5b</a>)</li>
+<li>Avoid storing the position in primitives::uncons_while (<a href="https://github.com/Marwes/combine/commit/9912507a80e178737e16d4ff3d19d7a1fee9fbc8">9912507a</a>)</li>
+<li>Calling uncons_range with the same size as is remaining should succeed (<a href="https://github.com/Marwes/combine/commit/cce6214ed4722880881c8c6998e00f4509a22588">cce6214e</a>)</li>
+<li>Add Sync to to the Error::Other variant (<a href="https://github.com/Marwes/combine/commit/22add3eca62ff5e6f4d58122a4b366290b1d9385">22add3ec</a>)</li>
+<li>Fix positions of BufferedStream being for the next token (<a href="https://github.com/Marwes/combine/commit/66eab92a7dd63269f48cf0fbd0722a6eeea9135d">66eab92a</a>)</li>
+<li>Fix the position handling of BufferedStream (<a href="https://github.com/Marwes/combine/commit/f21148b3c4c5c6f10d8b6d90ce4a7925596879b3">f21148b3</a>)</li>
+<li>Remove the Positioner bound from Stream::Token an Stream::Range (<a href="https://github.com/Marwes/combine/commit/fba3f1e760505305b6a586b6ff5a53eff645e1d1">fba3f1e7</a>)</li>
+<li><strong>buffered_stream:</strong>  BufferedStream no longer emits the last token after EOF (<a href="https://github.com/Marwes/combine/commit/6532884cc16307e1753584dd40b2b59e3daa6267">6532884c</a>)</li>
+<li><strong>travis:</strong>
+<ul>
+<li>Dont pass the test feature to travis (<a href="https://github.com/Marwes/combine/commit/382a608da2851c5cc2d3477025951e9a133732bc">382a608d</a>)</li>
+<li>Add travis_wait so travis does not time out the beta builds (<a href="https://github.com/Marwes/combine/commit/a3f0792ab347805e3f0ce619997a2c154f5e8c87">a3f0792a</a>)</li>
+</ul>
+</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li>Add the StreamOnce trait (<a href="https://github.com/Marwes/combine/commit/9ea0ed5d6c8f8cead773a24b968d4a0bbb606721">9ea0ed5d</a>, breaks <a href="https://github.com/Marwes/combine/issues/">#</a>)</li>
+</ul>
+</div><p class="table-note">sha256:f8a87102a9d8db5521529f0650d810022c7e70cf0696007f28bcfec2049b21b3</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>The MIT License (MIT)
+
+Copyright (c) 2015 Markus Westerlind
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+</code></pre></div><p class="table-note">sha256:9bbc1b3dc4674a9ebb12c2a62f54fe3c08672539717f8d05828f684b6cc419a3</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:31bcca26cb609cb3e43b0ac8f3662121acbc615320d419fe2f61c3731e682ea0</code></dd><dt>Upstream checksum</dt><dd><code>sha256:cfc320937d09e6de266b31b9afb480f197d7a861be86be7cb2ea7e5d1bfffc5e</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/combine&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;4.6.8&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:bytes&quot;</span><span class="p">]</span>
+<span class="n">bytes_05</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:bytes_05&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">futures-03</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pin-project&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;futures-core-03&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;futures-io-03&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pin-project-lite&quot;</span><span class="p">]</span>
+<span class="n">futures-core-03</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:futures-core-03&quot;</span><span class="p">]</span>
+<span class="n">futures-io-03</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:futures-io-03&quot;</span><span class="p">]</span>
+<span class="n">mp4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">pin-project</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pin-project-lite&quot;</span><span class="p">]</span>
+<span class="n">pin-project-lite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:pin-project-lite&quot;</span><span class="p">]</span>
+<span class="n">regex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:regex&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;memchr/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;bytes&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+<span class="n">tokio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;tokio-dep&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:tokio-util&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tokio-util/io&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;futures-core-03&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pin-project-lite&quot;</span><span class="p">]</span>
+<span class="n">tokio-02</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pin-project&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tokio-02-dep&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;futures-core-03&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pin-project-lite&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;bytes_05&quot;</span><span class="p">]</span>
+<span class="n">tokio-02-dep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tokio-02-dep&quot;</span><span class="p">]</span>
+<span class="n">tokio-03</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pin-project&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tokio-03-dep&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;futures-core-03&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pin-project-lite&quot;</span><span class="p">]</span>
+<span class="n">tokio-03-dep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tokio-03-dep&quot;</span><span class="p">]</span>
+<span class="n">tokio-dep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tokio-dep&quot;</span><span class="p">]</span>
+<span class="n">tokio-util</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:tokio-util&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;combine&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/bytes&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">bytes_05</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/bytes&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.5&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">futures-core-03</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/futures-core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">futures-io-03</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/futures-io&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">memchr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/memchr&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">pin-project-lite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/pin-project-lite&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">regex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/regex&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tokio-02-dep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tokio&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;io-util&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tokio-03-dep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tokio&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tokio-dep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tokio&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">tokio-util</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tokio-util&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.7&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;codec&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Markus Westerlind &lt;marwes91@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/combine/4.6.8">crates.io package</a></li><li><a href="https://github.com/Marwes/combine">Source repository</a></li><li><a href="https://docs.rs/combine">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">combine</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/combine"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=4.6.8"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

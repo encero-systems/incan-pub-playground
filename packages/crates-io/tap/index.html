@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>tap 1.0.1 · Incan.pub</title><meta name="description" content="Generic extensions for tapping values in Rust"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/tap</p><div class="title-row"><h1>tap</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/tap/versions/1.0.1/" selected>1.0.1</option></select></label></div><p class="description">Generic extensions for tapping values in Rust</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><p>&lt;div class=&quot;title-block&quot; style=&quot;text-align: center;&quot; align=&quot;center&quot;&gt;</p>
+<h3><code>tap</code> </h3>
+<h4>Suffix-Position Pipeline Behavior </h4>
+<p>[![Crate][crate_img]][crate]
+[![Documentation][docs_img]][docs]
+[![License][license_img]][license_file]</p>
+<p>[![Crate Downloads][downloads_img]][crate]
+[![Crate Size][loc_img]][loc]</p>
+<p>&lt;/div&gt;</p>
+<p>This crate provides extension methods on all types that allow transparent,
+temporary, inspection/mutation (tapping), transformation (piping), or type
+conversion. These methods make it convenient for you to insert debugging or
+modification points into an expression without requiring you to change any other
+portions of your code.</p>
+<h4>Example Use</h4>
+<h5>Tapping</h5>
+<p>You can tap inside a method-chain expression for logging without requiring a
+rebind. For instance, you may write a complex expression without any
+intermediate debugging steps, and only later decide that you want them.
+Ordinarily, this transform would look like this:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">extern</span><span class="w"> </span><span class="k">crate</span><span class="w"> </span><span class="n">reqwest</span><span class="p">;</span>
+<span class="k">extern</span><span class="w"> </span><span class="k">crate</span><span class="w"> </span><span class="n">tracing</span><span class="p">;</span>
+
+<span class="c1">// old</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reqwest</span><span class="p">::</span><span class="n">blocking</span><span class="p">::</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://example.com&quot;</span><span class="p">)</span><span class="o">?</span>
+<span class="w">  </span><span class="p">.</span><span class="n">text</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="n">tracing</span><span class="p">::</span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Response contents: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="p">);</span>
+
+<span class="c1">// new, with debugging</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">resp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reqwest</span><span class="p">::</span><span class="n">blocking</span><span class="p">::</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://example.com&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="n">tracing</span><span class="p">::</span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Response status: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">resp</span><span class="p">.</span><span class="n">status</span><span class="p">());</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">resp</span><span class="p">.</span><span class="n">text</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="n">tracing</span><span class="p">::</span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Response contents: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="p">);</span>
+</code></pre>
+<p>while with tapping, you can plug the logging statement directly into the overall
+expression, without making any other changes:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">extern</span><span class="w"> </span><span class="k">crate</span><span class="w"> </span><span class="n">reqwest</span><span class="p">;</span>
+<span class="k">extern</span><span class="w"> </span><span class="k">crate</span><span class="w"> </span><span class="n">tracing</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reqwest</span><span class="p">::</span><span class="n">blocking</span><span class="p">::</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;https://example.com&quot;</span><span class="p">)</span><span class="o">?</span>
+<span class="w">  </span><span class="c1">// The only change is the insertion of this line</span>
+<span class="w">  </span><span class="p">.</span><span class="n">tap</span><span class="p">(</span><span class="o">|</span><span class="n">resp</span><span class="o">|</span><span class="w"> </span><span class="n">tracing</span><span class="p">::</span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Response status: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">resp</span><span class="p">.</span><span class="n">status</span><span class="p">()))</span>
+<span class="w">  </span><span class="p">.</span><span class="n">text</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="n">tracing</span><span class="p">::</span><span class="n">debug</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Response contents: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">body</span><span class="p">);</span>
+</code></pre>
+<h5>Mutable Tapping</h5>
+<p>Some APIs are written to require mutable borrows, rather than value-to-value
+transformations, which can require temporary rebinding in order to create
+mutability in an otherwise-immutable context. For example, collecting data into
+a vector, sorting the vector, and then freezing it, might look like this:</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">collection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stream</span><span class="p">().</span><span class="n">collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+<span class="n">collection</span><span class="p">.</span><span class="n">sort</span><span class="p">();</span>
+<span class="c1">// potential error site: inserting other mutations here</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">collection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">collection</span><span class="p">;</span><span class="w"> </span><span class="c1">// now immutable</span>
+</code></pre>
+<p>But with a mutable tap, you can avoid the duplicate binding <em>and</em> guard against
+future errors due to the presence of a mutable binding:</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">collection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stream</span><span class="p">.</span><span class="n">collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span>
+<span class="w">  </span><span class="p">.</span><span class="n">tap_mut</span><span class="p">(</span><span class="o">|</span><span class="n">v</span><span class="o">|</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">sort</span><span class="p">());</span>
+</code></pre>
+<p>The <code>.tap_mut()</code> and related methods provide a mutable borrow to their argument,
+and allow the final binding site to choose their own level of mutability without
+exposing the intermediate permission.</p>
+<h5>Piping</h5>
+<p>In addition to transparent inspection or modification points, you may also wish
+to use suffix calls for subsequent operations. For example, the standard library
+offers the free function <code>fs::read</code> to convert <code>Path</code>-like objects into
+<code>Vec&lt;u8&gt;</code> of their filesystem contents. Ordinarily, free functions require use
+as:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">get_base_path</span><span class="p">();</span>
+<span class="n">path</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="s">&quot;logs&quot;</span><span class="p">);</span>
+<span class="n">path</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="o">&amp;</span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{}.log&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">today</span><span class="p">()));</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">contents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fs</span><span class="p">::</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+</code></pre>
+<p>whereäs use of tapping (for path modification) and piping (for <code>fs::read</code>) could
+be expressed like this:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">contents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">get_base_path</span><span class="p">()</span>
+<span class="w">  </span><span class="p">.</span><span class="n">tap_mut</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="s">&quot;logs&quot;</span><span class="p">))</span>
+<span class="w">  </span><span class="p">.</span><span class="n">tap_mut</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="o">&amp;</span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{}.log&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">today</span><span class="p">())))</span>
+<span class="w">  </span><span class="p">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">fs</span><span class="p">::</span><span class="n">read</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+</code></pre>
+<p>As a clearer example, consider the syntax required to apply multiple free
+funtions without <code>let</code>-bindings looks like this:</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">last</span><span class="p">(</span>
+<span class="w">  </span><span class="n">third</span><span class="p">(</span>
+<span class="w">    </span><span class="n">second</span><span class="p">(</span>
+<span class="w">      </span><span class="n">first</span><span class="p">(</span><span class="n">original_value</span><span class="p">),</span>
+<span class="w">      </span><span class="n">another_arg</span><span class="p">,</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="w">  </span><span class="p">),</span>
+<span class="w">  </span><span class="n">another_arg</span><span class="p">,</span>
+<span class="p">);</span>
+</code></pre>
+<p>which requires reading the expression in alternating, inside-out, order, to
+understand the full sequence of evaluation. With suffix calls, even free
+functions can be written in a point-free style that maintains a clear temporal
+and syntactic order:</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">original_value</span>
+<span class="w">  </span><span class="p">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">first</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="n">pipe</span><span class="p">(</span><span class="o">|</span><span class="n">v</span><span class="o">|</span><span class="w"> </span><span class="n">second</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">another_arg</span><span class="p">))</span>
+<span class="w">  </span><span class="p">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">third</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="n">pipe</span><span class="p">(</span><span class="o">|</span><span class="n">v</span><span class="o">|</span><span class="w"> </span><span class="n">last</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">another_arg</span><span class="p">));</span>
+</code></pre>
+<p>As piping is an ordinary method, not a syntax transformation, it still requires
+that you write function-call expressions when using a function with multiple
+arguments in the pipeline.</p>
+<h5>Conversion</h5>
+<p>The <code>conv</code> module is the simplest: it provides two traits, <code>Conv</code> and <code>TryConv</code>,
+which are sibling traits to <code>Into&lt;T&gt;</code> and <code>TryInto&lt;T&gt;</code>. Their methods,
+<code>Conv::conv::&lt;T&gt;</code> and <code>TryConv::try_conv::&lt;T&gt;</code>, call the corresponding
+trait implementation, and allow you to use <code>.into()</code>/<code>.try_into()</code> in
+non-terminal method calls of an expression.</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">.</span><span class="n">into</span><span class="p">().</span><span class="n">into_bytes</span><span class="p">();</span>
+</code></pre>
+<p>does not compile, because Rust cannot decide the type of <code>&quot;hello&quot;.into()</code>.
+Instead of rewriting the expression to use an intermediate <code>let</code> binding, you
+can write it as</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;hello&quot;</span><span class="p">.</span><span class="n">conv</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">().</span><span class="n">into_bytes</span><span class="p">();</span>
+</code></pre>
+<h4>Full Functionality</h4>
+<p>The <code>Tap</code> and <code>Pipe</code> traits both provide a large number of methods, which use
+different parts of the Rust language’s facilities for well-typed value access.
+Rather than repeat the API documentation here, you should view the module items
+in the [documentation][docs].</p>
+<p>As a summary, these traits provide methods that, upon receipt of a value,</p>
+<ul>
+<li>apply no transformation</li>
+<li>apply an <code>AsRef</code> or <code>AsMut</code> implementation</li>
+<li>apply a <code>Borrow</code> or <code>BorrowMut</code> implementation</li>
+<li>apply the <code>Deref</code> or <code>DerefMut</code> implementation</li>
+</ul>
+<p>before executing their effect argument.</p>
+<p>In addition, each <code>Tap</code> method <code>.tap_x</code> has a sibling method <code>.tap_x_dbg</code> that
+performs the same work, but only in debug builds; in release builds, the method
+call is stripped. This allows you to leave debugging taps in your source code,
+without affecting your project’s performance in true usage.</p>
+<p>Lastly, the <code>tap</code> module also has traits <code>TapOptional</code> and <code>TapFallible</code> which
+run taps on the variants of <code>Option</code> and <code>Result</code> enums, respectively, and do
+nothing when the variant does not match the method name. <code>TapOptional::tap_some</code>
+has no effect when called on a <code>None</code>, etc.</p>
+<p>
+[crate]: https://crates.io/crates/tap &quot;Crate Link&quot;
+[crate_img]: https://img.shields.io/crates/v/tap.svg?logo=rust &quot;Crate Page&quot;
+[docs]: https://docs.rs/tap &quot;Documentation&quot;
+[docs_img]: https://docs.rs/tap/badge.svg &quot;Documentation Display&quot;
+[downloads_img]: https://img.shields.io/crates/dv/tap.svg?logo=rust &quot;Crate Downloads&quot;
+[license_file]: https://github.com/myrrlyn/tap/blob/master/LICENSE.txt &quot;License File&quot;
+[license_img]: https://img.shields.io/crates/l/tap.svg &quot;License Display&quot;
+[loc]: https://github.com/myrrlyn/tap &quot;Repository&quot;
+[loc_img]: https://tokei.rs/b1/github/myrrlyn/tap?category=code &quot;Repository Size&quot;</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p>No feature declarations recorded.</p></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p>No dependencies declared.</p></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/bitvec/versions/1.1.1/">crates-io/bitvec 1.1.1</a><span>Requires ^1 · alias tap · </span></li><li><a href="../../../packages/crates-io/elliptic-curve/versions/0.13.8/">crates-io/elliptic-curve 0.13.8</a><span>Requires ^1.0.1 · alias tap · </span></li><li><a href="../../../packages/crates-io/wyz/versions/0.6.1/">crates-io/wyz 0.6.1</a><span>Requires ^1.0.1 · alias tap · </span></li><li><a href="../../../packages/crates-io/wyz/versions/0.5.1/">crates-io/wyz 0.5.1</a><span>Requires ^1 · alias tap · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0e515af3b2ebb5fd17e61204f64093ea90641e10e6fb9c4ec68ea4212ee98c00</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:e5318f6984eb45de3f13fcc693648d91393ef2395f5d247686eb0bb9f13cb013</small></li><li><code>sha256:81740d75b806a7dcd8fbf6301c07489186377a56a2b30b8c019fc522dcc88513</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636611">Attestation reference</a><small>Archive: sha256:c273da32d76e8f7ec4265be88fbbf7ac947e73b6aa751cd1d34e93f2e9542d65</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:9d061c4e3ac6fd17c1918f68de5dcd1e7a9fa299bc83f3a0d3d30b7f3e3e2442</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:8caa954335654fb7f814dbd0c2e06786d098ab704612e205d23c61e3de79a32c</small></li><li><code>sha256:fbbd9d5301632fe0fad17a9383c70d16e5a589b5c65a52ffa898b39a872cd5ee</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:995162905977b9391e705f756b7aa89e67c2c493ce759f825d30592c158631bf</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:16a20f96256f735e6483e7edd09a12d0f789ec7f3425088300fca7a7a2271324</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:c9fc80276191e9358e5cfec8b5667b7f1f5d774fa900b5c95195703d2755e402</small></li><li><code>sha256:ee78d69b3fe248faf010646491f5256ea8e8f04fbc532cc9aaabe0924236e233</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:047a865cb2927462c86f95cc99c4598a73126abc5c1229a12c065e0c37beb33f</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:829c914df4c597038f8a2fb91a65379f8a217d38d146c629c78912f29c8c8c2d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:5b366aa498cf91297f6a1563f564bcf91846044980faff585fb1cb64680b5398</small></li><li><code>sha256:eb5d713525abcc57ef0b345575d677d68a88a287ebb7387766485d460d6cd415</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:2dcd67bcd64ad01511160dd9dd5cfdbb5c1e742e63cf05a5a3397caf5e9838f9</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/tap/versions/1.0.1/">1.0.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/tap/1.0.1">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE.txt · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2017 Elliot Linder &lt;darfink@gmail.com&gt;
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:8b4e95f5cf0dc40269c99f7b787203ffe04ded245ca2427422c196efa2b2f42a</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:ecd517cfaee0c986ab958734e6643dcc99eebbb5b9441ae188b5b1a05e447682</code></dd><dt>Upstream checksum</dt><dd><code>sha256:55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tap&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.0.1&quot;</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tap&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2015&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Elliott Linder &lt;elliott.darfink@gmail.com&gt;, myrrlyn &lt;self@myrrlyn.dev&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/tap/1.0.1">crates.io package</a></li><li><a href="https://github.com/myrrlyn/tap">Source repository</a></li><li><a href="https://docs.rs/tap">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">tap</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/tap"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.0.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

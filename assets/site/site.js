@@ -13,7 +13,7 @@ for (const button of document.querySelectorAll('[data-copy]')) {
   });
 }
 const filters = document.getElementById('filters');
-if (filters) {
+if (filters && !filters.hasAttribute('data-registry')) {
   const search = document.getElementById('search');
   const license = document.getElementById('license');
   const category = document.getElementById('category');
@@ -84,4 +84,8 @@ if (headerSearch) {
     if (event.key === 'Escape' && headerSearch.open) {headerSearch.open = false; headerSearch.querySelector('summary').focus();}
   });
   document.addEventListener('click', event => {if (!headerSearch.contains(event.target)) headerSearch.open = false;});
+}
+
+for (const select of document.querySelectorAll('[data-version]')) {
+  select.addEventListener('change', () => {location.assign(select.value);});
 }

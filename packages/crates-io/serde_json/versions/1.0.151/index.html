@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>serde_json 1.0.151 · Incan.pub</title><meta name="description" content="A JSON serialization file format"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/serde_json</p><div class="title-row"><h1>serde_json</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/serde_json/versions/1.0.151/" selected>1.0.151</option><option value="../../../../../packages/crates-io/serde_json/versions/1.0.149/">1.0.149</option></select></label></div><p class="description">A JSON serialization file format</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Serde JSON   <a href="https://github.com/serde-rs/json/actions?query=branch%3Amaster">Build Status</a> <a href="https://crates.io/crates/serde_json">Latest Version</a></h3>
+<p><strong>Serde is a framework for <em>ser</em>ializing and <em>de</em>serializing Rust data structures efficiently and generically.</strong></p>
+<hr>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">serde_json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span>
+</code></pre>
+<p>You may be looking for:</p>
+<ul>
+<li><a href="https://docs.rs/serde_json">JSON API documentation</a></li>
+<li><a href="https://docs.rs/serde">Serde API documentation</a></li>
+<li><a href="https://serde.rs/">Detailed documentation about Serde</a></li>
+<li><a href="https://serde.rs/derive.html">Setting up <code>#[derive(Serialize, Deserialize)]</code></a></li>
+<li><a href="https://github.com/serde-rs/json/releases">Release notes</a></li>
+</ul>
+<p>JSON is a ubiquitous open-standard format that uses human-readable text to
+transmit data objects consisting of key-value pairs.</p>
+<pre><code>{
+    "name": "John Doe",
+    "age": 43,
+    "address": {
+        "street": "10 Downing Street",
+        "city": "London"
+    },
+    "phones": [
+        "+44 1234567",
+        "+44 2345678"
+    ]
+}
+</code></pre>
+<p>There are three common ways that you might find yourself needing to work with
+JSON data in Rust.</p>
+<ul>
+<li><strong>As text data.</strong> An unprocessed string of JSON data that you receive on an
+HTTP endpoint, read from a file, or prepare to send to a remote server.</li>
+<li><strong>As an untyped or loosely typed representation.</strong> Maybe you want to check
+that some JSON data is valid before passing it on, but without knowing the
+structure of what it contains. Or you want to do very basic manipulations
+like insert a key in a particular spot.</li>
+<li><strong>As a strongly typed Rust data structure.</strong> When you expect all or most of
+your data to conform to a particular structure and want to get real work done
+without JSON's loosey-goosey nature tripping you up.</li>
+</ul>
+<p>Serde JSON provides efficient, flexible, safe ways of converting data between
+each of these representations.</p>
+<h4>Operating on untyped JSON values</h4>
+<p>Any valid JSON data can be manipulated in the following recursive enum
+representation. This data structure is <a href="https://docs.rs/serde_json/1/serde_json/value/enum.Value.html"><code>serde_json::Value</code></a>.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">enum</span><span class="w"> </span><span class="nc">Value</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Null</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Bool</span><span class="p">(</span><span class="kt">bool</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Number</span><span class="p">(</span><span class="n">Number</span><span class="p">),</span>
+<span class="w">    </span><span class="nb">String</span><span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Array</span><span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Value</span><span class="o">&gt;</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Object</span><span class="p">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">Value</span><span class="o">&gt;</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<p>A string of JSON data can be parsed into a <code>serde_json::Value</code> by the
+<a href="https://docs.rs/serde_json/1/serde_json/de/fn.from_str.html"><code>serde_json::from_str</code></a> function. There is also
+<a href="https://docs.rs/serde_json/1/serde_json/de/fn.from_slice.html"><code>from_slice</code></a> for parsing from a byte slice <code>&amp;[u8]</code> and
+<a href="https://docs.rs/serde_json/1/serde_json/de/fn.from_reader.html"><code>from_reader</code></a> for parsing from any <code>io::Read</code> like a File or a
+TCP stream.</p>
+<p>&lt;div align=&quot;right&quot;&gt;
+&lt;a href=&quot;https://play.rust-lang.org/?edition=2018&amp;gist=d69d8e3156d4bb81c4461b60b772ab72&quot; target=&quot;_blank&quot;&gt;
+&lt;img align=&quot;center&quot; width=&quot;85&quot; src=&quot;https://raw.githubusercontent.com/serde-rs/serde-rs.github.io/master/img/runtab.png&quot;&gt;
+&lt;/a&gt;
+&lt;/div&gt;</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde_json</span><span class="p">::{</span><span class="nb">Result</span><span class="p">,</span><span class="w"> </span><span class="n">Value</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">untyped_example</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Some JSON input data as a &amp;str. Maybe this comes from the user.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;</span>
+<span class="s">        {</span>
+<span class="s">            &quot;name&quot;: &quot;John Doe&quot;,</span>
+<span class="s">            &quot;age&quot;: 43,</span>
+<span class="s">            &quot;phones&quot;: [</span>
+<span class="s">                &quot;+44 1234567&quot;,</span>
+<span class="s">                &quot;+44 2345678&quot;</span>
+<span class="s">            ]</span>
+<span class="s">        }&quot;#</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Parse the string of data into serde_json::Value.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="nc">Value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_json</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Access parts of the data by indexing with square brackets.</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Please call {} at the number {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">v</span><span class="p">[</span><span class="s">&quot;phones&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<p>The result of square bracket indexing like <code>v[&quot;name&quot;]</code> is a borrow of the data
+at that index, so the type is <code>&amp;Value</code>. A JSON map can be indexed with string
+keys, while a JSON array can be indexed with integer keys. If the type of the
+data is not right for the type with which it is being indexed, or if a map does
+not contain the key being indexed, or if the index into a vector is out of
+bounds, the returned element is <code>Value::Null</code>.</p>
+<p>When a <code>Value</code> is printed, it is printed as a JSON string. So in the code above,
+the output looks like <code>Please call &quot;John Doe&quot; at the number &quot;+44 1234567&quot;</code>. The
+quotation marks appear because <code>v[&quot;name&quot;]</code> is a <code>&amp;Value</code> containing a JSON
+string and its JSON representation is <code>&quot;John Doe&quot;</code>. Printing as a plain string
+without quotation marks involves converting from a JSON string to a Rust string
+with <a href="https://docs.rs/serde_json/1/serde_json/enum.Value.html#method.as_str"><code>as_str()</code></a> or avoiding the use of <code>Value</code> as described in the following
+section.</p>
+<p>The <code>Value</code> representation is sufficient for very basic tasks but can be tedious
+to work with for anything more significant. Error handling is verbose to
+implement correctly, for example imagine trying to detect the presence of
+unrecognized fields in the input data. The compiler is powerless to help you
+when you make a mistake, for example imagine typoing <code>v[&quot;name&quot;]</code> as <code>v[&quot;nmae&quot;]</code>
+in one of the dozens of places it is used in your code.</p>
+<h4>Parsing JSON as strongly typed data structures</h4>
+<p>Serde provides a powerful way of mapping JSON data into Rust data structures
+largely automatically.</p>
+<p>&lt;div align=&quot;right&quot;&gt;
+&lt;a href=&quot;https://play.rust-lang.org/?edition=2018&amp;gist=15cfab66d38ff8a15a9cf1d8d897ac68&quot; target=&quot;_blank&quot;&gt;
+&lt;img align=&quot;center&quot; width=&quot;85&quot; src=&quot;https://raw.githubusercontent.com/serde-rs/serde-rs.github.io/master/img/runtab.png&quot;&gt;
+&lt;/a&gt;
+&lt;/div&gt;</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::{</span><span class="n">Deserialize</span><span class="p">,</span><span class="w"> </span><span class="n">Serialize</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">serde_json</span><span class="p">::</span><span class="nb">Result</span><span class="p">;</span>
+
+<span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Person</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="n">age</span><span class="p">:</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span>
+<span class="w">    </span><span class="n">phones</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">typed_example</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Some JSON input data as a &amp;str. Maybe this comes from the user.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">r#&quot;</span>
+<span class="s">        {</span>
+<span class="s">            &quot;name&quot;: &quot;John Doe&quot;,</span>
+<span class="s">            &quot;age&quot;: 43,</span>
+<span class="s">            &quot;phones&quot;: [</span>
+<span class="s">                &quot;+44 1234567&quot;,</span>
+<span class="s">                &quot;+44 2345678&quot;</span>
+<span class="s">            ]</span>
+<span class="s">        }&quot;#</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Parse the string of data into a Person object. This is exactly the</span>
+<span class="w">    </span><span class="c1">// same function as the one that produced serde_json::Value above, but</span>
+<span class="w">    </span><span class="c1">// now we are asking it for a Person as output.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">p</span><span class="p">:</span><span class="w"> </span><span class="nc">Person</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_json</span><span class="p">::</span><span class="n">from_str</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Do things just like with any other Rust data structure.</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Please call {} at the number {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">phones</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<p>This is the same <code>serde_json::from_str</code> function as before, but this time we
+assign the return value to a variable of type <code>Person</code> so Serde will
+automatically interpret the input data as a <code>Person</code> and produce informative
+error messages if the layout does not conform to what a <code>Person</code> is expected to
+look like.</p>
+<p>Any type that implements Serde's <code>Deserialize</code> trait can be deserialized this
+way. This includes built-in Rust standard library types like <code>Vec&lt;T&gt;</code> and
+<code>HashMap&lt;K, V&gt;</code>, as well as any structs or enums annotated with
+<code>#[derive(Deserialize)]</code>.</p>
+<p>Once we have <code>p</code> of type <code>Person</code>, our IDE and the Rust compiler can help us use
+it correctly like they do for any other Rust code. The IDE can autocomplete
+field names to prevent typos, which was impossible in the <code>serde_json::Value</code>
+representation. And the Rust compiler can check that when we write
+<code>p.phones[0]</code>, then <code>p.phones</code> is guaranteed to be a <code>Vec&lt;String&gt;</code> so indexing
+into it makes sense and produces a <code>String</code>.</p>
+<p>The necessary setup for using Serde's derive macros is explained on the <em><a href="https://serde.rs/derive.html">Using
+derive</a></em> page of the Serde site.</p>
+<h4>Constructing JSON values</h4>
+<p>Serde JSON provides a <a href="https://docs.rs/serde_json/1/serde_json/macro.json.html"><code>json!</code> macro</a> to build <code>serde_json::Value</code>
+objects with very natural JSON syntax.</p>
+<p>&lt;div align=&quot;right&quot;&gt;
+&lt;a href=&quot;https://play.rust-lang.org/?edition=2018&amp;gist=6ccafad431d72b62e77cc34c8e879b24&quot; target=&quot;_blank&quot;&gt;
+&lt;img align=&quot;center&quot; width=&quot;85&quot; src=&quot;https://raw.githubusercontent.com/serde-rs/serde-rs.github.io/master/img/runtab.png&quot;&gt;
+&lt;/a&gt;
+&lt;/div&gt;</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde_json</span><span class="p">::</span><span class="n">json</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// The type of `john` is `serde_json::Value`</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">john</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">json</span><span class="o">!</span><span class="p">({</span>
+<span class="w">        </span><span class="s">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;John Doe&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;age&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">43</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;phones&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="s">&quot;+44 1234567&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s">&quot;+44 2345678&quot;</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;first phone number: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">john</span><span class="p">[</span><span class="s">&quot;phones&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="c1">// Convert to a string of JSON and print it out</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">john</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre>
+<p>The <code>Value::to_string()</code> function converts a <code>serde_json::Value</code> into a <code>String</code>
+of JSON text.</p>
+<p>One neat thing about the <code>json!</code> macro is that variables and expressions can be
+interpolated directly into the JSON value as you are building it. Serde will
+check at compile time that the value you are interpolating is able to be
+represented as JSON.</p>
+<p>&lt;div align=&quot;right&quot;&gt;
+&lt;a href=&quot;https://play.rust-lang.org/?edition=2018&amp;gist=f9101a6e61dfc9e02c6a67f315ed24f2&quot; target=&quot;_blank&quot;&gt;
+&lt;img align=&quot;center&quot; width=&quot;85&quot; src=&quot;https://raw.githubusercontent.com/serde-rs/serde-rs.github.io/master/img/runtab.png&quot;&gt;
+&lt;/a&gt;
+&lt;/div&gt;</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">full_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;John Doe&quot;</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">age_last_year</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">42</span><span class="p">;</span>
+
+<span class="c1">// The type of `john` is `serde_json::Value`</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">john</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">json</span><span class="o">!</span><span class="p">({</span>
+<span class="w">    </span><span class="s">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="nc">full_name</span><span class="p">,</span>
+<span class="w">    </span><span class="s">&quot;age&quot;</span><span class="p">:</span><span class="w"> </span><span class="nc">age_last_year</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="s">&quot;phones&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;+44 {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">random_phone</span><span class="p">())</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">});</span>
+</code></pre>
+<p>This is amazingly convenient, but we have the problem we had before with
+<code>Value</code>: the IDE and Rust compiler cannot help us if we get it wrong. Serde JSON
+provides a better way of serializing strongly-typed data structures into JSON
+text.</p>
+<h4>Creating JSON by serializing data structures</h4>
+<p>A data structure can be converted to a JSON string by
+<a href="https://docs.rs/serde_json/1/serde_json/ser/fn.to_string.html"><code>serde_json::to_string</code></a>. There is also
+<a href="https://docs.rs/serde_json/1/serde_json/ser/fn.to_vec.html"><code>serde_json::to_vec</code></a> which serializes to a <code>Vec&lt;u8&gt;</code> and
+<a href="https://docs.rs/serde_json/1/serde_json/ser/fn.to_writer.html"><code>serde_json::to_writer</code></a> which serializes to any <code>io::Write</code>
+such as a File or a TCP stream.</p>
+<p>&lt;div align=&quot;right&quot;&gt;
+&lt;a href=&quot;https://play.rust-lang.org/?edition=2018&amp;gist=3472242a08ed2ff88a944f2a2283b0ee&quot; target=&quot;_blank&quot;&gt;
+&lt;img align=&quot;center&quot; width=&quot;85&quot; src=&quot;https://raw.githubusercontent.com/serde-rs/serde-rs.github.io/master/img/runtab.png&quot;&gt;
+&lt;/a&gt;
+&lt;/div&gt;</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">serde</span><span class="p">::{</span><span class="n">Deserialize</span><span class="p">,</span><span class="w"> </span><span class="n">Serialize</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">serde_json</span><span class="p">::</span><span class="nb">Result</span><span class="p">;</span>
+
+<span class="cp">#[derive(Serialize, Deserialize)]</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Address</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">street</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="n">city</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">print_an_address</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Some data structure.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Address</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">street</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;10 Downing Street&quot;</span><span class="p">.</span><span class="n">to_owned</span><span class="p">(),</span>
+<span class="w">        </span><span class="n">city</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;London&quot;</span><span class="p">.</span><span class="n">to_owned</span><span class="p">(),</span>
+<span class="w">    </span><span class="p">};</span>
+
+<span class="w">    </span><span class="c1">// Serialize it to a JSON string.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serde_json</span><span class="p">::</span><span class="n">to_string</span><span class="p">(</span><span class="o">&amp;</span><span class="n">address</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Print, write to a file, or send to an HTTP server.</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">);</span>
+
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre>
+<p>Any type that implements Serde's <code>Serialize</code> trait can be serialized this way.
+This includes built-in Rust standard library types like <code>Vec&lt;T&gt;</code> and <code>HashMap&lt;K, V&gt;</code>, as well as any structs or enums annotated with <code>#[derive(Serialize)]</code>.</p>
+<h4>Performance</h4>
+<p>It is fast. You should expect in the ballpark of 500 to 1000 megabytes per
+second deserialization and 600 to 900 megabytes per second serialization,
+depending on the characteristics of your data. This is competitive with the
+fastest C and C++ JSON libraries or even 30% faster for many use cases.
+Benchmarks live in the <a href="https://github.com/serde-rs/json-benchmark">serde-rs/json-benchmark</a> repo.</p>
+<h4>Getting help</h4>
+<p>Serde is one of the most widely used Rust libraries, so any place that
+Rustaceans congregate will be able to help you out. For chat, consider trying
+the <a href="https://discord.com/channels/273534239310479360/274215136414400513">#rust-questions</a> or <a href="https://discord.com/channels/273534239310479360/273541522815713281">#rust-beginners</a> channels of the unofficial community
+Discord (invite: <a href="https://discord.gg/rust-lang-community">https://discord.gg/rust-lang-community</a>), the <a href="https://discord.com/channels/442252698964721669/443150878111694848">#rust-usage</a> or
+<a href="https://discord.com/channels/442252698964721669/448238009733742612">#beginners</a> channels of the official Rust Project Discord (invite:
+<a href="https://discord.gg/rust-lang">https://discord.gg/rust-lang</a>), or the <a href="https://rust-lang.zulipchat.com/#narrow/stream/122651-general">#general</a> stream in Zulip. For
+asynchronous, consider the <a href="https://stackoverflow.com/questions/tagged/rust">[rust] tag on StackOverflow</a>, the
+<a href="https://www.reddit.com/r/rust">/r/rust</a> subreddit which has a pinned weekly easy questions post, or the Rust
+<a href="https://users.rust-lang.org">Discourse forum</a>. It's acceptable to file a support issue in this
+repo, but they tend not to get as many eyes as any of the above and may get
+closed without a response after some time.</p>
+<h4>No-std support</h4>
+<p>As long as there is a memory allocator, it is possible to use serde_json without
+the rest of the Rust standard library. Disable the default &quot;std&quot; feature and
+enable the &quot;alloc&quot; feature:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">serde_json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<p>For JSON support in Serde without a memory allocator, please see the
+<a href="https://github.com/rust-embedded-community/serde-json-core"><code>serde-json-core</code></a> crate.</p>
+<p>&lt;br&gt;</p>
+<h6>License</h6>
+<p>&lt;sup&gt;
+Licensed under either of &lt;a href=&quot;LICENSE-APACHE&quot;&gt;Apache License, Version
+2.0&lt;/a&gt; or &lt;a href=&quot;LICENSE-MIT&quot;&gt;MIT license&lt;/a&gt; at your option.
+&lt;/sup&gt;</p>
+<p>&lt;br&gt;</p>
+<p>&lt;sub&gt;
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this crate by you, as defined in the Apache-2.0 license, shall
+be dual licensed as above, without any additional terms or conditions.
+&lt;/sub&gt;</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>alloc</code></th><td>No</td><td><ul class="effects"><li><code>serde_core/alloc</code></li></ul></td></tr><tr><th scope="row"><code>arbitrary_precision</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>float_roundtrip</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>indexmap</code></th><td>No</td><td><ul class="effects"><li><code>dep:indexmap</code></li></ul></td></tr><tr><th scope="row"><code>preserve_order</code></th><td>No</td><td><ul class="effects"><li><code>indexmap</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>raw_value</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>memchr/std</code></li><li><code>serde_core/std</code></li></ul></td></tr><tr><th scope="row"><code>unbounded_depth</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/indexmap/"><code>crates-io/indexmap</code></a><small>Alias: indexmap</small></th><td><code>^2.2.3</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/itoa/"><code>crates-io/itoa</code></a><small>Alias: itoa</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/memchr/"><code>crates-io/memchr</code></a><small>Alias: memchr</small></th><td><code>^2</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0.220</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required · when cfg(any())</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde_core/"><code>crates-io/serde_core</code></a><small>Alias: serde_core</small></th><td><code>^1.0.220</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/zmij/"><code>crates-io/zmij</code></a><small>Alias: zmij</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/arrow-json/versions/60.0.0/">crates-io/arrow-json 60.0.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/arrow-json/versions/58.4.0/">crates-io/arrow-json 58.4.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/arrow-schema/versions/60.0.0/">crates-io/arrow-schema 60.0.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/arrow-schema/versions/58.4.0/">crates-io/arrow-schema 58.4.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/assert-json-diff/versions/2.0.2/">crates-io/assert-json-diff 2.0.2</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/auditable-serde/versions/0.9.0/">crates-io/auditable-serde 0.9.0</a><span>Requires ^1.0.57 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/auditable-serde/versions/0.8.0/">crates-io/auditable-serde 0.8.0</a><span>Requires ^1.0.57 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/av-scenechange/versions/0.14.1/">crates-io/av-scenechange 0.14.1</a><span>Requires ^1.0.62 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/aws-smithy-http-client/versions/1.5.0/">crates-io/aws-smithy-http-client 1.5.0</a><span>Requires ^1.0.146 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/axum/versions/0.8.9/">crates-io/axum 0.8.9</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/axum/versions/0.8.8/">crates-io/axum 0.8.8</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/bigdecimal/versions/0.4.11/">crates-io/bigdecimal 0.4.11</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/cargo_metadata/versions/0.23.1/">crates-io/cargo_metadata 0.23.1</a><span>Requires ^1.0.142 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/cookie_store/versions/0.22.1/">crates-io/cookie_store 0.22.1</a><span>Requires ^1.0.87 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/criterion/versions/0.8.2/">crates-io/criterion 0.8.2</a><span>Requires ^1.0.100 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/datafusion-datasource-json/versions/53.1.0/">crates-io/datafusion-datasource-json 53.1.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/datafusion-expr/versions/53.1.0/">crates-io/datafusion-expr 53.1.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/elliptic-curve/versions/0.13.8/">crates-io/elliptic-curve 0.13.8</a><span>Requires ^1.0.47 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/fxprof-processed-profile/versions/0.6.0/">crates-io/fxprof-processed-profile 0.6.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/icu_provider/versions/2.3.1/">crates-io/icu_provider 2.3.1</a><span>Requires ^1.0.45 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/icu_provider/versions/2.1.1/">crates-io/icu_provider 2.1.1</a><span>Requires ^1.0.45 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/json-patch/versions/4.2.0/">crates-io/json-patch 4.2.0</a><span>Requires ^1.0.95 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/jsonpath-rust/versions/1.0.11/">crates-io/jsonpath-rust 1.0.11</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/jsonptr/versions/0.8.2/">crates-io/jsonptr 0.8.2</a><span>Requires ^1.0.140 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/jsonptr/versions/0.7.1/">crates-io/jsonptr 0.7.1</a><span>Requires ^1.0.119 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/jsonschema/versions/0.58.6/">crates-io/jsonschema 0.58.6</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/jsonschema-value/versions/0.58.6/">crates-io/jsonschema-value 0.58.6</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/jsonwebtoken/versions/11.1.0/">crates-io/jsonwebtoken 11.1.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/k8s-openapi/versions/0.28.0/">crates-io/k8s-openapi 0.28.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/kube-client/versions/4.2.0/">crates-io/kube-client 4.2.0</a><span>Requires ^1.0.127 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/kube-core/versions/4.2.0/">crates-io/kube-core 4.2.0</a><span>Requires ^1.0.127 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/multer/versions/3.1.0/">crates-io/multer 3.1.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/object_store/versions/0.14.2/">crates-io/object_store 0.14.2</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/object_store/versions/0.13.2/">crates-io/object_store 0.13.2</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/opentelemetry-otlp/versions/0.33.0/">crates-io/opentelemetry-otlp 0.33.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/opentelemetry_sdk/versions/0.33.0/">crates-io/opentelemetry_sdk 0.33.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/parquet/versions/58.4.0/">crates-io/parquet 58.4.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/pest/versions/2.9.2/">crates-io/pest 2.9.2</a><span>Requires ^1.0.85 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/postgres-types/versions/0.2.14/">crates-io/postgres-types 0.2.14</a><span>Requires ^1.0.144 · alias serde_json-1 · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir/versions/0.0.325/">crates-io/ra_ap_hir 0.0.325</a><span>Requires ^1.0.140 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_proc_macro_api/versions/0.0.325/">crates-io/ra_ap_proc_macro_api 0.0.325</a><span>Requires ^1.0.140 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_project_model/versions/0.0.325/">crates-io/ra_ap_project_model 0.0.325</a><span>Requires ^1.0.140 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/raw-cpuid/versions/11.6.0/">crates-io/raw-cpuid 11.6.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/redis/versions/1.7.1/">crates-io/redis 1.7.1</a><span>Requires ^1.0.149 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/referencing/versions/0.58.6/">crates-io/referencing 0.58.6</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/reqwest/versions/0.13.5/">crates-io/reqwest 0.13.5</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/rusqlite/versions/0.40.2/">crates-io/rusqlite 0.40.2</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/rust_decimal/versions/1.43.0/">crates-io/rust_decimal 1.43.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/schemars/versions/1.2.2/">crates-io/schemars 1.2.2</a><span>Requires ^1.0.127 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/schemars/versions/0.8.22/">crates-io/schemars 0.8.22</a><span>Requires ^1.0.25 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/serde_with/versions/3.24.0/">crates-io/serde_with 3.24.0</a><span>Requires ^1.0.151 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/siphasher/versions/1.0.4/">crates-io/siphasher 1.0.4</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/sqlparser/versions/0.61.0/">crates-io/sqlparser 0.61.0</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/sqlx-core/versions/0.9.0/">crates-io/sqlx-core 0.9.0</a><span>Requires ^1.0.142 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/sqlx-macros-core/versions/0.9.0/">crates-io/sqlx-macros-core 0.9.0</a><span>Requires ^1.0.142 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/sqlx-postgres/versions/0.9.0/">crates-io/sqlx-postgres 0.9.0</a><span>Requires ^1.0.142 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/substrait/versions/0.63.0/">crates-io/substrait 0.63.0</a><span>Requires ^1.0.145 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/substrait/versions/0.62.2/">crates-io/substrait 0.62.2</a><span>Requires ^1.0.145 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/tinytemplate/versions/1.2.1/">crates-io/tinytemplate 1.2.1</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/tracing-subscriber/versions/0.3.23/">crates-io/tracing-subscriber 0.3.23</a><span>Requires ^1.0.82 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/typewit/versions/1.15.2/">crates-io/typewit 1.15.2</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/typify-impl/versions/0.5.0/">crates-io/typify-impl 0.5.0</a><span>Requires ^1.0.145 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/typify-macro/versions/0.5.0/">crates-io/typify-macro 0.5.0</a><span>Requires ^1.0.145 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/ureq/versions/3.4.2/">crates-io/ureq 3.4.2</a><span>Requires ^1.0.120 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wasm-bindgen/versions/0.2.129/">crates-io/wasm-bindgen 0.2.129</a><span>Requires ^1.0 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wasm-metadata/versions/0.261.0/">crates-io/wasm-metadata 0.261.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wasm-metadata/versions/0.259.0/">crates-io/wasm-metadata 0.259.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wasm-metadata/versions/0.247.0/">crates-io/wasm-metadata 0.247.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wasm-metadata/versions/0.244.0/">crates-io/wasm-metadata 0.244.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wasmtime/versions/36.0.17/">crates-io/wasmtime 36.0.17</a><span>Requires ^1.0.80 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wiremock/versions/0.6.5/">crates-io/wiremock 0.6.5</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wit-component/versions/0.261.0/">crates-io/wit-component 0.261.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wit-component/versions/0.259.0/">crates-io/wit-component 0.259.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wit-component/versions/0.247.0/">crates-io/wit-component 0.247.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wit-component/versions/0.244.0/">crates-io/wit-component 0.244.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.261.0/">crates-io/wit-parser 0.261.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.259.0/">crates-io/wit-parser 0.259.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.247.0/">crates-io/wit-parser 0.247.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.244.0/">crates-io/wit-parser 0.244.0</a><span>Requires ^1 · alias serde_json · </span></li><li><a href="../../../../../packages/crates-io/wit-parser/versions/0.236.1/">crates-io/wit-parser 0.236.1</a><span>Requires ^1 · alias serde_json · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:090938744e44f2297e87c20f43d2dd567bbec4c1c12767fc4f277d96e0dfd6f8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:c985cc6a5422459ab7a1f72a58d4b7ddf36a7c33bc97a2e17252505385070497</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8fb798effbc5ef658ea9a9e59e1d56875ce45bc10d018a2751b8f4c4a37dec80</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:17e41ada6e8d8ca31609bf316878580d6b39bae017e6f36e97bb01ce130a56d2</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:fd1b15ff54e2030fe16ab6ecb35d0b6731dcf3bb3b7f0c24226357de6ea8904f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:3528f1b0501afc236e4a8b2565926f05ccd9736495b05764be2469b653878f04</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, raw_value, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2d59b994a696131f414169a3f8ca86d62cfd28de5b5482a829575a5a44e2f672</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:0455b7ed0ea92a9424a0a9f031c7593981ffce5f46da9f896eee9519f5f2c1a2</small></li><li><code>sha256:89b82ad69a91106e434eb55595f47a58f05e5f581826e36e0be532bdb088e8b9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:c17719d1d9571755177acf3f9f9c43c0e12be743b03f37dcb102244d08881692</small></li><li><code>sha256:b4df46b839066bb382bbe8b8e933f9fd9ec70c91d49d6e08592770f72c83b324</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:8f99fc6f071b575792e1da5d1c531d0372055304c4cb0f3f7b1a6f3761b4ee03</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:55cdd70052c1c0a156230f0e86c12fc535df938a49a4ce6bbc18970c9458cafd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:c73da84b4a1a82dbc81cd21d70acf5e3a9fc8ab11f6f70066457e33167f9a184</small></li><li><code>sha256:5a36c3dc2d7af28dfa82f8cfa536b43117957bd40d1948a64ce9419c34dfd4b4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:1f30f6defd95cb6ef3b169dd55e537ac88935630c84d9c5bc3d9664a0e2d6c26</small></li><li><code>sha256:81303f44def4a9548a332ee0906204de7e0e53fbce75cdb7db56a57ed74b2e1c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:f818efd00265afdb30df9d3aae34ab2d0fea18c84d8367bbc115f6e7b3234063</small></li><li><code>sha256:9d9c1192787b6e61580b5741c6f843a8309cdfcfe1044ab17ae640ed9f21d0db</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:41dfe045195ffa12b2ff853afe5c66305fbf0a4ee2de2dc0bcd23adcec75a30b</small></li><li><code>sha256:a10c38eee54be25a338cf810c2ad9906f1e1a37d27cc86f48c1eaccde0779b50</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53449647">Attestation reference</a><small>Archive: sha256:c3009f63d3b98d76161f78415f88fafabe38c799d1b9de489851fc7d5dd5e21b</small></li><li><code>sha256:afdc757cfa2fe43302556ff0c93d64968817a43e9bddf9622b3faaabf3d744b3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:5a8431dcecd72d363a7ec52de3142dd28f7ae3f8b99a6d1ad83620656f8f7097</small></li><li><code>sha256:f8545040b3d5d04bab24f5833134a293a57ffe45d3b20c60a3db6d136e06ba8a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53954876">Attestation reference</a><small>Archive: sha256:92b29300e76e3852e8fd3533c5a2f84cde3042a35131b7036789a79b7544fdb8</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std, unbounded_depth</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2d4bdb1607386fab1c28eeaf363529c6fe9cd6bceb9f35269a19fa796e569e43</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:b4dce83e6c14bd77fb49dfbedb95e676957642155605c0fad5533aae0d7f124c</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:4da5c7442de9b66a157f0593a9a352519d8a6a7a46875b15d96a237d2e161834</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:1393497020ac22b98350b7dd638a789842a09574875c06fb2b22ec5021571a9c</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:882415ed3defb0ecff001aa34b27a84049f172d37b6935eb84cf968c4235c62e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:cb3ad3fab5520fe61fa50b94955a26224ca26335fd520410a3b03e0585e9d376</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:56f167f3776eaf1eb52a553f0e031056322aeff058c27f46a13b5e4f701f4151</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:01fac8b9c08ffdd55ed9331d557561766bed9b08aa7a4ab78698236a88c8452e</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ab073855215eca0de913307f6b42f6c1d2623547ca8769caee20a56b42326435</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:1669e6f662342ee6c9e9461fe64309746ceef1c26bddca83abc093301bb2694a</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, raw_value, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:298c3997c8fd967bf3e9be14192deb161f0e0e21076bb04edf8788e133a809ac</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:730e5b18774a7cd3c6136af919f5326eb8ed94a6e27a769206b7251fe95f19a8</small></li><li><code>sha256:2e12d8ed9548552b2bcef4e987bae7d78d2abf50bf3a691cc6c50f806bad26d9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:9be0f90275a65edd9668a8903058c13d8da635e67a60e905fbc0d42e6416f5f2</small></li><li><code>sha256:b417c10ec7d6e3a1ff3a580564b1debbf1e704c210764170751c4fc9e8353d5c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:e4f05f6aa4d972e87ae3a4b0365eb49b3aa257addbd599dd78432047a6f8a2f6</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:34522409f1cc6b523c86ab195ed95f0bce50b44211d2b212c682968f4350f9ee</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54020554">Attestation reference</a><small>Archive: sha256:36362850cfeb2c09a23b40dc8e3e028fd75d932935f930ceb98d7456492a0142</small></li><li><code>sha256:3b7571379e7fa041c5a79cce461e93f5910f5f0933664925c4083c6caf2e0d79</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:b6c36f4ce8a048a2deb2b565589e831175b40353e6c9d51971c24cb225857348</small></li><li><code>sha256:5a8ac10e6cf774f9083296bdad5742988290ee31227182d0076a9e783577cb44</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:95516d29d7bd6e37a77aa6e97cbb1fe3909ea80c398a0df9985496d54c3db63b</small></li><li><code>sha256:66eeae662f1364a8a687b2e65807202db53c98c0e432864a48c24072700be688</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:f95879c4f9c0205d917bc788a80fe15735862a209578b9b667029f1c7ce59035</small></li><li><code>sha256:d63ead599e4072e542153563e823b6653184cf21c9391edcc3340ac69e54a0c4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:8923b0f839c02b99c03a04e18e8be4e241d44d0f7b7e9889a7024a2e138eec59</small></li><li><code>sha256:dded16cfbcb81023f67f895accd6397982f024abcf639962c34bd1ff4f97148c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:b5cc912f2acca160c941450698c50a524658c07a5b251cb1b32a7d97df334281</small></li><li><code>sha256:f7afe8f6b38ec4fcf3610a988a1bf147e82166168045ed080fcf9dc55a35f951</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:5f0156a4ac486d07349b9e01c256b994c14e986757c478594c0eaf3168d2f57f</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std, unbounded_depth</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:41d2c8a3b1013ec896ec3a1e1752727493844d3d6f4631b7ebafaad51218b589</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:13f6a1e544a4dd24afc9d3723e61a8bc6709ec591d690c12aafc7dd532077c12</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:52d0f8f32035684377922dcd74770b8ce40ed23efe2c1f9f284ed818b33bec98</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:81bb640b77d9928fdbd2fb9844a3727046acce128e4fa85fa02ea58575bdf7e6</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d2e3535cf4f6f46b2f2145c1f242b1e06ce0a3f784fbb135047d659a47828ff1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:ac012b51e706290a249696162eb5402c477a12e472434cb9633d4a810bf5d3f3</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1fff7e5008c0d4fe6d2654bd40abe965df57baf95df092f238c1ca77cb53c5f4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674983">Attestation reference</a><small>Archive: sha256:69e419cdfa1cd9542e304728e89a94b49da11198b70493b1ee530172e3f545db</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b4f36fa87c2acb6cb70cf2cbaa07425a176659b846f9698a511ba5ddd19d2cc3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674983">Attestation reference</a><small>Archive: sha256:22f16b6c4f5663dd71ed871e876f53dccff04b4bb910566a295e5fc407eac5e7</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, raw_value, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:558adbd5f4eda05be820555ba2af36239d21bd884d6b59478e4ecc5a5ed4b8c3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:b9d500980bcb7cd3c8d57d26849ae4fa9a2a46db8e84de9ecafda7974bab384e</small></li><li><code>sha256:9e0c9749663f667ebc4eb30f82be4802c362c62856f789ec0ad254b94b6e9452</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:3ab2b0b04e5c74e4eaef665cb5f78e9176eb74d30e94894607ab63d4800f0fa5</small></li><li><code>sha256:e8228cc96731792d4aa1f6bf9e4a5bd9b1e7ea1f5c4f68d1bb3cc6f63e5b5c8d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:f9378a6a5c0ae1cce1bbb205632d2ebf4853935e0d942022a63d435f74527c22</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:03467f1dcd49ebb68c1a94ae97fba032eb574f15023359f8e4c45b5662bfbc3a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674109">Attestation reference</a><small>Archive: sha256:189abe835aee8cd49f81b6145f6164a4fb7b660b757e28ed20b0b988b745dca8</small></li><li><code>sha256:2aab88104283fac4c8ef154b84902909b939ddc5215c5c3f457a0c9452d27540</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53493685">Attestation reference</a><small>Archive: sha256:0e16fcfd5702987089f378fffda70187aa5f23f8918d3f4d4e04d8829ce7990a</small></li><li><code>sha256:37d1a8d8a5bebbf03b2c94adf6e5419b517056d092afbd1ea5f7d0cbc667ff5e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:38a3c2d05b0e36fb38e77783867f978cec1912d91e0f77756f817485be1daf74</small></li><li><code>sha256:70cd678c40897cb18df7ef890fc9cf8c8bbbf34a01913e0026b8ef7381d52203</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:549cea3938ddc3aac6380b7c693e6ae7c89d5c8da445a057770b9e33ce2cc6a8</small></li><li><code>sha256:759010a1ef7bfa0142fc172fabb2fabce909271752ebcd3eadeee61f7ad2fc95</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:eab19146a8ffb5581c35e5be98af6257da93f9795a78ee0a9886f47500fa2fbc</small></li><li><code>sha256:9f07095715b3cf88198ef4f0de1c4c20f2d8af94925a9cbb73f0cb33011b2792</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675925">Attestation reference</a><small>Archive: sha256:ad991a4410dfb2e5977da37e8cef72558b0b4d169d741a2541480e283d66510d</small></li><li><code>sha256:d106998d1102d8ba59532ccfc402a4f3f52fa9f66ae935c75ac13292f992b534</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:01b99f81671a7a5f48cafd60bc5465cdd8fc8adce24e4dcc746a6200359cdc60</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std, unbounded_depth</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1eba33d767023de0a7e105160d6aa9f4a1d3199b2709add131d3dac52ee8deef</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:74f01288612c40d0a68ba0587195ec8ad015cb9095b4f573af83b1f7c449bc66</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e06ad654264bae84b1a5c1ff9dc15815cff5c650f744dbc667777050a8516069</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53950367">Attestation reference</a><small>Archive: sha256:f3bc1dc2f065d1bca61c5409d600d13504b25b76c5ab3083809526a45e0f8d95</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:028ee5adf5da64746a6f099b7937657125bdb243f11945d73e59db2736c8883e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:a3b018fb02f6df3a4675c025591a2a0d4b8f4bd512aa240fd611c02ec64078f9</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:f7bb5332eeed08bfdf50e45c10c545b571c74cbe95a418f671daf27540a468d0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:ec88e60e8a214b9612bc9eae7c99c0cb94d09a5442a2ea479ae771cdf9952d21</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e811975e11443444fd43155b81ad2861ddb639261258d66882b2e1d1b90ff0a2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:9c493b091a557a3b6149d3ed2f91742f892bdea98fa2a73331597d19cb66bb5f</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, raw_value, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:213446753414da3e131f28d4fa00c2e70715d7c2ec3550b8621cb93aae742bfa</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:68c11d107c7d728661ec0c90c7d25ce5768025c6cc80dfc392f3317298808400</small></li><li><code>sha256:3bf9da965a0a66eebc58149639a178c86f52427cb5b512904f3dbae901330254</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:f6d1091b55e4dd24cd1024882582b39b38596a41789edea7cbc08da6ecc44757</small></li><li><code>sha256:80991e53972e2546f8a91413d08ab2ec5908b6db9406605a647ac58137d66eb2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:5c38d42fda65c1f126eed78e626911cea7fec9b05d20bc2efe86811e93324a01</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:059105e0b05588848c383d2a40398b25a4f0c37529216adf5a1ff5dce2e1bb87</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:4d4cdf06279f23028bffd82d631cfcf27345301f80ae990ba69ab63e8c59f4cb</small></li><li><code>sha256:0daf8bc3a29d3078817fb8438a76957fc5818edebb8d0c9360ea7e877ae03dc2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:c61088789bd705982ceefdbe1530f7edebfafd06a38393b68c09e065e62bc446</small></li><li><code>sha256:75b1dc85161c8bba696794df3b61706169ad5b04b2a4f17c397c5bbd7e09eacd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:f277fc7dff72af0d9e02602fcb30d2c9cbe1dc2334ee4050b58461b858459321</small></li><li><code>sha256:a7c01313a5f1d39820fb4b0166894bdf9c2aa996a454f734b43f347c2623b0f1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:f5967d929fbe71d146f3a57d1179a1da9d8ea963036aa1cbfb04c00c5a26c11d</small></li><li><code>sha256:c92880f4179476876f69cfc2c774676ef426962ebc44a8a50455699cbe01dbc0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:f79ba1afa67549575fcc831fc25d2d4483c41fa9bac7b869b0bbdc030b317cf3</small></li><li><code>sha256:ddd5b69639563ecdd6466aa06191a64f6254beb5386d872dc063188b4e6039ef</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:1041f8da6affb0a5a6b27e8cc74765aa616b7dc9bf33dd4a178f955238b0b717</small></li><li><code>sha256:e826bee36a6a30f54b16499340075d62a11b61296828398ba68d3aa7be95f572</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54075092">Attestation reference</a><small>Archive: sha256:dee3ecee39b609c3050a2566c0d8288ac2d400623103a1ea3d55f02ff713e176</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std, unbounded_depth</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:03dde332bbf6cf289493f2d7b3ba44828fcc20aebbcae9028b48f9a035567854</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:506463dd9f6872f7396f132d0fb9416c632a460b8f6f1594618c8eb2ce94f8a3</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ba7508d6b117fd86d34dde3f70b9058d5c5130d4a9e74730614dcc4197ea9ce0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:f9c3f0d3da69d505c4b9b60b5dd6432fb31f86cf86cad38c15184d6b6d60a18e</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>alloc</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>alloc, default, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>alloc, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, float_roundtrip, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, raw_value, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, raw_value, std, unbounded_depth</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, std, unbounded_depth</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>alloc</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>alloc, default, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>alloc, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, float_roundtrip, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, indexmap, preserve_order, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, raw_value, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, std</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, std, unbounded_depth</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>std</td></tr><tr><th scope="row">wasm32-wasip1</th><td>debug</td><td>harvested</td><td>default, raw_value, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>alloc</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>alloc, default, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>alloc, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>default, float_roundtrip, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>default, raw_value, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>default, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>default, std, unbounded_depth</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>debug</td><td>harvested</td><td>std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>alloc</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>alloc, default, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>alloc, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>default, float_roundtrip, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>default, raw_value, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>default, std</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>default, std, unbounded_depth</td></tr><tr><th scope="row">x86_64-unknown-linux-gnu</th><td>release</td><td>harvested</td><td>std</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/serde_json/versions/1.0.151/">1.0.151</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/serde_json/1.0.151">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde_json/versions/1.0.149/">1.0.149</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/serde_json/1.0.149">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+</code></pre></div><p class="table-note">sha256:62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="section-intro">Historical observations across all versions, not unique users or installs. Statistics refresh independently of the index.</p><details class="document-file"><summary>Daily values · crates.io · upstream</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">UTC date</th><th scope="col">Downloads</th></tr></thead><tbody><tr><th scope="row">2026-09-07</th><td>3888619</td></tr><tr><th scope="row">2026-09-08</th><td>4580434</td></tr><tr><th scope="row">2026-09-09</th><td>4797328</td></tr><tr><th scope="row">2026-09-10</th><td>4674571</td></tr><tr><th scope="row">2026-09-11</th><td>4260094</td></tr><tr><th scope="row">2026-09-12</th><td>2912477</td></tr><tr><th scope="row">2026-09-13</th><td>2678925</td></tr><tr><th scope="row">2026-09-14</th><td>4481182</td></tr><tr><th scope="row">2026-09-15</th><td>4896555</td></tr><tr><th scope="row">2026-09-16</th><td>4661672</td></tr><tr><th scope="row">2026-09-17</th><td>4677439</td></tr><tr><th scope="row">2026-09-18</th><td>4392078</td></tr><tr><th scope="row">2026-09-19</th><td>2803409</td></tr><tr><th scope="row">2026-09-20</th><td>2850656</td></tr><tr><th scope="row">2026-09-21</th><td>4366852</td></tr><tr><th scope="row">2026-09-22</th><td>4736767</td></tr><tr><th scope="row">2026-09-23</th><td>4940260</td></tr><tr><th scope="row">2026-09-24</th><td>5022126</td></tr><tr><th scope="row">2026-09-25</th><td>4779393</td></tr><tr><th scope="row">2026-09-26</th><td>3179699</td></tr><tr><th scope="row">2026-09-27</th><td>3194870</td></tr><tr><th scope="row">2026-09-28</th><td>5177969</td></tr><tr><th scope="row">2026-09-29</th><td>5285707</td></tr><tr><th scope="row">2026-09-30</th><td>5224361</td></tr><tr><th scope="row">2026-10-01</th><td>5333808</td></tr><tr><th scope="row">2026-10-02</th><td>5085076</td></tr><tr><th scope="row">2026-10-03</th><td>3431349</td></tr><tr><th scope="row">2026-10-04</th><td>3236186</td></tr><tr><th scope="row">2026-10-05</th><td>4856880</td></tr><tr><th scope="row">2026-10-06</th><td>5221643</td></tr></tbody></table></div></details><div class="chart-block"><h3>crates.io · upstream</h3><strong class="download-total">129628385</strong><p>30 complete UTC days · all versions</p><img class="large-chart" src="../../../../../assets/site/charts/crates-io/serde_json/upstream-detail.png" alt="Recorded daily downloads"><p class="table-note">Captured 2026-10-07T10:29:14.121674000Z · <a href="https://crates.io/api/v1/crates/serde_json/downloads">Source</a></p></div><details class="document-file"><summary>Daily values · Incan registry · GitHub Packages</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">UTC date</th><th scope="col">Downloads</th></tr></thead><tbody><tr><th scope="row">2026-09-08</th><td>0</td></tr><tr><th scope="row">2026-09-09</th><td>0</td></tr><tr><th scope="row">2026-09-10</th><td>0</td></tr><tr><th scope="row">2026-09-11</th><td>0</td></tr><tr><th scope="row">2026-09-12</th><td>0</td></tr><tr><th scope="row">2026-09-13</th><td>0</td></tr><tr><th scope="row">2026-09-14</th><td>0</td></tr><tr><th scope="row">2026-09-15</th><td>0</td></tr><tr><th scope="row">2026-09-16</th><td>0</td></tr><tr><th scope="row">2026-09-17</th><td>0</td></tr><tr><th scope="row">2026-09-18</th><td>0</td></tr><tr><th scope="row">2026-09-19</th><td>0</td></tr><tr><th scope="row">2026-09-20</th><td>0</td></tr><tr><th scope="row">2026-09-21</th><td>0</td></tr><tr><th scope="row">2026-09-22</th><td>0</td></tr><tr><th scope="row">2026-09-23</th><td>0</td></tr><tr><th scope="row">2026-09-24</th><td>0</td></tr><tr><th scope="row">2026-09-25</th><td>0</td></tr><tr><th scope="row">2026-09-26</th><td>0</td></tr><tr><th scope="row">2026-09-27</th><td>0</td></tr><tr><th scope="row">2026-09-28</th><td>0</td></tr><tr><th scope="row">2026-09-29</th><td>0</td></tr><tr><th scope="row">2026-09-30</th><td>0</td></tr><tr><th scope="row">2026-10-01</th><td>0</td></tr><tr><th scope="row">2026-10-02</th><td>0</td></tr><tr><th scope="row">2026-10-03</th><td>0</td></tr><tr><th scope="row">2026-10-04</th><td>0</td></tr><tr><th scope="row">2026-10-05</th><td>0</td></tr><tr><th scope="row">2026-10-06</th><td>0</td></tr><tr><th scope="row">2026-10-07</th><td>7</td></tr></tbody></table></div></details><p class="table-note">The last registry day is a partial UTC day.</p><div class="chart-block"><h3>Incan registry · GitHub Packages</h3><strong class="download-total">7</strong><p>All-time pulls · all build tags</p><img class="large-chart" src="../../../../../assets/site/charts/crates-io/serde_json/registry-detail.png" alt="Recorded daily downloads"><p class="table-note">Captured 2026-10-07T10:29:14.121674000Z · <a href="https://github.com/encero-systems/incan.pub/pkgs/container/incan.pub%2Fcrates-io%2Fserde_json">Source</a></p></div></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:fbaa5d6302282e35f970e3e8f9e3df5af26ec2174cbb603d4ed429ad8798a379</code></dd><dt>Upstream checksum</dt><dd><code>sha256:c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_json&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.0.151&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde_core/alloc&quot;</span><span class="p">]</span>
+<span class="n">arbitrary_precision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">float_roundtrip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">indexmap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:indexmap&quot;</span><span class="p">]</span>
+<span class="n">preserve_order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;indexmap&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">raw_value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;memchr/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde_core/std&quot;</span><span class="p">]</span>
+<span class="n">unbounded_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;serde_json&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">indexmap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/indexmap&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.2.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">itoa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/itoa&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">memchr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/memchr&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.220&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any())&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde_core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.220&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">zmij</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/zmij&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;float_roundtrip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;raw_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;raw_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;unbounded_depth&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;unbounded_depth&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;float_roundtrip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;indexmap&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;preserve_order&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;raw_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;unbounded_depth&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;wasm32-wasip1&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;raw_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;float_roundtrip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;raw_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;unbounded_depth&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;float_roundtrip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;raw_value&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;unbounded_depth&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64-unknown-linux-gnu&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fast_arithmetic=</span><span class="se">\&quot;</span><span class="s2">64</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">]</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Erick Tryzelaar &lt;erick.tryzelaar@gmail.com&gt;, David Tolnay &lt;dtolnay@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.71</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/serde_json/1.0.151">crates.io package</a></li><li><a href="https://github.com/serde-rs/json">Source repository</a></li><li><a href="https://docs.rs/serde_json">Documentation</a></li></ul></div><div class="metadata-block mini-popularity"><h2>Downloads</h2><a class="mini-chart" href="#popularity"><span>crates.io · 30 complete days</span><strong>129628385</strong><img src="../../../../../assets/site/charts/crates-io/serde_json/upstream.png" alt="Recorded download trend"><small>Captured 2026-10-07</small></a><a class="mini-chart" href="#popularity"><span>Registry · all-time pulls</span><strong>7</strong><img src="../../../../../assets/site/charts/crates-io/serde_json/registry.png" alt="Recorded download trend"><small>Captured 2026-10-07</small></a></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">serde_json</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/serde_json"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.0.151"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

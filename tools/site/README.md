@@ -1,4 +1,12 @@
-# Deterministic static package pages
+# Registry-backed static package pages
+
+The current website consumes the owned registry feed: **1,311 packages and 1,707 version-specific pages**, plus package landing routes and paginated catalog pages. See [the current implementation guide](../../docs/registry-site.md) for the source contract, refresh/build commands and verification boundaries.
+
+Registry selection and rendering are authored in `registry.incn`; `main.incn` dispatches registry and retained legacy-fixture modes. Selected documentation is already in the index, so rendering needs neither an archive miner nor a language model. Statistics remain a separately dated snapshot.
+
+The sections below describe the original six-package fixture and the visual direction retained by the current site. Its old input pin and coverage are historical, not the current catalog's authority.
+
+## Original deterministic six-package fixture
 
 The Incan renderer builds the homepage, catalog and six vertical, anchored package documents from the frozen `assets/site/packages.json` bundle. No language model, registry resolution, package compilation, live statistics calls or GitHub credentials are involved in rendering.
 

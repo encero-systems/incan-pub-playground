@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>rayon 1.11.0 · Incan.pub</title><meta name="description" content="Simple work-stealing parallelism for Rust"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/rayon</p><div class="title-row"><h1>rayon</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/rayon/versions/1.12.0/">1.12.0</option><option value="../../../../../packages/crates-io/rayon/versions/1.11.0/" selected>1.11.0</option></select></label></div><p class="description">Simple work-stealing parallelism for Rust</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><p class="version-warning">Viewing an older indexed version. <a href="../../../../../packages/crates-io/rayon/">View latest indexed version 1.12.0 →</a></p><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Rayon</h3>
+<p><a href="https://crates.io/crates/rayon">Rayon crate</a>
+<a href="https://docs.rs/rayon">Rayon documentation</a>
+minimum rustc 1.80
+<a href="https://github.com/rayon-rs/rayon/actions">build status</a></p>
+<p>Rayon is a data-parallelism library for Rust. It is extremely
+lightweight and makes it easy to convert a sequential computation into
+a parallel one. It also guarantees data-race freedom. (You may also
+enjoy <a href="https://smallcultfollowing.com/babysteps/blog/2015/12/18/rayon-data-parallelism-in-rust/">this blog post</a> about Rayon, which gives more background
+and details about how it works, or <a href="https://www.youtube.com/watch?v=gof_OEv71Aw">this video</a>, from the Rust
+Belt Rust conference.) Rayon is
+<a href="https://crates.io/crates/rayon">available on crates.io</a>, and
+<a href="https://docs.rs/rayon">API documentation is available on docs.rs</a>.</p>
+<h4>Parallel iterators and more</h4>
+<p>Rayon makes it drop-dead simple to convert sequential iterators into
+parallel ones: usually, you just change your <code>foo.iter()</code> call into
+<code>foo.par_iter()</code>, and Rayon does the rest:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">rayon</span><span class="p">::</span><span class="n">prelude</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">sum_of_squares</span><span class="p">(</span><span class="n">input</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="kt">i32</span><span class="p">])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">input</span><span class="p">.</span><span class="n">par_iter</span><span class="p">()</span><span class="w"> </span><span class="c1">// &lt;-- just change that!</span>
+<span class="w">         </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|&amp;</span><span class="n">i</span><span class="o">|</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">i</span><span class="p">)</span>
+<span class="w">         </span><span class="p">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre>
+<p><a href="https://docs.rs/rayon/*/rayon/iter/index.html">Parallel iterators</a> take care of deciding how to divide your data
+into tasks; it will dynamically adapt for maximum performance. If you
+need more flexibility than that, Rayon also offers the <a href="https://docs.rs/rayon/*/rayon/fn.join.html">join</a> and
+<a href="https://docs.rs/rayon/*/rayon/fn.scope.html">scope</a> functions, which let you create parallel tasks on your own.
+For even more control, you can create <a href="https://docs.rs/rayon/*/rayon/struct.ThreadPool.html">custom thread pools</a> rather than
+using Rayon's default, global thread pool.</p>
+<h4>No data races</h4>
+<p>You may have heard that parallel execution can produce all kinds of
+crazy bugs. Well, rest easy. Rayon's APIs all guarantee <strong>data-race
+freedom</strong>, which generally rules out most parallel bugs (though not
+all). In other words, <strong>if your code compiles</strong>, it typically does the
+same thing it did before.</p>
+<p>For the most, parallel iterators in particular are guaranteed to
+produce the same results as their sequential counterparts. One caveat:
+If your iterator has side effects (for example, sending methods to
+other threads through a <a href="https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html">Rust channel</a> or writing to disk), those side
+effects may occur in a different order. Note also that, in some cases,
+parallel iterators offer alternative versions of the sequential
+iterator methods that can have higher performance.</p>
+<h4>Using Rayon</h4>
+<p><a href="https://crates.io/crates/rayon">Rayon is available on crates.io</a>. The
+recommended way to use it is to add a line into your Cargo.toml such
+as:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">rayon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.11&quot;</span>
+</code></pre>
+<p>To use the parallel iterator APIs, a number of traits have to be in
+scope. The easiest way to bring those things into scope is to use the
+<a href="https://docs.rs/rayon/*/rayon/prelude/index.html">Rayon prelude</a>. In
+each module where you would like to use the parallel iterator APIs,
+just add:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">rayon</span><span class="p">::</span><span class="n">prelude</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+</code></pre>
+<p>Rayon currently requires <code>rustc 1.80.0</code> or greater.</p>
+<h5>Usage with WebAssembly</h5>
+<p>By default, when building to WebAssembly, Rayon will treat it as any
+other platform without multithreading support and will fall back to
+sequential iteration. This allows existing code to compile and run
+successfully with no changes necessary, but it will run slower as it
+will only use a single CPU core.</p>
+<p>You can build Rayon-based projects with proper multithreading support
+for the Web, but you'll need an adapter and some project configuration
+to account for differences between WebAssembly threads and threads on
+the other platforms.</p>
+<p>Check out the
+<a href="https://github.com/RReverser/wasm-bindgen-rayon">wasm-bindgen-rayon</a>
+docs for more details.</p>
+<h4>Contribution</h4>
+<p>Rayon is an open source project! If you'd like to contribute to Rayon,
+check out
+<a href="https://github.com/rayon-rs/rayon/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22">the list of &quot;help wanted&quot; issues</a>.
+These are all (or should be) issues that are suitable for getting
+started, and they generally include a detailed set of instructions for
+what to do. Please ask questions if anything is unclear! Also, check
+out the
+<a href="https://github.com/rayon-rs/rayon/wiki/Guide-to-Development">Guide to Development</a>
+page on the wiki. Note that all code submitted in PRs to Rayon is
+assumed to
+<a href="https://github.com/rayon-rs/rayon/blob/main/README.md#license">be licensed under Rayon's dual MIT/Apache 2.0 licensing</a>.</p>
+<h4>Quick demo</h4>
+<p>To see Rayon in action, check out the <code>rayon-demo</code> directory, which
+includes a number of demos of code using Rayon. For example, run this
+command to get a visualization of an N-body simulation. To see the
+effect of using Rayon, press <code>s</code> to run sequentially and <code>p</code> to run in
+parallel.</p>
+<pre><code>&gt; cd rayon-demo
+&gt; cargo run --release -- nbody visualize
+</code></pre>
+<p>For more information on demos, try:</p>
+<pre><code>&gt; cd rayon-demo
+&gt; cargo run --release -- --help
+</code></pre>
+<h4>Other questions?</h4>
+<p>See <a href="https://github.com/rayon-rs/rayon/blob/main/FAQ.md">the Rayon FAQ</a>.</p>
+<h4>License</h4>
+<p>Rayon is distributed under the terms of both the MIT license and the
+Apache License (Version 2.0). See <a href="https://github.com/rayon-rs/rayon/blob/7af20d7692d5decbcb4adcaa079cd607e3e50814/LICENSE-APACHE">LICENSE-APACHE</a> and
+<a href="https://github.com/rayon-rs/rayon/blob/7af20d7692d5decbcb4adcaa079cd607e3e50814/LICENSE-MIT">LICENSE-MIT</a> for details. Opening a pull request is
+assumed to signal agreement with these licensing terms.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>web_spin_lock</code></th><td>No</td><td><ul class="effects"><li><code>dep:wasm_sync</code></li><li><code>rayon-core/web_spin_lock</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/either/"><code>crates-io/either</code></a><small>Alias: either</small></th><td><code>^1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rayon-core/"><code>crates-io/rayon-core</code></a><small>Alias: rayon-core</small></th><td><code>^1.13.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><code>crates-io/wasm_sync</code><small>Alias: wasm_sync</small></th><td><code>^0.1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/argon2/versions/0.6.0/">crates-io/argon2 0.6.0</a><span>Requires ^1.7 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/ark-ff/versions/0.6.0/">crates-io/ark-ff 0.6.0</a><span>Requires ^1 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/ark-serialize/versions/0.6.0/">crates-io/ark-serialize 0.6.0</a><span>Requires ^1 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/ark-std/versions/0.6.0/">crates-io/ark-std 0.6.0</a><span>Requires ^1 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/av-metrics/versions/0.9.1/">crates-io/av-metrics 0.9.1</a><span>Requires ^1.5 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/av-scenechange/versions/0.14.1/">crates-io/av-scenechange 0.14.1</a><span>Requires ^1.10.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/criterion/versions/0.8.2/">crates-io/criterion 0.8.2</a><span>Requires ^1.3 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/dashmap/versions/6.2.1/">crates-io/dashmap 6.2.1</a><span>Requires ^1.10.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/dashmap/versions/6.1.0/">crates-io/dashmap 6.1.0</a><span>Requires ^1.7.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.17.1/">crates-io/hashbrown 0.17.1</a><span>Requires ^1.9.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.17.0/">crates-io/hashbrown 0.17.0</a><span>Requires ^1.9.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.16.1/">crates-io/hashbrown 0.16.1</a><span>Requires ^1.9.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.15.5/">crates-io/hashbrown 0.15.5</a><span>Requires ^1.2 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/hashbrown/versions/0.14.5/">crates-io/hashbrown 0.14.5</a><span>Requires ^1.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/id-arena/versions/2.3.0/">crates-io/id-arena 2.3.0</a><span>Requires ^1.0.3 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/image/versions/0.25.10/">crates-io/image 0.25.10</a><span>Requires ^1.7.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/image/versions/0.24.9/">crates-io/image 0.24.9</a><span>Requires ^1.7.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/indexmap/versions/2.14.2/">crates-io/indexmap 2.14.2</a><span>Requires ^1.9 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/indexmap/versions/2.14.0/">crates-io/indexmap 2.14.0</a><span>Requires ^1.9 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/indicatif/versions/0.18.6/">crates-io/indicatif 0.18.6</a><span>Requires ^1.1 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/jpeg-decoder/versions/0.3.2/">crates-io/jpeg-decoder 0.3.2</a><span>Requires ^1.5.1 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/maybe-rayon/versions/0.1.1/">crates-io/maybe-rayon 0.1.1</a><span>Requires ^1.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/ndarray/versions/0.17.2/">crates-io/ndarray 0.17.2</a><span>Requires ^1.10.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/petgraph/versions/0.8.3/">crates-io/petgraph 0.8.3</a><span>Requires ^1.5.3 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_ide_db/versions/0.0.325/">crates-io/ra_ap_ide_db 0.0.325</a><span>Requires ^1.10.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_intern/versions/0.0.325/">crates-io/ra_ap_intern 0.0.325</a><span>Requires ^1.10.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_proc_macro_api/versions/0.0.325/">crates-io/ra_ap_proc_macro_api 0.0.325</a><span>Requires ^1.10.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_vfs-notify/versions/0.0.325/">crates-io/ra_ap_vfs-notify 0.0.325</a><span>Requires ^1.10.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/ravif/versions/0.13.0/">crates-io/ravif 0.13.0</a><span>Requires ^1.11.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/salsa/versions/0.25.2/">crates-io/salsa 0.25.2</a><span>Requires ^1.10.0 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/scrypt/versions/0.12.0/">crates-io/scrypt 0.12.0</a><span>Requires ^1.11 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/spdx/versions/0.13.6/">crates-io/spdx 0.13.6</a><span>Requires ^1.11 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/sysinfo/versions/0.39.6/">crates-io/sysinfo 0.39.6</a><span>Requires ^1.8 · alias rayon · </span></li><li><a href="../../../../../packages/crates-io/wasmtime/versions/36.0.17/">crates-io/wasmtime 36.0.17</a><span>Requires ^1.0 · alias rayon · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="notice">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/rayon/versions/1.12.0/">1.12.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/rayon/1.12.0">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rayon/versions/1.11.0/">1.11.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/rayon/1.11.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>RELEASES.md · Author-provided</summary><div class="readme"><h3>Release rayon 1.11.0 / rayon-core 1.13.0 (2025-08-12)</h3>
+<ul>
+<li>The minimum supported <code>rustc</code> is now 1.80.</li>
+<li><code>iter::repeatn</code> has been renamed to <code>iter::repeat_n</code> to match the name
+stabilized in the standard library. The old name still exists as a deprecated
+function for compatibility.</li>
+<li>Fixed a bug in <code>in_place_scope</code> when the default global registry uses the
+current thread, like on WebAssembly without threading support.</li>
+<li><code>binary_heap::Iter</code> no longer requires a temporary allocation.</li>
+<li>Relaxed trait bounds on many of the public structs.</li>
+<li>Implemented <code>IntoParallelIterator for Box&lt;[T]&gt;</code> and its references.</li>
+<li>Implemented <code>FromParallelIterator&lt;_&gt; for Box&lt;str&gt;</code> via <code>String</code>.</li>
+</ul>
+<h3>Release rayon 1.10.0 (2024-03-23)</h3>
+<ul>
+<li>The new methods <code>ParallelSlice::par_chunk_by</code> and
+<code>ParallelSliceMut::par_chunk_by_mut</code> work like the slice methods <code>chunk_by</code>
+and <code>chunk_by_mut</code> added in Rust 1.77.</li>
+</ul>
+<h3>Release rayon 1.9.0 (2024-02-27)</h3>
+<ul>
+<li>The new methods <code>IndexedParallelIterator::by_exponential_blocks</code> and
+<code>by_uniform_blocks</code> allow processing items in smaller groups at a time.</li>
+<li>The new <code>iter::walk_tree</code>, <code>walk_tree_prefix</code>, and <code>walk_tree_postfix</code>
+functions enable custom parallel iteration over tree-like structures.</li>
+<li>The new method <code>ParallelIterator::collect_vec_list</code> returns items as a linked
+list of vectors, which is an efficient mode of parallel collection used by
+many of the internal implementations of <code>collect</code>.</li>
+<li>The new methods <code>ParallelSliceMut::par_split_inclusive_mut</code>,
+<code>ParallelSlice::par_split_inclusive</code>, and
+<code>ParallelString::par_split_inclusive</code> all work like a normal split but
+keeping the separator as part of the left slice.</li>
+<li>The new <code>ParallelString::par_split_ascii_whitespace</code> splits only on ASCII
+whitespace, which is faster than including Unicode multi-byte whitespace.</li>
+<li><code>OsString</code> now implements <code>FromParallelIterator&lt;_&gt;</code> and <code>ParallelExtend&lt;_&gt;</code>
+for a few item types similar to the standard <code>FromIterator</code> and <code>Extend</code>.</li>
+<li>The internal <code>Pattern</code> trait for string methods is now implemented for
+<code>[char; N]</code> and <code>&amp;[char; N]</code>, matching any of the given characters.</li>
+</ul>
+<h3>Release rayon 1.8.1 / rayon-core 1.12.1 (2024-01-17)</h3>
+<ul>
+<li>The new <code>&quot;web_spin_lock&quot;</code> crate feature makes mutexes spin on the main
+browser thread in WebAssembly, rather than suffer an error about forbidden
+<code>atomics.wait</code> if they were to block in that context. Thanks @RReverser!</li>
+</ul>
+<h3>Release rayon 1.8.0 / rayon-core 1.12.0 (2023-09-20)</h3>
+<ul>
+<li>The minimum supported <code>rustc</code> is now 1.63.</li>
+<li>Added <code>ThreadPoolBuilder::use_current_thread</code> to use the builder thread as
+part of the new thread pool. That thread does not run the pool's main loop,
+but it may participate in work-stealing if it yields to rayon in some way.</li>
+<li>Implemented <code>FromParallelIterator&lt;T&gt;</code> for <code>Box&lt;[T]&gt;</code>, <code>Rc&lt;[T]&gt;</code>, and
+<code>Arc&lt;[T]&gt;</code>, as well as <code>FromParallelIterator&lt;Box&lt;str&gt;&gt;</code> and
+<code>ParallelExtend&lt;Box&lt;str&gt;&gt;</code> for <code>String</code>.</li>
+<li><code>ThreadPoolBuilder::build_scoped</code> now uses <code>std::thread::scope</code>.</li>
+<li>The default number of threads is now determined using
+<code>std::thread::available_parallelism</code> instead of the <code>num_cpus</code> crate.</li>
+<li>The internal logging facility has been removed, reducing bloat for all users.</li>
+<li>Many smaller performance tweaks and documentation updates.</li>
+</ul>
+<h3>Release rayon 1.7.0 / rayon-core 1.11.0 (2023-03-03)</h3>
+<ul>
+<li>The minimum supported <code>rustc</code> is now 1.59.</li>
+<li>Added a fallback when threading is unsupported.</li>
+<li>The new <code>ParallelIterator::take_any</code> and <code>skip_any</code> methods work like
+unordered <code>IndexedParallelIterator::take</code> and <code>skip</code>, counting items in
+whatever order they are visited in parallel.</li>
+<li>The new <code>ParallelIterator::take_any_while</code> and <code>skip_any_while</code> methods work
+like unordered <code>Iterator::take_while</code> and <code>skip_while</code>, which previously had
+no parallel equivalent. The &quot;while&quot; condition may be satisfied from anywhere
+in the parallel iterator, affecting all future items regardless of position.</li>
+<li>The new <code>yield_now</code> and <code>yield_local</code> functions will cooperatively yield
+execution to Rayon, either trying to execute pending work from the entire
+pool or from just the local deques of the current thread, respectively.</li>
+</ul>
+<h3>Release rayon-core 1.10.2 (2023-01-22)</h3>
+<ul>
+<li>Fixed miri-reported UB for SharedReadOnly tags protected by a call.</li>
+</ul>
+<h3>Release rayon 1.6.1 (2022-12-09)</h3>
+<ul>
+<li>Simplified <code>par_bridge</code> to only pull one item at a time from the iterator,
+without batching. Threads that are waiting for iterator items will now block
+appropriately rather than spinning CPU. (Thanks @njaard!)</li>
+<li>Added protection against recursion in <code>par_bridge</code>, so iterators that also
+invoke rayon will not cause mutex recursion deadlocks.</li>
+</ul>
+<h3>Release rayon-core 1.10.1 (2022-11-18)</h3>
+<ul>
+<li>Fixed a race condition with threads going to sleep while a broadcast starts.</li>
+</ul>
+<h3>Release rayon 1.6.0 / rayon-core 1.10.0 (2022-11-18)</h3>
+<ul>
+<li>The minimum supported <code>rustc</code> is now 1.56.</li>
+<li>The new <code>IndexedParallelIterator::fold_chunks</code> and <code>fold_chunks_with</code> methods
+work like <code>ParallelIterator::fold</code> and <code>fold_with</code> with fixed-size chunks of
+items. This may be useful for predictable batching performance, without the
+allocation overhead of <code>IndexedParallelIterator::chunks</code>.</li>
+<li>New &quot;broadcast&quot; methods run a given function on all threads in the pool.
+These run at a sort of reduced priority after each thread has exhausted their
+local work queue, but before they attempt work-stealing from other threads.
+<ul>
+<li>The global <code>broadcast</code> function and <code>ThreadPool::broadcast</code> method will
+block until completion, returning a <code>Vec</code> of all return values.</li>
+<li>The global <code>spawn_broadcast</code> function and methods on <code>ThreadPool</code>, <code>Scope</code>,
+and <code>ScopeFifo</code> will run detached, without blocking the current thread.</li>
+</ul>
+</li>
+<li>Panicking methods now use <code>#[track_caller]</code> to report the caller's location.</li>
+<li>Fixed a truncated length in <code>vec::Drain</code> when given an empty range.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@cuviper</li>
+<li>@idanmuze</li>
+<li>@JoeyBF</li>
+<li>@JustForFun88</li>
+<li>@kianmeng</li>
+<li>@kornelski</li>
+<li>@ritchie46</li>
+<li>@ryanrussell</li>
+<li>@steffahn</li>
+<li>@TheIronBorn</li>
+<li>@willcrozi</li>
+</ul>
+<h3>Release rayon 1.5.3 (2022-05-13)</h3>
+<ul>
+<li>The new <code>ParallelSliceMut::par_sort_by_cached_key</code> is a stable sort that caches
+the keys for each item -- a parallel version of <code>slice::sort_by_cached_key</code>.</li>
+</ul>
+<h3>Release rayon-core 1.9.3 (2022-05-13)</h3>
+<ul>
+<li>Fixed a use-after-free race in job notification.</li>
+</ul>
+<h3>Release rayon 1.5.2 / rayon-core 1.9.2 (2022-04-13)</h3>
+<ul>
+<li>The new <code>ParallelSlice::par_rchunks()</code> and <code>par_rchunks_exact()</code> iterate
+slice chunks in reverse, aligned the against the end of the slice if the
+length is not a perfect multiple of the chunk size. The new
+<code>ParallelSliceMut::par_rchunks_mut()</code> and <code>par_rchunks_exact_mut()</code> are the
+same for mutable slices.</li>
+<li>The <code>ParallelIterator::try_*</code> methods now support <code>std::ops::ControlFlow</code> and
+<code>std::task::Poll</code> items, mirroring the unstable <code>Try</code> implementations in the
+standard library.</li>
+<li>The <code>ParallelString</code> pattern-based methods now support <code>&amp;[char]</code> patterns,
+which match when any character in that slice is found in the string.</li>
+<li>A soft limit is now enforced on the number of threads allowed in a single
+thread pool, respecting internal bit limits that already existed. The current
+maximum is publicly available from the new function <code>max_num_threads()</code>.</li>
+<li>Fixed several Stacked Borrow and provenance issues found by <code>cargo miri</code>.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@atouchet</li>
+<li>@bluss</li>
+<li>@cuviper</li>
+<li>@fzyzcjy</li>
+<li>@nyanzebra</li>
+<li>@paolobarbolini</li>
+<li>@RReverser</li>
+<li>@saethlin</li>
+</ul>
+<h3>Release rayon 1.5.1 / rayon-core 1.9.1 (2021-05-18)</h3>
+<ul>
+<li>The new <code>in_place_scope</code> and <code>in_place_scope_fifo</code> are variations of <code>scope</code>
+and <code>scope_fifo</code>, running the initial non-<code>Send</code> callback directly on the
+current thread, rather than moving execution to the thread pool.</li>
+<li>With Rust 1.51 or later, arrays now implement <code>IntoParallelIterator</code>.</li>
+<li>New implementations of <code>FromParallelIterator</code> make it possible to <code>collect</code>
+complicated nestings of items.
+<ul>
+<li><code>FromParallelIterator&lt;(A, B)&gt; for (FromA, FromB)</code> works like <code>unzip</code>.</li>
+<li><code>FromParallelIterator&lt;Either&lt;L, R&gt;&gt; for (A, B)</code> works like <code>partition_map</code>.</li>
+</ul>
+</li>
+<li>Type inference now works better with parallel <code>Range</code> and <code>RangeInclusive</code>.</li>
+<li>The implementation of <code>FromParallelIterator</code> and <code>ParallelExtend</code> for
+<code>Vec&lt;T&gt;</code> now uses <code>MaybeUninit&lt;T&gt;</code> internally to avoid creating any
+references to uninitialized data.</li>
+<li><code>ParallelBridge</code> fixed a bug with threads missing available work.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@atouchet</li>
+<li>@cuviper</li>
+<li>@Hywan</li>
+<li>@iRaiko</li>
+<li>@Qwaz</li>
+<li>@rocallahan</li>
+</ul>
+<h3>Release rayon 1.5.0 / rayon-core 1.9.0 (2020-10-21)</h3>
+<ul>
+<li>Update crossbeam dependencies.</li>
+<li>The minimum supported <code>rustc</code> is now 1.36.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@cuviper</li>
+<li>@mbrubeck</li>
+<li>@mrksu</li>
+</ul>
+<h3>Release rayon 1.4.1 (2020-09-29)</h3>
+<ul>
+<li>The new <code>flat_map_iter</code> and <code>flatten_iter</code> methods can be used to flatten
+sequential iterators, which may perform better in cases that don't need the
+nested parallelism of <code>flat_map</code> and <code>flatten</code>.</li>
+<li>The new <code>par_drain</code> method is a parallel version of the standard <code>drain</code> for
+collections, removing items while keeping the original capacity. Collections
+that implement this through <code>ParallelDrainRange</code> support draining items from
+arbitrary index ranges, while <code>ParallelDrainFull</code> always drains everything.</li>
+<li>The new <code>positions</code> method finds all items that match the given predicate and
+returns their indices in a new iterator.</li>
+</ul>
+<h3>Release rayon-core 1.8.1 (2020-09-17)</h3>
+<ul>
+<li>Fixed an overflow panic on high-contention workloads, for a counter that was
+meant to simply wrap. This panic only occurred with debug assertions enabled,
+and was much more likely on 32-bit targets.</li>
+</ul>
+<h3>Release rayon 1.4.0 / rayon-core 1.8.0 (2020-08-24)</h3>
+<ul>
+<li>Implemented a new thread scheduler, <a href="https://github.com/rayon-rs/rfcs/pull/5">RFC 5</a>, which uses targeted wakeups for
+new work and for notifications of completed stolen work, reducing wasteful
+CPU usage in idle threads.</li>
+<li>Implemented <code>IntoParallelIterator for Range&lt;char&gt;</code> and <code>RangeInclusive&lt;char&gt;</code>
+with the same iteration semantics as Rust 1.45.</li>
+<li>Relaxed the lifetime requirements of the initial <code>scope</code> closure.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@CAD97</li>
+<li>@cuviper</li>
+<li>@kmaork</li>
+<li>@nikomatsakis</li>
+<li>@SuperFluffy</li>
+</ul>
+<h3>Release rayon 1.3.1 / rayon-core 1.7.1 (2020-06-15)</h3>
+<ul>
+<li>Fixed a use-after-free race in calls blocked between two rayon thread pools.</li>
+<li>Collecting to an indexed <code>Vec</code> now drops any partial writes while unwinding,
+rather than just leaking them. If dropping also panics, Rust will abort.
+<ul>
+<li>Note: the old leaking behavior is considered <em>safe</em>, just not ideal.</li>
+</ul>
+</li>
+<li>The new <code>IndexedParallelIterator::step_by()</code> adapts an iterator to step
+through items by the given count, like <code>Iterator::step_by()</code>.</li>
+<li>The new <code>ParallelSlice::par_chunks_exact()</code> and mutable equivalent
+<code>ParallelSliceMut::par_chunks_exact_mut()</code> ensure that the chunks always have
+the exact length requested, leaving any remainder separate, like the slice
+methods <code>chunks_exact()</code> and <code>chunks_exact_mut()</code>.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@adrian5</li>
+<li>@bluss</li>
+<li>@cuviper</li>
+<li>@FlyingCanoe</li>
+<li>@GuillaumeGomez</li>
+<li>@matthiasbeyer</li>
+<li>@picoHz</li>
+<li>@zesterer</li>
+</ul>
+<h3>Release rayon 1.3.0 / rayon-core 1.7.0 (2019-12-21)</h3>
+<ul>
+<li>Tuples up to length 12 now implement <code>IntoParallelIterator</code>, creating a
+<code>MultiZip</code> iterator that produces items as similarly-shaped tuples.</li>
+<li>The <code>--cfg=rayon_unstable</code> supporting code for <code>rayon-futures</code> is removed.</li>
+<li>The minimum supported <code>rustc</code> is now 1.31.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@cuviper</li>
+<li>@c410-f3r</li>
+<li>@silwol</li>
+</ul>
+<h3>Release rayon-futures 0.1.1 (2019-12-21)</h3>
+<ul>
+<li><code>Send</code> bounds have been added for the <code>Item</code> and <code>Error</code> associated types on
+all generic <code>F: Future</code> interfaces. While technically a breaking change, this
+is a soundness fix, so we are not increasing the semantic version for this.</li>
+<li>This crate is now deprecated, and the <code>--cfg=rayon_unstable</code> supporting code
+will be removed in <code>rayon-core 1.7.0</code>. This only supported the now-obsolete
+<code>Future</code> from <code>futures 0.1</code>, while support for <code>std::future::Future</code> is
+expected to come directly in <code>rayon-core</code> -- although that is not ready yet.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@cuviper</li>
+<li>@kornelski</li>
+<li>@jClaireCodesStuff</li>
+<li>@jwass</li>
+<li>@seanchen1991</li>
+</ul>
+<h3>Release rayon 1.2.1 / rayon-core 1.6.1 (2019-11-20)</h3>
+<ul>
+<li>Update crossbeam dependencies.</li>
+<li>Add top-level doc links for the iterator traits.</li>
+<li>Document that the iterator traits are not object safe.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@cuviper</li>
+<li>@dnaka91</li>
+<li>@matklad</li>
+<li>@nikomatsakis</li>
+<li>@Qqwy</li>
+<li>@vorner</li>
+</ul>
+<h3>Release rayon 1.2.0 / rayon-core 1.6.0 (2019-08-30)</h3>
+<ul>
+<li>The new <code>ParallelIterator::copied()</code> converts an iterator of references into
+copied values, like <code>Iterator::copied()</code>.</li>
+<li><code>ParallelExtend</code> is now implemented for the unit <code>()</code>.</li>
+<li>Internal updates were made to improve test determinism, reduce closure type
+sizes, reduce task allocations, and update dependencies.</li>
+<li>The minimum supported <code>rustc</code> is now 1.28.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@Aaron1011</li>
+<li>@cuviper</li>
+<li>@ralfbiedert</li>
+</ul>
+<h3>Release rayon 1.1.0 / rayon-core 1.5.0 (2019-06-12)</h3>
+<ul>
+<li>FIFO spawns are now supported using the new <code>spawn_fifo()</code> and <code>scope_fifo()</code>
+global functions, and their corresponding <code>ThreadPool</code> methods.
+<ul>
+<li>Normally when tasks are queued on a thread, the most recent is processed
+first (LIFO) while other threads will steal the oldest (FIFO). With FIFO
+spawns, those tasks are processed locally in FIFO order too.</li>
+<li>Regular spawns and other tasks like <code>join</code> are not affected.</li>
+<li>The <code>breadth_first</code> configuration flag, which globally approximated this
+effect, is now deprecated.</li>
+<li>For more design details, please see <a href="https://github.com/rayon-rs/rfcs/blob/main/accepted/rfc0001-scope-scheduling.md">RFC 1</a>.</li>
+</ul>
+</li>
+<li><code>ThreadPoolBuilder</code> can now take a custom <code>spawn_handler</code> to control how
+threads will be created in the pool.
+<ul>
+<li><code>ThreadPoolBuilder::build_scoped()</code> uses this to create a scoped thread
+pool, where the threads are able to use non-static data.</li>
+<li>This may also be used to support threading in exotic environments, like
+WebAssembly, which don't support the normal <code>std::thread</code>.</li>
+</ul>
+</li>
+<li><code>ParallelIterator</code> has 3 new methods: <code>find_map_any()</code>, <code>find_map_first()</code>,
+and <code>find_map_last()</code>, like <code>Iterator::find_map()</code> with ordering constraints.</li>
+<li>The new <code>ParallelIterator::panic_fuse()</code> makes a parallel iterator halt as soon
+as possible if any of its threads panic. Otherwise, the panic state is not
+usually noticed until the iterator joins its parallel tasks back together.</li>
+<li><code>IntoParallelIterator</code> is now implemented for integral <code>RangeInclusive</code>.</li>
+<li>Several internal <code>Folder</code>s now have optimized <code>consume_iter</code> implementations.</li>
+<li><code>rayon_core::current_thread_index()</code> is now re-exported in <code>rayon</code>.</li>
+<li>The minimum <code>rustc</code> is now 1.26, following the update policy defined in <a href="https://github.com/rayon-rs/rfcs/blob/main/accepted/rfc0003-minimum-rustc.md">RFC 3</a>.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@cuviper</li>
+<li>@didroe</li>
+<li>@GuillaumeGomez</li>
+<li>@huonw</li>
+<li>@janriemer</li>
+<li>@kornelski</li>
+<li>@nikomatsakis</li>
+<li>@seanchen1991</li>
+<li>@yegeun542</li>
+</ul>
+<h3>Release rayon 1.0.3 (2018-11-02)</h3>
+<ul>
+<li><code>ParallelExtend</code> is now implemented for tuple pairs, enabling nested
+<code>unzip()</code> and <code>partition_map()</code> operations.  For instance, <code>(A, (B, C))</code>
+items can be unzipped into <code>(Vec&lt;A&gt;, (Vec&lt;B&gt;, Vec&lt;C&gt;))</code>.
+<ul>
+<li><code>ParallelExtend&lt;(A, B)&gt;</code> works like <code>unzip()</code>.</li>
+<li><code>ParallelExtend&lt;Either&lt;A, B&gt;&gt;</code> works like <code>partition_map()</code>.</li>
+</ul>
+</li>
+<li><code>ParallelIterator</code> now has a method <code>map_init()</code> which calls an <code>init</code>
+function for a value to pair with items, like <code>map_with()</code> but dynamically
+constructed.  That value type has no constraints, not even <code>Send</code> or <code>Sync</code>.
+<ul>
+<li>The new <code>for_each_init()</code> is a variant of this for simple iteration.</li>
+<li>The new <code>try_for_each_init()</code> is a variant for fallible iteration.</li>
+</ul>
+</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@cuviper</li>
+<li>@dan-zheng</li>
+<li>@dholbert</li>
+<li>@ignatenkobrain</li>
+<li>@mdonoughe</li>
+</ul>
+<h3>Release rayon 1.0.2 / rayon-core 1.4.1 (2018-07-17)</h3>
+<ul>
+<li>The <code>ParallelBridge</code> trait with method <code>par_bridge()</code> makes it possible to
+use any <code>Send</code>able <code>Iterator</code> in parallel!
+<ul>
+<li>This trait has been added to <code>rayon::prelude</code>.</li>
+<li>It automatically implements internal synchronization and queueing to
+spread the <code>Item</code>s across the thread pool.  Iteration order is not
+preserved by this adaptor.</li>
+<li>&quot;Native&quot; Rayon iterators like <code>par_iter()</code> should still be preferred when
+possible for better efficiency.</li>
+</ul>
+</li>
+<li><code>ParallelString</code> now has additional methods for parity with <code>std</code> string
+iterators: <code>par_char_indices()</code>, <code>par_bytes()</code>, <code>par_encode_utf16()</code>,
+<code>par_matches()</code>, and <code>par_match_indices()</code>.</li>
+<li><code>ParallelIterator</code> now has fallible methods <code>try_fold()</code>, <code>try_reduce()</code>,
+and <code>try_for_each</code>, plus <code>*_with()</code> variants of each, for automatically
+short-circuiting iterators on <code>None</code> or <code>Err</code> values.  These are inspired by
+<code>Iterator::try_fold()</code> and <code>try_for_each()</code> that were stabilized in Rust 1.27.</li>
+<li><code>Range&lt;i128&gt;</code> and <code>Range&lt;u128&gt;</code> are now supported with Rust 1.26 and later.</li>
+<li>Small improvements have been made to the documentation.</li>
+<li><code>rayon-core</code> now only depends on <code>rand</code> for testing.</li>
+<li>Rayon tests now work on stable Rust.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@AndyGauge</li>
+<li>@cuviper</li>
+<li>@ignatenkobrain</li>
+<li>@LukasKalbertodt</li>
+<li>@MajorBreakfast</li>
+<li>@nikomatsakis</li>
+<li>@paulkernfeld</li>
+<li>@QuietMisdreavus</li>
+</ul>
+<h3>Release rayon 1.0.1 (2018-03-16)</h3>
+<ul>
+<li>Added more documentation for <code>rayon::iter::split()</code>.</li>
+<li>Corrected links and typos in documentation.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@cuviper</li>
+<li>@HadrienG2</li>
+<li>@matthiasbeyer</li>
+<li>@nikomatsakis</li>
+</ul>
+<h3>Release rayon 1.0.0 / rayon-core 1.4.0 (2018-02-15)</h3>
+<ul>
+<li><code>ParallelIterator</code> added the <code>update</code> method which applies a function to
+mutable references, inspired by <code>itertools</code>.</li>
+<li><code>IndexedParallelIterator</code> added the <code>chunks</code> method which yields vectors of
+consecutive items from the base iterator, inspired by <code>itertools</code>.</li>
+<li><code>String</code> now implements <code>FromParallelIterator&lt;Cow&lt;str&gt;&gt;</code> and
+<code>ParallelExtend&lt;Cow&lt;str&gt;&gt;</code>, inspired by <code>std</code>.</li>
+<li><code>()</code> now implements <code>FromParallelIterator&lt;()&gt;</code>, inspired by <code>std</code>.</li>
+<li>The new <code>ThreadPoolBuilder</code> replaces and deprecates <code>Configuration</code>.
+<ul>
+<li>Errors from initialization now have the concrete <code>ThreadPoolBuildError</code>
+type, rather than <code>Box&lt;Error&gt;</code>, and this type implements <code>Send</code> and <code>Sync</code>.</li>
+<li><code>ThreadPool::new</code> is deprecated in favor of <code>ThreadPoolBuilder::build</code>.</li>
+<li><code>initialize</code> is deprecated in favor of <code>ThreadPoolBuilder::build_global</code>.</li>
+</ul>
+</li>
+<li>Examples have been added to most of the parallel iterator methods.</li>
+<li>A lot of the documentation has been reorganized and extended.</li>
+</ul>
+<h4>Breaking changes</h4>
+<ul>
+<li>Rayon now requires rustc 1.13 or greater.</li>
+<li><code>IndexedParallelIterator::len</code> and <code>ParallelIterator::opt_len</code> now operate on
+<code>&amp;self</code> instead of <code>&amp;mut self</code>.</li>
+<li><code>IndexedParallelIterator::collect_into</code> is now <code>collect_into_vec</code>.</li>
+<li><code>IndexedParallelIterator::unzip_into</code> is now <code>unzip_into_vecs</code>.</li>
+<li>Rayon no longer exports the deprecated <code>Configuration</code> and <code>initialize</code> from
+rayon-core.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@Bilkow</li>
+<li>@cuviper</li>
+<li>@Enet4</li>
+<li>@ignatenkobrain</li>
+<li>@iwillspeak</li>
+<li>@jeehoonkang</li>
+<li>@jwass</li>
+<li>@Kerollmops</li>
+<li>@KodrAus</li>
+<li>@kornelski</li>
+<li>@MaloJaffre</li>
+<li>@nikomatsakis</li>
+<li>@obv-mikhail</li>
+<li>@oddg</li>
+<li>@phimuemue</li>
+<li>@stjepang</li>
+<li>@tmccombs</li>
+<li>bors[bot]</li>
+</ul>
+<h3>Release rayon 0.9.0 / rayon-core 1.3.0 / rayon-futures 0.1.0 (2017-11-09)</h3>
+<ul>
+<li><code>Configuration</code> now has a <code>build</code> method.</li>
+<li><code>ParallelIterator</code> added <code>flatten</code> and <code>intersperse</code>, both inspired by
+itertools.</li>
+<li><code>IndexedParallelIterator</code> added <code>interleave</code>, <code>interleave_shortest</code>, and
+<code>zip_eq</code>, all inspired by itertools.</li>
+<li>The new functions <code>iter::empty</code> and <code>once</code> create parallel iterators of
+exactly zero or one item, like their <code>std</code> counterparts.</li>
+<li>The new functions <code>iter::repeat</code> and <code>repeatn</code> create parallel iterators
+repeating an item indefinitely or <code>n</code> times, respectively.</li>
+<li>The new function <code>join_context</code> works like <code>join</code>, with an added <code>FnContext</code>
+parameter that indicates whether the job was stolen.</li>
+<li><code>Either</code> (used by <code>ParallelIterator::partition_map</code>) is now re-exported from
+the <code>either</code> crate, instead of defining our own type.
+<ul>
+<li><code>Either</code> also now implements <code>ParallelIterator</code>, <code>IndexedParallelIterator</code>,
+and <code>ParallelExtend</code> when both of its <code>Left</code> and <code>Right</code> types do.</li>
+</ul>
+</li>
+<li>All public types now implement <code>Debug</code>.</li>
+<li>Many of the parallel iterators now implement <code>Clone</code> where possible.</li>
+<li>Much of the documentation has been extended. (but still could use more help!)</li>
+<li>All rayon crates have improved metadata.</li>
+<li>Rayon was evaluated in the Libz Blitz, leading to many of these improvements.</li>
+<li>Rayon pull requests are now guarded by bors-ng.</li>
+</ul>
+<h4>Futures</h4>
+<p>The <code>spawn_future()</code> method has been refactored into its own <code>rayon-futures</code>
+crate, now through a <code>ScopeFutureExt</code> trait for <code>ThreadPool</code> and <code>Scope</code>.  The
+supporting <code>rayon-core</code> APIs are still gated by <code>--cfg rayon_unstable</code>.</p>
+<h4>Breaking changes</h4>
+<ul>
+<li>Two breaking changes have been made to <code>rayon-core</code>, but since they're fixing
+soundness bugs, we are considering these <em>minor</em> changes for semver.
+<ul>
+<li><code>Scope::spawn</code> now requires <code>Send</code> for the closure.</li>
+<li><code>ThreadPool::install</code> now requires <code>Send</code> for the return value.</li>
+</ul>
+</li>
+<li>The <code>iter::internal</code> module has been renamed to <code>iter::plumbing</code>, to hopefully
+indicate that while these are low-level details, they're not really internal
+or private to rayon.  The contents of that module are needed for third-parties
+to implement new parallel iterators, and we'll treat them with normal semver
+stability guarantees.</li>
+<li>The function <code>rayon::iter::split</code> is no longer re-exported as <code>rayon::split</code>.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to all of the contributors for this release!</p>
+<ul>
+<li>@AndyGauge</li>
+<li>@ChristopherDavenport</li>
+<li>@chrisvittal</li>
+<li>@cuviper</li>
+<li>@dns2utf8</li>
+<li>@dtolnay</li>
+<li>@frewsxcv</li>
+<li>@gsquire</li>
+<li>@Hittherhod</li>
+<li>@jdr023</li>
+<li>@laumann</li>
+<li>@leodasvacas</li>
+<li>@lvillani</li>
+<li>@MajorBreakfast</li>
+<li>@mamuleanu</li>
+<li>@marmistrz</li>
+<li>@mbrubeck</li>
+<li>@mgattozzi</li>
+<li>@nikomatsakis</li>
+<li>@smt923</li>
+<li>@stjepang</li>
+<li>@tmccombs</li>
+<li>@vishalsodani</li>
+<li>bors[bot]</li>
+</ul>
+<h3>Release rayon 0.8.2 (2017-06-28)</h3>
+<ul>
+<li><code>ParallelSliceMut</code> now has six parallel sorting methods with the same
+variations as the standard library.
+<ul>
+<li><code>par_sort</code>, <code>par_sort_by</code>, and <code>par_sort_by_key</code> perform stable sorts in
+parallel, using the default order, a custom comparator, or a key extraction
+function, respectively.</li>
+<li><code>par_sort_unstable</code>, <code>par_sort_unstable_by</code>, and <code>par_sort_unstable_by_key</code>
+perform unstable sorts with the same comparison options.</li>
+<li>Thanks to @stjepang!</li>
+</ul>
+</li>
+</ul>
+<h3>Release rayon 0.8.1 / rayon-core 1.2.0 (2017-06-14)</h3>
+<ul>
+<li>The following core APIs are being stabilized:
+<ul>
+<li><code>rayon::spawn()</code> -- spawns a task into the Rayon thread pool; as it
+is contained in the global scope (rather than a user-created
+scope), the task cannot capture anything from the current stack
+frame.</li>
+<li><code>ThreadPool::join()</code>, <code>ThreadPool::spawn()</code>, <code>ThreadPool::scope()</code>
+-- convenience APIs for launching new work within a thread pool.</li>
+</ul>
+</li>
+<li>The various iterator adapters are now tagged with <code>#[must_use]</code></li>
+<li>Parallel iterators now offer a <code>for_each_with</code> adapter, similar to
+<code>map_with</code>.</li>
+<li>We are adopting a new approach to handling the remaining unstable
+APIs (which primarily pertain to futures integration). As awlays,
+unstable APIs are intended for experimentation, but do not come with
+any promise of compatibility (in other words, we might change them
+in arbitrary ways in any release). Previously, we designated such
+APIs using a Cargo feature &quot;unstable&quot;. Now, we are using a regular
+<code>#[cfg]</code> flag. This means that to see the unstable APIs, you must do
+<code>RUSTFLAGS='--cfg rayon_unstable' cargo build</code>. This is
+intentionally inconvenient; in particular, if you are a library,
+then your clients must also modify their environment, signaling
+their agreement to instability.</li>
+</ul>
+<h3>Release rayon 0.8.0 / rayon-core 1.1.0 (2017-06-13)</h3>
+<h4>Rayon 0.8.0</h4>
+<ul>
+<li>Added the <code>map_with</code> and <code>fold_with</code> combinators, which help for
+passing along state (like channels) that cannot be shared between
+threads but which can be cloned on each thread split.</li>
+<li>Added the <code>while_some</code> combinator, which helps for writing short-circuiting iterators.</li>
+<li>Added support for &quot;short-circuiting&quot; collection: e.g., collecting
+from an iterator producing <code>Option&lt;T&gt;</code> or <code>Result&lt;T, E&gt;</code> into a
+<code>Option&lt;Collection&lt;T&gt;&gt;</code> or <code>Result&lt;Collection&lt;T&gt;, E&gt;</code>.</li>
+<li>Support <code>FromParallelIterator</code> for <code>Cow</code>.</li>
+<li>Removed the deprecated weight APIs.</li>
+<li>Simplified the parallel iterator trait hierarchy by removing the
+<code>BoundedParallelIterator</code> and <code>ExactParallelIterator</code> traits,
+which were not serving much purpose.</li>
+<li>Improved documentation.</li>
+<li>Added some missing <code>Send</code> impls.</li>
+<li>Fixed some small bugs.</li>
+</ul>
+<h4>Rayon-core 1.1.0</h4>
+<ul>
+<li>We now have more documentation.</li>
+<li>Renamed the (unstable) methods <code>spawn_async</code> and
+<code>spawn_future_async</code> -- which spawn tasks that cannot hold
+references -- to simply <code>spawn</code> and <code>spawn_future</code>, respectively.</li>
+<li>We are now using the coco library for our deque.</li>
+<li>Individual thread pools can now be configured in &quot;breadth-first&quot;
+mode, which causes them to execute spawned tasks in the reverse
+order that they used to.  In some specific scenarios, this can be a
+win (though it is not generally the right choice).</li>
+<li>Added top-level functions:
+<ul>
+<li><code>current_thread_index</code>, for querying the index of the current worker thread within
+its thread pool (previously available as <code>thread_pool.current_thread_index()</code>);</li>
+<li><code>current_thread_has_pending_tasks</code>, for querying whether the
+current worker that has an empty task deque or not. This can be
+useful when deciding whether to spawn a task.</li>
+</ul>
+</li>
+<li>The environment variables for controlling Rayon are now
+<code>RAYON_NUM_THREADS</code> and <code>RAYON_LOG</code>. The older variables (e.g.,
+<code>RAYON_RS_NUM_CPUS</code> are still supported but deprecated).</li>
+</ul>
+<h4>Rayon-demo</h4>
+<ul>
+<li>Added a new game-of-life benchmark.</li>
+</ul>
+<h4>Contributors</h4>
+<p>Thanks to the following contributors:</p>
+<ul>
+<li>@ChristopherDavenport</li>
+<li>@SuperFluffy</li>
+<li>@antoinewdg</li>
+<li>@crazymykl</li>
+<li>@cuviper</li>
+<li>@glandium</li>
+<li>@julian-seward1</li>
+<li>@leodasvacas</li>
+<li>@leshow</li>
+<li>@lilianmoraru</li>
+<li>@mschmo</li>
+<li>@nikomatsakis</li>
+<li>@stjepang</li>
+</ul>
+<h3>Release rayon 0.7.1 / rayon-core 1.0.2 (2017-05-30)</h3>
+<p>This release is a targeted performance fix for #343, an issue where
+rayon threads could sometimes enter into a spin loop where they would
+be unable to make progress until they are pre-empted.</p>
+<h3>Release rayon 0.7 / rayon-core 1.0 (2017-04-06)</h3>
+<p>This release marks the first step towards Rayon 1.0. <strong>For best
+performance, it is important that all Rayon users update to at least
+Rayon 0.7.</strong> This is because, as of Rayon 0.7, we have taken steps to
+ensure that, no matter how many versions of rayon are actively in use,
+there will only be a single global scheduler. This is achieved via the
+<code>rayon-core</code> crate, which is being released at version 1.0, and which
+encapsulates the core schedule APIs like <code>join()</code>. (Note: the
+<code>rayon-core</code> crate is, to some degree, an implementation detail, and
+not intended to be imported directly; it's entire API surface is
+mirrored through the rayon crate.)</p>
+<p>We have also done a lot of work reorganizing the API for Rayon 0.7 in
+preparation for 1.0. The names of iterator types have been changed and
+reorganized (but few users are expected to be naming those types
+explicitly anyhow). In addition, a number of parallel iterator methods
+have been adjusted to match those in the standard iterator traits more
+closely. See the &quot;Breaking Changes&quot; section below for
+details.</p>
+<p>Finally, Rayon 0.7 includes a number of new features and new parallel
+iterator methods. <strong>As of this release, Rayon's parallel iterators
+have officially reached parity with sequential iterators</strong> -- that is,
+every sequential iterator method that makes any sense in parallel is
+supported in some capacity.</p>
+<h5>New features and methods</h5>
+<ul>
+<li>The internal <code>Producer</code> trait now features <code>fold_with</code>, which enables
+better performance for some parallel iterators.</li>
+<li>Strings now support <code>par_split()</code> and <code>par_split_whitespace()</code>.</li>
+<li>The <code>Configuration</code> API is expanded and simplified:
+<ul>
+<li><code>num_threads(0)</code> no longer triggers an error</li>
+<li>you can now supply a closure to name the Rayon threads that get created
+by using <code>Configuration::thread_name</code>.</li>
+<li>you can now inject code when Rayon threads start up and finish</li>
+<li>you can now set a custom panic handler to handle panics in various odd situations</li>
+</ul>
+</li>
+<li>Threadpools are now able to more gracefully put threads to sleep when not needed.</li>
+<li>Parallel iterators now support <code>find_first()</code>, <code>find_last()</code>, <code>position_first()</code>,
+and <code>position_last()</code>.</li>
+<li>Parallel iterators now support <code>rev()</code>, which primarily affects subsequent calls
+to <code>enumerate()</code>.</li>
+<li>The <code>scope()</code> API is now considered stable (and part of <code>rayon-core</code>).</li>
+<li>There is now a useful <code>rayon::split</code> function for creating custom
+Rayon parallel iterators.</li>
+<li>Parallel iterators now allow you to customize the min/max number of
+items to be processed in a given thread. This mechanism replaces the
+older <code>weight</code> mechanism, which is deprecated.</li>
+<li><code>sum()</code> and friends now use the standard <code>Sum</code> traits</li>
+</ul>
+<h5>Breaking changes</h5>
+<p>In the move towards 1.0, there have been a number of minor breaking changes:</p>
+<ul>
+<li>Configuration setters like <code>Configuration::set_num_threads()</code> lost the <code>set_</code> prefix,
+and hence become something like <code>Configuration::num_threads()</code>.</li>
+<li><code>Configuration</code> getters are removed</li>
+<li>Iterator types have been shuffled around and exposed more consistently:
+<ul>
+<li>combinator types live in <code>rayon::iter</code>, e.g. <code>rayon::iter::Filter</code></li>
+<li>iterators over various types live in a module named after their type,
+e.g. <code>rayon::slice::Windows</code></li>
+</ul>
+</li>
+<li>When doing a <code>sum()</code> or <code>product()</code>, type annotations are needed for the result
+since it is now possible to have the resulting sum be of a type other than the value
+you are iterating over (this mirrors sequential iterators).</li>
+</ul>
+<h5>Experimental features</h5>
+<p>Experimental features require the use of the <code>unstable</code> feature. Their
+APIs may change or disappear entirely in future releases (even minor
+releases) and hence they should be avoided for production code.</p>
+<ul>
+<li>We now have (unstable) support for futures integration. You can use
+<code>Scope::spawn_future</code> or <code>rayon::spawn_future_async()</code>.</li>
+<li>There is now a <code>rayon::spawn_async()</code> function for using the Rayon
+thread pool to run tasks that do not have references to the stack.</li>
+</ul>
+<h5>Contributors</h5>
+<p>Thanks to the following people for their contributions to this release:</p>
+<ul>
+<li>@Aaronepower</li>
+<li>@ChristopherDavenport</li>
+<li>@bluss</li>
+<li>@cuviper</li>
+<li>@froydnj</li>
+<li>@gaurikholkar</li>
+<li>@hniksic</li>
+<li>@leodasvacas</li>
+<li>@leshow</li>
+<li>@martinhath</li>
+<li>@mbrubeck</li>
+<li>@nikomatsakis</li>
+<li>@pegomes</li>
+<li>@schuster</li>
+<li>@torkleyy</li>
+</ul>
+<h3>Release 0.6 (2016-12-21)</h3>
+<p>This release includes a lot of progress towards the goal of parity
+with the sequential iterator API, though there are still a few methods
+that are not yet complete. If you'd like to help with that effort,
+<a href="https://github.com/rayon-rs/rayon/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Parity+with+the+%60Iterator%60+trait%22">check out the milestone</a>
+to see the remaining issues.</p>
+<p><strong>Announcement:</strong> @cuviper has been added as a collaborator to the
+Rayon repository for all of his outstanding work on Rayon, which
+includes both internal refactoring and helping to shape the public
+API. Thanks @cuviper! Keep it up.</p>
+<ul>
+<li>We now support <code>collect()</code> and not just <code>collect_with()</code>.
+You can use <code>collect()</code> to build a number of collections,
+including vectors, maps, and sets. Moreover, when building a vector
+with <code>collect()</code>, you are no longer limited to exact parallel iterators.
+Thanks @nikomatsakis, @cuviper!</li>
+<li>We now support <code>skip()</code> and <code>take()</code> on parallel iterators.
+Thanks @martinhath!</li>
+<li><strong>Breaking change:</strong> We now match the sequential APIs for <code>min()</code> and <code>max()</code>.
+We also support <code>min_by_key()</code> and <code>max_by_key()</code>. Thanks @tapeinosyne!</li>
+<li><strong>Breaking change:</strong> The <code>mul()</code> method is now renamed to <code>product()</code>,
+to match sequential iterators. Thanks @jonathandturner!</li>
+<li>We now support parallel iterator over ranges on <code>u64</code> values. Thanks @cuviper!</li>
+<li>We now offer a <code>par_chars()</code> method on strings for iterating over characters
+in parallel. Thanks @cuviper!</li>
+<li>We now have new demos: a traveling salesman problem solver as well as matrix
+multiplication. Thanks @nikomatsakis, @edre!</li>
+<li>We are now documenting our minimum rustc requirement (currently
+v1.12.0).  We will attempt to maintain compatibility with rustc
+stable v1.12.0 as long as it remains convenient, but if new features
+are stabilized or added that would be helpful to Rayon, or there are
+bug fixes that we need, we will bump to the most recent rustc. Thanks @cuviper!</li>
+<li>The <code>reduce()</code> functionality now has better inlining.
+Thanks @bluss!</li>
+<li>The <code>join()</code> function now has some documentation. Thanks @gsquire!</li>
+<li>The project source has now been fully run through rustfmt.
+Thanks @ChristopherDavenport!</li>
+<li>Exposed helper methods for accessing the current thread index.
+Thanks @bholley!</li>
+</ul>
+<h3>Release 0.5 (2016-11-04)</h3>
+<ul>
+<li><strong>Breaking change:</strong> The <code>reduce</code> method has been vastly
+simplified, and <code>reduce_with_identity</code> has been deprecated.</li>
+<li><strong>Breaking change:</strong> The <code>fold</code> method has been changed. It used to
+always reduce the values, but now instead it is a combinator that
+returns a parallel iterator which can itself be reduced. See the
+docs for more information.</li>
+<li>The following parallel iterator combinators are now available (thanks @cuviper!):
+<ul>
+<li><code>find_any()</code>: similar to <code>find</code> on a sequential iterator,
+but doesn't necessarily return the <em>first</em> matching item</li>
+<li><code>position_any()</code>: similar to <code>position</code> on a sequential iterator,
+but doesn't necessarily return the index of <em>first</em> matching item</li>
+<li><code>any()</code>, <code>all()</code>: just like their sequential counterparts</li>
+</ul>
+</li>
+<li>The <code>count()</code> combinator is now available for parallel iterators.</li>
+<li>We now build with older versions of rustc again (thanks @durango!),
+as we removed a stray semicolon from <code>thread_local!</code>.</li>
+<li>Various improvements to the (unstable) <code>scope()</code> API implementation.</li>
+</ul>
+<h3>Release 0.4.3 (2016-10-25)</h3>
+<ul>
+<li>Parallel iterators now offer an adaptive weight scheme,
+which means that explicit weights should no longer
+be necessary in most cases! Thanks @cuviper!
+<ul>
+<li>We are considering removing weights or changing the weight mechanism
+before 1.0. Examples of scenarios where you still need weights even
+with this adaptive mechanism would be great. Join the discussion
+at <a href="https://github.com/rayon-rs/rayon/issues/111">https://github.com/rayon-rs/rayon/issues/111</a>.</li>
+</ul>
+</li>
+<li>New (unstable) scoped threads API, see <code>rayon::scope</code> for details.
+<ul>
+<li>You will need to supply the <a href="https://doc.rust-lang.org/cargo/reference/features.html#the-features-section">cargo feature</a> <code>unstable</code>.</li>
+</ul>
+</li>
+<li>The various demos and benchmarks have been consolidated into one
+program, <code>rayon-demo</code>.</li>
+<li>Optimizations in Rayon's inner workings. Thanks @emilio!</li>
+<li>Update <code>num_cpus</code> to 1.0. Thanks @jamwt!</li>
+<li>Various internal cleanup in the implementation and typo fixes.
+Thanks @cuviper, @Eh2406, and @spacejam!</li>
+</ul>
+<h3>Release 0.4.2 (2016-09-15)</h3>
+<ul>
+<li>Updated crates.io metadata.</li>
+</ul>
+<h3>Release 0.4.1 (2016-09-14)</h3>
+<ul>
+<li>New <code>chain</code> combinator for parallel iterators.</li>
+<li><code>Option</code>, <code>Result</code>, as well as many more collection types now have
+parallel iterators.</li>
+<li>New mergesort demo.</li>
+<li>Misc fixes.</li>
+</ul>
+<p>Thanks to @cuviper, @edre, @jdanford, @frewsxcv for their contributions!</p>
+<h3>Release 0.4 (2016-05-16)</h3>
+<ul>
+<li>Make use of latest versions of catch-panic and various fixes to panic propagation.</li>
+<li>Add new prime sieve demo.</li>
+<li>Add <code>cloned()</code> and <code>inspect()</code> combinators.</li>
+<li>Misc fixes for Rust RFC 1214.</li>
+</ul>
+<p>Thanks to @areilb1, @Amanieu, @SharplEr, and @cuviper for their contributions!</p>
+<h3>Release 0.3 (2016-02-23)</h3>
+<ul>
+<li>Expanded <code>par_iter</code> APIs now available:
+<ul>
+<li><code>into_par_iter</code> is now supported on vectors (taking ownership of the elements)</li>
+</ul>
+</li>
+<li>Panic handling is much improved:
+<ul>
+<li>if you use the Nightly feature, experimental panic recovery is available</li>
+<li>otherwise, panics propagate out and poision the workpool</li>
+</ul>
+</li>
+<li>New <code>Configuration</code> object to control number of threads and other details</li>
+<li>New demos and benchmarks
+<ul>
+<li>try <code>cargo run --release -- visualize</code> in <code>demo/nbody</code> :)
+<ul>
+<li>Note: a nightly compiler is required for this demo due to the
+use of the <code>+=</code> syntax</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Thanks to @bjz, @cuviper, @Amanieu, and @willi-kappler for their contributions!</p>
+<h3>Release 0.2 and earlier</h3>
+<p>No release notes were being kept at this time.</p>
+</div><p class="table-note">sha256:d93d9bdcd13f00357518ad9eccba727c0cdfabe56ec324ee5e599fa2a0881875</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2010 The Rust Project Developers
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:b646698c0551a34ff1a41f803e8bd7679b119053b5ec2f720ebf7bf043667738</code></dd><dt>Upstream checksum</dt><dd><code>sha256:368f01d005bf8fd9b1206fb6fa653e6c4a81ceb1466406b81792d87c5677a58f</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rayon&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.11.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">web_spin_lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:wasm_sync&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rayon-core/web_spin_lock&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rayon&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">either</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/either&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rayon-core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rayon-core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.13.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">wasm_sync</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/wasm_sync&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.80</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/rayon/1.11.0">crates.io package</a></li><li><a href="https://github.com/rayon-rs/rayon">Source repository</a></li><li><a href="https://docs.rs/rayon/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">rayon</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/rayon"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.11.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

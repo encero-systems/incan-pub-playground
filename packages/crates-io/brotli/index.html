@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>brotli 9.0.0 · Incan.pub</title><meta name="description" content="A brotli compressor and decompressor that with an interface avoiding the rust stdlib. This makes it suitable for embedded devices and kernels. It is designed with a pluggable allocator so that the standard lib&#39;s allocator may be employed. The default build also includes a stdlib allocator and stream interface. Disable this with --features=no-stdlib. All included code is safe."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/brotli</p><div class="title-row"><h1>brotli</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/brotli/versions/9.0.0/" selected>9.0.0</option><option value="../../../packages/crates-io/brotli/versions/8.0.4/">8.0.4</option></select></label></div><p class="description">A brotli compressor and decompressor that with an interface avoiding the rust stdlib. This makes it suitable for embedded devices and kernels. It is designed with a pluggable allocator so that the standard lib&#39;s allocator may be employed. The default build also includes a stdlib allocator and stream interface. Disable this with --features=no-stdlib. All included code is safe.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>BSD-3-Clause AND MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>rust-brotli</h3>
+<p><a href="https://crates.io/crates/brotli">crates.io</a>
+<a href="https://travis-ci.org/dropbox/rust-brotli">Build Status</a></p>
+<h3>What's new in 9.0.0</h3>
+<ul>
+<li>Custom dictionaries. Depends on brotli-decompressor 6.0.0, whose dictionary
+support is re-exported from this crate, so <code>brotli::Decompressor</code>,
+<code>brotli::DecompressorWriter</code> and <code>brotli::BrotliState</code> all gain
+<code>attach_dictionary</code> and <code>attach_serialized_dictionary</code>:
+<ul>
+<li><code>attach_dictionary</code> takes a raw LZ77 prefix dictionary and is the
+equivalent of the C <code>BrotliDecoderAttachDictionary</code> with
+<code>BROTLI_SHARED_DICTIONARY_RAW</code>. Up to 15 may be attached, and they must be
+attached before the first read or write.</li>
+<li>Dictionaries now live in their own buffers (the C implementation's
+&quot;compound dictionary&quot; scheme) rather than being copied into the ring
+buffer, so they stay addressable after the ring buffer wraps. Streams where
+output plus dictionary exceed the window decode correctly, and dictionaries
+larger than the window are no longer truncated.</li>
+<li><code>attach_serialized_dictionary</code> accepts the serialized shared dictionary
+container (magic <code>0x91 0x00</code>) from
+draft-vandevenne-shared-brotli-format, including embedded LZ77 prefix
+dictionaries, custom word lists, custom transform lists and context-based
+dictionary selection.</li>
+</ul>
+</li>
+<li>Breaking: the allocator crates move a major version, to alloc-no-stdlib 3.x
+and alloc-stdlib 0.3.x. alloc-no-stdlib's <code>Allocator</code>/<code>SliceWrapper</code> traits
+are part of the public API of this crate and of brotli-decompressor, so a
+crate that passes its own allocator to rust-brotli must move to the same
+generation: with a split, an allocator built against 2.x no longer satisfies
+the 3.x <code>Allocator</code> bound. The dependency ranges are pinned so that the
+resolver cannot span the major.</li>
+<li>Breaking, FFI: <code>BrotliDecoderSetParameter</code> now returns <code>BROTLI_BOOL</code> and
+takes the parameter selector as an <code>int</code>, matching the prototype in
+<code>c/brotli/decode.h</code> and the C library. It returns false for an unrecognized
+selector instead of forming an invalid enum discriminant at the ABI boundary.
+C callers that ignored the return value are unaffected; Rust callers of
+<code>CBrotliDecoderSetParameter</code> should pass <code>BrotliDecoderParameter::... as i32</code>.</li>
+<li>New non-default <code>portable-float</code> feature that makes encoder output
+target-independent, so the same input compresses to byte-identical output on
+every target. It routes the cost estimators' <code>log2</code>/<code>powf</code> onto the
+table-driven implementations <code>no_std</code> builds already use, instead of the
+platform libm, whose one-ULP differences could move a block-split boundary.
+It is off by default because it changes the emitted bytes and costs about
+0.006% of ratio.</li>
+<li>The <code>safe</code> feature is now declared in <code>Cargo.toml</code>. The <code>cfg</code> had been
+referenced from <code>src/ffi</code> since the FFI was added but was never listed, so it
+could not actually be turned on. With it, the FFI drops the two <code>unsafe impl Send</code> lines and the encoder and multicompress entry points that rely on them;
+the decoder FFI is unaffected.</li>
+<li>Fix #257: <code>SendableMemoryBlock&lt;T&gt;</code> in the FFI allocator no longer claims
+<code>Send</code> for a <code>T</code> that is not itself <code>Send</code>.</li>
+<li>Fix #258: <code>BroCatli</code> recognizes a complete empty stream as soon as its
+window, ISLAST and ISLASTEMPTY bits are buffered, rather than waiting for the
+normal four- or five-byte prefix.</li>
+<li>The <code>simd</code> feature builds on current nightly again (<code>Mask::to_int</code> was
+renamed to <code>Mask::to_simd</code>).</li>
+<li>The <code>seccomp</code> feature builds again: the calloc-backed allocator macros are
+brought into scope in the <code>brotli</code> binary, and <code>alloc-no-stdlib</code>'s <code>unsafe</code>
+feature, which gates them on 3.x, is enabled by it.</li>
+</ul>
+<h4>What's new in 8.0.4</h4>
+<p>Fix: adjust versions of rust-decompressor and rust-alloc-no-stdlib and
+alloc-stdlib so the Allocator&lt;&gt; trait is identical for all associated crates.
+Return BrotliFileNotCraftedForConcatenation when a new stream header advertises more whole source bytes than have been buffered. This prevents the unsigned subtraction in shift_and_check_new_stream_header from underflowing on truncated metadata headers.
+Return NULL from BrotliEncoderCreateInstance and BrotliEncoderCreateWorkPool when a caller-provided allocator returns NULL, rather than writing state through a NULL pointer.
+Wrap the mutable Broccoli FFI entry points in a local catch_unwind helper, matching the encoder FFI convention so Rust panics do not unwind across extern C when std panic catching is available.
+Return BrotliFileNotCraftedForConcatenation on caught panics and keep the existing pass-through behavior for no-std or pass-through-ffi-panics builds. Add regression coverage for a crafted stream input that previously panicked through BroccoliConcatStream.
+Reject serialized BroCatli buffers with out-of-range live state fields before constructing the state. This keeps deserialize_from_buffer on its existing Result&lt;BroCatli, ()&gt; API while returning Err(()) for corrupt buffers that would otherwise panic on later use</p>
+<h4>What's new in 8.0.3</h4>
+<p>Fix: avoid panic across Broccoli FFI boundary with BroCatLi
+Fix: CompressMulti worker joins on errors</p>
+<h4>What's new in 8.0.2</h4>
+<p>Fix for memory leak in ffi API</p>
+<h4>What's new in 8.0.1</h4>
+<p>Compatibility for ffi builds</p>
+<h4>What's new in 8.0.0</h4>
+<ul>
+<li>Fixed LZ77 to comply with the specification
+<ul>
+<li>No longer seed the context by the end of the lz77 dictionary. Instead use
+zero for the seed as would happen without a dictionary. This matches the
+behavior of brotli with a custom dictionary as specified in</li>
+<li>https://datatracker.ietf.org/doc/draft-vandevenne-shared-brotli-format/</li>
+</ul>
+</li>
+</ul>
+<h4>What's new in 7.0.0</h4>
+<ul>
+<li>Fix error with short writes</li>
+<li>allow quality=10 for certain APIs and make it default to 9.5</li>
+</ul>
+<h4>What's new in 6.0.0</h4>
+<ul>
+<li>Remove unused SIMD use statements</li>
+<li>hide a few warnings - these are TODOs, and should be fixed in separate PRs</li>
+<li>do NOT build SIMD as part of MSRV -- doesn't make any sense to combine nightly with MSRV</li>
+</ul>
+<h4>What's new in 5.0.0</h4>
+<ul>
+<li>The FFI is no longer active by default to avoid ODR issues if multiple versions of brotli are included in several dependent crates.</li>
+</ul>
+<h4>What's new in 4.0.0</h4>
+<p>Pinned to a rust-brotli-decompressor that can disable the ffi with the ffi-api
+flag.
+This can help avoid symbol conflicts with other brotli libs.</p>
+<h4>What's new in 3.5</h4>
+<p>Updated SIMD support.
+Better CI integration.
+Cleaned up some of the clippy warnings.</p>
+<h4>What's new in 3.4</h4>
+<p>Brotli decompressor's reader and writer has better behavior when operating upon brotli streams with extra bits at the end.
+Optional features like stdsimd are now tested or disabled for now.</p>
+<h4>What's new in 3.2</h4>
+<ul>
+<li>into_inner conversions for both Reader and Writer classes</li>
+</ul>
+<h4>What's new in 3.0</h4>
+<ul>
+<li>A fully compatible FFI for drop-in compatibiltiy with the https://github.com/google/brotli binaries
+<ul>
+<li>custom allocators fully supported</li>
+</ul>
+</li>
+<li>Multithreaded compression so multiple threads can operate in unison on a single file</li>
+<li>Concatenatability mode to add the feature requested in https://github.com/google/brotli/issues/628
+<ul>
+<li>binary tool catbrotli can accomplish this if the first file was specified with -apendable and the second with -catable</li>
+</ul>
+</li>
+<li>validation mode where a file is double-checked to be able to be decompressed with the same settings; useful for benchmarking or fuzzing</li>
+<li>Magic Number: where the brotli file can have a useful header with a few magic bytes, concatability info and a final output size for pre-allocating memory</li>
+</ul>
+<h4>What's new in 2.5</h4>
+<ul>
+<li>In 2.5 The callback also passes down an allocator to make new StaticCommands and PDFs and 256 bit floating point vectors.</li>
+<li>In 2.4 The callback with the compression intermediate representation now passes a full metablock at a time. Also these items are mutable
+in case futher optimization is desired</li>
+</ul>
+<h4>What's new in 2.3</h4>
+<ul>
+<li>Flush now produces output instead of calling finish on the stream. This allows you to use the writer abstraction to
+get immediate output without having to resort to the CompressStream internal abstraction</li>
+</ul>
+<h4>Project Requirements</h4>
+<p>Direct no-stdlib port of the C brotli compressor to Rust</p>
+<p>no dependency on the Rust stdlib: this library would be ideal for decompressing within a rust kernel among other things.</p>
+<p>This is useful to see how C and Rust compare in an apples-to-apples
+comparison where the same algorithms and data structures and
+optimizations are employed.</p>
+<h4>Compression Usage</h4>
+<p>Rust brotli currently supports compression levels 0 - 11
+They should be bitwise identical to the brotli C compression engine at compression levels 0-9
+Recommended lg_window_size is between 20 and 22</p>
+<h5>With the io::Read abstraction</h5>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">CompressorReader</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdin</span><span class="p">(),</span><span class="w"> </span><span class="mi">4096</span><span class="w"> </span><span class="cm">/* buffer size */</span><span class="p">,</span>
+<span class="w">                                              </span><span class="n">quality</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="n">lg_window_size</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u32</span><span class="p">);</span>
+</code></pre>
+<p>then you can simply read input as you would any other io::Read class</p>
+<h5>With the io::Write abstraction</h5>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">Compressor</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdout</span><span class="p">(),</span><span class="w"> </span><span class="mi">4096</span><span class="w"> </span><span class="cm">/* buffer size */</span><span class="p">,</span>
+<span class="w">                                         </span><span class="n">quality</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="n">lg_window_size</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u32</span><span class="p">);</span>
+</code></pre>
+<p>There are also methods to build Compressor Readers or Writers using the with_params static function</p>
+<p>eg:</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BrotliEncoderParams</span><span class="p">::</span><span class="n">default</span><span class="p">();</span>
+<span class="c1">// modify params to fit the application needs</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">Compressor</span><span class="p">::</span><span class="n">with_params</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdout</span><span class="p">(),</span><span class="w"> </span><span class="mi">4096</span><span class="w"> </span><span class="cm">/* buffer size */</span><span class="p">,</span>
+<span class="w">                                         </span><span class="n">params</span><span class="p">);</span>
+</code></pre>
+<p>or for the reader</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BrotliEncoderParams</span><span class="p">::</span><span class="n">default</span><span class="p">();</span>
+<span class="c1">// modify params to fit the application needs</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">CompressorReader</span><span class="p">::</span><span class="n">with_params</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdin</span><span class="p">(),</span><span class="w"> </span><span class="mi">4096</span><span class="w"> </span><span class="cm">/* buffer size */</span><span class="p">,</span>
+<span class="w">                                                       </span><span class="n">params</span><span class="p">);</span>
+</code></pre>
+<h5>With the Stream Copy abstraction</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">match</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">BrotliCompress</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdin</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdout</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">brotli_encoder_params</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;Error {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Decompression Usage</h4>
+<h5>With the io::Read abstraction</h5>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">Decompressor</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdin</span><span class="p">(),</span><span class="w"> </span><span class="mi">4096</span><span class="w"> </span><span class="cm">/* buffer size */</span><span class="p">);</span>
+</code></pre>
+<p>then you can simply read input as you would any other io::Read class</p>
+<h5>With the io::Write abstraction</h5>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">DecompressorWriter</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdout</span><span class="p">(),</span><span class="w"> </span><span class="mi">4096</span><span class="w"> </span><span class="cm">/* buffer size */</span><span class="p">);</span>
+</code></pre>
+<h5>With the Stream Copy abstraction</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">match</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">BrotliDecompress</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdin</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdout</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;Error {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span>
+<span class="p">}</span>
+</code></pre>
+<h5>With a custom dictionary</h5>
+<p>A raw LZ77 prefix dictionary is attached before the first read (or the first
+write, for <code>DecompressorWriter</code>); up to 15 may be attached. The dictionary is
+handed over as the allocator's memory type, and <code>attach_dictionary</code> returns
+false if it could not be attached.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">enc</span><span class="p">::</span><span class="n">StandardAlloc</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">brotli</span><span class="p">::{</span><span class="n">Allocator</span><span class="p">,</span><span class="w"> </span><span class="n">Decompressor</span><span class="p">,</span><span class="w"> </span><span class="n">SliceWrapperMut</span><span class="p">};</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">StandardAlloc</span><span class="p">::</span><span class="n">default</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">dict</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&lt;</span><span class="n">StandardAlloc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">Allocator</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;&gt;</span><span class="p">::</span><span class="n">alloc_cell</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">alloc</span><span class="p">,</span><span class="w"> </span><span class="n">dictionary</span><span class="p">.</span><span class="n">len</span><span class="p">());</span>
+<span class="n">dict</span><span class="p">.</span><span class="n">slice_mut</span><span class="p">().</span><span class="n">clone_from_slice</span><span class="p">(</span><span class="n">dictionary</span><span class="p">);</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">brotli</span><span class="p">::</span><span class="n">Decompressor</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">stdin</span><span class="p">(),</span><span class="w"> </span><span class="mi">4096</span><span class="w"> </span><span class="cm">/* buffer size */</span><span class="p">);</span>
+<span class="fm">assert!</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">attach_dictionary</span><span class="p">(</span><span class="n">dict</span><span class="p">));</span>
+</code></pre>
+<p>The dictionary lives in its own buffer rather than in the ring buffer, so it
+stays addressable for the whole stream even when it is larger than the window or
+when the output outgrows the window.</p>
+<p><code>attach_serialized_dictionary</code> takes the same kind of argument, but the bytes are
+a serialized shared dictionary container (magic <code>0x91 0x00</code>) which may carry an
+LZ77 prefix dictionary, a custom word list and a custom transform list.</p>
+<p>The matching binary tool flag is <code>-customdictionary=&lt;file&gt;</code>, on both compression
+and decompression:</p>
+<pre><code>brotli -c -customdictionary=dict.bin &lt; plaintext &gt; compressed.br
+brotli -customdictionary=dict.bin &lt; compressed.br &gt; plaintext
+</code></pre>
+<h5>With manual memory management</h5>
+<p>There are 3 steps to using brotli without stdlib</p>
+<ol>
+<li>setup the memory manager</li>
+<li>setup the BrotliState</li>
+<li>in a loop, call BrotliDecompressStream</li>
+</ol>
+<p>in Detail</p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// at global scope declare a MemPool type -- in this case we&#39;ll choose the heap to</span>
+<span class="c1">// avoid unsafe code, and avoid restrictions of the stack size</span>
+
+<span class="n">declare_stack_allocator_struct</span><span class="o">!</span><span class="p">(</span><span class="n">MemPool</span><span class="p">,</span><span class="w"> </span><span class="n">heap</span><span class="p">);</span>
+
+<span class="c1">// at local scope, make a heap allocated buffers to hold uint8&#39;s uint32&#39;s and huffman codes</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">u8_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">define_allocator_memory_pool</span><span class="o">!</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="mi">32</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">],</span><span class="w"> </span><span class="n">heap</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">u32_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">define_allocator_memory_pool</span><span class="o">!</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">],</span><span class="w"> </span><span class="n">heap</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">hc_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">define_allocator_memory_pool</span><span class="o">!</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="n">HuffmanCode</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">],</span><span class="w"> </span><span class="n">heap</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">heap_u8_allocator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HeapPrealloc</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new_allocator</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">u8_buffer</span><span class="p">,</span><span class="w"> </span><span class="n">bzero</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">heap_u32_allocator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HeapPrealloc</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new_allocator</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">u32_buffer</span><span class="p">,</span><span class="w"> </span><span class="n">bzero</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">heap_hc_allocator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HeapPrealloc</span><span class="p">::</span><span class="o">&lt;</span><span class="n">HuffmanCode</span><span class="o">&gt;</span><span class="p">::</span><span class="n">new_allocator</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">hc_buffer</span><span class="p">,</span><span class="w"> </span><span class="n">bzero</span><span class="p">);</span>
+
+<span class="c1">// At this point no more syscalls are going to be needed since everything can come from the allocators.</span>
+
+<span class="c1">// Feel free to activate SECCOMP jailing or other mechanisms to secure your application if you wish.</span>
+
+<span class="c1">// Now it&#39;s possible to setup the decompressor state</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">brotli_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BrotliState</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">heap_u8_allocator</span><span class="p">,</span><span class="w"> </span><span class="n">heap_u32_allocator</span><span class="p">,</span><span class="w"> </span><span class="n">heap_hc_allocator</span><span class="p">);</span>
+
+<span class="c1">// at this point the decompressor simply needs an input and output buffer and the ability to track</span>
+<span class="c1">// the available data left in each buffer</span>
+<span class="k">loop</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BrotliDecompressStream</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">available_in</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">input_offset</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">input</span><span class="p">.</span><span class="n">slice</span><span class="p">(),</span>
+<span class="w">                                    </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">available_out</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">output_offset</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">output</span><span class="p">.</span><span class="n">slice_mut</span><span class="p">(),</span>
+<span class="w">                                    </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">written</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">brotli_state</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// just end the decompression if result is BrotliResult::ResultSuccess or BrotliResult::ResultFailure</span>
+<span class="p">}</span>
+</code></pre>
+<p>This interface is the same interface that the C brotli decompressor uses</p>
+<p>Also feel free to use custom allocators that invoke Box directly.
+This example illustrates a mechanism to avoid subsequent syscalls after the initial allocation</p>
+<h4>Using the C interface</h4>
+<p>rust-brotli is a drop-in replacement for the official https://github.com/google/brotli C
+implementation. That means you can use it from any place that supports that library.
+To build rust-brotli in this manner enter the c subdirectory and run make there</p>
+<p>cd c &amp;&amp; make</p>
+<p>this should build c/target/release/libbrotli.so and should build the vanilla
+command line tool in C for compressing and decompressing any brotli file.</p>
+<p>the libbrotli.so in c/target/release should be able to replace any other libbrotli.so
+file, but with all the advantages of using safe rust (except in the FFI bindings)</p>
+<p>The code also allows a wider range of options, including forcing the prediction mode
+(eg UTF8 vs signed vs MSB vs LSB) and changing the weight of the literal cost from 540
+to other values.</p>
+<p>Custom dictionaries are reachable from C as well: <code>brotli/decode.h</code> declares
+<code>BrotliDecoderAttachDictionary</code>, which takes a <code>BrotliSharedDictionaryType</code> of
+either <code>BROTLI_SHARED_DICTIONARY_RAW</code> or <code>BROTLI_SHARED_DICTIONARY_SERIALIZED</code>
+from <code>brotli/shared_dictionary.h</code>. As in the C library, the dictionary must be
+attached before decoding starts, ownership is not transferred, and the buffer
+must stay alive until the decoder instance is destroyed.</p>
+<pre><code class="syntax-highlight language-c"><span class="n">BrotliDecoderState</span><span class="w"> </span><span class="o">*</span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BrotliDecoderCreateInstance</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">BrotliDecoderAttachDictionary</span><span class="p">(</span><span class="n">state</span><span class="p">,</span><span class="w"> </span><span class="n">BROTLI_SHARED_DICTIONARY_RAW</span><span class="p">,</span>
+<span class="w">                                   </span><span class="n">dict_size</span><span class="p">,</span><span class="w"> </span><span class="n">dict</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="cm">/* dictionary was corrupt, or the 15 dictionary limit was reached */</span>
+<span class="p">}</span>
+</code></pre>
+<h4>Stream Concatenation</h4>
+<p>Brotli supports creating streams that can be concatenated together, useful for streaming
+scenarios where you want to compress chunks independently but decompress as a single stream.</p>
+<h5>Simple Concatenation (Fast)</h5>
+<p>Use <code>-bare -appendable</code> for the first file and <code>-bare -catable</code> for subsequent files.
+These can be combined using plain byte concatenation without special tools, with a
+finalization byte (<code>0x03</code>) added at the end:</p>
+<pre><code># Create the base file with header but no trailer (must specify window size)
+brotli -c -bare -appendable -w22 input1.txt &gt; base.br
+
+# Create bare-catable streams (no header, no trailer, same window size!)
+brotli -c -bare -catable -w22 input2.txt &gt; part2.br
+brotli -c -bare -catable -w22 input3.txt &gt; part3.br
+
+# Simple concatenation with finalization byte
+# Note: printf '\x03' adds the required final byte
+(cat base.br part2.br part3.br; printf '\x03') &gt; combined.br
+
+# Decompress normally
+brotli -d combined.br -o output.txt
+</code></pre>
+<p><strong>Advantages:</strong></p>
+<ul>
+<li>Instant concatenation (no processing)</li>
+<li>No special tools required</li>
+<li>Bare streams can be appended in any order</li>
+</ul>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>All files must use the same window size (<code>-w22</code> recommended)</li>
+<li>First file: <code>-bare -appendable</code> (has header, no trailer)</li>
+<li>Subsequent files: <code>-bare -catable</code> (no header, no trailer, no dictionary refs)</li>
+<li>A final <code>0x03</code> byte must be appended to complete the stream</li>
+</ul>
+<h5>Efficient Concatenation (Size-optimized)</h5>
+<p>Use the <code>catbrotli</code> tool with <code>-catable</code> and <code>-appendable</code> flags for better compression
+at the cost of processing time:</p>
+<pre><code># Create files for catbrotli tool
+brotli -c -appendable input1.txt &gt; appendable.br
+brotli -c -catable input2.txt &gt; catable1.br
+brotli -c -catable input3.txt &gt; catable2.br
+
+# Concatenate using catbrotli tool
+catbrotli appendable.br catable1.br catable2.br &gt; combined.br
+</code></pre>
+<p><strong>Tradeoff:</strong> <code>catbrotli</code> produces smaller output but requires CPU time to process the
+streams intelligently. Use this when size matters more than concatenation speed.</p>
+<h5>Technical Reference: Stream Parameter Interactions</h5>
+<p><strong>Stream Types and Their Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Stream Type</th>
+<th>bare_stream</th>
+<th>byte_align</th>
+<th>appendable</th>
+<th>catable</th>
+<th>use_dictionary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td>false</td>
+<td>false</td>
+<td>false</td>
+<td>false</td>
+<td>true</td>
+<td>Normal brotli stream with header and trailer</td>
+</tr>
+<tr>
+<td>First (simple concat)</td>
+<td>true</td>
+<td>true</td>
+<td>true</td>
+<td>false</td>
+<td>true</td>
+<td>Has header, no trailer - for simple <code>cat</code> concatenation</td>
+</tr>
+<tr>
+<td>Subsequent (simple concat)</td>
+<td>true</td>
+<td>true</td>
+<td>true</td>
+<td>true</td>
+<td>false</td>
+<td>No header, no trailer, no dict refs - append to first</td>
+</tr>
+<tr>
+<td>Appendable (catbrotli)</td>
+<td>false</td>
+<td>varies</td>
+<td>true</td>
+<td>false</td>
+<td>true</td>
+<td>For use with <code>catbrotli</code> tool</td>
+</tr>
+<tr>
+<td>Catable (catbrotli)</td>
+<td>false</td>
+<td>varies</td>
+<td>true</td>
+<td>true</td>
+<td>false</td>
+<td>For use with <code>catbrotli</code> tool</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Important Notes:</strong></p>
+<ul>
+<li><strong>Parameter dependencies are applied automatically</strong> by the library in both CLI and API usage</li>
+<li>The library's <code>SanitizeParams</code> function ensures:
+<ul>
+<li><code>catable = true</code> → automatically sets <code>appendable = true</code> and <code>use_dictionary = false</code></li>
+<li><code>bare_stream = true</code> → automatically sets <code>byte_align = true</code></li>
+<li><code>!appendable</code> → automatically sets <code>byte_align = false</code></li>
+</ul>
+</li>
+<li>When using <code>set_parameter()</code>, dependencies are applied immediately</li>
+<li>When setting fields directly (e.g., <code>params.catable = true</code>), dependencies are applied during compression initialization</li>
+<li><strong>No manual fixups needed</strong> - the library handles all parameter dependencies</li>
+<li>The <code>use_dictionary = false</code> for catable streams prevents references to bytes before the chunk boundary</li>
+<li>Simple concatenation requires a final <code>0x03</code> byte to complete the stream</li>
+<li>All concatenated streams must use the same window size</li>
+</ul>
+<p><strong>Example API Usage:</strong></p>
+<pre><code class="syntax-highlight language-rust"><span class="c1">// First file: -bare -appendable equivalent</span>
+<span class="n">params</span><span class="p">.</span><span class="n">bare_stream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span><span class="w">    </span><span class="c1">// Sets bare_stream=true, byte_align=true (automatic)</span>
+<span class="n">params</span><span class="p">.</span><span class="n">appendable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span><span class="w">     </span><span class="c1">// Sets appendable=true</span>
+
+<span class="c1">// Subsequent files: -bare -catable equivalent</span>
+<span class="n">params</span><span class="p">.</span><span class="n">bare_stream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span><span class="w">    </span><span class="c1">// Sets bare_stream=true, byte_align=true (automatic)</span>
+<span class="n">params</span><span class="p">.</span><span class="n">catable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span><span class="w">        </span><span class="c1">// Sets catable=true, appendable=true, use_dictionary=false (automatic)</span>
+
+<span class="c1">// All parameter dependencies are handled automatically by the library.</span>
+<span class="c1">// No manual fixups required - just set the primary flags you want.</span>
+</code></pre>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>alloc-stdlib</code></th><td>Yes<small>default → std → alloc-stdlib</small></td><td><ul class="effects"><li><code>dep:alloc-stdlib</code></li></ul></td></tr><tr><th scope="row"><code>benchmark</code></th><td>No</td><td><ul class="effects"><li><code>brotli-decompressor/benchmark</code></li></ul></td></tr><tr><th scope="row"><code>billing</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>disable-timer</code></th><td>No</td><td><ul class="effects"><li><code>brotli-decompressor/disable-timer</code></li></ul></td></tr><tr><th scope="row"><code>disallow_large_window_size</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>external-literal-probability</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>ffi-api</code></th><td>No</td><td><ul class="effects"><li><code>brotli-decompressor/ffi-api</code></li></ul></td></tr><tr><th scope="row"><code>float64</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>floating_point_context_mixing</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>no-stdlib-ffi-binding</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>pass-through-ffi-panics</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>portable-float</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>safe</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>seccomp</code></th><td>No</td><td><ul class="effects"><li><code>alloc-no-stdlib/unsafe</code></li><li><code>brotli-decompressor/seccomp</code></li></ul></td></tr><tr><th scope="row"><code>sha2</code></th><td>No</td><td><ul class="effects"><li><code>dep:sha2</code></li></ul></td></tr><tr><th scope="row"><code>simd</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>alloc-stdlib</code></li><li><code>brotli-decompressor/std</code></li></ul></td></tr><tr><th scope="row"><code>validation</code></th><td>No</td><td><ul class="effects"><li><code>sha2</code></li></ul></td></tr><tr><th scope="row"><code>vector_scratch_space</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/alloc-no-stdlib/"><code>crates-io/alloc-no-stdlib</code></a><small>Alias: alloc-no-stdlib</small></th><td><code>&gt;=3.0.0, &lt;4.0.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/alloc-stdlib/"><code>crates-io/alloc-stdlib</code></a><small>Alias: alloc-stdlib</small></th><td><code>&gt;=0.3.0, &lt;0.4</code><small>Default features: enabled</small><small>Requests: </small></td><td>Enabled through default → std → alloc-stdlib</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/brotli-decompressor/"><code>crates-io/brotli-decompressor</code></a><small>Alias: brotli-decompressor</small></th><td><code>~6.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/sha2/"><code>crates-io/sha2</code></a><small>Alias: sha2</small></th><td><code>~0.10</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/compression-codecs/versions/0.4.45/">crates-io/compression-codecs 0.4.45</a><span>Requires ^9 · alias brotli · </span></li><li><a href="../../../packages/crates-io/compression-codecs/versions/0.4.44/">crates-io/compression-codecs 0.4.44</a><span>Requires ^8 · alias brotli · </span></li><li><a href="../../../packages/crates-io/parquet/versions/58.4.0/">crates-io/parquet 58.4.0</a><span>Requires ^8.0 · alias brotli · </span></li><li><a href="../../../packages/crates-io/rustls/versions/0.23.45/">crates-io/rustls 0.23.45</a><span>Requires ^8 · alias brotli · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc-stdlib, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:660cd8c361f4a8dc0e9d9e0ee90b9979c9bcb3973ec49f857ee7bb421408caff</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:7fcc918acb05781ec01674c02ee3181f584df4983460c886602440cff8d563b6</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc-stdlib, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:eb348e7fabc0a88ce04331b03ee02e21270b43054e239c39128dc30b2bfa0c0f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:d0a448317cdd0477307ea4718338bc486c04f51c66e962143624d1c90a9b877a</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc-stdlib, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7c574e3501b823eae1c48be3509e6d83ae6d12c537810f08d4e267a457a2f363</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:1c776b957655052e4dfb0623630ea9b6dbd7544ea4103ad3581ceca94b68659f</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc-stdlib, default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:429cce23d7ebbd5d51d5a2c81b3e718f985cb223bf13206c84283a5c95c5e3c7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:0b4a536b3d38e553894f43619122c8221851c297a3bcf3bf517941a70ebff6c9</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/brotli/versions/9.0.0/">9.0.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/brotli/9.0.0">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/brotli/versions/8.0.4/">8.0.4</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/brotli/8.0.4">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>BSD-3-Clause AND MIT</strong></p><details class="document-file"><summary>LICENSE.BSD-3-Clause · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2016 Dropbox, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</code></pre></div><p class="table-note">sha256:c0c56f26d9c051cac4d200c34c84e7ae9aaa853e01a982a1df08b09931e518ae</p></details><details class="document-file"><summary>LICENSE.MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:01288f35249e75e82feecb2f0efddb5b1275b26ecbce4deb8227c49ad3ad0622</code></dd><dt>Upstream checksum</dt><dd><code>sha256:f8b851b75c23ca7873623d612fe49bd1989aeb03d08fb9432187eb253d3d4c6b</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/brotli&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;9.0.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">alloc-stdlib</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:alloc-stdlib&quot;</span><span class="p">]</span>
+<span class="n">benchmark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;brotli-decompressor/benchmark&quot;</span><span class="p">]</span>
+<span class="n">billing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">disable-timer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;brotli-decompressor/disable-timer&quot;</span><span class="p">]</span>
+<span class="n">disallow_large_window_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">external-literal-probability</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">ffi-api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;brotli-decompressor/ffi-api&quot;</span><span class="p">]</span>
+<span class="n">float64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">floating_point_context_mixing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">no-stdlib-ffi-binding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">pass-through-ffi-panics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">portable-float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">safe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">seccomp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc-no-stdlib/unsafe&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;brotli-decompressor/seccomp&quot;</span><span class="p">]</span>
+<span class="n">sha2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:sha2&quot;</span><span class="p">]</span>
+<span class="n">simd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc-stdlib&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;brotli-decompressor/std&quot;</span><span class="p">]</span>
+<span class="n">validation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;sha2&quot;</span><span class="p">]</span>
+<span class="n">vector_scratch_space</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;brotli&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2015&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">alloc-no-stdlib</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/alloc-no-stdlib&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=3.0.0, &lt;4.0.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">alloc-stdlib</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/alloc-stdlib&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.3.0, &lt;0.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">brotli-decompressor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/brotli-decompressor&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;~6.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">sha2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/sha2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;~0.10&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Daniel Reiter Horn &lt;danielrh@dropbox.com&gt;, The Brotli Authors</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.59.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/brotli/9.0.0">crates.io package</a></li><li><a href="https://github.com/dropbox/rust-brotli">Source repository</a></li><li><a href="https://docs.rs/brotli/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">brotli</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/brotli"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=9.0.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>radium 1.1.1 · Incan.pub</title><meta name="description" content="Portable interfaces for maybe-atomic types"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/radium</p><div class="title-row"><h1>radium</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/radium/versions/1.1.1/" selected>1.1.1</option><option value="../../../../../packages/crates-io/radium/versions/0.7.0/">0.7.0</option></select></label></div><p class="description">Portable interfaces for maybe-atomic types</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><p>&lt;div style=&quot;text-align: center;&quot; align=&quot;center&quot;&gt;</p>
+<h3>Radium</h3>
+<p>[![Latest Version][version_img]][crate_link]
+[![MSRV][msrv_img]][crate_link]</p>
+<p>[![Documentation][docs_img]][docs_link]
+[![Crate Downloads][downloads_img]][crate_link]</p>
+<p>&lt;/div&gt;</p>
+<p>Radium provides unifying abstractions and graceful degradation for code that
+requires shared-mutability, but does not necessarily require hardware-level
+atomicity to provide it.</p>
+<p>The primary export is the [<code>Radium</code>] trait. This is implemented on all of the
+types in the standard library’s [<code>atomic</code>] module, as well as the [<code>Cell</code>]
+wrappers over <code>bool</code>, the integers, and mutable pointers. Your code can be
+generic over the <code>Radium</code> trait and use a stable and consistent API, and permit
+client code to provide atomic or non-atomic types as they are able.</p>
+<p>Additionally, Radium provides three type families with varying guarantees of
+atomic behavior: [<code>Atom&lt;T&gt;</code>] wraps the standard library atomics, and only
+accepts <code>T</code> parameters where the target has an <code>AtomicT</code> type; [<code>Isotope&lt;T&gt;</code>]
+accepts any of the types which could be atomic, and wraps atomics where they
+exist and silently decays to <code>Cell&lt;T&gt;</code> where they do not; and [<code>Radon&lt;T&gt;</code>] wraps
+<code>Cell&lt;T&gt;</code>. All three of these types have no API except for implementing
+<code>Radium</code>, <code>Debug</code>, <code>Default</code>, and <code>From&lt;T&gt;</code>, so your code can switch between
+them without needing to worry about changing usage.</p>
+<p>Lastly, Radium provides <code>RadiumT</code> type aliases matching all of the <code>AtomicT</code>
+type names in the standard library. Each of these aliases forwards to its atomic
+variant when it exists, and to <code>Cell&lt;T&gt;</code> when it does not. Your code can use
+these names to be portable across targets with varying levels of atomic support
+without having to worry about the fact that <code>AtomicT</code> symbols vanish on targets
+that do not have the requisite atomic instructions.</p>
+<p>The Rust compiler [stabilized][0] the <code>cfg(target_has_atomic)</code> test in version
+1.60. This is now the MSRV for Radium 1.0. The version-0 series will stay
+supported for the indeterminate future to allow for pre-1.60 projects to
+continue to use it. The <code>radium::if_atomic!</code> macro allows projects to simulate
+<code>#[cfg(target_has_atomic)]</code> in version-0, but is removed in version-1.</p>
+<p>This crate is <code>#![no_std]</code>-compatible, as it relies solely on the
+<code>core::sync::atomic</code> and <code>core::cell</code> modules.</p>
+<h4>Versioning</h4>
+<p>Radium is by definition attached to the Rust standard library. As the atomic API
+evolves, Radium will follow it. MSRV raising is always at least a minor-version
+increase.</p>
+<p>As of Rust 1.60, support for 128-bit atomics is still unstable. Since Radium
+commits to being usable on the stable release series, it does not support
+128-bit atomics. As a compromise, <code>Cell&lt;{i,u}128&gt;</code> <em>is</em> integrated with Radium
+to prepare for stabilizaation in the future.</p>
+<p>If 128-bit atomics are removed from the standard library without stabilization,
+Radium will remove support for <code>Cell&lt;{i,u}128&gt;</code> in a major-version increase.</p>
+<h4>Non-Standard Implementors</h4>
+<p>In addition to the Rust standard library <code>Cell</code> and <code>Atomic</code> types, we also
+provide an implementation for the [<code>portable-atomic</code>] crate. However, the
+<code>portable-atomic</code> implementation cannot compile on a select few targets. As of
+1.60, they are:</p>
+<ul>
+<li><code>thumbv6m-none-eabi</code></li>
+<li><code>riscv32i-unknown-none-elf</code></li>
+<li><code>riscv32imc-unknown-none-elf</code></li>
+</ul>
+<p>These targets have 32-bit atomic load and store instructions, but do not have
+read/modify/write instructions. Since <code>Radium</code> demands RMU behavior, and
+<code>portable-atomic</code> does not provide it even in software (the <code>.fetch_action</code>
+methods are all missing), we do not attempt to handle these targets gracefully
+and simply allow the compile to fail.</p>
+<p>Do not use the <code>portable-atomic</code> feature when compiling for these targets.</p>
+<p>We disable all <code>portable-atomic</code> features, including the default-on <code>fallback</code>
+feature. This causes <code>portable-atomic</code> to only generate symbols that match what
+the standard library provides on that target. If you enable
+<code>portable-atomic/fallback</code> in your own crate, then these symbols will exist, but
+<code>radium</code> will not be able to see them because <code>#[cfg(feature = &quot;...&quot;)]</code> cannot
+query <em>other</em> crates’ enabled feature set. You will need to set radium’s
+<code>portable-atomic-fallback</code> feature to get <code>Radium</code> implementations for atomic
+operations wider than what the target instruction set supports.</p>
+<h4>Pre-1.60 Target Discovery</h4>
+<p>Because the compiler did not make atomic support on targets accessible to
+libraries, Radium used a build script to detect the target architecture and emit
+its own directives that marked the presence or absence of an atomic integer. We
+accomplished this by reading the compiler’s target information records and
+copying the information directly into our build script.</p>
+<p>If Radium v0 does not work for your architecture, please update the build script
+to handle your target string and submit a pull request against the v0 branch.
+We write the build script on an as-needed basis; it is not proactively filled
+with all of the information listed in the compiler.</p>
+<p><strong>NOTE</strong>: The build script receives information through two environment
+variables: <code>TARGET</code> and <code>CARGO_CFG_TARGET_ARCH</code>. The latter is equivalent to the
+value in <code>cfg(target_arch)</code>; however, this value <strong>does not</strong> contain enough
+information to fully disambiguate the target. The build script attempts to do
+rudimentary parsing of the <code>env!(TARGET)</code> string; if this does not work for
+your target, consider using the <code>TARGET_ARCH</code> matcher, or match on the full
+<code>TARGET</code> string rather than the attempted parse.</p>
+<hr>
+<h4>Project Origins</h4>
+<p><strong>@kneecaw</strong> - <a href="https://twitter.com/kneecaw/status/1132695060812849154">https://twitter.com/kneecaw/status/1132695060812849154</a></p>
+<blockquote>
+<p>Feelin' lazy: Has someone already written a helper trait abstracting
+operations over <code>AtomicUsize</code> and <code>Cell&lt;usize&gt;</code> for generic code which may not
+care about atomicity?</p>
+</blockquote>
+<p><strong>@ManishEarth</strong> - <a href="https://twitter.com/ManishEarth/status/1132706585300496384">https://twitter.com/ManishEarth/status/1132706585300496384</a></p>
+<blockquote>
+<p>no but call the crate radium</p>
+<p>(since people didn't care that it was radioactive and used it in everything)</p>
+</blockquote>
+<p>
+[crate_link]: https://crates.io/crates/radium &quot;Crates.io package&quot;
+[docs_img]: https://img.shields.io/docsrs/radium/latest.svg?style=for-the-badge &quot;Radium documentation badge&quot;
+[docs_link]: https://docs.rs/radium &quot;Radium documentation&quot;
+[downloads_img]: https://img.shields.io/crates/dv/radium.svg?style=for-the-badge &quot;Crate downloads&quot;
+[msrv_img]: https://img.shields.io/badge/MSRV-1.60-f46623?style=for-the-badge&amp;logo=rust &quot;Minimum Supported Rust Version: 1.60&quot;
+[version_img]: https://img.shields.io/crates/v/radium?color=f46623&amp;style=for-the-badge &quot;Radium version badge&quot;</p>
+<p>
+[<code>Atom&lt;T&gt;</code>]: https://docs.rs/radium/latest/radium/types/struct.Atom.html
+[<code>Cell</code>]: https://doc.rust-lang.org/core/cell/struct.Cell.html
+[<code>Isotope&lt;T&gt;</code>]: https://docs.rs/radium/latest/radium/types/struct.Isotope.html
+[<code>Radium</code>]: https://docs.rs/radium/latest/radium/trait.Radium.html
+[<code>Radon&lt;T&gt;</code>]: https://docs.rs/radium/latest/radium/types/struct.Radon.html
+[<code>atomic</code>]: https://doc.rust-lang.org/core/sync/atomic
+[<code>portable-atomic</code>]: https://docs.rs/portable-atomic/1</p>
+<p>
+[0]: https://github.com/rust-lang/rust/blob/master/RELEASES.md#version-1600-2022-04-07</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>portable-atomic</code></th><td>No</td><td><ul class="effects"><li><code>dep:portable-atomic</code></li></ul></td></tr><tr><th scope="row"><code>portable-atomic-fallback</code></th><td>No</td><td><ul class="effects"><li><code>portable-atomic</code></li><li><code>dep:portable-atomic</code></li><li><code>portable-atomic/fallback</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/cfg-if/"><code>crates-io/cfg-if</code></a><small>Alias: cfg-if</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/portable-atomic/"><code>crates-io/portable-atomic</code></a><small>Alias: portable-atomic</small></th><td><code>^1</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/bitvec/versions/1.1.1/">crates-io/bitvec 1.1.1</a><span>Requires ^0.7 · alias radium · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:12cab8a70c1d570b52ee489c31f9794af51c1c6e794bab362d37468c952a9750</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:194cc7c41a135067d27f7f8dce0c2c713710b4933bd244cb24cb20ab66672af5</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8bb25f7041cbe2213b3e1fa3ca445042d1d436d16072a8424bf2787a06a7a6d9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:423684a982931486bf56c5bca064828a2eb6f4089d661866001df1ec47247fe6</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:bf5a31209bc5037b05171609aef919fb8e42311bc83489d77c0b7a38dc54d1bb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:207f971ce654f5e1637cb8fbb9e4e388b0b1f44c9c841a488702a5bba4ef3a3d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:efee91d90c1e940353b44c27e1f34ad209ae7418f024d9e626396b31e2f16807</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:d3cf61e5657c242b4f50e5a740269517b7943e453ffd537c0529aeb06d402fef</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/radium/versions/1.1.1/">1.1.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/radium/1.1.1">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/radium/versions/0.7.0/">0.7.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/radium/0.7.0">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE.txt · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2019 kneecaw (Nika Layzell)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:f08f8e7af9d12672dc1c54f41d8ac46fbba22982d471dbc7a1c743b86e35269e</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:b30ef6e5e957f4b5f929e07f3458d6b7b0c22db319436d99b889ec6868fd7997</code></dd><dt>Upstream checksum</dt><dd><code>sha256:1775bc532a9bfde46e26eba441ca1171b91608d14a3bae71fea371f18a00cffe</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/radium&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.1.1&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">portable-atomic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:portable-atomic&quot;</span><span class="p">]</span>
+<span class="n">portable-atomic-fallback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;portable-atomic&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:portable-atomic&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;portable-atomic/fallback&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;radium&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">cfg-if</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cfg-if&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">portable-atomic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/portable-atomic&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.60</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/radium/1.1.1">crates.io package</a></li><li><a href="https://github.com/ferrilab/ferrilab">Source repository</a></li><li><a href="https://docs.rs/radium">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">radium</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/radium"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.1.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

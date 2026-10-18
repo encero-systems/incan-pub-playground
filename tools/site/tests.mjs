@@ -9,7 +9,7 @@ const root = resolve('.');
 const input = JSON.parse(await readFile('assets/site/packages.json','utf8'));
 const binary = resolve('tools/site/target/incan/main/oven/release/main');
 const templates = resolve('tools/site/templates');
-const htmlFor = async name => readFile(`packages/crates-io/${name}/index.html`,'utf8');
+const htmlFor = async name => readFile(join(legacyRoot,`packages/crates-io/${name}/index.html`),'utf8');
 function section(html,id) {return html.split(`<section id="${id}">`)[1]?.split('</section>')[0];}
 function row(html,id) {return html.split(`<tr id="feature-${id}">`)[1]?.split('</tr>')[0];}
 async function renderFixture(packages) {
@@ -19,9 +19,16 @@ async function renderFixture(packages) {
  const run=spawnSync(binary,[file,output,templates],{cwd:root,encoding:'utf8'});
  return {dir,output,run};
 }
+const baseline=await renderFixture(input.packages);
+assert.equal(baseline.run.status,0,baseline.run.stdout+baseline.run.stderr);
+const legacyRoot=baseline.output;
+// Fixture pages reference the same static assets; copy those for route integrity assertions.
+const {cp}=await import('node:fs/promises');
+await cp('assets',join(legacyRoot,'assets'),{recursive:true,filter:path=>!path.includes('assets/registry')});
+await cp('package-data-design.md',join(legacyRoot,'package-data-design.md'));
 test('all six pages contain their main content in initial HTML, with valid local links and assets',async()=>{
  for(const p of input.packages){
-  const path=resolve(`packages/${p.id}/index.html`); const html=await readFile(path,'utf8');
+  const path=resolve(legacyRoot,`packages/${p.id}/index.html`); const html=await readFile(path,'utf8');
   for(const id of ['features','dependencies','dependents','builds','releases','popularity','readme','security','provenance']) assert.ok(section(html,id),`${p.id}: ${id}`);
   assert.ok(section(html,'readme').length>500); assert.ok(html.indexOf('<section id="readme">') < html.indexOf('<section id="features">')); assert.doesNotMatch(html, /id="overview"/); assert.equal([...html.matchAll(/<h1\b/g)].length, 1); assert.doesNotMatch(html,/role="tabpanel"|\{\{(?:name|features|dependencies)\}\}/);
   const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));
@@ -61,10 +68,10 @@ test('scoped identities coexist; duplicates and unsafe output paths are rejected
 });
 test('a second render is byte-for-byte identical',async()=>{
  const {output,run}=await renderFixture(input.packages);assert.equal(run.status,0,run.stdout);
- for(const path of ['index.html','catalog/index.html',...input.packages.map(p=>`packages/${p.id}/index.html`)]) assert.deepEqual(await readFile(path),await readFile(join(output,path)),path);
+ for(const path of ['index.html','catalog/index.html',...input.packages.map(p=>`packages/${p.id}/index.html`)]) assert.deepEqual(await readFile(join(legacyRoot,path)),await readFile(join(output,path)),path);
 });
 test('homepage and catalog routes preserve scoped links, recorded starter facts and search destinations',async()=>{
- const home=await readFile('index.html','utf8');
+ const home=await readFile(join(legacyRoot,'index.html'),'utf8');
  assert.match(home,/<h1[^>]*>Building blocks<br>for Oven/);
  assert.match(home,/<form[^>]*action="catalog\/"[^>]*method="get"/);
  assert.match(home,/name="q"/);
@@ -79,13 +86,13 @@ test('homepage and catalog routes preserve scoped links, recorded starter facts 
   assert.ok(card,p.id); assert.ok(card.includes(p.version)); assert.ok(card.includes(p.about.license));
  }
  for(const route of ['index.html','catalog/index.html']){
-  const path=resolve(route); const html=await readFile(path,'utf8');
+  const path=resolve(legacyRoot,route); const html=await readFile(path,'utf8');
   for(const [,url] of html.matchAll(/(?:href|src)="([^"]+)"/g)){
    if(/^(?:#|https?:|mailto:|\/\/)/.test(url))continue;
    const file=resolve(dirname(path),url.split(/[?#]/)[0]); await access(file.endsWith('/')?join(file,'index.html'):file);
   }
  }
- const catalog=await readFile('catalog/index.html','utf8');
+ const catalog=await readFile(join(legacyRoot,'catalog/index.html'),'utf8');
  for(const p of input.packages)assert.ok(catalog.includes(`href="../packages/${p.id}/"`));
  for(const p of input.packages){const html=await htmlFor(p.name);assert.match(html,/action="\.\.\/\.\.\/\.\.\/catalog\/"/);assert.match(html,/href="\.\.\/\.\.\/\.\.\/catalog\/">Catalog/);}
  const p=structuredClone(input.packages.find(p=>p.name==='serde'));

@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>cmov 0.5.4 · Incan.pub</title><meta name="description" content="Conditional move CPU intrinsics which are guaranteed on major platforms (ARM32/ARM64, x86/x86_64,
+RISC-V) to execute in constant-time and not be rewritten as branches by the compiler. Provides
+wrappers for the CMOV family of instructions on x86/x86_64 and CSEL on AArch64, along with a
+portable &quot;best-effort&quot; pure Rust fallback implementation."><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/cmov</p><div class="title-row"><h1>cmov</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/cmov/versions/0.5.4/" selected>0.5.4</option></select></label></div><p class="description">Conditional move CPU intrinsics which are guaranteed on major platforms (ARM32/ARM64, x86/x86_64,
+RISC-V) to execute in constant-time and not be rewritten as branches by the compiler. Provides
+wrappers for the CMOV family of instructions on x86/x86_64 and CSEL on AArch64, along with a
+portable &quot;best-effort&quot; pure Rust fallback implementation.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0 OR MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3><a href="https://github.com/RustCrypto">RustCrypto</a>: CMOV (Conditional Move)</h3>
+<p><a href="https://crates.io/crates/cmov">Crate</a>
+<a href="https://docs.rs/cmov/">Docs</a>
+<a href="https://github.com/RustCrypto/utils/actions/workflows/cmov.yml">Build Status</a>
+Apache 2.0/MIT Licensed
+MSRV
+<a href="https://rustcrypto.zulipchat.com/#narrow/stream/260052-utils">Project Chat</a></p>
+<p>Conditional move CPU intrinsics which are guaranteed on major platforms to execute in constant-time
+and not be rewritten as branches by the compiler.</p>
+<p>Provides wrappers for the <a href="https://www.jaist.ac.jp/iscenter-new/mpc/altix/altixdata/opt/intel/vtune/doc/users_guide/mergedProjects/analyzer_ec/mergedProjects/reference_olh/mergedProjects/instructions/instruct32_hh/vc35.htm">CMOV family</a> of instructions on <code>x86</code>/<code>x86_64</code> and the <a href="https://developer.arm.com/documentation/dui0802/b/CSEL">CSEL</a>
+instruction on <code>aarch64</code> CPUs, along with a portable fallback implementation for other CPU
+architectures.</p>
+<h4>About</h4>
+<p>Conditional move intrinsics provide <a href="https://en.wikipedia.org/wiki/Predication_(computer_architecture)">predication</a> which allows selection
+of one or more values without using branch instructions, thus making the
+selection constant-time with respect to the values, and not subject to CPU
+execution features which might introduce timing or other microarchitectural
+sidechannels introduced by branch prediction or other speculative execution
+features.</p>
+<p>This crate provides wrappers for the CMOV/CSEL instructions implemented using
+inline <code>asm!</code>, which means the implementation is a black box that will not be
+rewritten by e.g. LLVM's architecture-specific lowerings, such as the
+<a href="https://dsprenkels.com/cmov-conversion.html">x86-cmov-conversion</a> pass.</p>
+<p>This is a <em>low level crate</em> who's API is designed to make it easy to build
+portable abstractions across various CPU architectures and is not intended for
+general purpose use.</p>
+<p>See the <a href="https://docs.rs/ctutils"><code>ctutils</code></a> crate for a higher-level API build on top of <code>cmov</code>.</p>
+<h4>Supported target architectures</h4>
+<p>This crate provides guaranteed constant-time operation using inline <code>asm!</code>
+on the following CPU architectures:</p>
+<ul>
+<li>[x] <code>x86</code>/<code>x86_64</code> (<code>CMOVZ</code>, <code>CMOVNZ</code>)</li>
+<li>[x] <code>arm</code> (mask generation only)</li>
+<li>[x] <code>aarch64</code> (<code>CSEL</code>)</li>
+<li>[x] <code>riscv32</code> (mask generation only)</li>
+<li>[x] <code>riscv64</code> (mask generation only)</li>
+</ul>
+<p>On other target architectures, a &quot;best effort&quot; portable fallback implementation
+based on bitwise arithmetic is used instead, augmented with tactical usage of
+<code>core::hint::black_box</code> based on past analysis of the generated assembly.
+However, we cannot guarantee that this implementation generates branch-free
+code, especially on hypothetical future rustc versions which introduce new
+optimizations.</p>
+<p>Please <a href="https://github.com/RustCrypto/utils/issues">open an issue</a> if you notice non-constant-time CPU instructions
+(e.g. branches, secret-dependent address calculations) being generated and we
+will treat it as a security issue and do our best to find a solution.</p>
+<p>You can also open an issue to request first-class support for native
+predication instructions on other architectures we don't currently support.</p>
+<h5><code>x86</code> / <code>x86_64</code> notes</h5>
+<p>Intel has confirmed that all extant CPUs implement the CMOV family of
+instructions in constant-time, and that this property will hold for future
+Intel CPUs as well.</p>
+<h4>⚠️ Security Warning</h4>
+<p>The implementation contained in this crate has never been independently audited!
+USE AT YOUR OWN RISK!</p>
+<p>Below are security issues this crate has experienced in the past:</p>
+<ul>
+<li><a href="https://rustsec.org/advisories/RUSTSEC-2026-0003.html">RUSTSEC-2026-0003</a>: Non-constant-time code generation on ARM32 targets</li>
+<li><a href="https://github.com/RustCrypto/utils/security/advisories/GHSA-3rjw-m598-pq24">GHSA-3rjw-m598-pq24</a>: <code>Cmov</code>/<code>CmovEq</code> on ARM64 can produce wrong results if high-bits of registers are set</li>
+</ul>
+<h4>Minimum Supported Rust Version (MSRV) Policy</h4>
+<p>MSRV increases are not considered breaking changes and can happen in patch
+releases.</p>
+<p>The crate MSRV accounts for all supported targets and crate feature
+combinations, excluding explicitly unstable features.</p>
+<h4>License</h4>
+<p>Licensed under either of:</p>
+<ul>
+<li><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a></li>
+<li><a href="http://opensource.org/licenses/MIT">MIT license</a></li>
+</ul>
+<p>at your option.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p>No feature declarations recorded.</p></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p>No dependencies declared.</p></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/ctutils/versions/0.4.3/">crates-io/ctutils 0.4.3</a><span>Requires ^0.5.3 · alias cmov · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:78e2213787c0651399bdb82deaf604e5f55e7102fdf03720776f8f11cee1a367</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:8c333bbc5934e300c3904dac7a50c9a01c4309d79b1f6eba550f394e8418f61e</small></li><li><code>sha256:9964a71039bbd5f0496383eced478e3b760f9b1556a6be078cd33447f98909a9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:3be71149fab61595c53d463dd5d4db8a9a006b450ba6bd4ced13e60f72650117</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:55e7b6947bafc1d9e65a81e6236451e8739886a0d883f77b54d031c4b988748b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:8ba3bd585a21d8d00875de88a0fa5a423264db88bcdc56a4b1fc1804b00b1552</small></li><li><code>sha256:880d696b42c728a4eb8709cf34eee90490de64096ce5dc82ee25cf8dfbca992e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:f9468bc632441c25604689824b7e7e6e78fe142c98653bc4ac35b4288ad21ad1</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:45d64c6f89835f90598d7394074a27d117bd5344659f5d9a63ca446ebb5ff6f1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:affb5637fcc08b99badba20661977aa306417f303f2796d90e34301a0174603a</small></li><li><code>sha256:8a62d32b3199a2f1eeedfd683ef22d5e7a61694cd7182ebbddf404861f6800b0</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:bb0704c468a5bacf5464df064cfd6e4becdcfe3fbe8bc9fcb9f026f69a01f6eb</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:03f185e7a1c6f3db45c5692f68716b30d181c427f413d010f16e601a0712d387</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:9daefa3fffa416bd4ede76cf1bcc9348277d825d87d8ac4e3247379fd2e520dc</small></li><li><code>sha256:4dc3001fa14c9b8f1cbb3991b77a59fa65a722c092b5a03f11190cd038314ada</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:2bca5dadd81a6b39ba0506e04a18427a89a776a3f27a482d15c7af5dd7f5179d</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/cmov/versions/0.5.4/">0.5.4</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/cmov/0.5.4">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>0.5.4 (2026-05-28)</h4>
+<h5>Security</h5>
+<ul>
+<li>Fix <a href="https://github.com/RustCrypto/utils/security/advisories/GHSA-3rjw-m598-pq24">GHSA-3rjw-m598-pq24</a>: <code>Cmov</code>/<code>CmovEq</code> on <code>aarch64</code> can produce wrong results if high-bits of registers are set (<a href="https://github.com/RustCrypto/utils/commit/dba6c355c9f241e3726d5ec2a68f9f3b519f6063">dba6c355</a>)</li>
+</ul>
+<h4>0.5.3 (2026-04-02)</h4>
+<h5>Added</h5>
+<ul>
+<li>Impl <code>Cmov</code>/<code>CmovEq</code> for <code>NonZeroUsize</code>/<code>NonZeroIsize</code> (<a href="https://github.com/RustCrypto/utils/pull/1415">#1415</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Avoid using <code>asm!</code> under <code>cfg(miri)</code> (<a href="https://github.com/RustCrypto/utils/pull/1436">#1436</a>)</li>
+</ul>
+<h4>0.5.2 (2026-01-20)</h4>
+<h5>Fixed</h5>
+<ul>
+<li><code>Cmov</code> impl for <code>isize</code>/<code>usize</code> (<a href="https://github.com/RustCrypto/utils/pull/1412">#1412</a>)</li>
+</ul>
+<h4>0.5.1 (2026-01-18)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>riscv32</code> optimised mask generation (<a href="https://github.com/RustCrypto/utils/pull/1396">#1396</a>)</li>
+<li><code>riscv64</code> optimised mask generation (<a href="https://github.com/RustCrypto/utils/pull/1397">#1397</a>)</li>
+<li>Support for <code>core::num::NonZero*</code> and <code>core::cmp::Ordering</code> (<a href="https://github.com/RustCrypto/utils/pull/1404">#1404</a>)</li>
+</ul>
+<h4>0.5.0 (2026-01-17)</h4>
+<h5>Added</h5>
+<ul>
+<li>Optimized <code>CmovEq</code> for <code>[u8]</code> (<a href="https://github.com/RustCrypto/utils/pull/1356">#1356</a>)</li>
+<li>Optimized <code>CmovEq</code> for <code>[u16]</code> (<a href="https://github.com/RustCrypto/utils/pull/1370">#1370</a>)</li>
+<li>Impl <code>Cmov</code>/<code>CmovEq</code> for slices of unsigned integers (<a href="https://github.com/RustCrypto/utils/pull/1370">#1370</a>, <a href="https://github.com/RustCrypto/utils/pull/1372">#1372</a>)</li>
+<li>Impl <code>Cmov</code>/<code>CmovEq</code> for slices of signed integers (<a href="https://github.com/RustCrypto/utils/pull/1373">#1373</a>)</li>
+<li>Impl <code>Cmov</code>/<code>CmovEq</code> for <code>isize</code>/<code>usize</code> (<a href="https://github.com/RustCrypto/utils/pull/1375">#1375</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Impls of <code>Cmov</code>/<code>CmovEq</code> for <code>[T; N]</code> are now bounded on <code>[T]: Cmov(Eq)</code> (<a href="https://github.com/RustCrypto/utils/pull/1372">#1372</a>)</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>Generic impl of <code>CmovEq</code> for <code>[T]</code> where <code>T: CmovEq</code> in favor of specialized impls (<a href="https://github.com/RustCrypto/utils/pull/1356">#1356</a>)</li>
+</ul>
+<h4>0.4.6 (2026-01-16)</h4>
+<h5>Added</h5>
+<ul>
+<li>Optimized <code>Cmov</code> for <code>[u8; N]</code> (<a href="https://github.com/RustCrypto/utils/pull/1350">#1350</a>)</li>
+<li>Optimized <code>CmovEq</code> for <code>[u8; N]</code> (<a href="https://github.com/RustCrypto/utils/pull/1353">#1353</a>)</li>
+<li>Optimized <code>Cmov</code> for <code>[u8]</code> (<a href="https://github.com/RustCrypto/utils/pull/1354">#1354</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Provided <code>Cmov::cmovz</code> impl (<a href="https://github.com/RustCrypto/utils/pull/1351">#1351</a>)</li>
+</ul>
+<h4>0.4.5 (2026-01-15)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Introduce small ARM32 <code>asm!</code> optimization which also guarantees constant-time operation (<a href="https://github.com/RustCrypto/utils/pull/1336">#1336</a>, <a href="https://github.com/RustCrypto/utils/pull/1346">#1346</a>)</li>
+</ul>
+<h4>0.4.4 (2026-01-14)</h4>
+<h5>Security</h5>
+<ul>
+<li>Fix non-constant-time assembly being emitted from portable backend on <code>thumbv6m-none-eabi</code> (<a href="https://github.com/RustCrypto/utils/pull/1332">#1332</a>)</li>
+</ul>
+<h4>0.4.3 (2025-12-27)</h4>
+<h5>Fixed</h5>
+<ul>
+<li><code>aarch64</code> ASM bug (<a href="https://github.com/RustCrypto/utils/pull/1299">#1299</a>)</li>
+<li>Truncation bug in portable implementation (<a href="https://github.com/RustCrypto/utils/pull/1300">#1300</a>)</li>
+</ul>
+<h4>0.4.2 (2025-12-26)</h4>
+<h5>Added</h5>
+<ul>
+<li>Signed integer support (<a href="https://github.com/RustCrypto/utils/pull/1280">#1280</a>)</li>
+</ul>
+<h4>0.4.1 (2025-12-19)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Use <code>black_box</code> in portable impl (<a href="https://github.com/RustCrypto/utils/pull/1255">#1255</a>)</li>
+</ul>
+<h4>0.4.0 (2025-09-10)</h4>
+<h5>Changed</h5>
+<ul>
+<li>Edition changed to 2024 and MSRV bumped to 1.85 (<a href="https://github.com/RustCrypto/utils/pull/1149">#1149</a>)</li>
+</ul>
+<h4>0.3.1 (2023-10-14)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>CmovEq</code> impl for slices (<a href="https://github.com/RustCrypto/utils/pull/954">#954</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Use <code>#[inline]</code> instead of <code>#[inline(always)]</code> (<a href="https://github.com/RustCrypto/utils/pull/924">#924</a>)</li>
+<li><code>CmovEq</code> now invokes XOR within the ASM block (<a href="https://github.com/RustCrypto/utils/pull/925">#925</a>)</li>
+</ul>
+<h4>0.3.0 (2023-04-02)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>miri</code> support by forcing the <code>portable</code> backend (<a href="https://github.com/RustCrypto/utils/pull/864">#864</a>)</li>
+<li>Constant-time equality comparisons (<a href="https://github.com/RustCrypto/utils/pull/873">#873</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Make <code>Cmov::cmovz</code> a provided method (<a href="https://github.com/RustCrypto/utils/pull/871">#871</a>)</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Builds on <code>x86</code> (32-bit) targets (<a href="https://github.com/RustCrypto/utils/pull/863">#863</a>)</li>
+</ul>
+<h4>0.2.0 (2023-02-26)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>Condition</code> alias for <code>u8</code> (<a href="https://github.com/RustCrypto/utils/pull/830">#830</a>)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Redesigned trait-based API (<a href="https://github.com/RustCrypto/utils/pull/830">#830</a>)
+<ul>
+<li>Built around a <code>Cmov</code> trait</li>
+<li>Trait is impl'd for <code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code>, <code>u128</code></li>
+<li>Accepts a <code>Condition</code> (i.e. <code>u8</code>) as a predicate</li>
+</ul>
+</li>
+<li>MSRV 1.60 (<a href="https://github.com/RustCrypto/utils/pull/839">#839</a>)</li>
+</ul>
+<h4>0.1.1 (2022-03-02)</h4>
+<h5>Added</h5>
+<ul>
+<li><code>cmovz</code>/<code>cmovnz</code>-alike support for AArch64 targets (<a href="https://github.com/RustCrypto/utils/pull/744">#744</a>)</li>
+</ul>
+<h4>0.1.0 (2022-02-27)</h4>
+<ul>
+<li>Initial release</li>
+</ul>
+</div><p class="table-note">sha256:3b6296d1f27c66fe4d6c433588dc1fd1c7295638c31f5191e30fdb3823759cf9</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0 OR MIT</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+</code></pre></div><p class="table-note">sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2022-2026 The RustCrypto Project Developers
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:70c9d40f1f9545c3f133b8a67206e89da850f6468eed072281bb3701514114a9</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:69d70b265616fbf9013c7530dda11366830a042346f801a231edfd4f133f7c26</code></dd><dt>Upstream checksum</dt><dd><code>sha256:0c9ea0ac24bc397ab3c98583a3c9ba74fa56b09a4449bbe172b9b1ddb016027a</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/cmov&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.5.4&quot;</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;cmov&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>RustCrypto Developers</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/cmov/0.5.4">crates.io package</a></li><li><a href="https://github.com/RustCrypto/utils">Source repository</a></li><li><a href="https://docs.rs/cmov">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">cmov</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/cmov"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.5.4"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

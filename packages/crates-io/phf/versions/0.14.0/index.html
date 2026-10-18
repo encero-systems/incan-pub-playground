@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>phf 0.14.0 · Incan.pub</title><meta name="description" content="Runtime support for perfect hash function data structures"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/phf</p><div class="title-row"><h1>phf</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/phf/versions/0.14.0/" selected>0.14.0</option><option value="../../../../../packages/crates-io/phf/versions/0.12.1/">0.12.1</option></select></label></div><p class="description">Runtime support for perfect hash function data structures</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Rust-PHF</h3>
+<p><a href="https://github.com/rust-phf/rust-phf/actions/workflows/ci.yml">CI</a> <a href="https://crates.io/crates/phf">Latest Version</a></p>
+<p><a href="https://docs.rs/phf">Documentation</a></p>
+<p>Rust-PHF is a library to generate efficient lookup tables at compile time using
+<a href="http://en.wikipedia.org/wiki/Perfect_hash_function">perfect hash functions</a>.</p>
+<p>It currently uses the
+<a href="http://cmph.sourceforge.net/papers/esa09.pdf">CHD algorithm</a> by default and
+also ships an experimental <code>ptrhash</code> feature for an alternative MPHF layout.</p>
+<p>MSRV (minimum supported rust version) is Rust 1.85.</p>
+<h4>Usage</h4>
+<p>PHF data structures can be constructed via either the procedural
+macros in the <code>phf_macros</code> crate or code generation supported by the
+<code>phf_codegen</code> crate.</p>
+<p>To compile the <code>phf</code> crate with a dependency on
+libcore instead of libstd, enabling use in environments where libstd
+will not work, set <code>default-features = false</code> for the dependency:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="c1"># to use `phf` in `no_std` environments</span>
+<span class="n">phf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.14.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<h5>phf_macros</h5>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">phf</span><span class="p">::</span><span class="n">phf_map</span><span class="p">;</span>
+
+<span class="cp">#[derive(Clone)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="nc">Keyword</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Loop</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Continue</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Break</span><span class="p">,</span>
+<span class="w">    </span><span class="nb">Fn</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Extern</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">static</span><span class="w"> </span><span class="n">KEYWORDS</span><span class="p">:</span><span class="w"> </span><span class="nc">phf</span><span class="p">::</span><span class="n">Map</span><span class="o">&lt;&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">Keyword</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">phf_map</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s">&quot;loop&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Keyword</span><span class="p">::</span><span class="n">Loop</span><span class="p">,</span>
+<span class="w">    </span><span class="s">&quot;continue&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Keyword</span><span class="p">::</span><span class="n">Continue</span><span class="p">,</span>
+<span class="w">    </span><span class="s">&quot;break&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Keyword</span><span class="p">::</span><span class="n">Break</span><span class="p">,</span>
+<span class="w">    </span><span class="s">&quot;fn&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Keyword</span><span class="p">::</span><span class="nb">Fn</span><span class="p">,</span>
+<span class="w">    </span><span class="s">&quot;extern&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Keyword</span><span class="p">::</span><span class="n">Extern</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="c1">// You can also use OR (`|`) patterns to map multiple keys to the same value:</span>
+<span class="k">static</span><span class="w"> </span><span class="n">OPERATORS</span><span class="p">:</span><span class="w"> </span><span class="nc">phf</span><span class="p">::</span><span class="n">Map</span><span class="o">&lt;&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">phf_map</span><span class="o">!</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s">&quot;+&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">&quot;add&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">&quot;plus&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;addition&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s">&quot;-&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">&quot;sub&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">&quot;minus&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;subtraction&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s">&quot;*&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">&quot;mul&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">&quot;times&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;multiplication&quot;</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">parse_keyword</span><span class="p">(</span><span class="n">keyword</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Keyword</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">KEYWORDS</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyword</span><span class="p">).</span><span class="n">cloned</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">parse_operator</span><span class="p">(</span><span class="n">operator</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">OPERATORS</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">operator</span><span class="p">).</span><span class="n">copied</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">phf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.14.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;macros&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<p>To try the experimental alternative, enable <code>ptrhash</code> on both the generator and
+runtime crates you use:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">phf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.14.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;macros&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;ptrhash&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<h6>Note</h6>
+<p>Currently, the macro syntax has some limitations and may not
+work as you want. See <a href="https://github.com/rust-phf/rust-phf/issues/196">#196</a> for example.
+Integer literals in the first key's type shape must use explicit suffixes, such
+as <code>0u32</code>, <code>[0u8, 1]</code>, or <code>(0u32, 1u32)</code>; later keys infer unsuffixed integer
+literals from the same position in that first key.
+Tuple keys are supported up to 12 elements.
+All keys must use the same supported key expression type as the first key.</p>
+<h5>phf_codegen</h5>
+<p>To use <code>phf_codegen</code> on build.rs, you have to add dependencies under <code>[build-dependencies]</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[build-dependencies]</span>
+<span class="n">phf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;0.14.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">phf_codegen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.14.0&quot;</span>
+</code></pre>
+<p>When using the experimental <code>ptrhash</code> layout, enable the <code>ptrhash</code> feature on
+both <code>phf_codegen</code> and the runtime <code>phf</code> dependency so the generated constants
+match the runtime struct layout.</p>
+<p>Then put code on build.rs:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">env</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">::</span><span class="n">File</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::{</span><span class="n">BufWriter</span><span class="p">,</span><span class="w"> </span><span class="n">Write</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">path</span><span class="p">::</span><span class="n">Path</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Path</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">env</span><span class="p">::</span><span class="n">var</span><span class="p">(</span><span class="s">&quot;OUT_DIR&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">()).</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;codegen.rs&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BufWriter</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">File</span><span class="p">::</span><span class="n">create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">path</span><span class="p">).</span><span class="n">unwrap</span><span class="p">());</span>
+
+<span class="w">    </span><span class="fm">write!</span><span class="p">(</span>
+<span class="w">        </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">file</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;static KEYWORDS: phf::Map&lt;&amp;&#39;static str, Keyword&gt; = {}&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">phf_codegen</span><span class="p">::</span><span class="n">Map</span><span class="p">::</span><span class="n">new</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;loop&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Keyword::Loop&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;continue&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Keyword::Continue&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;break&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Keyword::Break&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;fn&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Keyword::Fn&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;extern&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Keyword::Extern&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">build</span><span class="p">()</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">write!</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">file</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Example with OR patterns (note: phf_codegen doesn&#39;t support OR patterns directly)</span>
+<span class="w">    </span><span class="fm">write!</span><span class="p">(</span>
+<span class="w">        </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">file</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;static OPERATORS: phf::Map&lt;&amp;&#39;static str, &amp;&#39;static str&gt; = {}&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">phf_codegen</span><span class="p">::</span><span class="n">Map</span><span class="p">::</span><span class="n">new</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;+&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">addition</span><span class="se">\&quot;</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;add&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">addition</span><span class="se">\&quot;</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;plus&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">addition</span><span class="se">\&quot;</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;-&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">subtraction</span><span class="se">\&quot;</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;sub&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">subtraction</span><span class="se">\&quot;</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;minus&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\&quot;</span><span class="s">subtraction</span><span class="se">\&quot;</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">build</span><span class="p">()</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">write!</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">file</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>and lib.rs:</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[derive(Clone)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Keyword</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Loop</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Continue</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Break</span><span class="p">,</span>
+<span class="w">    </span><span class="nb">Fn</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Extern</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="fm">include!</span><span class="p">(</span><span class="fm">concat!</span><span class="p">(</span><span class="fm">env!</span><span class="p">(</span><span class="s">&quot;OUT_DIR&quot;</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;/codegen.rs&quot;</span><span class="p">));</span>
+
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">parse_keyword</span><span class="p">(</span><span class="n">keyword</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Keyword</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">KEYWORDS</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">keyword</span><span class="p">).</span><span class="n">cloned</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">parse_operator</span><span class="p">(</span><span class="n">operator</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">OPERATORS</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">operator</span><span class="p">).</span><span class="n">copied</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>macros</code></th><td>No</td><td><ul class="effects"><li><code>phf_macros</code></li></ul></td></tr><tr><th scope="row"><code>phf_macros</code></th><td>No</td><td><ul class="effects"><li><code>dep:phf_macros</code></li></ul></td></tr><tr><th scope="row"><code>ptrhash</code></th><td>No</td><td><ul class="effects"><li><code>phf_macros?/ptrhash</code></li><li><code>phf_shared/ptrhash</code></li></ul></td></tr><tr><th scope="row"><code>serde</code></th><td>No</td><td><ul class="effects"><li><code>dep:serde</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>phf_shared/std</code></li><li><code>serde?/std</code></li></ul></td></tr><tr><th scope="row"><code>uncased</code></th><td>No</td><td><ul class="effects"><li><code>phf_macros?/uncased</code></li><li><code>phf_shared/uncased</code></li></ul></td></tr><tr><th scope="row"><code>unicase</code></th><td>No</td><td><ul class="effects"><li><code>phf_macros?/unicase</code></li><li><code>phf_shared/unicase</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/phf_macros/"><code>crates-io/phf_macros</code></a><small>Alias: phf_macros</small></th><td><code>^0.14.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/phf_shared/"><code>crates-io/phf_shared</code></a><small>Alias: phf_shared</small></th><td><code>^0.14.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/chrono-tz/versions/0.10.4/">crates-io/chrono-tz 0.10.4</a><span>Requires ^0.12 · alias phf · </span></li><li><a href="../../../../../packages/crates-io/cssparser/versions/0.38.0/">crates-io/cssparser 0.38.0</a><span>Requires ^0.14.0 · alias phf · </span></li><li><a href="../../../../../packages/crates-io/strum/versions/0.28.0/">crates-io/strum 0.28.0</a><span>Requires ^0.13 · alias phf · </span></li><li><a href="../../../../../packages/crates-io/web_atoms/versions/0.3.0/">crates-io/web_atoms 0.3.0</a><span>Requires ^0.14 · alias phf · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, macros, phf_macros, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0706e3d1bea89e6ec94685b904df98ac9b6c31f610cdd5bd89bda9260c688bb6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:2b8e27ab6be5ecdae66a0f629a6c1710c44ec7d417948e0b6de54f9968779d96</small></li><li><code>sha256:7169e1e00633aa9f1e7b39f7a429b7e1e7cd8095916e8a9918496681fd6a7610</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53551495">Attestation reference</a><small>Archive: sha256:18501e35174511c025272cadf187aa2f7776e221e8fef7c66c5d63d1834aa0a8</small></li><li><code>sha256:8d9d464ceb8a5ab377aee364a31029e75c8d9cdba743a85b18d026ac04a53058</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:e02dadbbbda6b9d3d03c29741f336079d8e08ab01ab86347c226f0b6b20a03e2</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2963005ff1975079f3aa84069ec182c380ce49fe080866064678f36276bcaa77</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:7d0ba978534f8d6e047ce8709ec365a72e08c75bd10740af213ccdf005b99833</small></li><li><code>sha256:c8ae2808ad50342280c2fad8d0466495dd753bada2078c726e008b6c020b9849</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:1fbf0da5640242372cdff1d3c07d00f7788d887b76d8157418b804b84b09bc75</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, macros, phf_macros, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a346d2d36e31617c5736c3acfbf9a5c296a0f17306321019286df720391235cf</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:478b2f82e13b61f1278700a22eb2adf61de6c866da8fb4286fd52990e4967bec</small></li><li><code>sha256:d5afa028f3f7893613d8d0d6c9df9da6dfa22e407f8e95ccf02e7d8f23597822</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:a81e6f8a7227f86f3ec6bf448d437d9c05f1a3bee23299caeb2dafcc2a812a55</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7c4b9016876f8f0df7e7e8ef12e85bcf72d0949a836d849bd983a5453eef174f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:935ae8bc3bea41cbdd156497b6de9a4dde6e45d702a9f8f40d7e96aa120cfc50</small></li><li><code>sha256:f65542b58c12c26a630ae6703b448df5cd031f825a594676993aed21f0aad3bc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:30b82f28c52b2401f940c69b9486342875d2c64cb5cbff9b9890d9dff7c81954</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, macros, phf_macros, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b64c97650610e588619628ef4826585a3a504f5b8cad89786a5617fd6bfcb554</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:53d6e440ff2afd5b77471df0bd43640ae715eeee26a04b30413f1076621ab1cf</small></li><li><code>sha256:bf292abb470eb55b8acfb716ff892cdfa5a6f16f798f92401731523b44048453</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:82899cb616ecd18b7dc7963c73951d813864a10de34194404b5e926b955715f8</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:115ee84d927ac54c5b56b83fcd104c14eb3429005424b7ce39b8e6934f6bcc02</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:15f75ef3de8cbaaed763d292379e69b80b0d27a25b35be7606b774c49716215e</small></li><li><code>sha256:e66cf5cd7d6e9106ca612b726bb83958ed80dfadb5156be5afb8e7966b85e3b1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:792f2e65f40d15f120c4e58182e8b6142174156d40c2e8f5b7223f5bb61a9933</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, macros, phf_macros, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a8ee016b68c48e44729c9815f8d64b92bbd815336d4003e0552f0096110e2b84</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:e00ce134d97527833b26de5e54017d415dc7b9569488009ba870d1b800ec4fc3</small></li><li><code>sha256:ef7d5d6aeba9bdf7bf08846c233c4335551d7fa982c6ed2267bc7ad1344bdc58</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:98a1a1a8c022d26b321b13299dcacef3bb8be77de29b9d19c9497ffa966a83eb</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0d0b104a7c7dd15d7be5aa05de85a17ff70c56ff243d344a0815321f98ef0c4f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:b4fdd57a606c4974f1ab998644b8e9ef23f9ca534b0213863b553dcbf6ccd54a</small></li><li><code>sha256:9ebedf5dac2308df4b521f3062f89702db6fe99aa3a62524340bde33ba0877a3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:af7497cda9c319eea03bf7fcb5af69be338e5ab5d265100616d441e5c618fdd2</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/phf/versions/0.14.0/">0.14.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/phf/0.14.0">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/phf/versions/0.12.1/">0.12.1</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/phf/0.12.1">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>0.14.0 (2026-06-21)</h4>
+<h5>Chore</h5>
+<ul>
+<li>&lt;csr-id-ef36a8ee5df641399eee33a5c767c9c866fc2152/&gt; update rust crate syn to v2.0.115</li>
+<li>&lt;csr-id-93febde3dd3f1ac67b1259967f3899f68deab54e/&gt; bump MSRV to 1.68</li>
+<li>&lt;csr-id-cfbb052e855f697f2d42423408ce9d1e63d1c5b6/&gt; setup cargo-deny</li>
+<li>&lt;csr-id-17bce845aed852ccba597f99e5db853a4a6afa1f/&gt; Fix clippy warnings</li>
+<li>&lt;csr-id-e4e1556f40a25c1d50e4467dc9312c9b04beecd9/&gt; Remove criterion from deps</li>
+<li>&lt;csr-id-03a930696231da01005e762425841f91587b3e04/&gt; Update version number</li>
+<li>&lt;csr-id-ecd6a86d2bb104624cae5372bd63e7f10d1cc4cf/&gt; Fix version number</li>
+</ul>
+<h5>New Features</h5>
+<ul>
+<li>&lt;csr-id-81257954b089048bd5409ada47cc4562ba346334/&gt; migrate to 2024 edition
+<ul>
+<li>
+<p>feat: migrate to 2024 edition</p>
+</li>
+<li>
+<p>update cargo.lock</p>
+</li>
+</ul>
+</li>
+<li>&lt;csr-id-c628ed45358dc78a3c3df5c2972ebf49fb9409c6/&gt; add experimental ptrhash feature</li>
+<li>&lt;csr-id-4e85433fb2a35fcb1a6ad0067b67911ee5c747b6/&gt; Support OR pattern key</li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>&lt;csr-id-4ffa9f06e6b3eff6cef6221fab586af6326bdeea/&gt; implement <code>PhfEq</code> to address tuple lifetime issue</li>
+<li>&lt;csr-id-2b64a060d64b4bbdf77519efd117bb4b5ae873d1/&gt; require suffixed int on parsing</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>23 commits contributed to the release over the course of 366 calendar days.</li>
+<li>366 days passed between releases.</li>
+<li>12 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>7 unique issues were worked on: <a href="https://github.com/rust-phf/rust-phf/issues/377">#377</a>, <a href="https://github.com/rust-phf/rust-phf/issues/389">#389</a>, <a href="https://github.com/rust-phf/rust-phf/issues/392">#392</a>, <a href="https://github.com/rust-phf/rust-phf/issues/403">#403</a>, <a href="https://github.com/rust-phf/rust-phf/issues/415">#415</a>, <a href="https://github.com/rust-phf/rust-phf/issues/419">#419</a>, <a href="https://github.com/rust-phf/rust-phf/issues/420">#420</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/rust-phf/rust-phf/issues/377">#377</a></strong>
+<ul>
+<li>Update rust crate syn to v2.0.115 (<a href="https://github.com/rust-phf/rust-phf/commit/ef36a8ee5df641399eee33a5c767c9c866fc2152"><code>ef36a8e</code></a>)</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/rust-phf/rust-phf/issues/389">#389</a></strong>
+<ul>
+<li>Remove outdated link from docs (<a href="https://github.com/rust-phf/rust-phf/commit/4d6f0ab760773b7867e027a702cfbfc5b98724bd"><code>4d6f0ab</code></a>)</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/rust-phf/rust-phf/issues/392">#392</a></strong>
+<ul>
+<li>Add experimental ptrhash feature (<a href="https://github.com/rust-phf/rust-phf/commit/c628ed45358dc78a3c3df5c2972ebf49fb9409c6"><code>c628ed4</code></a>)</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/rust-phf/rust-phf/issues/403">#403</a></strong>
+<ul>
+<li>Resolve #[cfg] via decl macros instead of generating combinations (<a href="https://github.com/rust-phf/rust-phf/commit/f2405c94a17025be6eed2b9a372189f14b65f625"><code>f2405c9</code></a>)</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/rust-phf/rust-phf/issues/415">#415</a></strong>
+<ul>
+<li>Migrate to 2024 edition (<a href="https://github.com/rust-phf/rust-phf/commit/81257954b089048bd5409ada47cc4562ba346334"><code>8125795</code></a>)</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/rust-phf/rust-phf/issues/419">#419</a></strong>
+<ul>
+<li>Require suffixed int on parsing (<a href="https://github.com/rust-phf/rust-phf/commit/2b64a060d64b4bbdf77519efd117bb4b5ae873d1"><code>2b64a06</code></a>)</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/rust-phf/rust-phf/issues/420">#420</a></strong>
+<ul>
+<li>Implement <code>PhfEq</code> to address tuple lifetime issue (<a href="https://github.com/rust-phf/rust-phf/commit/4ffa9f06e6b3eff6cef6221fab586af6326bdeea"><code>4ffa9f0</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Merge pull request #367 from JohnTitor/msrv-1.68 (<a href="https://github.com/rust-phf/rust-phf/commit/2629d9b47d9ef3d4caeb1c27ff16cd3d1c7bccc6"><code>2629d9b</code></a>)</li>
+<li>Bump MSRV to 1.68 (<a href="https://github.com/rust-phf/rust-phf/commit/93febde3dd3f1ac67b1259967f3899f68deab54e"><code>93febde</code></a>)</li>
+<li>Merge pull request #355 from JohnTitor/deny (<a href="https://github.com/rust-phf/rust-phf/commit/66618434f3c87f7f63eb72496fc31cacda7a164a"><code>6661843</code></a>)</li>
+<li>Setup cargo-deny (<a href="https://github.com/rust-phf/rust-phf/commit/cfbb052e855f697f2d42423408ce9d1e63d1c5b6"><code>cfbb052</code></a>)</li>
+<li>Prepare a release for v0.13.1 (<a href="https://github.com/rust-phf/rust-phf/commit/1e518a6e94a2444b8df7d89078cfc69859537971"><code>1e518a6</code></a>)</li>
+<li>Merge pull request #350 from JohnTitor/release-0.13.0 (<a href="https://github.com/rust-phf/rust-phf/commit/6e87a1678ad11e6c75f7c861bba82ff5e67408b4"><code>6e87a16</code></a>)</li>
+<li>Prepare a release for v0.13.0 (<a href="https://github.com/rust-phf/rust-phf/commit/a8e8d69580e5525fd0c0089f5fd0603b6c85bd09"><code>a8e8d69</code></a>)</li>
+<li>Merge pull request #348 from JohnTitor/support-or-pattern (<a href="https://github.com/rust-phf/rust-phf/commit/175aae49f492d67150711a51005337f85d716259"><code>175aae4</code></a>)</li>
+<li>Support OR pattern key (<a href="https://github.com/rust-phf/rust-phf/commit/4e85433fb2a35fcb1a6ad0067b67911ee5c747b6"><code>4e85433</code></a>)</li>
+<li>Merge pull request #343 from JohnTitor/chore/fix-clippy (<a href="https://github.com/rust-phf/rust-phf/commit/4bcbfbcafd618297790ecf689ab375444ed8629c"><code>4bcbfbc</code></a>)</li>
+<li>Fix clippy warnings (<a href="https://github.com/rust-phf/rust-phf/commit/17bce845aed852ccba597f99e5db853a4a6afa1f"><code>17bce84</code></a>)</li>
+<li>Merge pull request #340 from JohnTitor/chore/rm-criterion (<a href="https://github.com/rust-phf/rust-phf/commit/1e892e8f5be8e1a6345cc4877baf7ef0796c34e1"><code>1e892e8</code></a>)</li>
+<li>Remove criterion from deps (<a href="https://github.com/rust-phf/rust-phf/commit/e4e1556f40a25c1d50e4467dc9312c9b04beecd9"><code>e4e1556</code></a>)</li>
+<li>Update version number (<a href="https://github.com/rust-phf/rust-phf/commit/03a930696231da01005e762425841f91587b3e04"><code>03a9306</code></a>)</li>
+<li>Merge pull request #334 from rust-phf/chore/fix-test (<a href="https://github.com/rust-phf/rust-phf/commit/4ddbefdb118fa5d63ad62824ae4003f1b970ed68"><code>4ddbefd</code></a>)</li>
+<li>Fix version number (<a href="https://github.com/rust-phf/rust-phf/commit/ecd6a86d2bb104624cae5372bd63e7f10d1cc4cf"><code>ecd6a86</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>0.12.0 (2025-06-19)</h4>
+<p>&lt;csr-id-08e74647f00f7d77cbb81e0cb73ed663798d000f/&gt;
+&lt;csr-id-08897bd7603c362280ad4f24feca2c99be5e9a98/&gt;
+&lt;csr-id-51d6baaa6ffce658fb9b56a96affaf0ddd0603e5/&gt;</p>
+<h5>Chore</h5>
+<ul>
+<li>&lt;csr-id-08e74647f00f7d77cbb81e0cb73ed663798d000f/&gt; Update version number in docs</li>
+<li>&lt;csr-id-08897bd7603c362280ad4f24feca2c99be5e9a98/&gt; Turn off serde std feature on no-std</li>
+</ul>
+<h5>Chore</h5>
+<ul>
+<li>&lt;csr-id-51d6baaa6ffce658fb9b56a96affaf0ddd0603e5/&gt; Update changelog</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>11 commits contributed to the release over the course of 138 calendar days.</li>
+<li>163 days passed between releases.</li>
+<li>3 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release phf_shared v0.12.0, phf_generator v0.12.0, phf_macros v0.12.0, phf v0.12.0, phf_codegen v0.12.0, safety bump 4 crates (<a href="https://github.com/rust-phf/rust-phf/commit/e309f286acbfc238d7fec17c7c5f4328557566f8"><code>e309f28</code></a>)</li>
+<li>Update changelog (<a href="https://github.com/rust-phf/rust-phf/commit/51d6baaa6ffce658fb9b56a96affaf0ddd0603e5"><code>51d6baa</code></a>)</li>
+<li>Update version number in docs (<a href="https://github.com/rust-phf/rust-phf/commit/08e74647f00f7d77cbb81e0cb73ed663798d000f"><code>08e7464</code></a>)</li>
+<li>Merge pull request #333 from JohnTitor/chore/serde-no-std (<a href="https://github.com/rust-phf/rust-phf/commit/5c3ad850fd55f8a9fd2ea8bce69fc458029242d6"><code>5c3ad85</code></a>)</li>
+<li>Turn off serde std feature on no-std (<a href="https://github.com/rust-phf/rust-phf/commit/08897bd7603c362280ad4f24feca2c99be5e9a98"><code>08897bd</code></a>)</li>
+<li>Merge pull request #289 from thaliaarchi/master (<a href="https://github.com/rust-phf/rust-phf/commit/a6df856ade4cfbf2666fcabbd70c666ea8234abf"><code>a6df856</code></a>)</li>
+<li>Add support for unicase::Ascii type (<a href="https://github.com/rust-phf/rust-phf/commit/28068018dec5aab9b6ddc0da918431285db8cd34"><code>2806801</code></a>)</li>
+<li>Merge pull request #309 from edef1c/uncased-macro (<a href="https://github.com/rust-phf/rust-phf/commit/37a779400b63b5d0b5d5ab63e2727bbfb9ce494d"><code>37a7794</code></a>)</li>
+<li>Merge branch 'master' into no-wasteful-allocations (<a href="https://github.com/rust-phf/rust-phf/commit/33b8affe77cea8bdeccb5c8d6c730c78231fc138"><code>33b8aff</code></a>)</li>
+<li>Update phf/examples/uncased-example/Cargo.toml (<a href="https://github.com/rust-phf/rust-phf/commit/81938207ee77f787b3186a8d6060a2615fe199c6"><code>8193820</code></a>)</li>
+<li>Merge branch 'master' into fastrand (<a href="https://github.com/rust-phf/rust-phf/commit/576dd47858a2db74eb4ef67a8385039ef17b867d"><code>576dd47</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>0.11.3 (2025-01-07)</h4>
+<p>&lt;csr-id-a96a4e29d63fb1ab3cc10e050571e733f5d2d0d1/&gt;</p>
+<h5>Chore</h5>
+<ul>
+<li>&lt;csr-id-a96a4e29d63fb1ab3cc10e050571e733f5d2d0d1/&gt; bump Cargo.toml version of phf and phf_macros</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>10 commits contributed to the release.</li>
+<li>562 days passed between releases.</li>
+<li>1 commit was understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Adjusting changelogs prior to release of phf_shared v0.11.3, phf_generator v0.11.3, phf_macros v0.11.3, phf v0.11.3, phf_codegen v0.11.3 (<a href="https://github.com/rust-phf/rust-phf/commit/e111f4b53a965c188fdcbf03950321107d9b3987"><code>e111f4b</code></a>)</li>
+<li>Merge pull request #322 from JohnTitor/release-0.11.3 (<a href="https://github.com/rust-phf/rust-phf/commit/dc64dd6bace986a8858590455e08659d9ea4ae4b"><code>dc64dd6</code></a>)</li>
+<li>Reset version num (<a href="https://github.com/rust-phf/rust-phf/commit/13581f8e9eefe8b8b7cb1b1ad04f2d68d97b0ffd"><code>13581f8</code></a>)</li>
+<li>Merge pull request #315 from LunarLambda/master (<a href="https://github.com/rust-phf/rust-phf/commit/695a0df769f3c75150a67ed9bb316579b875289d"><code>695a0df</code></a>)</li>
+<li>Bump Cargo.toml version of phf and phf_macros (<a href="https://github.com/rust-phf/rust-phf/commit/a96a4e29d63fb1ab3cc10e050571e733f5d2d0d1"><code>a96a4e2</code></a>)</li>
+<li>Macro support for uncased (<a href="https://github.com/rust-phf/rust-phf/commit/4359e17371e4b93a45b8600cc56bc27aa95c5bb1"><code>4359e17</code></a>)</li>
+<li>Merge pull request #290 from thaliaarchi/eq-trait (<a href="https://github.com/rust-phf/rust-phf/commit/f89fca430205ddcbd7f41fa7c4f4f2144ae62cdb"><code>f89fca4</code></a>)</li>
+<li>Merge pull request #300 from JohnTitor/msrv-1.61 (<a href="https://github.com/rust-phf/rust-phf/commit/323366d03966ddad2eaa3432df79c9da8339e319"><code>323366d</code></a>)</li>
+<li>Bump MSRV to 1.61 (<a href="https://github.com/rust-phf/rust-phf/commit/1795f7b66b16af0191f221dc957bc8a090c891ad"><code>1795f7b</code></a>)</li>
+<li>Implement PartialEq and Eq for map and set types (<a href="https://github.com/rust-phf/rust-phf/commit/6e5dc322cd3fac4eea960a6f2778989ccf985f95"><code>6e5dc32</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>0.11.2 (2023-06-24)</h4>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>10 commits contributed to the release.</li>
+<li>319 days passed between releases.</li>
+<li>0 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>0 issues like '(#ID)' were seen in commit messages</li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release phf_shared v0.11.2, phf_generator v0.11.2, phf_macros v0.11.2, phf v0.11.2, phf_codegen v0.11.2 (<a href="https://github.com/rust-phf/rust-phf/commit/c9c35fd8ba3f1bc228388b0cef6e3814a02a72c0"><code>c9c35fd</code></a>)</li>
+<li>Update changelogs (<a href="https://github.com/rust-phf/rust-phf/commit/a1e5072b8e84b108f06389a1d41ac868426a03f7"><code>a1e5072</code></a>)</li>
+<li>Merge pull request #288 from JohnTitor/rm-phf-stats (<a href="https://github.com/rust-phf/rust-phf/commit/8fd5b7770d427aea5004d17ff585541d0856d40b"><code>8fd5b77</code></a>)</li>
+<li>Remove mentions to <code>PHF_STATS</code> (<a href="https://github.com/rust-phf/rust-phf/commit/0b7a82689ceab9e0e364c1d1dbe3639d2e99320a"><code>0b7a826</code></a>)</li>
+<li>Merge pull request #280 from jf2048/deref-bytestring (<a href="https://github.com/rust-phf/rust-phf/commit/377634245c8c6f0569a2ed7b75d08366b54c8810"><code>3776342</code></a>)</li>
+<li>Allow using dereferenced bytestring literal keys in phf_map! (<a href="https://github.com/rust-phf/rust-phf/commit/8c0d0572da8c0b5e188e7fda4ab8bd4bcb97f720"><code>8c0d057</code></a>)</li>
+<li>Merge pull request #276 from JohnTitor/playground-metadata (<a href="https://github.com/rust-phf/rust-phf/commit/f8e9d279c528cb6985badc3ca3a60117ef92d51b"><code>f8e9d27</code></a>)</li>
+<li>Add metadata for playground (<a href="https://github.com/rust-phf/rust-phf/commit/7e212e345f41a16409776a59796dd9ab24d6527d"><code>7e212e3</code></a>)</li>
+<li>Merge pull request #274 from ankane/license-files (<a href="https://github.com/rust-phf/rust-phf/commit/21baa73941a0694ec48f437c0c0a6abfcc2f32d2"><code>21baa73</code></a>)</li>
+<li>Include license files in crates (<a href="https://github.com/rust-phf/rust-phf/commit/1229b2faa6b97542ab4850a1723b1723dea92814"><code>1229b2f</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+<h4>0.11.1 (2022-08-08)</h4>
+<p>&lt;csr-id-92e7b433a4f62cc9b070cd1d678a6061d0906ee6/&gt;</p>
+<h5>Chore</h5>
+<ul>
+<li>&lt;csr-id-92e7b433a4f62cc9b070cd1d678a6061d0906ee6/&gt; point to local crates for now</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>&lt;csr-id-6be1599d7a0df27fd1888c78d247f8810cb8f750/&gt; state allowed key expressions in <code>phf_map</code></li>
+</ul>
+<h5>Bug Fixes</h5>
+<ul>
+<li>
+<p>&lt;csr-id-caf1ce71aed110fb44206ce2291154572ebfe9b7/&gt; remove now-unnecessary <code>proc-macro-hack</code> crate usage
+Resolves <a href="https://github.com/rust-phf/rust-phf/issues/255">https://github.com/rust-phf/rust-phf/issues/255</a>.</p>
+<p>This resolves an issue with Windows Defender identifying <code>proc-macro-hack</code> as threats. It also sheds
+a depedency that is no longer necessary, now that the MSRV of this crate is 1.46 and
+<code>proc-macro-hack</code> is only useful for providing support for Rust versions 1.31 through 1.45. Per
+<a href="https://github.com/dtolnay/proc-macro-hack">upstream</a>:</p>
+<blockquote>
+<p><strong>Note:</strong> <em>As of Rust 1.45 this crate is superseded by native support for #[proc_macro] in
+expression position. Only consider using this crate if you care about supporting compilers between
+1.31 and 1.45.</em></p>
+</blockquote>
+</li>
+</ul>
+<h5>Commit Statistics</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<ul>
+<li>310 commits contributed to the release.</li>
+<li>3 commits were understood as <a href="https://www.conventionalcommits.org">conventional</a>.</li>
+<li>1 unique issue was worked on: <a href="https://github.com/rust-phf/rust-phf/issues/249">#249</a></li>
+</ul>
+<h5>Commit Details</h5>
+<p>&lt;csr-read-only-do-not-edit/&gt;</p>
+<p>&lt;details&gt;&lt;summary&gt;view details&lt;/summary&gt;</p>
+<ul>
+<li><strong><a href="https://github.com/rust-phf/rust-phf/issues/249">#249</a></strong>
+<ul>
+<li>Add <code>Map::new()</code> function and <code>Default</code> implementation to create new, empty map (<a href="https://github.com/rust-phf/rust-phf/commit/baac7d065a71a388476b998ba55b1c0aedaa9d86"><code>baac7d0</code></a>)</li>
+</ul>
+</li>
+<li><strong>Uncategorized</strong>
+<ul>
+<li>Release phf_shared v0.11.1, phf_generator v0.11.1, phf_macros v0.11.1, phf v0.11.1, phf_codegen v0.11.1 (<a href="https://github.com/rust-phf/rust-phf/commit/3897b21c6d38e5adcaf9110b4bb33c19f6b41977"><code>3897b21</code></a>)</li>
+<li>Merge pull request #264 from rust-phf/tweak-changelog (<a href="https://github.com/rust-phf/rust-phf/commit/97f997d2be827ca636a29046c78e2c09c5c62650"><code>97f997d</code></a>)</li>
+<li>Replace handmade changelog with generated one by <code>cargo-smart-release</code> (<a href="https://github.com/rust-phf/rust-phf/commit/cb84cf6636ab52823c53e70d6abeac8f648a3482"><code>cb84cf6</code></a>)</li>
+<li>Merge pull request #260 from JohnTitor/fix-repo-link (<a href="https://github.com/rust-phf/rust-phf/commit/1407ebe536b39611db92d765ddec4de0e6c8a16e"><code>1407ebe</code></a>)</li>
+<li>Add category to crates (<a href="https://github.com/rust-phf/rust-phf/commit/32a72c3859997fd6b590e9ec092ae789d2acdf55"><code>32a72c3</code></a>)</li>
+<li>Update repository links on Cargo.toml (<a href="https://github.com/rust-phf/rust-phf/commit/1af3b0fe1f8fdcae7ccc1bc8d51de309fb16a6bf"><code>1af3b0f</code></a>)</li>
+<li>Merge pull request #258 from JohnTitor/release-0.11.0 (<a href="https://github.com/rust-phf/rust-phf/commit/c0b9ef98e798f807f94544aeb0fff429ef280efc"><code>c0b9ef9</code></a>)</li>
+<li>Release 0.11.0 (<a href="https://github.com/rust-phf/rust-phf/commit/d2efdc08a7eb1d0d6c414b7b2ac41ce1fe1f9a43"><code>d2efdc0</code></a>)</li>
+<li>Merge pull request #257 from JohnTitor/edition-2021 (<a href="https://github.com/rust-phf/rust-phf/commit/36ec8854a9da4f295618e98d94aaf7150df2173e"><code>36ec885</code></a>)</li>
+<li>Make crates edition 2021 (<a href="https://github.com/rust-phf/rust-phf/commit/b9d25da58b912d9927fbc41901631cd77836462b"><code>b9d25da</code></a>)</li>
+<li>Merge pull request #256 from NZXTCorp/remove-proc-macro-hack (<a href="https://github.com/rust-phf/rust-phf/commit/a85f070d641317a04b81da053cc4040619652e69"><code>a85f070</code></a>)</li>
+<li>Remove now-unnecessary <code>proc-macro-hack</code> crate usage (<a href="https://github.com/rust-phf/rust-phf/commit/caf1ce71aed110fb44206ce2291154572ebfe9b7"><code>caf1ce7</code></a>)</li>
+<li>Point to local crates for now (<a href="https://github.com/rust-phf/rust-phf/commit/92e7b433a4f62cc9b070cd1d678a6061d0906ee6"><code>92e7b43</code></a>)</li>
+<li>Merge pull request #252 from JohnTitor/clippy-fixes (<a href="https://github.com/rust-phf/rust-phf/commit/22570b89476248d22c9d77f315fd98e048c49700"><code>22570b8</code></a>)</li>
+<li>Fix some Clippy warnings (<a href="https://github.com/rust-phf/rust-phf/commit/71fd47ca27a8b1fe24b2eec75efd17ddfe11835f"><code>71fd47c</code></a>)</li>
+<li>Merge pull request #251 from JohnTitor/weak-deps (<a href="https://github.com/rust-phf/rust-phf/commit/2e1167c2046cd20aed1a906b4e23b40303cf0c00"><code>2e1167c</code></a>)</li>
+<li>Make &quot;unicase + macros&quot; features work (<a href="https://github.com/rust-phf/rust-phf/commit/11bb2426f0237b1ecea8c8038630b1231ede4871"><code>11bb242</code></a>)</li>
+<li>Merge pull request #245 from JohnTitor/phf-0.10.1 (<a href="https://github.com/rust-phf/rust-phf/commit/bed01538ae576876f11189d541875d228acef9e8"><code>bed0153</code></a>)</li>
+<li>Prepare 0.10.1 release (<a href="https://github.com/rust-phf/rust-phf/commit/4cc8344fad640ed71d75f557ce1a3b6eded321c3"><code>4cc8344</code></a>)</li>
+<li>Merge pull request #244 from reitermarkus/serialize-map (<a href="https://github.com/rust-phf/rust-phf/commit/a43e0e19459201bac496030b9a7e30267c0e6dd4"><code>a43e0e1</code></a>)</li>
+<li>Allow serializing <code>Map</code>. (<a href="https://github.com/rust-phf/rust-phf/commit/b6c682e81ea537b967ba055a0e464d24f5ea795c"><code>b6c682e</code></a>)</li>
+<li>Merge pull request #243 from birkenfeld/patch-1 (<a href="https://github.com/rust-phf/rust-phf/commit/815c17cfa80a5087f91d24d56c7dae600a0df4c0"><code>815c17c</code></a>)</li>
+<li>State allowed key expressions in <code>phf_map</code> (<a href="https://github.com/rust-phf/rust-phf/commit/6be1599d7a0df27fd1888c78d247f8810cb8f750"><code>6be1599</code></a>)</li>
+<li>Merge pull request #240 from JohnTitor/docs-update (<a href="https://github.com/rust-phf/rust-phf/commit/da98b9e80fdb22cd6d48a4a42489840afe603756"><code>da98b9e</code></a>)</li>
+<li>Remove some stuff which is now unnecessary (<a href="https://github.com/rust-phf/rust-phf/commit/6941e825d09a98c1ea29a08ecd5fd605611584a4"><code>6941e82</code></a>)</li>
+<li>Refine doc comments (<a href="https://github.com/rust-phf/rust-phf/commit/d8cfc436059a1c2c3ede1afb0f9ec2333c046fc6"><code>d8cfc43</code></a>)</li>
+<li>Merge pull request #234 from JohnTitor/fix-ci (<a href="https://github.com/rust-phf/rust-phf/commit/eba4cc28d92c1db95cc430985a0fbc9ca63d1307"><code>eba4cc2</code></a>)</li>
+<li>Fix CI failure (<a href="https://github.com/rust-phf/rust-phf/commit/d9b5ff23367d2bbcc385ff8243c7d972f45d459c"><code>d9b5ff2</code></a>)</li>
+<li>Merge pull request #230 from JohnTitor/release-0.10 (<a href="https://github.com/rust-phf/rust-phf/commit/3ea14b2166553ad6e7b9afe7244144f5d661b6c6"><code>3ea14b2</code></a>)</li>
+<li>Prepare for release 0.10.0 (<a href="https://github.com/rust-phf/rust-phf/commit/588ac25dd5c0afccea084e6f94867328a6a30454"><code>588ac25</code></a>)</li>
+<li>Merge pull request #228 from JohnTitor/release-0.9.1 (<a href="https://github.com/rust-phf/rust-phf/commit/d527f9d016adafe7d2930e37710291030b432838"><code>d527f9d</code></a>)</li>
+<li>Prepare for v0.9.1 (<a href="https://github.com/rust-phf/rust-phf/commit/9b719789149ef195ef5eba093b7e73255fbef8dc"><code>9b71978</code></a>)</li>
+<li>Merge pull request #226 from bhgomes/iterator-traits (<a href="https://github.com/rust-phf/rust-phf/commit/012be08aa1bc23092539bf617317243e672c75b1"><code>012be08</code></a>)</li>
+<li>Add trait implementations to iterators mirroring std::collections (<a href="https://github.com/rust-phf/rust-phf/commit/e47e4dce434fd8d0ee80a3c57880f6b2465eed90"><code>e47e4dc</code></a>)</li>
+<li>Merge pull request #224 from bhgomes/const-fns (<a href="https://github.com/rust-phf/rust-phf/commit/65deaf745b5175b6b8e645b6c66e53fc55bb3a85"><code>65deaf7</code></a>)</li>
+<li>Remove Slice type and fix some docs (<a href="https://github.com/rust-phf/rust-phf/commit/99d353390f8124a283da9202fd4d163e68bc1949"><code>99d3533</code></a>)</li>
+<li>Add len/is_empty const-fns (<a href="https://github.com/rust-phf/rust-phf/commit/f4749220eec2fccef35a66de323c01704a0eeda1"><code>f474922</code></a>)</li>
+<li>Merge pull request #223 from JohnTitor/minor-cleanup (<a href="https://github.com/rust-phf/rust-phf/commit/c746106ad05917ad62f244504727b07e07c3e075"><code>c746106</code></a>)</li>
+<li>Minor cleanups (<a href="https://github.com/rust-phf/rust-phf/commit/8868d088e2fed36fcd7741e9a1c5bf68bef4f46e"><code>8868d08</code></a>)</li>
+<li>Merge pull request #222 from JohnTitor/precisify-msrv (<a href="https://github.com/rust-phf/rust-phf/commit/50f8a0d3d3f4cc7e15146e29e0559ba057a25a4d"><code>50f8a0d</code></a>)</li>
+<li>Precisify MSRV (<a href="https://github.com/rust-phf/rust-phf/commit/63886f6eb0d53d5bf44a10c713066b090686b8e2"><code>63886f6</code></a>)</li>
+<li>Merge pull request #219 from JohnTitor/release-0.9.0 (<a href="https://github.com/rust-phf/rust-phf/commit/307969ff3bb8cae320e648890a9525920035944b"><code>307969f</code></a>)</li>
+<li>Prepare 0.9.0 release (<a href="https://github.com/rust-phf/rust-phf/commit/2ca46c4f9c9083c128fcc6add33dc5986638940f"><code>2ca46c4</code></a>)</li>
+<li>Cleanup cargo metadata (<a href="https://github.com/rust-phf/rust-phf/commit/a9e4b0a1e84825004fa66e938b870f83d3147d0d"><code>a9e4b0a</code></a>)</li>
+<li>Merge pull request #218 from JohnTitor/cleanup (<a href="https://github.com/rust-phf/rust-phf/commit/76f907239af9b0cca7dac4e6d702cedc72f6f371"><code>76f9072</code></a>)</li>
+<li>Run rustfmt (<a href="https://github.com/rust-phf/rust-phf/commit/dd86c6c103f25021b52144085b8fab0a94582bef"><code>dd86c6c</code></a>)</li>
+<li>Fix some clippy warnings (<a href="https://github.com/rust-phf/rust-phf/commit/9adc370ead7fbcc36cd0c74f495ab7631e0c9754"><code>9adc370</code></a>)</li>
+<li>Cleanup docs (<a href="https://github.com/rust-phf/rust-phf/commit/ddecc3aa97aec6d9e9d6e59c57bc598d476335c1"><code>ddecc3a</code></a>)</li>
+<li>Merge pull request #217 from JohnTitor/rename-feature (<a href="https://github.com/rust-phf/rust-phf/commit/ff77659a001c08f1f069a17cc5d2ff6fdd51569c"><code>ff77659</code></a>)</li>
+<li>Rename <code>unicase_support</code> to <code>unicase</code> (<a href="https://github.com/rust-phf/rust-phf/commit/b47174bb9ebbd68e41316e1aa39c6541a45356a6"><code>b47174b</code></a>)</li>
+<li>Merge pull request #197 from benesch/uncased (<a href="https://github.com/rust-phf/rust-phf/commit/8b44f0c4caf1a431426ff8dbae68f0693d6cef63"><code>8b44f0c</code></a>)</li>
+<li>Add support for uncased (<a href="https://github.com/rust-phf/rust-phf/commit/2a6087fcaf99b445ff6013f693f7c4fe5d6f7387"><code>2a6087f</code></a>)</li>
+<li>Merge pull request #211 from skyfloogle/ordered-phfborrow (<a href="https://github.com/rust-phf/rust-phf/commit/6ec8afb6d85121d2edb023fcf3626308a4b3dad4"><code>6ec8afb</code></a>)</li>
+<li>Replace <code>std::borrow::Borrow</code> with <code>PhfBorrow</code> for ordered maps and sets (<a href="https://github.com/rust-phf/rust-phf/commit/f43a9cf4aa2aefc9e743727697ec65a0ba6cc29e"><code>f43a9cf</code></a>)</li>
+<li>Merge pull request #174 from abonander/169-drop-borrow (<a href="https://github.com/rust-phf/rust-phf/commit/3c087d4782be496e7955d2b51d5883c4ce64ccd3"><code>3c087d4</code></a>)</li>
+<li>Replace uses of <code>std::borrow::Borrow</code> with new <code>PhfBorrow</code> trait (<a href="https://github.com/rust-phf/rust-phf/commit/b2f3a9c6a95ebabc2b0ae7ed1ec3ee7d72418e85"><code>b2f3a9c</code></a>)</li>
+<li>Merge pull request #205 from skyfloogle/ordered-stuff (<a href="https://github.com/rust-phf/rust-phf/commit/9ae1678f2507d6d26a1b780385a2e17bdfbb0b5c"><code>9ae1678</code></a>)</li>
+<li>Add back ordered_map, ordered_set (<a href="https://github.com/rust-phf/rust-phf/commit/0ab01081e4bd8f40bc18ab554c95f217220228d5"><code>0ab0108</code></a>)</li>
+<li>Merge pull request #208 from JohnTitor/simplify-workspace (<a href="https://github.com/rust-phf/rust-phf/commit/a47ac36b16dd8798659be3e24f74051cd1ed760d"><code>a47ac36</code></a>)</li>
+<li>Use <code>[patch.crates-io]</code> section instead of path key (<a href="https://github.com/rust-phf/rust-phf/commit/f47515bce5c433214dbecee262a7a6f14e6a74d4"><code>f47515b</code></a>)</li>
+<li>Merge pull request #194 from pickfire/patch-1 (<a href="https://github.com/rust-phf/rust-phf/commit/caec346b07cf04cc7850e4aeeca077856b79256a"><code>caec346</code></a>)</li>
+<li>Merge pull request #190 from rjsberry/phf-shared-no-default-features (<a href="https://github.com/rust-phf/rust-phf/commit/8dce12c4716cb7eeaedd5c7f5143b9c0450cedc2"><code>8dce12c</code></a>)</li>
+<li>Fix style in doc (<a href="https://github.com/rust-phf/rust-phf/commit/a28590675293af7c8faf866c1d847b7ed6876048"><code>a285906</code></a>)</li>
+<li>Fix building with no_std (<a href="https://github.com/rust-phf/rust-phf/commit/db4ce56082aafeb1aeee7e079d2bb4ae97ae58be"><code>db4ce56</code></a>)</li>
+<li>Merge pull request #180 from abonander/master (<a href="https://github.com/rust-phf/rust-phf/commit/81c7cc5b48649108428671d3b8ad151f6fbdb359"><code>81c7cc5</code></a>)</li>
+<li>Release v0.8.0 (<a href="https://github.com/rust-phf/rust-phf/commit/4060288dc2c1ebe3b0630e4016ed51935bb0c863"><code>4060288</code></a>)</li>
+<li>Merge pull request #171 from abonander/170-removals (<a href="https://github.com/rust-phf/rust-phf/commit/0d0082178568036736bb6d51cb91f95ca5a616c3"><code>0d00821</code></a>)</li>
+<li>Remove ordered_map, ordered_set, phf_builder (<a href="https://github.com/rust-phf/rust-phf/commit/8ae2bb886841a69a4fc482f439e2374f2373ab15"><code>8ae2bb8</code></a>)</li>
+<li>Merge pull request #168 from abonander/167-std-default (<a href="https://github.com/rust-phf/rust-phf/commit/a93209486f5874515da0483002e8669b2dbf95e6"><code>a932094</code></a>)</li>
+<li>Switch optional <code>core</code> feature to default <code>std</code> feature (<a href="https://github.com/rust-phf/rust-phf/commit/645e23dda30ac1b99af39f201a74211e7ac3251a"><code>645e23d</code></a>)</li>
+<li>Merge pull request #164 from abonander/perf-improvements (<a href="https://github.com/rust-phf/rust-phf/commit/70129c6fbcdf428ce9f1014eea935301ac70e410"><code>70129c6</code></a>)</li>
+<li>Use two separate hashes and full 32-bit displacements (<a href="https://github.com/rust-phf/rust-phf/commit/9b70bd94f8b0b74f156e75ccefbd4a4c7ba29728"><code>9b70bd9</code></a>)</li>
+<li>Merge pull request #149 from danielhenrymantilla/proc-macro-hack (<a href="https://github.com/rust-phf/rust-phf/commit/ae649cd67d9ce1452092ee739971d8ee232505ee"><code>ae649cd</code></a>)</li>
+<li>Made macros work in stable (<a href="https://github.com/rust-phf/rust-phf/commit/4fc0d1a8c3bcc3950082b614d8bfa4a0f63d6962"><code>4fc0d1a</code></a>)</li>
+<li>Merge branch 'master' into patch-1 (<a href="https://github.com/rust-phf/rust-phf/commit/cd0d7ce1194252dcaca3153988ba2a4effa66b4f"><code>cd0d7ce</code></a>)</li>
+<li>Merge pull request #152 from abonander/unicase-upgrade (<a href="https://github.com/rust-phf/rust-phf/commit/27f7c2c85efde7aeb3c5409985f2d605aff8e05b"><code>27f7c2c</code></a>)</li>
+<li>Convert to 2018 edition (<a href="https://github.com/rust-phf/rust-phf/commit/9ff66ab36a23c7170cc775773f042a06de426c3b"><code>9ff66ab</code></a>)</li>
+<li>Merge pull request #145 from cetra3/empty_hash (<a href="https://github.com/rust-phf/rust-phf/commit/2d3176b384112db5ca3fea08f1973ffc8a7c729b"><code>2d3176b</code></a>)</li>
+<li>Fix &amp; include tests for empty maps (<a href="https://github.com/rust-phf/rust-phf/commit/83fd51c3095cbcd22b87c4d26ee22eb27a4e98d0"><code>83fd51c</code></a>)</li>
+<li>Release v0.7.24 (<a href="https://github.com/rust-phf/rust-phf/commit/1287414b1302d2d717c5f4be81accf4c12ccad48"><code>1287414</code></a>)</li>
+<li>Docs for new macro setup (<a href="https://github.com/rust-phf/rust-phf/commit/364ed47c9f4401655fe7b897ce3e01e46706c286"><code>364ed47</code></a>)</li>
+<li>Fix feature name (<a href="https://github.com/rust-phf/rust-phf/commit/e3a744255582aba8c743543503c9ad4c980a1ac3"><code>e3a7442</code></a>)</li>
+<li>Reexport macros through phf crate (<a href="https://github.com/rust-phf/rust-phf/commit/588fd1a785492afa5ad76db0556097e32e24387d"><code>588fd1a</code></a>)</li>
+<li>Release v0.7.23 (<a href="https://github.com/rust-phf/rust-phf/commit/a050b6f2a6b825bf0824339266ab9545340420d4"><code>a050b6f</code></a>)</li>
+<li>Release 0.7.22 (<a href="https://github.com/rust-phf/rust-phf/commit/ab884054fa17eef915db2bdb5259c7aa71fbfea6"><code>ab88405</code></a>)</li>
+<li>Release v0.7.21 (<a href="https://github.com/rust-phf/rust-phf/commit/6c7e2d9ce17ff1b87507925bdbe87e6e682ed3e4"><code>6c7e2d9</code></a>)</li>
+<li>Typo (<a href="https://github.com/rust-phf/rust-phf/commit/8d23b15361094b23c4eabacdb12f2dda386cc8e0"><code>8d23b15</code></a>)</li>
+<li>Link to docs.rs (<a href="https://github.com/rust-phf/rust-phf/commit/61142c5aa168cff1bf53a6961ddc12012b49e1bb"><code>61142c5</code></a>)</li>
+<li>Release v0.7.20 (<a href="https://github.com/rust-phf/rust-phf/commit/f631f50abfaf6ea3d6fc8caaada47975b6df3a62"><code>f631f50</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/ea7e2562706663632a0af65ae9fa94e5cf78c4ea"><code>ea7e256</code></a>)</li>
+<li>Merge branch 'release-v0.7.19' into release (<a href="https://github.com/rust-phf/rust-phf/commit/81a4806b05f14fb49aa972de27a42926a542ec44"><code>81a4806</code></a>)</li>
+<li>Release v0.7.19 (<a href="https://github.com/rust-phf/rust-phf/commit/0a98dd1865d12a3fa4cc27bdb38fa1e7374940d9"><code>0a98dd1</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/ecab54b8a028c88938f220dbb0a684e017bab62f"><code>ecab54b</code></a>)</li>
+<li>Merge branch 'release-v0.7.18' into release (<a href="https://github.com/rust-phf/rust-phf/commit/dfa970b229cc32cfb2da1692aa94ad8a266e704a"><code>dfa970b</code></a>)</li>
+<li>Release v0.7.18 (<a href="https://github.com/rust-phf/rust-phf/commit/3f717650f4331f5dbb9d7a3f878228fcf1138729"><code>3f71765</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/5f0856327731107d9fada1b0318f6f15f32957c2"><code>5f08563</code></a>)</li>
+<li>Merge branch 'release-v0.7.17' into release (<a href="https://github.com/rust-phf/rust-phf/commit/e073dd262d1b4c95234222ee5048fc883b9c7301"><code>e073dd2</code></a>)</li>
+<li>Release v0.7.17 (<a href="https://github.com/rust-phf/rust-phf/commit/21ecf72101715e4754db95a64ecd7de5a37b7f14"><code>21ecf72</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/839f06d5a10c1300353b8f3c972990624695b668"><code>839f06d</code></a>)</li>
+<li>Merge branch 'release-v0.7.16' into release (<a href="https://github.com/rust-phf/rust-phf/commit/6f5575c9b12d3619ea17c0825a613fcac12820f4"><code>6f5575c</code></a>)</li>
+<li>Release v0.7.16 (<a href="https://github.com/rust-phf/rust-phf/commit/8bf29c10a878c83d73cc40385f0e96cb9cc95afa"><code>8bf29c1</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/b4ec398f415e5cac2cd4d794b1889788e644447f"><code>b4ec398</code></a>)</li>
+<li>Merge branch 'release-v0.7.15' into release (<a href="https://github.com/rust-phf/rust-phf/commit/6bbc9e249b9a84e2019432b7d3b178851d2d776e"><code>6bbc9e2</code></a>)</li>
+<li>Release v0.7.15 (<a href="https://github.com/rust-phf/rust-phf/commit/20f896e6975cabb9cf9883b08eaa5b3da8597f11"><code>20f896e</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/7c692d42970bf6cb2540f6b2d3c88d63b3fd1f7a"><code>7c692d4</code></a>)</li>
+<li>Merge branch 'release-v0.7.14' into release (<a href="https://github.com/rust-phf/rust-phf/commit/ea8dd652c292746a20bf3a680e9f925f6f0530b1"><code>ea8dd65</code></a>)</li>
+<li>Release v0.7.14 (<a href="https://github.com/rust-phf/rust-phf/commit/fee66fc20e33f2b119f830a8926f3b6e52abcf09"><code>fee66fc</code></a>)</li>
+<li>Merge pull request #82 from Ryman/unicase (<a href="https://github.com/rust-phf/rust-phf/commit/909fac5d4414a7d366432de078bcc6f78a25c230"><code>909fac5</code></a>)</li>
+<li>Add an impl of PhfHash for UniCase (<a href="https://github.com/rust-phf/rust-phf/commit/d761144daf92ce6aed83165aa840a1ae72bd0bb2"><code>d761144</code></a>)</li>
+<li>Drop all rust features (<a href="https://github.com/rust-phf/rust-phf/commit/888f6234cd4e26e08b1f2d3716e4d4e0b95d0196"><code>888f623</code></a>)</li>
+<li>Introduce a Slice abstraction for buffers (<a href="https://github.com/rust-phf/rust-phf/commit/0cc38449c21f29bd9348e28c5719d650e16159cf"><code>0cc3844</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/d9351e1488bd42d1a4453e4a465177fb1c781fdc"><code>d9351e1</code></a>)</li>
+<li>Merge branch 'release-v0.7.13' into release (<a href="https://github.com/rust-phf/rust-phf/commit/b582e4ecec23be992ba915fc7873c0d5598f388a"><code>b582e4e</code></a>)</li>
+<li>Release v0.7.13 (<a href="https://github.com/rust-phf/rust-phf/commit/4769a6d2ce1d392da06e4b3cb833a1cdccb1f1aa"><code>4769a6d</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/5659a9db39bc5ee2179b264fce4cba4384d6d025"><code>5659a9d</code></a>)</li>
+<li>Merge branch 'release-v0.7.12' into release (<a href="https://github.com/rust-phf/rust-phf/commit/2f0a5de9f01d9d22c774d8d85daec2a047a462e8"><code>2f0a5de</code></a>)</li>
+<li>Release v0.7.12 (<a href="https://github.com/rust-phf/rust-phf/commit/9b75ee5ed14060c45a5785fba0387be09e698624"><code>9b75ee5</code></a>)</li>
+<li>Merge pull request #75 from aidanhs/aphs-fix-ord-set-doc (<a href="https://github.com/rust-phf/rust-phf/commit/ae5ee38cad084144775d89fe38d8fdda33224697"><code>ae5ee38</code></a>)</li>
+<li>Fix ordered set <code>index</code> documentation (<a href="https://github.com/rust-phf/rust-phf/commit/44e495f634b1588ab148333cc582557f7877177f"><code>44e495f</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/87ffab863aaeefb5ac2164da62f0407122d8057e"><code>87ffab8</code></a>)</li>
+<li>Merge branch 'release-v0.7.11' into release (<a href="https://github.com/rust-phf/rust-phf/commit/7260d04413349bacab484afb74f9a496335278e1"><code>7260d04</code></a>)</li>
+<li>Release v0.7.11 (<a href="https://github.com/rust-phf/rust-phf/commit/a0042277b181ec95fcbf29751b9a453f4f962ebb"><code>a004227</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/1579bec1448c7b833f5965fe39d4ef2df66c982c"><code>1579bec</code></a>)</li>
+<li>Merge branch 'release-v0.7.10' into release (<a href="https://github.com/rust-phf/rust-phf/commit/25cea133fb4eec938bdfa74f04adbc8d94e30d4e"><code>25cea13</code></a>)</li>
+<li>Release v0.7.10 (<a href="https://github.com/rust-phf/rust-phf/commit/c43154b2661dc09620a7879c16f37b47d6ec03ae"><code>c43154b</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/2c67ce5a4129cd543178bf015f021a3bb83b6895"><code>2c67ce5</code></a>)</li>
+<li>Merge branch 'release-v0.7.9' into release (<a href="https://github.com/rust-phf/rust-phf/commit/87206e1c7b8d4089370dc168402ded0c0700a447"><code>87206e1</code></a>)</li>
+<li>Release v0.7.9 (<a href="https://github.com/rust-phf/rust-phf/commit/b7d29dfe0df288b2da74de195f764eace1c8e443"><code>b7d29df</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/cd339023e90ac1ce6971fa81badea65fb1f2b086"><code>cd33902</code></a>)</li>
+<li>Merge branch 'release-v0.7.8' into release (<a href="https://github.com/rust-phf/rust-phf/commit/8bc23a023908a038d668b6f7d8e94ee416995285"><code>8bc23a0</code></a>)</li>
+<li>Release v0.7.8 (<a href="https://github.com/rust-phf/rust-phf/commit/aad0b9b658fb970e3df60b066961aafca1a17c44"><code>aad0b9b</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/dccff69384729e3d4972174ce62d8f9db9429485"><code>dccff69</code></a>)</li>
+<li>Merge branch 'release-v0.7.7' into release (<a href="https://github.com/rust-phf/rust-phf/commit/2d988b7dfb04d949246adc047f6b195263612246"><code>2d988b7</code></a>)</li>
+<li>Release v0.7.7 (<a href="https://github.com/rust-phf/rust-phf/commit/c9e7a93f4d6f85a72651aba6187e4c956d8c1167"><code>c9e7a93</code></a>)</li>
+<li>Run through rustfmt (<a href="https://github.com/rust-phf/rust-phf/commit/58e222380b7fc9609a055cb5a6110ba04e47d677"><code>58e2223</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/776046c961456dee9e16a6b6574d336c66e259f8"><code>776046c</code></a>)</li>
+<li>Merge branch 'release-v0.7.6' into release (<a href="https://github.com/rust-phf/rust-phf/commit/2ea7d5cab5e9e54952ca618b43ec3583a33a4847"><code>2ea7d5c</code></a>)</li>
+<li>Release v0.7.6 (<a href="https://github.com/rust-phf/rust-phf/commit/5bcd5c95215f5aa29e133cb2912662085a8158f0"><code>5bcd5c9</code></a>)</li>
+<li>Fix core feature build (<a href="https://github.com/rust-phf/rust-phf/commit/751c94b208ded3b4d8ccff495513e4a55cb8fde0"><code>751c94b</code></a>)</li>
+<li>Use libstd debug builders (<a href="https://github.com/rust-phf/rust-phf/commit/fd71c31288d72920a72eb73a69bc7325e7b1ba48"><code>fd71c31</code></a>)</li>
+<li>Simplify no_std logic a bit (<a href="https://github.com/rust-phf/rust-phf/commit/70f2ed93d2e64b822bf2a23fde0ee848e8785bd1"><code>70f2ed9</code></a>)</li>
+<li>Merge pull request #68 from gz/master (<a href="https://github.com/rust-phf/rust-phf/commit/44006f74efca95d4f049bbf25df6321977c39577"><code>44006f7</code></a>)</li>
+<li>Reinstantiate no_std cargo feature flag. (<a href="https://github.com/rust-phf/rust-phf/commit/7c3f757cdc83b4035d81f0d521b4b80b9080155e"><code>7c3f757</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/1f770df1290b586a8d641ecb0bbd105080afc0ea"><code>1f770df</code></a>)</li>
+<li>Merge branch 'release-v0.7.5' into release (<a href="https://github.com/rust-phf/rust-phf/commit/bb65b8cca30ef9d4518e3083558019a972873efa"><code>bb65b8c</code></a>)</li>
+<li>Release v0.7.5 (<a href="https://github.com/rust-phf/rust-phf/commit/fda44f550401c1bd4aad29bb2c07030b86761028"><code>fda44f5</code></a>)</li>
+<li>Merge branch 'release' (<a href="https://github.com/rust-phf/rust-phf/commit/269b5dc41ebf82f423393d5219e8107e9c911a03"><code>269b5dc</code></a>)</li>
+<li>Merge branch 'release-v0.7.4' into release (<a href="https://github.com/rust-phf/rust-phf/commit/7c093e83ffe5192d9cdcd5402b6abb7800ffafb3"><code>7c093e8</code></a>)</li>
+<li>Release v0.7.4 (<a href="https://github.com/rust-phf/rust-phf/commit/c7c0d3c294126157f0275a05b7c3a65c419234a1"><code>c7c0d3c</code></a>)</li>
+<li>Merge pull request #62 from SimonSapin/string-cache (<a href="https://github.com/rust-phf/rust-phf/commit/6f5971869e5864cae653ec3606d17b554c343ef8"><code>6f59718</code></a>)</li>
+<li>Add hash() and get_index() to phf_shared. (<a href="https://github.com/rust-phf/rust-phf/commit/d3b2ea0f0a9bd9cb79da90d8795f1905c3df1f5f"><code>d3b2ea0</code></a>)</li>
+<li>Update PhfHash to mirror std::hash::Hash (<a href="https://github.com/rust-phf/rust-phf/commit/96ef156baae669b233673d6be2b96617ad48551e"><code>96ef156</code></a>)</li>
+<li>Release v0.7.3 (<a href="https://github.com/rust-phf/rust-phf/commit/77ea23917e908b10c4c5c463671a8409292f8661"><code>77ea239</code></a>)</li>
+<li>Merge pull request #59 from alexcrichton/update (<a href="https://github.com/rust-phf/rust-phf/commit/6bd5a939bda52281b0fa9844df1c42f1ce0220be"><code>6bd5a93</code></a>)</li>
+<li>Remove prelude imports (<a href="https://github.com/rust-phf/rust-phf/commit/98183e132a28b46af7bf72edd218549218d00776"><code>98183e1</code></a>)</li>
+<li>Release v0.7.2 (<a href="https://github.com/rust-phf/rust-phf/commit/642b69d0100a4ee7ec6e430ef1351bd1f28f9a4a"><code>642b69d</code></a>)</li>
+<li>Merge pull request #55 from SimonSapin/indexing (<a href="https://github.com/rust-phf/rust-phf/commit/0cc37b2f9e46e3c597373a8dfa669cc62acf5253"><code>0cc37b2</code></a>)</li>
+<li>Add <code>index</code> methods to <code>OrderedMap</code> and <code>OrderedSet</code>. (<a href="https://github.com/rust-phf/rust-phf/commit/d2af00d4e32412d6f6b7597786976c1a0b642956"><code>d2af00d</code></a>)</li>
+<li>Release v0.7.1 (<a href="https://github.com/rust-phf/rust-phf/commit/9cb9de911ad4e16964f0def29780dde1630c3619"><code>9cb9de9</code></a>)</li>
+<li>Release v0.7.0 (<a href="https://github.com/rust-phf/rust-phf/commit/555a690561673597aee068650ac884bbcc2e31cf"><code>555a690</code></a>)</li>
+<li>Stabilize phf (<a href="https://github.com/rust-phf/rust-phf/commit/e2152739cbdd471116d88bb4a9cea4cdfede1e42"><code>e215273</code></a>)</li>
+<li>Drop debug_builders feature (<a href="https://github.com/rust-phf/rust-phf/commit/0b68ea538639ebbdae032c9c3abefe547a60e982"><code>0b68ea5</code></a>)</li>
+<li>Release v0.6.19 (<a href="https://github.com/rust-phf/rust-phf/commit/5810d30ef2162f33cfb4da99c65b7344c7f2913b"><code>5810d30</code></a>)</li>
+<li>Clean up debug impls (<a href="https://github.com/rust-phf/rust-phf/commit/7e32f399e150739c9cea3b9acd958d885d796372"><code>7e32f39</code></a>)</li>
+<li>Merge pull request #53 from kmcallister/rustup (<a href="https://github.com/rust-phf/rust-phf/commit/7f0392ad5ed9bb88a95d931f9c92e66a83aa039a"><code>7f0392a</code></a>)</li>
+<li>Upgrade to rustc 1.0.0-dev (d8be84eb4 2015-03-29) (built 2015-03-29) (<a href="https://github.com/rust-phf/rust-phf/commit/7d74f1ff5eaa6a2963b97cdd7683e449681ff9aa"><code>7d74f1f</code></a>)</li>
+<li>Release v0.6.18 (<a href="https://github.com/rust-phf/rust-phf/commit/36efc721478d097fba1e5458cbdd9f288637abae"><code>36efc72</code></a>)</li>
+<li>Fix for upstream changes (<a href="https://github.com/rust-phf/rust-phf/commit/eabadcf7e8af351ba8f07d86746e35adc8c5812e"><code>eabadcf</code></a>)</li>
+<li>Release v0.6.17 (<a href="https://github.com/rust-phf/rust-phf/commit/271ccc27d885363d4d8c549f75624d08c48e56c5"><code>271ccc2</code></a>)</li>
+<li>Release v0.6.15 (<a href="https://github.com/rust-phf/rust-phf/commit/ede14df1e574674852b09bcafff4ad549ebfd4ae"><code>ede14df</code></a>)</li>
+<li>Release v0.6.14 (<a href="https://github.com/rust-phf/rust-phf/commit/cf64ebb8f769c9f12c9a03d05713dde6b8caf371"><code>cf64ebb</code></a>)</li>
+<li>Release v0.6.13 (<a href="https://github.com/rust-phf/rust-phf/commit/4fdb5331fd9978ca3e180a06fb2e34627f50fb77"><code>4fdb533</code></a>)</li>
+<li>Fix warnings and use debug builders (<a href="https://github.com/rust-phf/rust-phf/commit/4d28684b72333e911e23b898b5780947d49822a5"><code>4d28684</code></a>)</li>
+<li>Release v0.6.12 (<a href="https://github.com/rust-phf/rust-phf/commit/59ca58637206c9806c13cc24cb35cb7d0ce9d23f"><code>59ca586</code></a>)</li>
+<li>Release v0.6.11 (<a href="https://github.com/rust-phf/rust-phf/commit/e1e6d3b40a6babddd0989406f2b4e952443ff52e"><code>e1e6d3b</code></a>)</li>
+<li>Release v0.6.10 (<a href="https://github.com/rust-phf/rust-phf/commit/fc45373b34a461664f532c5108f3d2625172c128"><code>fc45373</code></a>)</li>
+<li>Add documentation for phf_macros (<a href="https://github.com/rust-phf/rust-phf/commit/8eca79711f33d04ad773a023581b6bd0a6f1efdc"><code>8eca797</code></a>)</li>
+<li>Move tests to phf_macros (<a href="https://github.com/rust-phf/rust-phf/commit/40dbc328456003484716021cc317156967f1b2c1"><code>40dbc32</code></a>)</li>
+<li>Remove core feature (<a href="https://github.com/rust-phf/rust-phf/commit/d4c189a2b060df33e7c97d6c1f0f430b68fc23b5"><code>d4c189a</code></a>)</li>
+<li>Release v0.6.9 (<a href="https://github.com/rust-phf/rust-phf/commit/822f4e3fb127dc02d36d802803d71aa5b98bed3c"><code>822f4e3</code></a>)</li>
+<li>Fix for upstream changes (<a href="https://github.com/rust-phf/rust-phf/commit/f01488236a8e944f1b12b4bc441d55c10fc47aa1"><code>f014882</code></a>)</li>
+<li>Release v0.6.8 (<a href="https://github.com/rust-phf/rust-phf/commit/cd637cafb6d37b1901b6c119a7d26f253e9a288e"><code>cd637ca</code></a>)</li>
+<li>Merge pull request #49 from kmcallister/rustup (<a href="https://github.com/rust-phf/rust-phf/commit/ee54b59ff1eb87b10aa2df60b25887fcb0afa765"><code>ee54b59</code></a>)</li>
+<li>Upgrade to rustc 1.0.0-nightly (6c065fc8c 2015-02-17) (built 2015-02-18) (<a href="https://github.com/rust-phf/rust-phf/commit/cbd9a41bdf3771eceeb1d4701e1d598b1321cdad"><code>cbd9a41</code></a>)</li>
+<li>.map(|t| t.clone()) -&gt; .cloned() (<a href="https://github.com/rust-phf/rust-phf/commit/044f6903cca0a3d656e4a738cc02b1d29d80c996"><code>044f690</code></a>)</li>
+<li>Add example to root module docs (<a href="https://github.com/rust-phf/rust-phf/commit/fbbb53094e52efa19ff225d3d3ef2cbc00b4a7af"><code>fbbb530</code></a>)</li>
+<li>Release v0.6.7 (<a href="https://github.com/rust-phf/rust-phf/commit/bfc36c979225f652cdb72f3b1f2a25e77b50ab8c"><code>bfc36c9</code></a>)</li>
+<li>Release v0.6.6 (<a href="https://github.com/rust-phf/rust-phf/commit/b09a174a166c7744c5989bedc6ba68340f6f7fd1"><code>b09a174</code></a>)</li>
+<li>Fix for upstream changse (<a href="https://github.com/rust-phf/rust-phf/commit/9bd870597fb26a109a4f33926a299729c00aea10"><code>9bd8705</code></a>)</li>
+<li>Release v0.6.5 (<a href="https://github.com/rust-phf/rust-phf/commit/271e7848f35b31d6ce9fc9268de173738464bfc8"><code>271e784</code></a>)</li>
+<li>Fix for upstream changes (<a href="https://github.com/rust-phf/rust-phf/commit/3db7cef414e4de28eb6c18938c275a3aafbdafa4"><code>3db7cef</code></a>)</li>
+<li>Fix doc URLs (<a href="https://github.com/rust-phf/rust-phf/commit/e1c53fc3d79d896ec65677ed88eda2140468e124"><code>e1c53fc</code></a>)</li>
+<li>Move docs to this repo and auto build them (<a href="https://github.com/rust-phf/rust-phf/commit/f8ef160480e2d4ce72fa7afb6ebce70e45acbc76"><code>f8ef160</code></a>)</li>
+<li>Release v0.6.4 (<a href="https://github.com/rust-phf/rust-phf/commit/6866c1bf5ad5091bc969f1356884aa86c27458cb"><code>6866c1b</code></a>)</li>
+<li>Release v0.6.3 (<a href="https://github.com/rust-phf/rust-phf/commit/b0c5e3cb69742f81160ea80a3ba1782a0b4e01a2"><code>b0c5e3c</code></a>)</li>
+<li>Release v0.6.2 (<a href="https://github.com/rust-phf/rust-phf/commit/d9ddf45b15ba812b0d3acedffb08e901742e56c4"><code>d9ddf45</code></a>)</li>
+<li>Implement IntoIterator (<a href="https://github.com/rust-phf/rust-phf/commit/2f63ded4b37f91215754545b828ca14a1aad2d32"><code>2f63ded</code></a>)</li>
+<li>Link to libstd by default (<a href="https://github.com/rust-phf/rust-phf/commit/24555b19e6b54656633cc4ceac91864f14c20471"><code>24555b1</code></a>)</li>
+<li>Release v0.6.1 (<a href="https://github.com/rust-phf/rust-phf/commit/ca0e9f6b9c737f3d11bcad2f4624bb5603a8170e"><code>ca0e9f6</code></a>)</li>
+<li>Fix for upstream changes (<a href="https://github.com/rust-phf/rust-phf/commit/69ca376dc8daa094ab16f1fcbadb65f83a75939b"><code>69ca376</code></a>)</li>
+<li>Fix for stability changes (<a href="https://github.com/rust-phf/rust-phf/commit/f7fb510dfe67f11522a2d214bd14d21f910bfd7b"><code>f7fb510</code></a>)</li>
+<li>More sed fixes (<a href="https://github.com/rust-phf/rust-phf/commit/81b54b22f2c87914a737fc4c650f95809ff1383e"><code>81b54b2</code></a>)</li>
+<li>Release v0.6.0 (<a href="https://github.com/rust-phf/rust-phf/commit/09d687053caf4d321f72907528573b3334fae3c2"><code>09d6870</code></a>)</li>
+<li>Rename phf_mac to phf_macros (<a href="https://github.com/rust-phf/rust-phf/commit/c50d1077b1d53fccd703021911a7100b8937bbc7"><code>c50d107</code></a>)</li>
+<li>More fixes for bad sed (<a href="https://github.com/rust-phf/rust-phf/commit/28af2aa411cc418025c8d04fd838db5cda6a792b"><code>28af2aa</code></a>)</li>
+<li>Fix silly sed error (<a href="https://github.com/rust-phf/rust-phf/commit/39e098a7fb333cc046f4506f4c20cbc0d079c12f"><code>39e098a</code></a>)</li>
+<li>Show -&gt; Debug (<a href="https://github.com/rust-phf/rust-phf/commit/384ead41f21d0cb2c46f3b6628e5ba9ee00f79c0"><code>384ead4</code></a>)</li>
+<li>Release v0.5.0 (<a href="https://github.com/rust-phf/rust-phf/commit/8683be260effe5605243ef230bad6154ef4e5e20"><code>8683be2</code></a>)</li>
+<li>Add type to Show implementations (<a href="https://github.com/rust-phf/rust-phf/commit/c5a4f3112e09d84332305bd7daff3a93691c7b3c"><code>c5a4f31</code></a>)</li>
+<li>Merge pull request #41 from alexcrichton/update (<a href="https://github.com/rust-phf/rust-phf/commit/79772f414fb18cedc33bf4ee95a9dcdbf9c0caad"><code>79772f4</code></a>)</li>
+<li>Remove unused features (<a href="https://github.com/rust-phf/rust-phf/commit/88700a2068c0901db8454119e3bcae5953d5b8a2"><code>88700a2</code></a>)</li>
+<li>Remove fmt::String impls for structures (<a href="https://github.com/rust-phf/rust-phf/commit/5135f029157d13bde463740e75140f9c4403edaa"><code>5135f02</code></a>)</li>
+<li>Release v0.4.9 (<a href="https://github.com/rust-phf/rust-phf/commit/28cbe704e0f96495c2527ad93c5e67315c245908"><code>28cbe70</code></a>)</li>
+<li>Fix for upstream changes (<a href="https://github.com/rust-phf/rust-phf/commit/0b22188f5767a0a125d01ed8b176ce19fef95cad"><code>0b22188</code></a>)</li>
+<li>Release v0.4.8 (<a href="https://github.com/rust-phf/rust-phf/commit/bb858f11dd88579d47b0089121f8d551731464ab"><code>bb858f1</code></a>)</li>
+<li>Merge pull request #38 from chris-morgan/master (<a href="https://github.com/rust-phf/rust-phf/commit/668f986705ba3a6385b47b851878250ce954a6dc"><code>668f986</code></a>)</li>
+<li>Release v0.4.7 (<a href="https://github.com/rust-phf/rust-phf/commit/d83f551a874a24b2a4308804e7cbca32a1aa2494"><code>d83f551</code></a>)</li>
+<li>Fix for upstream changes (<a href="https://github.com/rust-phf/rust-phf/commit/c3ae5ac94cfa11404b420d45229c3a0d0d8a4535"><code>c3ae5ac</code></a>)</li>
+<li>Release v0.4.6 (<a href="https://github.com/rust-phf/rust-phf/commit/360bf81ad3aafced75dc64a49e58a867d5239264"><code>360bf81</code></a>)</li>
+<li>Release v0.4.5 (<a href="https://github.com/rust-phf/rust-phf/commit/ab4786c09b55e46658f2a66092caf6a782d056a6"><code>ab4786c</code></a>)</li>
+<li>Fix for upstream changes (<a href="https://github.com/rust-phf/rust-phf/commit/6963a16a7619c3aa4a14ed880334e5712deae20e"><code>6963a16</code></a>)</li>
+<li>Release v0.4.4 (<a href="https://github.com/rust-phf/rust-phf/commit/f678635378555b7d086014b0466aea12a3ae5701"><code>f678635</code></a>)</li>
+<li>Fix for upstream changes (<a href="https://github.com/rust-phf/rust-phf/commit/2b4863fcb5827d5bd89cc278d2a3052b6b3ee20e"><code>2b4863f</code></a>)</li>
+<li>Release v0.4.3 (<a href="https://github.com/rust-phf/rust-phf/commit/4f5902c222a81da009bf7955bc96568c73b46b13"><code>4f5902c</code></a>)</li>
+<li>Fix for weird type inference breakage (<a href="https://github.com/rust-phf/rust-phf/commit/3c36bfbdd6ebfc1e544cbd38473f48e91406d965"><code>3c36bfb</code></a>)</li>
+<li>Release v0.4.2 (<a href="https://github.com/rust-phf/rust-phf/commit/69d92b869fab51a31fda6126003edadd9e832b32"><code>69d92b8</code></a>)</li>
+<li>Merge pull request #37 from alexcrichton/update (<a href="https://github.com/rust-phf/rust-phf/commit/b9f0a43500499fc08170690bdc6624f289e35841"><code>b9f0a43</code></a>)</li>
+<li>Update to rust master (<a href="https://github.com/rust-phf/rust-phf/commit/4a0d48d165d78d1b3e8f791503e220a032d26d24"><code>4a0d48d</code></a>)</li>
+<li>Release v0.4.1 (<a href="https://github.com/rust-phf/rust-phf/commit/0fba8374fd6fb1b10d9d456ae4b1310b00e9d9ca"><code>0fba837</code></a>)</li>
+<li>Release v0.4.0 (<a href="https://github.com/rust-phf/rust-phf/commit/49dbb3636621c0436e771a4e0ebfe7342b676616"><code>49dbb36</code></a>)</li>
+<li>Fix for upstream changes and drop xxhash (<a href="https://github.com/rust-phf/rust-phf/commit/fc2539f7893ef0f833a8c13ec77ba317bd8bf43e"><code>fc2539f</code></a>)</li>
+<li>Release v0.3.0 (<a href="https://github.com/rust-phf/rust-phf/commit/0a80b06ecde77b33cec8c956c67704613fdd313e"><code>0a80b06</code></a>)</li>
+<li>Fix for unboxed closure changes (<a href="https://github.com/rust-phf/rust-phf/commit/d96a1e5c7107eceb5cda147eb2ac3691ec534f68"><code>d96a1e5</code></a>)</li>
+<li>Rename Set and OrderedSet iterators (<a href="https://github.com/rust-phf/rust-phf/commit/9103fc564121d90aa24adf1014ad82bc09119e0f"><code>9103fc5</code></a>)</li>
+<li>Merge pull request #32 from sp3d/master (<a href="https://github.com/rust-phf/rust-phf/commit/fc4829a292663e4e30a23a4ba1de693d154cd611"><code>fc4829a</code></a>)</li>
+<li>Add support for [u8, ..N] keys (<a href="https://github.com/rust-phf/rust-phf/commit/e26947cc264266bcbc85b8cf5c46b2019d654c72"><code>e26947c</code></a>)</li>
+<li>Bump to 0.2 (<a href="https://github.com/rust-phf/rust-phf/commit/4546f51fccbd56ddf1214fe232db8926d9f471de"><code>4546f51</code></a>)</li>
+<li>Remove uneeded feature (<a href="https://github.com/rust-phf/rust-phf/commit/98dde65406865890af53618b7517ca8fcb2da5ad"><code>98dde65</code></a>)</li>
+<li>Alter entries iterator behavior (<a href="https://github.com/rust-phf/rust-phf/commit/14627f5696156b09bcc1150bee0318fa3c5c6c0f"><code>14627f5</code></a>)</li>
+<li>Bump to 0.1.0 (<a href="https://github.com/rust-phf/rust-phf/commit/43d9a50e6240716d68dadd9d037f22b2f7df4b58"><code>43d9a50</code></a>)</li>
+<li>Merge pull request #31 from jamesrhurst/exactsize (<a href="https://github.com/rust-phf/rust-phf/commit/d20c311e0e519c0ace07c0d2085d6d35e64a5ba8"><code>d20c311</code></a>)</li>
+<li>Make publishable on crates.io (<a href="https://github.com/rust-phf/rust-phf/commit/4ad2bb27be35015b3f37ec7025c46df9170b3ef9"><code>4ad2bb2</code></a>)</li>
+<li>ExactSize is now ExactSizeIterator (<a href="https://github.com/rust-phf/rust-phf/commit/6a7cc6eb9ec08b103b6b62fa39bdb3229f3cdbe4"><code>6a7cc6e</code></a>)</li>
+<li>Use repository packages (<a href="https://github.com/rust-phf/rust-phf/commit/6e3a54d1fee637c59e86b06ee5af67ab01039338"><code>6e3a54d</code></a>)</li>
+<li>Add license and descriptions (<a href="https://github.com/rust-phf/rust-phf/commit/ff7dad4cb8ad84d8fe05df2f1f32d959971eaa1c"><code>ff7dad4</code></a>)</li>
+<li>Update to use BorrowFrom (<a href="https://github.com/rust-phf/rust-phf/commit/2f3c6053c2d754974a94aa45a49b8cce10ae88ba"><code>2f3c605</code></a>)</li>
+<li>Merge pull request #28 from cgaebel/master (<a href="https://github.com/rust-phf/rust-phf/commit/cc0d031772c1068781eaf64878ac2cd93499d6cf"><code>cc0d031</code></a>)</li>
+<li>S/kv/entry/ (<a href="https://github.com/rust-phf/rust-phf/commit/bf62eb878981115492fbac99ff4d9f6c99858f72"><code>bf62eb8</code></a>)</li>
+<li>Merge pull request #27 from cgaebel/master (<a href="https://github.com/rust-phf/rust-phf/commit/f6ce09a25c4468b76a48fe4e1070436121084786"><code>f6ce09a</code></a>)</li>
+<li>More code review (<a href="https://github.com/rust-phf/rust-phf/commit/aec5aab3a95bb96bd32b560598851dfc2f322fad"><code>aec5aab</code></a>)</li>
+<li>Code review (<a href="https://github.com/rust-phf/rust-phf/commit/88d54c2b875830bb00170421f3ea7d74eefe3f2b"><code>88d54c2</code></a>)</li>
+<li>Added key+value equivalents for the map getters. (<a href="https://github.com/rust-phf/rust-phf/commit/7ced00017886acfe740ea70ba10b4d4cb9cf780f"><code>7ced000</code></a>)</li>
+<li>Switch from find to get (<a href="https://github.com/rust-phf/rust-phf/commit/88abf6c8b081439c8cb1458289790d0ee8f4d04a"><code>88abf6c</code></a>)</li>
+<li>Fix some deprecation warnings (<a href="https://github.com/rust-phf/rust-phf/commit/af2dd53e131e950f29bb089e48bc9f42f621a9d7"><code>af2dd53</code></a>)</li>
+<li>Update for collections traits removal (<a href="https://github.com/rust-phf/rust-phf/commit/f585e4c88f1cd327e0b409c60deb51cd3f3d6b15"><code>f585e4c</code></a>)</li>
+<li>Remove deprecated reexports (<a href="https://github.com/rust-phf/rust-phf/commit/b697d132b04f282bf489adde6cfe996adf8634fd"><code>b697d13</code></a>)</li>
+<li>Hide deprecated reexports from docs (<a href="https://github.com/rust-phf/rust-phf/commit/d12006775117350d9c47e636aa3d4ba64e3a3454"><code>d120067</code></a>)</li>
+<li>Add deprecated reexports (<a href="https://github.com/rust-phf/rust-phf/commit/5752604bfa3d0aaad43dc4b1c50e986c6ee078e4"><code>5752604</code></a>)</li>
+<li>Fix doc header size (<a href="https://github.com/rust-phf/rust-phf/commit/8f5c0f0b491868a3811b434321f871892eab02c1"><code>8f5c0f0</code></a>)</li>
+<li>Fix docs (<a href="https://github.com/rust-phf/rust-phf/commit/eadea0b2c2cb9e76d0be9a209819c75a41434719"><code>eadea0b</code></a>)</li>
+<li>Convert PhfOrderedSet to new naming conventions (<a href="https://github.com/rust-phf/rust-phf/commit/de193c767502a587d8bf4b81b6c5fb821e4a6b29"><code>de193c7</code></a>)</li>
+<li>Switch over PhfOrderedMap to new naming scheme (<a href="https://github.com/rust-phf/rust-phf/commit/f17bae1c34380b0566207df8e54807f3773109ce"><code>f17bae1</code></a>)</li>
+<li>Convert PhfSet to new naming conventions (<a href="https://github.com/rust-phf/rust-phf/commit/b2416db396bc0e35fd64fd23c367f26b5fe78f5a"><code>b2416db</code></a>)</li>
+<li>Move and rename PhfMap stuff (<a href="https://github.com/rust-phf/rust-phf/commit/7fc934a23e7e25fd12014a123eea8f7707928338"><code>7fc934a</code></a>)</li>
+<li>Update for Equiv DST changes (<a href="https://github.com/rust-phf/rust-phf/commit/719de47be5881b070cdf948668ae3c71dcea51f6"><code>719de47</code></a>)</li>
+<li>Clean up warnings (<a href="https://github.com/rust-phf/rust-phf/commit/b44065b78dd31d2931d5d4427b608ae907e841a9"><code>b44065b</code></a>)</li>
+<li>Fix docs (<a href="https://github.com/rust-phf/rust-phf/commit/83a8116c71bf1cbf28d51d269b4c214e13748509"><code>83a8116</code></a>)</li>
+<li>Drop libstd requirement (<a href="https://github.com/rust-phf/rust-phf/commit/dd3d0f1fedc19bbea2795bb63b9ce623618f4e31"><code>dd3d0f1</code></a>)</li>
+<li>Remove unneeded import (<a href="https://github.com/rust-phf/rust-phf/commit/15cc17901777ef3e8f9a7a95f15f11e5dd29eb57"><code>15cc179</code></a>)</li>
+<li>Update docs location (<a href="https://github.com/rust-phf/rust-phf/commit/49647cdd0c170be43956822cc31968ac96cd31b4"><code>49647cd</code></a>)</li>
+<li>Misc cleanup (<a href="https://github.com/rust-phf/rust-phf/commit/2fe6940182240e39ecd283eef00c5eff1b343a08"><code>2fe6940</code></a>)</li>
+<li>Use XXHash instead of SipHash (<a href="https://github.com/rust-phf/rust-phf/commit/bd10658648539a13553bd9ea8853f490ee424cc8"><code>bd10658</code></a>)</li>
+<li>Use slice operators (<a href="https://github.com/rust-phf/rust-phf/commit/a1b503023f516753fcd95061b1b303d21bb44a91"><code>a1b5030</code></a>)</li>
+<li>Fix warnings in tests (<a href="https://github.com/rust-phf/rust-phf/commit/4bf6f824795de3c587f554119cf8d6f88c438e53"><code>4bf6f82</code></a>)</li>
+<li>Remove old crate_name attributes (<a href="https://github.com/rust-phf/rust-phf/commit/35701e2591d78d76707453376fc32b3a53de08c0"><code>35701e2</code></a>)</li>
+<li>Fix typo (<a href="https://github.com/rust-phf/rust-phf/commit/68458d3255af0f58510c3b502dcff4d83af19ae8"><code>68458d3</code></a>)</li>
+<li>Rephrase order guarantees (<a href="https://github.com/rust-phf/rust-phf/commit/3c2661d8a421d9f9ddccdcbc51a3386480fdf59d"><code>3c2661d</code></a>)</li>
+<li>Update examples (<a href="https://github.com/rust-phf/rust-phf/commit/85a3b28ea9ee24f080ff02d1db390284691714a9"><code>85a3b28</code></a>)</li>
+<li>Minor cleanup (<a href="https://github.com/rust-phf/rust-phf/commit/2f75f5fed1579c1f26c42f8a263977fcec50f749"><code>2f75f5f</code></a>)</li>
+<li>Merge pull request #12 from kmcallister/find-index (<a href="https://github.com/rust-phf/rust-phf/commit/d7ae8800202cd20cf057b865d4023b28fe80c8cc"><code>d7ae880</code></a>)</li>
+<li>Provide find_index{,_equiv} on PhfOrdered{Set,Map} (<a href="https://github.com/rust-phf/rust-phf/commit/b16d4400556f7cae3e7dcca8ba091af5459090de"><code>b16d440</code></a>)</li>
+<li>Update for lifetime changes (<a href="https://github.com/rust-phf/rust-phf/commit/af0a11c92bd531c9677bef31f6a6d8c4b59ad29b"><code>af0a11c</code></a>)</li>
+<li>Add back crate_name for rustdoc (<a href="https://github.com/rust-phf/rust-phf/commit/92ec57aca33e1dfeda7a6cadb0b0fd08ddc23808"><code>92ec57a</code></a>)</li>
+<li>More cleanup (<a href="https://github.com/rust-phf/rust-phf/commit/20dea1d778a9e5226b6ffe2b11ed37a23878863a"><code>20dea1d</code></a>)</li>
+<li>One more where clause (<a href="https://github.com/rust-phf/rust-phf/commit/d6e5d774a5ab6e796da0eb5e0cf062d0f0aebec0"><code>d6e5d77</code></a>)</li>
+<li>Switch to where clause syntax (<a href="https://github.com/rust-phf/rust-phf/commit/13b93899b5679d425fdfff7695003bc52d4c8f0b"><code>13b9389</code></a>)</li>
+<li>Cargo update (<a href="https://github.com/rust-phf/rust-phf/commit/2a650efcdb9f013906cdf097e7a569c38d38487e"><code>2a650ef</code></a>)</li>
+<li>Re-disable in-crate tests (<a href="https://github.com/rust-phf/rust-phf/commit/9c4d247cb824689791e81942fd586e36899b35aa"><code>9c4d247</code></a>)</li>
+<li>Properly support cross compiled builds (<a href="https://github.com/rust-phf/rust-phf/commit/b2220d9a428049fb9c52b51c16d8f6b15cd02487"><code>b2220d9</code></a>)</li>
+<li>Reenable tests for phf crate for docs (<a href="https://github.com/rust-phf/rust-phf/commit/3ab5bd117af17cc8d91816b5911a65376f2a8f7f"><code>3ab5bd1</code></a>)</li>
+<li>Update for pattern changes (<a href="https://github.com/rust-phf/rust-phf/commit/f79814a6abfa3bc5d739825643ea4ecee0a3aa8a"><code>f79814a</code></a>)</li>
+<li>Move test to tests dir (<a href="https://github.com/rust-phf/rust-phf/commit/c9ca9b118f77e0581887c0bde09e78f9f7f00d0f"><code>c9ca9b1</code></a>)</li>
+<li>Add more _equiv methods (<a href="https://github.com/rust-phf/rust-phf/commit/61eea759b53785fd8233a565de0765ce66fb824d"><code>61eea75</code></a>)</li>
+<li>Elide lifetimes (<a href="https://github.com/rust-phf/rust-phf/commit/20a1e838c01017d74ef48cdb40e30eaf32de834a"><code>20a1e83</code></a>)</li>
+<li>Impl Index for PhfMap and PhfOrderedMap (<a href="https://github.com/rust-phf/rust-phf/commit/3995dbc443f33571e15c18c45b38862a515a88c0"><code>3995dbc</code></a>)</li>
+<li>Switch Travis to using cargo (<a href="https://github.com/rust-phf/rust-phf/commit/95f3c9074392b7782d28e6a94e79dfc303066ea2"><code>95f3c90</code></a>)</li>
+<li>Rename module (<a href="https://github.com/rust-phf/rust-phf/commit/25aeba6aeeb9f14ebabf11cd368f22840d40a245"><code>25aeba6</code></a>)</li>
+<li>Rename phf_shared to phf (<a href="https://github.com/rust-phf/rust-phf/commit/6372fa437f01de39cc80120f9d9ed48cee0f0b1f"><code>6372fa4</code></a>)</li>
+<li>Turn off tests for main crates (<a href="https://github.com/rust-phf/rust-phf/commit/6718b60a55939992b7d4c5c00f57a4a81f38e5ac"><code>6718b60</code></a>)</li>
+<li>Pull shared code into a module (<a href="https://github.com/rust-phf/rust-phf/commit/19c4f8d420d3a9ff8e3ace0256198f5db9fccae0"><code>19c4f8d</code></a>)</li>
+<li>Move iterator maps to construction time (<a href="https://github.com/rust-phf/rust-phf/commit/a8bb8156d513d0e15c476baac13a8d153f740958"><code>a8bb815</code></a>)</li>
+<li>Implement more iterator traits for PhfMap iters (<a href="https://github.com/rust-phf/rust-phf/commit/4b4897284da11b59b4122c4b0c10b23064ca380c"><code>4b48972</code></a>)</li>
+<li>Add support for remaining literals (<a href="https://github.com/rust-phf/rust-phf/commit/55ededfc9ccbd3b01690e289adfc4d5e05a4064d"><code>55ededf</code></a>)</li>
+<li>Byte and char key support (<a href="https://github.com/rust-phf/rust-phf/commit/789990ede8def8c333a305437899a953ed6f9a62"><code>789990e</code></a>)</li>
+<li>Support binary literal keys! (<a href="https://github.com/rust-phf/rust-phf/commit/6bfb12bf3b0bffb66e44b8a5326051b58d697543"><code>6bfb12b</code></a>)</li>
+<li>Parameterize the key type of PhfOrdered* (<a href="https://github.com/rust-phf/rust-phf/commit/f6ce641e5676be8d70e961f020d79fc3d6dcfb74"><code>f6ce641</code></a>)</li>
+<li>Parameterize the key type of PhfMap and Set (<a href="https://github.com/rust-phf/rust-phf/commit/cb4ed93175b656f442802c27e039add8e2b86723"><code>cb4ed93</code></a>)</li>
+<li>Update for crate_id removal (<a href="https://github.com/rust-phf/rust-phf/commit/a0ab8d7f517305c77cdb1d51076ff4b3e31923e5"><code>a0ab8d7</code></a>)</li>
+<li>Split to two separate Cargo packages (<a href="https://github.com/rust-phf/rust-phf/commit/4ff35445a4b376009d0f365bd761c2c27c174c4c"><code>4ff3544</code></a>)
+&lt;/details&gt;</li>
+</ul>
+</li>
+</ul>
+</div><p class="table-note">sha256:711b2eeb01bc41f42cfa692f6eabdd5a349d3cabbc6cf825d0a2c7d860f9adf4</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>The MIT License (MIT)
+
+Copyright (c) 2014-2022 Steven Fackler, Yuki Okushi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:581acd320c815407af140e1b7f2bed70bc62fc0b1c24c1764668498637bddf0b</code></dd><dt>Upstream checksum</dt><dd><code>sha256:010378780309880b08997fae13be7834dba947d36393bd372f2b1556deb2a2f6</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/phf&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.14.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">macros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;phf_macros&quot;</span><span class="p">]</span>
+<span class="n">phf_macros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:phf_macros&quot;</span><span class="p">]</span>
+<span class="n">ptrhash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;phf_macros?/ptrhash&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;phf_shared/ptrhash&quot;</span><span class="p">]</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:serde&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;phf_shared/std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serde?/std&quot;</span><span class="p">]</span>
+<span class="n">uncased</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;phf_macros?/uncased&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;phf_shared/uncased&quot;</span><span class="p">]</span>
+<span class="n">unicase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;phf_macros?/unicase&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;phf_shared/unicase&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;phf&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2024&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">phf_macros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/phf_macros&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.14.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">phf_shared</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/phf_shared&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.14.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Steven Fackler &lt;sfackler@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.85</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/phf/0.14.0">crates.io package</a></li><li><a href="https://github.com/rust-phf/rust-phf">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">phf</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/phf"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.14.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

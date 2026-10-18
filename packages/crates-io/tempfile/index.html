@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>tempfile 3.27.0 · Incan.pub</title><meta name="description" content="A library for managing temporary files and directories."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/tempfile</p><div class="title-row"><h1>tempfile</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/tempfile/versions/3.27.0/" selected>3.27.0</option></select></label></div><p class="description">A library for managing temporary files and directories.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>tempfile</h3>
+<p><a href="https://crates.io/crates/tempfile">Crate</a>
+<a href="https://github.com/Stebalien/tempfile/actions/workflows/ci.yml?query=branch%3Amaster">Build Status</a></p>
+<p>A secure, cross-platform, temporary file library for Rust. In addition to creating
+temporary files, this library also allows users to securely open multiple
+independent references to the same temporary file (useful for consumer/producer
+patterns and surprisingly difficult to implement securely).</p>
+<p><a href="https://docs.rs/tempfile/">Documentation</a></p>
+<h4>Usage</h4>
+<p>Minimum required Rust version: 1.63.0</p>
+<p>Add this to your <code>Cargo.toml</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">tempfile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;3&quot;</span>
+</code></pre>
+<h4>Supported Platforms</h4>
+<p>This crate supports all major operating systems:</p>
+<ul>
+<li>Linux</li>
+<li>Android</li>
+<li>MacOS</li>
+<li>Windows</li>
+<li>FreeBSD (likely other BSDs but we don't have CI for them)</li>
+<li>RedoxOS</li>
+<li>Wasm (build and link only, Wasm doesn't have a filesystem)</li>
+<li>WASI P1 &amp; P2.</li>
+</ul>
+<p>However:</p>
+<ul>
+<li>Android, RedoxOS, Wasm, and WASI targets all require the latest stable rust compiler.</li>
+<li>WASI P1/P2 does not define a default temporary directory. You'll need to explicitly call <code>tempfile::env::override_temp_dir</code> with a valid directory or temporary file creation will panic on this platform.</li>
+<li>WASI P1/P2 does not have file permissions.</li>
+<li>You <em>may</em> need to override the temporary directory in Android as well to point at your application's per-app cache directory.</li>
+</ul>
+<h4>Example</h4>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">::</span><span class="n">File</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::{</span><span class="n">Write</span><span class="p">,</span><span class="w"> </span><span class="n">Read</span><span class="p">,</span><span class="w"> </span><span class="n">Seek</span><span class="p">,</span><span class="w"> </span><span class="n">SeekFrom</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Write</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">tmpfile</span><span class="p">:</span><span class="w"> </span><span class="nc">File</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tempfile</span><span class="p">::</span><span class="n">tempfile</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">write!</span><span class="p">(</span><span class="n">tmpfile</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Hello World!&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Seek to start</span>
+<span class="w">    </span><span class="n">tmpfile</span><span class="p">.</span><span class="n">seek</span><span class="p">(</span><span class="n">SeekFrom</span><span class="p">::</span><span class="n">Start</span><span class="p">(</span><span class="mi">0</span><span class="p">)).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Read</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="w">    </span><span class="n">tmpfile</span><span class="p">.</span><span class="n">read_to_string</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="s">&quot;Hello World!&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>getrandom</code></li></ul></td></tr><tr><th scope="row"><code>getrandom</code></th><td>Yes<small>default → getrandom</small></td><td><ul class="effects"><li><code>dep:getrandom</code></li></ul></td></tr><tr><th scope="row"><code>nightly</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/fastrand/"><code>crates-io/fastrand</code></a><small>Alias: fastrand</small></th><td><code>^2.1.1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/getrandom/"><code>crates-io/getrandom</code></a><small>Alias: getrandom</small></th><td><code>&gt;=0.3.0, &lt;0.5</code><small>Default features: disabled</small><small>Requests: </small></td><td>Enabled through default → getrandom · when cfg(any(unix, windows, target_os = &quot;wasi&quot;))</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/once_cell/"><code>crates-io/once_cell</code></a><small>Alias: once_cell</small></th><td><code>^1.19.0</code><small>Default features: disabled</small><small>Requests: std</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/rustix/"><code>crates-io/rustix</code></a><small>Alias: rustix</small></th><td><code>^1.1.4</code><small>Default features: enabled</small><small>Requests: fs</small></td><td>Required · when cfg(any(unix, target_os = &quot;wasi&quot;))</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/windows-sys/"><code>crates-io/windows-sys</code></a><small>Alias: windows-sys</small></th><td><code>&gt;=0.52, &lt;0.62</code><small>Default features: enabled</small><small>Requests: Win32_Foundation, Win32_Storage_FileSystem</small></td><td>Required · when cfg(windows)</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/datafusion/versions/53.1.0/">crates-io/datafusion 53.1.0</a><span>Requires ^3 · alias tempfile · </span></li><li><a href="../../../packages/crates-io/datafusion-datasource/versions/53.1.0/">crates-io/datafusion-datasource 53.1.0</a><span>Requires ^3 · alias tempfile · </span></li><li><a href="../../../packages/crates-io/datafusion-execution/versions/53.1.0/">crates-io/datafusion-execution 53.1.0</a><span>Requires ^3 · alias tempfile · </span></li><li><a href="../../../packages/crates-io/insta/versions/1.49.0/">crates-io/insta 1.49.0</a><span>Requires ^3 · alias tempfile · </span></li><li><a href="../../../packages/crates-io/native-tls/versions/0.2.18/">crates-io/native-tls 0.2.18</a><span>Requires ^3.1.0 · alias tempfile · cfg(target_os = &quot;macos&quot;)</span></li><li><a href="../../../packages/crates-io/proptest/versions/1.11.0/">crates-io/proptest 1.11.0</a><span>Requires ^3.0 · alias tempfile · </span></li><li><a href="../../../packages/crates-io/prost-build/versions/0.14.4/">crates-io/prost-build 0.14.4</a><span>Requires ^3 · alias tempfile · </span></li><li><a href="../../../packages/crates-io/rusty-fork/versions/0.3.1/">crates-io/rusty-fork 0.3.1</a><span>Requires ^3.0 · alias tempfile · </span></li><li><a href="../../../packages/crates-io/tonic-prost-build/versions/0.14.6/">crates-io/tonic-prost-build 0.14.6</a><span>Requires ^3.0 · alias tempfile · </span></li><li><a href="../../../packages/crates-io/uds_windows/versions/1.2.1/">crates-io/uds_windows 1.2.1</a><span>Requires ^3 · alias tempfile · cfg(windows)</span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1a7dabbe0459fbe7e0c0d043cc84c3322a9ec6f34706daa8e29e72fac0add126</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53635976">Attestation reference</a><small>Archive: sha256:f756a4292068b414e732b399a2c5df10f981c6b05187debd17b53f137ac9e14b</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:16e78b46dfda0959c1e5e0d5ed15ba4b75cca44b874c4daa5bed322aacb24698</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636611">Attestation reference</a><small>Archive: sha256:8417e741dce486424f9a8939fef48f5f7484b1d069a1ca7d3a3e6184f7c88f1b</small></li><li><code>sha256:20b970ea81c28b371a7aa971298a598f5d9220ae07f5957911826afd42ffe2f6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636611">Attestation reference</a><small>Archive: sha256:b3df80430a19d3b2ca2fde3c76d65821ffd6eb2049b3b5f296d9e7fc5fc039b9</small></li><li><code>sha256:eb26608429e0a9b2ea1e6c5288132baae1b056894bb533731a40a874d33cb6a7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:f21631eb07d4eecaf823e2ac72f8f8ea885b4f97e2abca5674f282822daee3da</small></li><li><code>sha256:f491071c5880b06a8aff808e85e144d7b2a0d0903cf8f81ac19eddbaca85cf82</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:c25c5cd821c039288a086098de0083fe49a6a5ac4e1e697131a35856c8622206</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e424b688e07f60acb51eca4cc685c1219546220296ff8f7f351d2676ad851932</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:7946fd2c7d4821821a1312e34abea37e27cc0cb514601cf81f4a557c76d4b75f</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2578e8029480cee75dbbc63be43e2b4b80d3cd8bef9d5143b82d94dc39668e45</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:20ab7c1b72a7027e704b88944f093388fac890686859277fd4fca84b63f7bcba</small></li><li><code>sha256:76c7e58a4f27f24061b67e487e65e50b9fe637e0861995b5b7bf04b8b7ffa809</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54025080">Attestation reference</a><small>Archive: sha256:6a6cb16c99a8a7d24dd9365128415d70c0974edbdafd278b91c4f51af906710e</small></li><li><code>sha256:a550c1e94c991f578b8cbfe7c5179b6373ccd333c6f75006571fa2333ed6d63a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:982e4b440cc2c9676e4710c037a0abf2f5de7e85cbf3041ef457561228093d40</small></li><li><code>sha256:cc81b16595e7e51e7eb4f73190993721168b112700a4bf222b8918bd37f1ad98</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:aa4deb7ae9ad67ce4efa39946e7eb974de3f66b30e5b9e42916e9249a3ab5528</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:33d3a80d7cf9aa44bc0c13221f4dd242108441d52b5134aa9f1b5794c40c0f18</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:0e0210c4c62fcf39f474872bd6669e8ca57a2e56c51c8430d88f092d5741c942</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:8411fd8d05a59e8657f2ddfc5526e50d211186516bb50275fe0b3ab9c279c4f5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:8e1f05c5e90dd3f3fc161957d7d9d95c51eb25d136558d4486525938910c82fb</small></li><li><code>sha256:d3e9f88b4890622a81098247744b2446e40f4c9415b04a3c21baf0a3191becb4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674983">Attestation reference</a><small>Archive: sha256:fe3a85b7955a02e3e45ce94608f8279fdf560f6ef688b9e5e31642e29fe2a5e0</small></li><li><code>sha256:d92fa82c389770ce7f912a519dd783d646d952ebf9082035685c946d587824f6</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:069f9faf1ace4dd21acb88f1fdc72abe1881ff91ae03ef5f6df626537d1bcec2</small></li><li><code>sha256:fcc0eafe92e9bd9e3090ca7d8e47a8fe664c908b201896a0110b22c66db68e92</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:aa07eae19f9948bc16a404850e4ca6c9dbe55c9a069072beb33916fd2d4cbc53</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2e6c69fed2c4ea15de7e8713a7da3b99f9fa2dcfb2d288f7999e866504b3fd26</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:cb7d70db3521a44f60fa546e7da0a4f8fe69b5dd5823ee37fe61b04a4447c31e</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, getrandom</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b13e9cb86bc82f792bd98cce2b0a17edd3aca7788fd2d4faeabcd96ebd4ad4d4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:c06cc8895f5a9cad2fdc6b80d5fc226a93fef00382d2b284adcd792f7ab09810</small></li><li><code>sha256:d81f1d4bb79c38b28975e9cb223706f68ea81b2464cb8cc75ce9174b648a46b1</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:70446c6e49d1b6a92fb270ca2f5728ca72c209c92691edc9fc188fa316f331ee</small></li><li><code>sha256:dad0ea7f2ca47068e8cf1b5f163827d04a8fe6de1032e28924fb65c0827c8676</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:fda16442a0ec74a391d0fee747492451b37c97c60bd3b52726ab4e276aab646f</small></li><li><code>sha256:e7e5b5f8506ad938a787ca587ce154693ec59c238e22b49b63005e0407aee048</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080824">Attestation reference</a><small>Archive: sha256:589c71fd33d06f57a55d1659cb7426c41a373abe9acf60a866c19a341e44dd1f</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td>default, getrandom</td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td></td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td>default, getrandom</td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/tempfile/versions/3.27.0/">3.27.0</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/tempfile/3.27.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<h4>3.27.0</h4>
+<p>This release adds <code>TempPath::try_from_path</code> and deprecates <code>TempPath::from_path</code>.</p>
+<p>Prior to this release, <code>TempPath::from_path</code> made no attempts to convert relative paths into absolute paths. The following code would have deleted the wrong file:</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="n">tmp_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TempPath</span><span class="p">::</span><span class="n">from_path</span><span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">)</span>
+<span class="n">std</span><span class="p">::</span><span class="n">env</span><span class="p">::</span><span class="n">set_current_dir</span><span class="p">(</span><span class="s">&quot;/some/other/path&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="nb">drop</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">);</span>
+</code></pre>
+<p>Now:</p>
+<ol>
+<li><code>TempPath::from_path</code> will attempt to convert relative paths into absolute paths. However, this isn't always possible as we need to call <code>std::env::current_dir</code>, which can fail. If we fail to convert the relative path to an absolute path, we simply keep the relative path.</li>
+<li>The <code>TempPath::try_from_path</code> behaves exactly like <code>TempPath::from_path</code>, except that it returns an error if we fail to convert a relative path into an absolute path (or if the passed path is empty).</li>
+</ol>
+<p>Neither function attempt to verify the existence of the file in question.</p>
+<p>Thanks to @meng-xu-cs for reporting this issue.</p>
+<h4>3.26.0</h4>
+<ul>
+<li>Support <code>NamedTempFile::persist</code> on RedoxOS (#393) (thanks to @Andy-Python-Programmer).</li>
+</ul>
+<h4>3.25.0</h4>
+<ul>
+<li>Allow <code>getrandom</code> 0.4.x while retaining support for <code>getrandom</code> 0.3.x.</li>
+</ul>
+<h4>3.24.0</h4>
+<ul>
+<li>Actually support WASIp2 without the nightly feature. This library is now feature complete on WASIp2 without any additional feature flags.</li>
+<li>Exclude CI scripts from the published crate.</li>
+</ul>
+<h4>3.23.0</h4>
+<ul>
+<li>Remove need for the &quot;nightly&quot; feature to compile with &quot;wasip2&quot;.</li>
+</ul>
+<h4>3.22.0</h4>
+<ul>
+<li>Updated <code>windows-sys</code> requirement to allow version 0.61.x</li>
+<li>Remove <code>unstable-windows-keep-open-tempfile</code> feature.</li>
+</ul>
+<h4>3.21.0</h4>
+<ul>
+<li>Updated <code>windows-sys</code> requirement to allow version 0.60.x</li>
+</ul>
+<h4>3.20.0</h4>
+<p>This release mostly unifies the behavior/capabilities around &quot;keeping&quot; temporary files:</p>
+<ul>
+<li>Rename <code>Builder::keep(bool)</code> (via deprecation) to <code>Builder::disable_cleanup(bool)</code> to make it clear that behaves differently from <code>NamedTempFile::keep()</code>. The former disables automatic cleanup while the latter <em>consumes</em> the <code>NamedTempFile</code> object entirely and unsets the &quot;temporary file&quot; attribute (on Windows).</li>
+<li>Rename <code>TempDir::into_path</code> (via deprecation) to <code>TempDir::keep</code> to mirror <code>NamedTempFile::keep</code>.</li>
+<li>Add <code>TempDir::disable_cleanup</code>, <code>NamedTempFile::disable_cleanup</code>, and <code>TempPath::disable_cleanup</code> making it possible to disable automatic cleanup in-place <em>after</em> creating a temporary file/directory (equivalent to calling <code>Builder::disable_cleanup</code> before creating the file/directory).</li>
+</ul>
+<p>Additionally, it adds a few spooled temporary file features:
+git lo</p>
+<ul>
+<li>Add <code>SpooledTempFile::into_file</code> for turning a <code>SpooledTempFile</code> into a regular unnamed temporary file, writing it to the backing storage (&quot;rolling&quot; it) if it was still stored in-memory.</li>
+<li>Add <code>spooled_tempfile_in</code> and <code>SpooledTempFile::new_in</code> methods for creating spooled temporary files in a specific directory. This makes it possible to choose the backing device for your spooled temporary file which is rather important on Linux where the default temporary directory is likely backed by memory (defeating the entire point of having a spooled temporary file).</li>
+</ul>
+<p>Finally, this release improves documentation, especially the top-level documentation explaining which temporary file type to use.</p>
+<p><strong>BREAKING</strong> for those with <code>deny(warnings)</code>:</p>
+<ul>
+<li><code>Builder::keep</code> deprecated in favor of <code>Builder::disable_cleanup</code>.</li>
+<li><code>TempDir::into_path</code> is deprecated in favor of <code>TempDir::keep</code>.</li>
+</ul>
+<h4>3.19.1</h4>
+<ul>
+<li>Don't unlink temporary files immediately on Windows (fixes #339). Unfortunately, this seemed to corrupt the file object (possibly a Windows kernel bug) in rare cases and isn't strictly speaking necessary.</li>
+</ul>
+<h4>3.19.0</h4>
+<ul>
+<li>Remove direct dependency on <code>cfg-if</code>. It's still in the tree, but we didn't really need to use it in this crate.</li>
+<li>Add an unstable feature (<code>unstable-windows-keep-open-tempfile</code>) to test a potential fix to #339.</li>
+</ul>
+<h4>3.18.0</h4>
+<ul>
+<li>Update <code>rustix</code> to 1.0.0.</li>
+<li>Make <code>NamedTempFile::persist_noclobber</code> atomic on Apple operating systems. It's now atomic on MacOS, Windows, and Linux (depending on the OS version and filesystem used).</li>
+</ul>
+<h4>3.17.1</h4>
+<ul>
+<li>Fix build with <code>windows-sys</code> 0.52. Unfortunately, we have no CI for older <code>windows-sys</code> versions at the moment...</li>
+</ul>
+<h4>3.17.0</h4>
+<ul>
+<li>Make sure to use absolute paths in when creating unnamed temporary files (avoids a small race in the &quot;immediate unlink&quot; logic) and in <code>Builder::make_in</code> (when creating temporary files of arbitrary types).</li>
+<li>Prevent a theoretical crash that could (maybe) happen when a temporary file is created from a drop function run in a TLS destructor. Nobody has actually reported a case of this happening in practice and I have been unable to create this scenario in a test.</li>
+<li>When reseeding with <code>getrandom</code>, use platform (e.g., CPU) specific randomness sources where possible.</li>
+<li>Clarify some documentation.</li>
+<li>Unlink unnamed temporary files on windows <em>immediately</em> when possible instead of waiting for the handle to be closed. We open files with &quot;Unix&quot; semantics, so this is generally possible.</li>
+</ul>
+<h4>3.16.0</h4>
+<ul>
+<li>Update <code>getrandom</code> to <code>0.3.0</code> (thanks to @paolobarbolini).</li>
+<li>Allow <code>windows-sys</code> versions <code>0.59.x</code> in addition to <code>0.59.0</code> (thanks @ErichDonGubler).</li>
+<li>Improved security documentation (thanks to @n0toose for collaborating with me on this).</li>
+</ul>
+<h4>3.15.0</h4>
+<p>Re-seed the per-thread RNG from system randomness when we repeatedly fail to create temporary files (#314). This resolves a potential DoS vector (#178) while avoiding <code>getrandom</code> in the common case where it's necessary. The feature is optional but enabled by default via the <code>getrandom</code> feature.</p>
+<p>For libc-free builds, you'll either need to disable this feature or opt-in to a different <a href="https://github.com/rust-random/getrandom?tab=readme-ov-file#opt-in-backends"><code>getrandom</code> backend</a>.</p>
+<h4>3.14.0</h4>
+<ul>
+<li>Make the wasip2 target work (requires tempfile's &quot;nightly&quot; feature to be enabled). <a href="https://github.com/Stebalien/tempfile/pull/305">#305</a>.</li>
+<li>Allow older windows-sys versions <a href="https://github.com/Stebalien/tempfile/pull/304">#304</a>.</li>
+</ul>
+<h4>3.13.0</h4>
+<ul>
+<li>Add <code>with_suffix</code> constructors for easily creating new temporary files with a specific suffix (e.g., a specific file extension). Thanks to @Borgerr.</li>
+<li>Update dependencies (fastrand &amp; rustix).</li>
+</ul>
+<h4>3.12.0</h4>
+<ul>
+<li>Add a <code>keep(keep: bool)</code> function to builder that suppresses delete-on-drop behavior (thanks to @RalfJung).</li>
+<li>Update <code>windows-sys</code> from 0.52 to 0.59.</li>
+</ul>
+<h4>3.11.0</h4>
+<ul>
+<li>Add the ability to override the default temporary directory. This API shouldn't be used in general, but there are some cases where it's unavoidable.</li>
+</ul>
+<h4>3.10.1</h4>
+<ul>
+<li>Handle potential integer overflows in 32-bit systems when seeking/truncating &quot;spooled&quot; temporary files past 4GiB (2³²).</li>
+<li>Handle a theoretical 32-bit overflow when generating a temporary file name larger than 4GiB. Now it'll panic (on allocation failure) rather than silently succeeding due to wraparound.</li>
+</ul>
+<p>Thanks to @stoeckmann for finding and fixing both of these issues.</p>
+<h4>3.10.0</h4>
+<ul>
+<li>Drop <code>redox_syscall</code> dependency, we now use <code>rustix</code> for Redox.</li>
+<li>Add <code>Builder::permissions</code> for setting the permissions on temporary files and directories (thanks to @Byron).</li>
+<li>Update rustix to 0.38.31.</li>
+<li>Update fastrand to 2.0.1.</li>
+</ul>
+<h4>3.9.0</h4>
+<ul>
+<li>Updates windows-sys to 0.52</li>
+<li>Updates minimum rustix version to 0.38.25</li>
+</ul>
+<h4>3.8.1</h4>
+<ul>
+<li>Update rustix to fix a potential panic on <code>persist_noclobber</code> on android.</li>
+<li>Update redox_syscall to 0.4 (on redox).</li>
+<li>Fix some docs typos.</li>
+</ul>
+<h4>3.8.0</h4>
+<ul>
+<li>Added <code>with_prefix</code> and <code>with_prefix_in</code> to <code>TempDir</code> and <code>NamedTempFile</code> to make it easier to create temporary files/directories with nice prefixes.</li>
+<li>Misc cleanups.</li>
+</ul>
+<h4>3.7.1</h4>
+<ul>
+<li>Tempfile builds on haiku again.</li>
+<li>Under the hood, we've switched from the unlinkat/linkat syscalls to the regular unlink/link syscalls where possible.</li>
+</ul>
+<h4>3.7.0</h4>
+<p>BREAKING: This release updates the MSRV to 1.63. This isn't an API-breaking change (so no major
+release) but it's still a breaking change for some users.</p>
+<ul>
+<li>Update fastrand from 1.6 to 2.0</li>
+<li>Update rustix to 0.38</li>
+<li>Updates the MSRV to 1.63.</li>
+<li>Provide AsFd/AsRawFd on wasi.</li>
+</ul>
+<h4>3.6.0</h4>
+<ul>
+<li>Update windows-sys to 0.48.</li>
+<li>Update rustix min version to 0.37.11</li>
+<li>Forward some <code>NamedTempFile</code> and <code>SpooledTempFile</code> methods to the underlying <code>File</code> object for
+better performance (especially vectorized writes, etc.).</li>
+<li>Implement <code>AsFd</code> and <code>AsHandle</code>.</li>
+<li>Misc documentation fixes and code cleanups.</li>
+</ul>
+<h4>3.5.0</h4>
+<ul>
+<li>Update rustix from 0.36 to 0.37.1. This makes wasi work on rust stable</li>
+<li>Update <code>windows-sys</code>, <code>redox_syscall</code></li>
+<li>BREAKING: Remove the implementation of <code>Write for &amp;NamedTempFile&lt;F&gt; where &amp;F: Write</code>. Unfortunately, this can cause compile issues in unrelated code (https://github.com/Stebalien/tempfile/issues/224).</li>
+</ul>
+<h4>3.4.0</h4>
+<p>SECURITY: Prior <code>tempfile</code> releases depended on <code>remove_dir_all</code> version 0.5.0 which was vulnerable to a <a href="https://github.com/XAMPPRocky/remove_dir_all/security/advisories/GHSA-mc8h-8q98-g5hr">TOCTOU race</a>. This same race is present in rust versions prior to 1.58.1.</p>
+<p>Features:</p>
+<ul>
+<li>Generalized temporary files: <code>NamedTempFile</code> can now abstract over different kinds of files (e.g.,
+unix domain sockets, pipes, etc.):
+<ul>
+<li>Add <code>Builder::make</code> and <code>Builder::make_in</code> for generalized temp file
+creation.</li>
+<li>Add <code>NamedTempFile::from_parts</code> to complement <code>NamedTempFile::into_parts</code>.</li>
+<li>Add generic parameter to <code>NamedTempFile</code> to support wrapping non-File types.</li>
+</ul>
+</li>
+</ul>
+<p>Bug Fixes/Improvements:</p>
+<ul>
+<li>Don't try to create a temporary file multiple times if the file path has been fully specified by
+the user (no random characters).</li>
+<li><code>NamedTempFile::persist_noclobber</code> is now always atomic on linux when <code>renameat_with</code> is
+supported. Previously, it would first link the new path, then unlink the previous path.</li>
+<li>Fix compiler warnings on windows.</li>
+</ul>
+<p>Trivia:</p>
+<ul>
+<li>Switch from <code>libc</code> to <code>rustix</code> on wasi/unix. This now makes direct syscalls instead of calling
+through libc.</li>
+<li>Remove <code>remove_dir_all</code> dependency. The rust standard library has optimized their internal version
+significantly.</li>
+<li>Switch to official windows-sys windows bindings.</li>
+</ul>
+<p>Breaking:</p>
+<ul>
+<li>The minimum rust version is now <code>1.48.0</code>.</li>
+<li>Mark most functions as <code>must_use</code>.</li>
+<li>Uses direct syscalls on linux by default, instead of libc.</li>
+<li>The new type parameter in <code>NamedTempFile</code> may lead to type inference issues in some cases.</li>
+</ul>
+<h4>3.3.0</h4>
+<p>Features:</p>
+<ul>
+<li>Replace rand with fastrand for a significantly smaller dependency tree. Cryptographic randomness
+isn't necessary for temporary file names, and isn't all that helpful either.</li>
+<li>Add limited WASI support.</li>
+<li>Add a function to extract the inner data from a <code>SpooledTempFile</code>.</li>
+</ul>
+<p>Bug Fixes:</p>
+<ul>
+<li>Make it possible to persist unnamed temporary files on linux by removing the <code>O_EXCL</code> flag.</li>
+<li>Fix redox minimum crate version.</li>
+</ul>
+<h4>3.2.0</h4>
+<p>Features:</p>
+<ul>
+<li>Bump rand dependency to <code>0.8</code>.</li>
+<li>Bump cfg-if dependency to <code>1.0</code></li>
+</ul>
+<p>Other than that, this release mostly includes small cleanups and simplifications.</p>
+<p>Breaking: The minimum rust version is now <code>1.40.0</code>.</p>
+<h4>3.1.0</h4>
+<p>Features:</p>
+<ul>
+<li>Bump rand dependency to <code>0.7</code>.</li>
+</ul>
+<p>Breaking: The minimum rust version is now <code>1.32.0</code>.</p>
+<h4>3.0.9</h4>
+<p>Documentation:</p>
+<ul>
+<li>Add an example for reopening a named temporary file.</li>
+<li>Flesh out the security documentation.</li>
+</ul>
+<p>Features:</p>
+<ul>
+<li>Introduce an <code>append</code> option to the builder.</li>
+<li>Errors:
+<ul>
+<li>No longer implement the soft-deprecated <code>description</code>.</li>
+<li>Implement <code>source</code> instead of <code>cause</code>.</li>
+</ul>
+</li>
+</ul>
+<p>Breaking: The minimum rust version is now 1.30.</p>
+<h4>3.0.8</h4>
+<p>This is a bugfix release.</p>
+<p>Fixes:</p>
+<ul>
+<li>Export <code>PathPersistError</code>.</li>
+<li>Fix a bug where flushing a <code>SpooledTempFile</code> to disk could fail to write part
+of the file in some rare, yet-to-reproduced cases.</li>
+</ul>
+<h4>3.0.7</h4>
+<p>Breaking:</p>
+<ul>
+<li><code>Builder::prefix</code> and <code>Builder::suffix</code> now accept a generic <code>&amp;AsRef&lt;OsStr&gt;</code>.
+This could affect type inference.</li>
+<li>Temporary files (except unnamed temporary files on Windows and Linux &gt;= 3.11)
+now use absolute path names. This will break programs that create temporary
+files relative to their current working directory when they don't have the
+search permission (x) on some ancestor directory. This is only likely to
+affect programs with strange chroot-less filesystem sandboxes. If you believe
+you're affected by this issue, please comment on #40.</li>
+</ul>
+<p>Features:</p>
+<ul>
+<li>Accept anything implementing <code>&amp;AsRef&lt;OsStr&gt;</code> in the builder: &amp;OsStr, &amp;OsString, &amp;Path, etc.</li>
+</ul>
+<p>Fixes:</p>
+<ul>
+<li>Fix LFS support.</li>
+<li>Use absolute paths for named temporary files to guard against changes in the
+current directory.</li>
+<li>Use absolute paths when creating unnamed temporary files on platforms that
+can't create unlinked or auto-deleted temporary files. This fixes a very
+unlikely race where the current directory could change while the temporary
+file is being created.</li>
+</ul>
+<p>Misc:</p>
+<ul>
+<li>Use modern stdlib features to avoid custom unsafe code. This reduces the
+number of unsafe blocks from 12 to 4.</li>
+</ul>
+<h4>3.0.6</h4>
+<ul>
+<li>Don't hide temporary files on windows, fixing #66 and #69.</li>
+</ul>
+<h4>3.0.5</h4>
+<p>Features:</p>
+<ul>
+<li>Added a spooled temporary file implementation. This temporary file variant
+starts out as an in-memory temporary file but &quot;rolls-over&quot; onto disk when it
+grows over a specified size (#68).</li>
+<li>Errors are now annotated with paths to make debugging easier (#73).</li>
+</ul>
+<p>Misc:</p>
+<ul>
+<li>The rand version has been bumped to 0.6 (#74).</li>
+</ul>
+<p>Bugs:</p>
+<ul>
+<li>Tempfile compiles again on Redox (#75).</li>
+</ul>
+<h4>3.0.4</h4>
+<ul>
+<li>Now compiles on unsupported platforms.</li>
+</ul>
+<h4>3.0.3</h4>
+<ul>
+<li>update rand to 0.5</li>
+</ul>
+<h4>3.0.2</h4>
+<ul>
+<li>Actually <em>delete</em> temporary files on non-Linux unix systems (thanks to
+@oliverhenshaw for the fix and a test case).</li>
+</ul>
+<h4>3.0.1</h4>
+<ul>
+<li>Restore NamedTempFile::new_in</li>
+</ul>
+<h4>3.0.0</h4>
+<ul>
+<li>Adds temporary directory support (@KodrAus)</li>
+<li>Allow closing named temporary files without deleting them (@jasonwhite)</li>
+</ul>
+<h4>2.2.0</h4>
+<ul>
+<li>Redox Support</li>
+</ul>
+<h4>2.1.6</h4>
+<ul>
+<li>Remove build script and bump minimum rustc version to 1.9.0</li>
+</ul>
+<h4>2.1.5</h4>
+<ul>
+<li>Don't build platform-specific dependencies on all platforms.</li>
+<li>Cleanup some documentation.</li>
+</ul>
+<h4>2.1.4</h4>
+<ul>
+<li>Fix crates.io tags. No interesting changes.</li>
+</ul>
+<h4>2.1.3</h4>
+<p>Export <code>PersistError</code>.</p>
+<h4>2.1.2</h4>
+<p>Add <code>Read</code>/<code>Write</code>/<code>Seek</code> impls on <code>&amp;NamedTempFile</code>. This mirrors the
+implementations on <code>&amp;File</code>. One can currently just deref to a <code>&amp;File</code> but these
+implementations are more discoverable.</p>
+<h4>2.1.1</h4>
+<p>Add LFS Support.</p>
+<h4>2.1.0</h4>
+<ul>
+<li>Implement <code>AsRef&lt;File&gt;</code> for <code>NamedTempFile</code> allowing named temporary files to
+be borrowed as <code>File</code>s.</li>
+<li>Add a method to convert a <code>NamedTempFile</code> to an unnamed temporary <code>File</code>.</li>
+</ul>
+<h4>2.0.1</h4>
+<ul>
+<li>Arm bugfix</li>
+</ul>
+<h4>2.0.0</h4>
+<p>This release replaces <code>TempFile</code> with a <code>tempfile()</code> function that returns
+<code>std::fs::File</code> objects. These are significantly more useful because most rust
+libraries expect normal <code>File</code> objects.</p>
+<p>To continue supporting shared temporary files, this new version adds a
+<code>reopen()</code> method to <code>NamedTempFile</code>.</p>
+</div><p class="table-note">sha256:13b8730892c92c98a1ba1730f11d4c33b2a99d787c627ae630f7f756df2cd09e</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2015 Steven Allen
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:8b427f5bc501764575e52ba4f9d95673cf8f6d80a86d0d06599852e1a9a20a36</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:ae789eaa0e36412c14e7e3281290f89943435182d264841a5bb1cf41dc6cbb6c</code></dd><dt>Upstream checksum</dt><dd><code>sha256:32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at efce0ce</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/tempfile&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;3.27.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;getrandom&quot;</span><span class="p">]</span>
+<span class="n">getrandom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:getrandom&quot;</span><span class="p">]</span>
+<span class="n">nightly</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tempfile&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">fastrand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/fastrand&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.1.1&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">getrandom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/getrandom&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.3.0, &lt;0.5&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(unix, windows, target_os = </span><span class="se">\&quot;</span><span class="s2">wasi</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">once_cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/once_cell&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.19.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="n">rustix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustix&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.1.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fs&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(any(unix, target_os = </span><span class="se">\&quot;</span><span class="s2">wasi</span><span class="se">\&quot;</span><span class="s2">))&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">windows-sys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/windows-sys&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;&gt;=0.52, &lt;0.62&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Win32_Foundation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Win32_Storage_FileSystem&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(windows)&quot;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:9ebe09693379e402e89284142b16dc935412d6addfd66c604969e8f15a42d5e0&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;getrandom&quot;</span><span class="p">]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:0c8061b2662bc8ca14686e8ca0bdae3a8ac591e732140705967e33167a5b2d9d&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Steven Allen &lt;steven@stebalien.com&gt;, The Rust Project Developers, Ashley Mannix &lt;ashleymannix@live.com.au&gt;, Jason White &lt;me@jasonwhite.io&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.63</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/tempfile/3.27.0">crates.io package</a></li><li><a href="https://github.com/Stebalien/tempfile">Source repository</a></li><li><a href="https://docs.rs/tempfile">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">tempfile</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/tempfile"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=3.27.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

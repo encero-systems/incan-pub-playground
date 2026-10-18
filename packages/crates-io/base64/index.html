@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>base64 0.23.1 · Incan.pub</title><meta name="description" content="encodes and decodes base64 as bytes or utf8"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/base64</p><div class="title-row"><h1>base64</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/base64/versions/0.23.1/" selected>0.23.1</option><option value="../../../packages/crates-io/base64/versions/0.22.1/">0.22.1</option><option value="../../../packages/crates-io/base64/versions/0.21.7/">0.21.7</option><option value="../../../packages/crates-io/base64/versions/0.13.1/">0.13.1</option></select></label></div><p class="description">encodes and decodes base64 as bytes or utf8</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3><a href="https://crates.io/crates/base64">base64</a></h3>
+<p><a href="https://crates.io/crates/base64"></a> <a href="https://docs.rs/base64">Docs</a> <a href="https://circleci.com/gh/marshallpierce/rust-base64/tree/master">CircleCI</a> <a href="https://codecov.io/gh/marshallpierce/rust-base64">codecov</a></p>
+<p>&lt;a href=&quot;https://www.jetbrains.com/?from=rust-base64&quot;&gt;&lt;img src=&quot;/icon_CLion.svg&quot; height=&quot;40px&quot;/&gt;&lt;/a&gt;</p>
+<p>Made with CLion. Thanks to JetBrains for supporting open source!</p>
+<p>It's base64. What more could anyone want?</p>
+<p>This library's goals are to be <em>correct</em> and <em>fast</em>. It's thoroughly tested and widely used. It exposes functionality at
+multiple levels of abstraction so you can choose the level of convenience vs performance that you want,
+e.g. <code>decode_engine_slice</code> decodes into an existing <code>&amp;mut [u8]</code> and is pretty fast (2.6GiB/s for a 3 KiB input),
+whereas <code>decode_engine</code> allocates a new <code>Vec&lt;u8&gt;</code> and returns it, which might be more convenient in some cases, but is
+slower (although still fast enough for almost any purpose) at 2.1 GiB/s.</p>
+<p>See the <a href="https://docs.rs/base64">docs</a> for all the details.</p>
+<h4>FAQ</h4>
+<h5>I need to decode base64 with whitespace/null bytes/other random things interspersed in it. What should I do?</h5>
+<p>Remove non-base64 characters from your input before decoding.</p>
+<p>If you have a <code>Vec</code> of base64, <a href="https://doc.rust-lang.org/std/vec/struct.Vec.html#method.retain">retain</a> can be used to
+strip out whatever you need removed.</p>
+<p>If you have a <code>Read</code> (e.g. reading a file or network socket), there are various approaches.</p>
+<ul>
+<li>Use <a href="https://crates.io/crates/iter-read">iter_read</a> together with <code>Read</code>'s <code>bytes()</code> to filter out unwanted bytes.</li>
+<li>Implement <code>Read</code> with a <code>read()</code> impl that delegates to your actual <code>Read</code>, and then drops any bytes you don't want.</li>
+</ul>
+<h5>I need to line-wrap base64, e.g. for MIME/PEM.</h5>
+<p><a href="https://crates.io/crates/line-wrap">line-wrap</a> does just that.</p>
+<h5>I want canonical base64 encoding/decoding.</h5>
+<p>First, don't do this. You should no more expect Base64 to be canonical than you should expect compression algorithms to
+produce canonical output across all usage in the wild (hint: they don't).
+However, <a href="https://eprint.iacr.org/2022/361">people are drawn to their own destruction like moths to a flame</a>, so here we
+are.</p>
+<p>There are two opportunities for non-canonical encoding (and thus, detection of the same during decoding): the final bits
+of the last encoded token in two or three token suffixes, and the <code>=</code> token used to inflate the suffix to a full four
+tokens.</p>
+<p>The trailing bits issue is unavoidable: with 6 bits available in each encoded token, 1 input byte takes 2 tokens,
+with the second one having some bits unused. Same for two input bytes: 16 bits, but 3 tokens have 18 bits. Unless we
+decide to stop shipping whole bytes around, we're stuck with those extra bits that a sneaky or buggy encoder might set
+to 1 instead of 0.</p>
+<p>The <code>=</code> pad bytes, on the other hand, are entirely a self-own by the Base64 standard. They do not affect decoding other
+than to provide an opportunity to say &quot;that padding is incorrect&quot;. Exabytes of storage and transfer have no doubt been
+wasted on pointless <code>=</code> bytes. Somehow we all seem to be quite comfortable with, say, hex-encoded data just stopping
+when it's done rather than requiring a confirmation that the author of the encoder could count to four. Anyway, there
+are two ways to make pad bytes predictable: require canonical padding to the next multiple of four bytes as per the RFC,
+or, if you control all producers and consumers, save a few bytes by requiring no padding (especially applicable to the
+url-safe alphabet).</p>
+<p>All <code>Engine</code> implementations must at a minimum support treating non-canonical padding of both types as an error, and
+optionally may allow other behaviors.</p>
+<h4>Rust version compatibility</h4>
+<p>The minimum supported Rust version is 1.71.0.</p>
+<h3>Contributing</h3>
+<p>Contributions are very welcome. However, because this library is used widely, and in security-sensitive contexts, all
+PRs will be carefully scrutinized. Beyond that, this sort of low level library simply needs to be 100% correct. Nobody
+wants to chase bugs in encoding of any sort.</p>
+<p>All this means that it takes me a fair amount of time to review each PR, so it might take quite a while to carve out the
+free time to give each PR the attention it deserves. I will get to everyone eventually!</p>
+<h4>Developing</h4>
+<p>Benchmarks are in <code>benches/</code>.</p>
+<pre><code>cargo bench
+</code></pre>
+<h4>no_std</h4>
+<p>This crate supports no_std. By default the crate targets std via the <code>std</code> feature. You can deactivate
+the <code>default-features</code> to target <code>core</code> instead. In that case you lose out on all the functionality revolving
+around <code>std::io</code>, <code>std::error::Error</code>, and heap allocations. There is an additional <code>alloc</code> feature that you can activate
+to bring back the support for heap allocations.</p>
+<h4>SIMD acceleration</h4>
+<p>The default-on <code>simd-unsafe</code> feature enables SIMD-accelerated engines for the standard and
+URL-safe alphabets, which are several times faster than the scalar <code>GeneralPurpose</code> engine. It is
+the only feature that uses <code>unsafe</code>; without it the crate is <code>#![forbid(unsafe_code)]</code>.</p>
+<p>The <code>Simd</code> engine detects the best available instruction set (AVX2 on <code>x86_64</code>, NEON on <code>aarch64</code>) at
+runtime and falls back to the scalar engine, and needs the <code>std</code> feature. The <code>Avx2</code> and <code>Neon</code>
+engines target one instruction set without runtime detection, so they can be used in <code>no_std</code> builds
+when the target is known to support the instructions.</p>
+<h5>Testing SIMD</h5>
+<p>Testing SIMD directly requires having all of the necessary hardware available. Fortunately, the instructions we use are
+also provided by Miri, so we can check for UB and proper logic all at once on any system. Here, this is filtering for
+tests with <code>miri</code> in the name as those are written to be acceptably slow under Miri's overhead, but any test should work
+(eventually).</p>
+<pre><code>RUSTFLAGS="-C target-feature=+avx2" cargo +nightly miri \
+    test --target x86_64-unknown-linux-gnu miri
+RUSTFLAGS="-C target-feature=+neon" cargo +nightly miri \
+    test --target aarch64-unknown-linux-gnu miri
+</code></pre>
+<h4>Profiling</h4>
+<p>On Linux, you can use <a href="https://perf.wiki.kernel.org/index.php/Main_Page">perf</a> for profiling. Then compile the
+benchmarks with <code>cargo bench --no-run</code>.</p>
+<p>Run the benchmark binary with <code>perf</code> (shown here filtering to one particular benchmark, which will make the results
+easier to read). <code>perf</code> is only available to the root user on most systems as it fiddles with event counters in your
+CPU, so use <code>sudo</code>. We need to run the actual benchmark binary, hence the path into <code>target</code>. You can see the actual
+full path with <code>cargo bench -v</code>; it will print out the commands it runs. If you use the exact path
+that <code>bench</code> outputs, make sure you get the one that's for the benchmarks, not the tests. You may also want
+to <code>cargo clean</code> so you have only one <code>benchmarks-</code> binary (they tend to accumulate).</p>
+<pre><code>sudo perf record target/release/deps/benchmarks-* --bench decode_10mib_reuse
+</code></pre>
+<p>Then analyze the results, again with perf:</p>
+<pre><code>sudo perf annotate -l
+</code></pre>
+<p>You'll see a bunch of interleaved rust source and assembly like this. The section with <code>lib.rs:327</code> is telling us that
+4.02% of samples saw the <code>movzbl</code> aka bit shift as the active instruction. However, this percentage is not as exact as
+it seems due to a phenomenon called <em>skid</em>. Basically, a consequence of how fancy modern CPUs are is that this sort of
+instruction profiling is inherently inaccurate, especially in branch-heavy code.</p>
+<pre><code> lib.rs:322    0.70 :     10698:       mov    %rdi,%rax
+    2.82 :        1069b:       shr    $0x38,%rax
+         :                  if morsel == decode_tables::INVALID_VALUE {
+         :                      bad_byte_index = input_index;
+         :                      break;
+         :                  };
+         :                  accum = (morsel as u64) &lt;&lt; 58;
+ lib.rs:327    4.02 :     1069f:       movzbl (%r9,%rax,1),%r15d
+         :              // fast loop of 8 bytes at a time
+         :              while input_index &lt; length_of_full_chunks {
+         :                  let mut accum: u64;
+         :
+         :                  let input_chunk = BigEndian::read_u64(&amp;input_bytes[input_index..(input_index + 8)]);
+         :                  morsel = decode_table[(input_chunk &gt;&gt; 56) as usize];
+ lib.rs:322    3.68 :     106a4:       cmp    $0xff,%r15
+         :                  if morsel == decode_tables::INVALID_VALUE {
+    0.00 :        106ab:       je     1090e &lt;base64::decode_config_buf::hbf68a45fefa299c1+0x46e&gt;
+</code></pre>
+<h4>Fuzzing</h4>
+<p>This uses <a href="https://github.com/rust-fuzz/cargo-fuzz">cargo-fuzz</a>. See <code>fuzz/fuzzers</code> for the available fuzzing scripts.
+To run, use an invocation like these:</p>
+<pre><code>cargo +nightly fuzz run roundtrip
+cargo +nightly fuzz run roundtrip_no_pad
+cargo +nightly fuzz run roundtrip_random_config -- -max_len=10240
+cargo +nightly fuzz run decode_random
+</code></pre>
+<h4>License</h4>
+<p>This project is dual-licensed under MIT and Apache 2.0.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>alloc</code></th><td>Yes<small>default → std → alloc</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>simd-unsafe</code></li></ul></td></tr><tr><th scope="row"><code>simd-unsafe</code></th><td>Yes<small>default → simd-unsafe</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li><code>alloc</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p>No dependencies declared.</p></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/arrow-cast/versions/60.0.0/">crates-io/arrow-cast 60.0.0</a><span>Requires ^0.23 · alias base64 · </span></li><li><a href="../../../packages/crates-io/arrow-cast/versions/58.4.0/">crates-io/arrow-cast 58.4.0</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/axum/versions/0.8.9/">crates-io/axum 0.8.9</a><span>Requires ^0.22.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/axum/versions/0.8.8/">crates-io/axum 0.8.8</a><span>Requires ^0.22.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/cookie/versions/0.18.2/">crates-io/cookie 0.18.2</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/crossterm/versions/0.29.0/">crates-io/crossterm 0.29.0</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/datafusion-functions/versions/53.1.0/">crates-io/datafusion-functions 53.1.0</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/hdrhistogram/versions/7.6.0/">crates-io/hdrhistogram 7.6.0</a><span>Requires ^0.22.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/headers/versions/0.4.2/">crates-io/headers 0.4.2</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/hyper-util/versions/0.1.21/">crates-io/hyper-util 0.1.21</a><span>Requires ^0.23 · alias base64 · </span></li><li><a href="../../../packages/crates-io/hyper-util/versions/0.1.20/">crates-io/hyper-util 0.1.20</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/jsonwebtoken/versions/11.1.0/">crates-io/jsonwebtoken 11.1.0</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/k8s-openapi/versions/0.28.0/">crates-io/k8s-openapi 0.28.0</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/kube-client/versions/4.2.0/">crates-io/kube-client 4.2.0</a><span>Requires ^0.22.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/object_store/versions/0.14.2/">crates-io/object_store 0.14.2</a><span>Requires ^0.23 · alias base64 · </span></li><li><a href="../../../packages/crates-io/object_store/versions/0.13.2/">crates-io/object_store 0.13.2</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/opentelemetry-proto/versions/0.33.0/">crates-io/opentelemetry-proto 0.33.0</a><span>Requires ^0.22.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/parquet/versions/58.4.0/">crates-io/parquet 58.4.0</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/pbjson/versions/0.8.0/">crates-io/pbjson 0.8.0</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/pem/versions/4.0.0/">crates-io/pem 4.0.0</a><span>Requires ^0.23.0 · alias base64 · </span></li><li><a href="../../../packages/crates-io/pem/versions/3.0.6/">crates-io/pem 3.0.6</a><span>Requires ^0.22.0 · alias base64 · </span></li><li><a href="../../../packages/crates-io/plist/versions/1.10.1/">crates-io/plist 1.10.1</a><span>Requires ^0.23.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/postgres-protocol/versions/0.6.12/">crates-io/postgres-protocol 0.6.12</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/redis/versions/1.7.1/">crates-io/redis 1.7.1</a><span>Requires ^0.22.1 · alias base64 · cfg(not(target_family = &quot;wasm&quot;))</span></li><li><a href="../../../packages/crates-io/reqwest/versions/0.13.5/">crates-io/reqwest 0.13.5</a><span>Requires ^0.23 · alias base64 · </span></li><li><a href="../../../packages/crates-io/rust-argon2/versions/3.0.0/">crates-io/rust-argon2 3.0.0</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/rust-argon2/versions/0.8.3/">crates-io/rust-argon2 0.8.3</a><span>Requires &gt;=0.13.0, &lt;0.14.0 · alias base64 · </span></li><li><a href="../../../packages/crates-io/rustls-pemfile/versions/1.0.4/">crates-io/rustls-pemfile 1.0.4</a><span>Requires ^0.21 · alias base64 · </span></li><li><a href="../../../packages/crates-io/rustls-platform-verifier/versions/0.7.1/">crates-io/rustls-platform-verifier 0.7.1</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/serde-saphyr/versions/0.0.29/">crates-io/serde-saphyr 0.0.29</a><span>Requires &gt;=0.21.0, &lt;=0.22.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/serde_with/versions/3.24.0/">crates-io/serde_with 3.24.0</a><span>Requires ^0.23.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/sqlx-core/versions/0.9.0/">crates-io/sqlx-core 0.9.0</a><span>Requires ^0.22.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/sqlx-postgres/versions/0.9.0/">crates-io/sqlx-postgres 0.9.0</a><span>Requires ^0.22.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/tonic/versions/0.14.6/">crates-io/tonic 0.14.6</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/tower-http/versions/0.7.1/">crates-io/tower-http 0.7.1</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/tower-http/versions/0.6.11/">crates-io/tower-http 0.6.11</a><span>Requires ^0.22 · alias base64 · </span></li><li><a href="../../../packages/crates-io/ureq/versions/3.4.2/">crates-io/ureq 3.4.2</a><span>Requires ^0.23.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/ureq-proto/versions/0.6.4/">crates-io/ureq-proto 0.6.4</a><span>Requires ^0.23.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/wasmtime-internal-cache/versions/36.0.17/">crates-io/wasmtime-internal-cache 36.0.17</a><span>Requires ^0.22.1 · alias base64 · </span></li><li><a href="../../../packages/crates-io/wiremock/versions/0.6.5/">crates-io/wiremock 0.6.5</a><span>Requires ^0.22 · alias base64 · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default, simd-unsafe, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:92a6289ee0d60e52efa52338f61e1eb1424ad2b452e6781c10c4973a3983d6a3</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53449647">Attestation reference</a><small>Archive: sha256:41ac5394e517b1d622fc090f9c759277fcca8f2a0dd315dd055483ec69e45f44</small></li><li><code>sha256:c0d28c10d50fbd20275b37f1d794bfd8d89934425a0a89a4c8302b31f3de1c93</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:c18a29e90b7831a321bba5e7fb4aebdc0677aa71adc374ab6059c84a78b7734a</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b883f27f9fe4c5adfb229f30a12e47e8312bfc9f6b5fe1db9faf4c345afcdd59</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53637542">Attestation reference</a><small>Archive: sha256:8c1df2cf95597adc436199ac04a1254336c83b72f02d48d1a08bcdbf72060b46</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default, simd-unsafe, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2cfd710b26eb88994d422cd22e892e98e00c0b821d54d1f0dc5c59a9bf4a37b4</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54020554">Attestation reference</a><small>Archive: sha256:0031aae68d1fd16b398f2054e9f1d337d4070d67dcbbaae660d67501cc631dfa</small></li><li><code>sha256:bb53ec3b7975c3b432d83a97816a3b7f5c2a1a37f2ac450fd07c0e94afd937f7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:6f44974a37d85ebd6479620295fb6f2b75c0dd3e72e564fa1f7ef5eaebe4328d</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:344146b2cf4ce826ebf2a4ab00dc4c9147570685b3d7d3db40bda96e36b3a78d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54070018">Attestation reference</a><small>Archive: sha256:67508d1d8694550365becc051a07a98ae90b749bf27fac56fa8c27bba8001874</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default, simd-unsafe, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7a037c6bc49105dc189e29d8287c0da4fe3ddee5743264830f745b0525c6204b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53449186">Attestation reference</a><small>Archive: sha256:76cbba42dd97a5a1dc5e211468379fb06ead4997e72312b64dd2ea37c6f3b19f</small></li><li><code>sha256:7bfcd0ced54fc8eb7f7b0af37cabda368baebbbd7025193ecda4dc7d67f0d626</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674109">Attestation reference</a><small>Archive: sha256:717d6ad69eedb527f04df9dfc41c2dac0076c6c327878d20e1059d593e661e29</small></li><li><code>sha256:e3d444ddd40fc457a71f07a3bb60d55e5eb9b78b04a944387d75b7d0c2047035</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:df2921db229fd5b43694d8a96cda66fde5d80f568b0952491e7d0e3f434b5edf</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:56c89c23f0257c9f4e3c790e0075f6ff8e1bd8fcb2614c8812e178f4901da512</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675866">Attestation reference</a><small>Archive: sha256:2c97910b43242b37d5593c10607ef1c9f5cf38eb38d6dd189295f513d7fb36a8</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, default, simd-unsafe, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2da245381a28f55cfcd2f97f90eda5e53044a1c9aa21452d218f798a48bfd79e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53449897">Attestation reference</a><small>Archive: sha256:2953583dafce9a2be2931da94729535ce197cfd359d803dfd85bcec9dc2dc984</small></li><li><code>sha256:4a066035bda04f43b2ea9b3d76ae3eb84229058ee43d42aba8b8c5ed0a7c591f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:19d4d9b9252e3efb766606856223ab1bd819194557cf27b2d66c72f3ada91e8b</small></li><li><code>sha256:e1200c012b2f0bafb7cbe85fb25a536871ba87579ab3a44956c69605c6d8944c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54075092">Attestation reference</a><small>Archive: sha256:4bd226eaf4ac4f55e35855edcf47ca818b44bff32a33fecec0111dbde3d96a9f</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>alloc, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:878afc49e27cba942e2fa58e1447ee1587709dcda47ddeec444bc3c1a2aefac5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078815">Attestation reference</a><small>Archive: sha256:0b7e7f64539aed38ab7008ed18b1c2cb637063526340e0c1eb946bd5288c5557</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/base64/versions/0.23.1/">0.23.1</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/base64/0.23.1">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/base64/versions/0.22.1/">0.22.1</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/base64/0.22.1">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/base64/versions/0.21.7/">0.21.7</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/base64/0.21.7">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/base64/versions/0.13.1/">0.13.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/base64/0.13.1">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>RELEASE-NOTES.md · Author-provided</summary><div class="readme"><h3>0.23.1</h3>
+<ul>
+<li>Make the tests build again on non-SIMD architectures</li>
+</ul>
+<h3>0.23.0</h3>
+<ul>
+<li>Added more consts for preconfigured configs and engines</li>
+<li>Make DecodeError::InvalidLastSymbol more clear by including the decoded value</li>
+<li>Added SIMD-accelerated engines behind the default-on <code>simd-unsafe</code> feature: <code>Simd</code> picks the best
+instruction set at runtime (AVX2 on <code>x86_64</code>, NEON on <code>aarch64</code>) and falls back to the scalar
+<code>GeneralPurpose</code> engine, while <code>Avx2</code> and <code>Neon</code> target one instruction set with no runtime
+detection and work in <code>no_std</code>. The engines support the standard and URL-safe alphabets.</li>
+<li>Update MSRV to 1.71.0</li>
+<li>Add support for custom padding symbols</li>
+</ul>
+<h3>0.22.1</h3>
+<ul>
+<li>Correct the symbols used for the predefined <code>alphabet::BIN_HEX</code>.</li>
+</ul>
+<h3>0.22.0</h3>
+<ul>
+<li><code>DecodeSliceError::OutputSliceTooSmall</code> is now conservative rather than precise. That is, the error will only occur if the decoded output <em>cannot</em> fit, meaning that <code>Engine::decode_slice</code> can now be used with exactly-sized output slices. As part of this, <code>Engine::internal_decode</code> now returns <code>DecodeSliceError</code> instead of <code>DecodeError</code>, but that is not expected to affect any external callers.</li>
+<li><code>DecodeError::InvalidLength</code> now refers specifically to the <em>number of valid symbols</em> being invalid (i.e. <code>len % 4 == 1</code>), rather than just the number of input bytes. This avoids confusing scenarios when based on interpretation you could make a case for either <code>InvalidLength</code> or <code>InvalidByte</code> being appropriate.</li>
+<li>Decoding is somewhat faster (5-10%)</li>
+</ul>
+<h3>0.21.7</h3>
+<ul>
+<li>Support getting an alphabet's contents as a str via <code>Alphabet::as_str()</code></li>
+</ul>
+<h3>0.21.6</h3>
+<ul>
+<li>Improved introductory documentation and example</li>
+</ul>
+<h3>0.21.5</h3>
+<ul>
+<li>Add <code>Debug</code> and <code>Clone</code> impls for the general purpose Engine</li>
+</ul>
+<h3>0.21.4</h3>
+<ul>
+<li>Make <code>encoded_len</code> <code>const</code>, allowing the creation of arrays sized to encode compile-time-known data lengths</li>
+</ul>
+<h3>0.21.3</h3>
+<ul>
+<li>Implement <code>source</code> instead of <code>cause</code> on Error types</li>
+<li>Roll back MSRV to 1.48.0 so Debian can continue to live in a time warp</li>
+<li>Slightly faster chunked encoding for short inputs</li>
+<li>Decrease binary size</li>
+</ul>
+<h3>0.21.2</h3>
+<ul>
+<li>Rollback MSRV to 1.57.0 -- only dev dependencies need 1.60, not the main code</li>
+</ul>
+<h3>0.21.1</h3>
+<ul>
+<li>Remove the possibility of panicking during decoded length calculations</li>
+<li><code>DecoderReader</code> no longer sometimes erroneously ignores
+padding  <a href="https://github.com/marshallpierce/rust-base64/issues/226">#226</a></li>
+</ul>
+<h4>Breaking changes</h4>
+<ul>
+<li><code>Engine.internal_decode</code> return type changed</li>
+<li>Update MSRV to 1.60.0</li>
+</ul>
+<h3>0.21.0</h3>
+<h4>Migration</h4>
+<h5>Functions</h5>
+<table>
+<thead>
+<tr>
+<th>&lt; 0.20 function</th>
+<th>0.21 equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>encode()</code></td>
+<td><code>engine::general_purpose::STANDARD.encode()</code> or <code>prelude::BASE64_STANDARD.encode()</code></td>
+</tr>
+<tr>
+<td><code>encode_config()</code></td>
+<td><code>engine.encode()</code></td>
+</tr>
+<tr>
+<td><code>encode_config_buf()</code></td>
+<td><code>engine.encode_string()</code></td>
+</tr>
+<tr>
+<td><code>encode_config_slice()</code></td>
+<td><code>engine.encode_slice()</code></td>
+</tr>
+<tr>
+<td><code>decode()</code></td>
+<td><code>engine::general_purpose::STANDARD.decode()</code> or <code>prelude::BASE64_STANDARD.decode()</code></td>
+</tr>
+<tr>
+<td><code>decode_config()</code></td>
+<td><code>engine.decode()</code></td>
+</tr>
+<tr>
+<td><code>decode_config_buf()</code></td>
+<td><code>engine.decode_vec()</code></td>
+</tr>
+<tr>
+<td><code>decode_config_slice()</code></td>
+<td><code>engine.decode_slice()</code></td>
+</tr>
+</tbody>
+</table>
+<p>The short-lived 0.20 functions were the 0.13 functions with <code>config</code> replaced with <code>engine</code>.</p>
+<h5>Padding</h5>
+<p>If applicable, use the preset engines <code>engine::STANDARD</code>, <code>engine::STANDARD_NO_PAD</code>, <code>engine::URL_SAFE</code>,
+or <code>engine::URL_SAFE_NO_PAD</code>.
+The <code>NO_PAD</code> ones require that padding is absent when decoding, and the others require that
+canonical padding is present .</p>
+<p>If you need the &lt; 0.20 behavior that did not care about padding, or want to recreate &lt; 0.20.0's predefined <code>Config</code>s
+precisely, see the following table.</p>
+<table>
+<thead>
+<tr>
+<th>0.13.1 Config</th>
+<th>0.20.0+ alphabet</th>
+<th><code>encode_padding</code></th>
+<th><code>decode_padding_mode</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>STANDARD</td>
+<td>STANDARD</td>
+<td>true</td>
+<td>Indifferent</td>
+</tr>
+<tr>
+<td>STANDARD_NO_PAD</td>
+<td>STANDARD</td>
+<td>false</td>
+<td>Indifferent</td>
+</tr>
+<tr>
+<td>URL_SAFE</td>
+<td>URL_SAFE</td>
+<td>true</td>
+<td>Indifferent</td>
+</tr>
+<tr>
+<td>URL_SAFE_NO_PAD</td>
+<td>URL_SAFE</td>
+<td>false</td>
+<td>Indifferent</td>
+</tr>
+</tbody>
+</table>
+<h3>0.21.0-rc.1</h3>
+<ul>
+<li>Restore the ability to decode into a slice of precisely the correct length with <code>Engine.decode_slice_unchecked</code>.</li>
+<li>Add <code>Engine</code> as a <code>pub use</code> in <code>prelude</code>.</li>
+</ul>
+<h3>0.21.0-beta.2</h3>
+<h4>Breaking changes</h4>
+<ul>
+<li>Re-exports of preconfigured engines in <code>engine</code> are removed in favor of <code>base64::prelude::...</code> that are better suited
+to those who wish to <code>use</code> the entire path to a name.</li>
+</ul>
+<h3>0.21.0-beta.1</h3>
+<h4>Breaking changes</h4>
+<ul>
+<li><code>FastPortable</code> was only meant to be an interim name, and shouldn't have shipped in 0.20. It is now <code>GeneralPurpose</code> to
+make its intended usage more clear.</li>
+<li><code>GeneralPurpose</code> and its config are now <code>pub use</code>'d in the <code>engine</code> module for convenience.</li>
+<li>Change a few <code>from()</code> functions to be <code>new()</code>. <code>from()</code> causes confusing compiler errors because of confusion
+with <code>From::from</code>, and is a little misleading because some of those invocations are not very cheap as one would
+usually expect from a <code>from</code> call.</li>
+<li><code>encode*</code> and <code>decode*</code> top level functions are now methods on <code>Engine</code>.</li>
+<li><code>DEFAULT_ENGINE</code> was replaced by <code>engine::general_purpose::STANDARD</code></li>
+<li>Predefined engine consts <code>engine::general_purpose::{STANDARD, STANDARD_NO_PAD, URL_SAFE, URL_SAFE_NO_PAD}</code>
+<ul>
+<li>These are <code>pub use</code>d into <code>engine</code> as well</li>
+</ul>
+</li>
+<li>The <code>*_slice</code> decode/encode functions now return an error instead of panicking when the output slice is too small
+<ul>
+<li>As part of this, there isn't now a public way to decode into a slice <em>exactly</em> the size needed for inputs that
+aren't multiples of 4 tokens. If adding up to 2 bytes to always be a multiple of 3 bytes for the decode buffer is
+a problem, file an issue.</li>
+</ul>
+</li>
+</ul>
+<h4>Other changes</h4>
+<ul>
+<li><code>decoded_len_estimate()</code> is provided to make it easy to size decode buffers correctly.</li>
+</ul>
+<h3>0.20.0</h3>
+<h4>Breaking changes</h4>
+<ul>
+<li>Update MSRV to 1.57.0</li>
+<li>Decoding can now either ignore padding, require correct padding, or require no padding. The default is to require
+correct padding.
+<ul>
+<li>The <code>NO_PAD</code> config now requires that padding be absent when decoding.</li>
+</ul>
+</li>
+</ul>
+<h4>0.20.0-alpha.1</h4>
+<h5>Breaking changes</h5>
+<ul>
+<li>Extended the <code>Config</code> concept into the <code>Engine</code> abstraction, allowing the user to pick different encoding / decoding
+implementations.
+<ul>
+<li>What was formerly the only algorithm is now the <code>FastPortable</code> engine, so named because it's portable (works on
+any CPU) and relatively fast.</li>
+<li>This opens the door to a portable constant-time
+implementation (<a href="https://github.com/marshallpierce/rust-base64/pull/153">#153</a>,
+presumably <code>ConstantTimePortable</code>?) for security-sensitive applications that need side-channel resistance, and
+CPU-specific SIMD implementations for more speed.</li>
+<li>Standard base64 per the RFC is available via <code>DEFAULT_ENGINE</code>. To use different alphabets or other settings (
+padding, etc), create your own engine instance.</li>
+</ul>
+</li>
+<li><code>CharacterSet</code> is now <code>Alphabet</code> (per the RFC), and allows creating custom alphabets. The corresponding tables that
+were previously code-generated are now built dynamically.</li>
+<li>Since there are already multiple breaking changes, various functions are renamed to be more consistent and
+discoverable.</li>
+<li>MSRV is now 1.47.0 to allow various things to use <code>const fn</code>.</li>
+<li><code>DecoderReader</code> now owns its inner reader, and can expose it via <code>into_inner()</code>. For symmetry, <code>EncoderWriter</code> can do
+the same with its writer.</li>
+<li><code>encoded_len</code> is now public so you can size encode buffers precisely.</li>
+</ul>
+<h3>0.13.1</h3>
+<ul>
+<li>More precise decode buffer sizing, avoiding unnecessary allocation in <code>decode_config</code>.</li>
+</ul>
+<h3>0.13.0</h3>
+<ul>
+<li>Config methods are const</li>
+<li>Added <code>EncoderStringWriter</code> to allow encoding directly to a String</li>
+<li><code>EncoderWriter</code> now owns its delegate writer rather than keeping a reference to it (though refs still work)
+<ul>
+<li>As a consequence, it is now possible to extract the delegate writer from an <code>EncoderWriter</code> via <code>finish()</code>, which
+returns <code>Result&lt;W&gt;</code> instead of <code>Result&lt;()&gt;</code>. If you were calling <code>finish()</code> explicitly, you will now need to
+use <code>let _ = foo.finish()</code> instead of just <code>foo.finish()</code> to avoid a warning about the unused value.</li>
+</ul>
+</li>
+<li>When decoding input that has both an invalid length and an invalid symbol as the last byte, <code>InvalidByte</code> will be
+emitted instead of <code>InvalidLength</code> to make the problem more obvious.</li>
+</ul>
+<h3>0.12.2</h3>
+<ul>
+<li>Add <code>BinHex</code> alphabet</li>
+</ul>
+<h3>0.12.1</h3>
+<ul>
+<li>Add <code>Bcrypt</code> alphabet</li>
+</ul>
+<h3>0.12.0</h3>
+<ul>
+<li>A <code>Read</code> implementation (<code>DecoderReader</code>) to let users transparently decoded data from a b64 input source</li>
+<li>IMAP's modified b64 alphabet</li>
+<li>Relaxed type restrictions to just <code>AsRef&lt;[ut8]&gt;</code> for main <code>encode*</code>/<code>decode*</code> functions</li>
+<li>A minor performance improvement in encoding</li>
+</ul>
+<h3>0.11.0</h3>
+<ul>
+<li>Minimum rust version 1.34.0</li>
+<li><code>no_std</code> is now supported via the two new features <code>alloc</code> and <code>std</code>.</li>
+</ul>
+<h3>0.10.1</h3>
+<ul>
+<li>Minimum rust version 1.27.2</li>
+<li>Fix bug in streaming encoding (<a href="https://github.com/marshallpierce/rust-base64/pull/90">#90</a>): if the underlying writer
+didn't write all the bytes given to it, the remaining bytes would not be retried later. See the docs
+on <code>EncoderWriter::write</code>.</li>
+<li>Make it configurable whether or not to return an error when decoding detects excess trailing bits.</li>
+</ul>
+<h3>0.10.0</h3>
+<ul>
+<li>Remove line wrapping. Line wrapping was never a great conceptual fit in this library, and other features (streaming
+encoding, etc) either couldn't support it or could support only special cases of it with a great increase in
+complexity. Line wrapping has been pulled out into a <a href="https://crates.io/crates/line-wrap">line-wrap</a> crate, so it's
+still available if you need it.
+<ul>
+<li><code>Base64Display</code> creation no longer uses a <code>Result</code> because it can't fail, which means its helper methods for
+common
+configs that <code>unwrap()</code> for you are no longer needed</li>
+</ul>
+</li>
+<li>Add a streaming encoder <code>Write</code> impl to transparently base64 as you write.</li>
+<li>Remove the remaining <code>unsafe</code> code.</li>
+<li>Remove whitespace stripping to simplify <code>no_std</code> support. No out of the box configs use it, and it's trivial to do
+yourself if needed: <code>filter(|b| !b&quot; \n\t\r\x0b\x0c&quot;.contains(b)</code>.</li>
+<li>Detect invalid trailing symbols when decoding and return an error rather than silently ignoring them.</li>
+</ul>
+<h3>0.9.3</h3>
+<ul>
+<li>Update safemem</li>
+</ul>
+<h3>0.9.2</h3>
+<ul>
+<li>Derive <code>Clone</code> for <code>DecodeError</code>.</li>
+</ul>
+<h3>0.9.1</h3>
+<ul>
+<li>Add support for <code>crypt(3)</code>'s base64 variant.</li>
+</ul>
+<h3>0.9.0</h3>
+<ul>
+<li><code>decode_config_slice</code> function for no-allocation decoding, analogous to <code>encode_config_slice</code></li>
+<li>Decode performance optimization</li>
+</ul>
+<h3>0.8.0</h3>
+<ul>
+<li><code>encode_config_slice</code> function for no-allocation encoding</li>
+</ul>
+<h3>0.7.0</h3>
+<ul>
+<li><code>STANDARD_NO_PAD</code> config</li>
+<li><code>Base64Display</code> heap-free wrapper for use in format strings, etc</li>
+</ul>
+<h3>0.6.0</h3>
+<ul>
+<li>Decode performance improvements</li>
+<li>Use <code>unsafe</code> in fewer places</li>
+<li>Added fuzzers</li>
+</ul>
+<h3>0.5.2</h3>
+<ul>
+<li>Avoid usize overflow when calculating length</li>
+<li>Better line wrapping performance</li>
+</ul>
+<h3>0.5.1</h3>
+<ul>
+<li>Temporarily disable line wrapping</li>
+<li>Add Apache 2.0 license</li>
+</ul>
+<h3>0.5.0</h3>
+<ul>
+<li>MIME support, including configurable line endings and line wrapping</li>
+<li>Removed <code>decode_ws</code></li>
+<li>Renamed <code>Base64Error</code> to <code>DecodeError</code></li>
+</ul>
+<h3>0.4.1</h3>
+<ul>
+<li>Allow decoding a <code>AsRef&lt;[u8]&gt;</code> instead of just a <code>&amp;str</code></li>
+</ul>
+<h3>0.4.0</h3>
+<ul>
+<li>Configurable padding</li>
+<li>Encode performance improvements</li>
+</ul>
+<h3>0.3.0</h3>
+<ul>
+<li>Added encode/decode functions that do not allocate their own storage</li>
+<li>Decode performance improvements</li>
+<li>Extraneous padding bytes are no longer ignored. Now, an error will be returned.</li>
+</ul>
+</div><p class="table-note">sha256:2caa288e216c82d7bea1ff8dcdd5f21cb9dfae7fbe4f79526ebf5aafef3a0b57</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+   To apply the Apache License to your work, attach the following
+   boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include
+   the brackets!)  The text should be enclosed in the appropriate
+   comment syntax for the file format. We also recommend that a
+   file or class name and description of purpose be included on the
+   same "printed page" as the copyright notice for easier
+   identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div><p class="table-note">sha256:a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>The MIT License (MIT)
+
+Copyright (c) 2025 Alice Maz, Marshall Pierce
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:ab499c75a0f0da8e0fe83bf9ba3a27e5c39705310f07107c6c66b69958d2401c</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:11694284cd7f891ba5c49cd1945d81f34f24b125aff98a76fe49bf1ef6177eaa</code></dd><dt>Upstream checksum</dt><dd><code>sha256:ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/base64&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.23.1&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;simd-unsafe&quot;</span><span class="p">]</span>
+<span class="n">simd-unsafe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;alloc&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;base64&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Marshall Pierce &lt;marshall@mpierce.org&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.71.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/base64/0.23.1">crates.io package</a></li><li><a href="https://github.com/marshallpierce/rust-base64">Source repository</a></li><li><a href="https://docs.rs/base64">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">base64</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/base64"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.23.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

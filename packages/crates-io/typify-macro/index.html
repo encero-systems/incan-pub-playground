@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>typify-macro 0.5.0 · Incan.pub</title><meta name="description" content="typify macro implementation"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/typify-macro</p><div class="title-row"><h1>typify-macro</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/typify-macro/versions/0.5.0/" selected>0.5.0</option></select></label></div><p class="description">typify macro implementation</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>Typify</h3>
+<p>Typify compiles JSON Schema documents into Rust types. It can be used in one of
+several ways:</p>
+<ul>
+<li>
+<p>using the <a href="https://github.com/oxidecomputer/typify/blob/c99b5fbd97aece0037f0cbfe3a67b91b18fcd2de/typify-macro/./cargo-typify/README.md"><code>cargo typify</code></a> command</p>
+</li>
+<li>
+<p>via the macro <code>import_types!(&quot;types.json&quot;)</code> to generate Rust types directly in
+your program</p>
+</li>
+<li>
+<p>via a builder interface to generate Rust types in <code>build.rs</code> or <code>xtask</code></p>
+</li>
+<li>
+<p>via the builder functions to generate persistent files e.g. when building
+API bindings</p>
+</li>
+</ul>
+<p><strong>If generation fails, doesn't compile or is generally lousy</strong>: Please file an
+issue and include the JSON Schema and Rust output (if there is any). Use <code>cargo typify</code> command to generate code from the command-line. It's even more helpful
+if you can articulate the output you'd ideally like to see.</p>
+<h4>JSON Schema → Rust types</h4>
+<p>JSON Schema is a constraint language designed for validation. As a result, it
+is not well-suited--and is often seemingly hostile--to translation into
+constructive type systems. It allows for expressions of arbitrary complexity
+with an infinity of ways to articulate a given set of constraints. As such,
+typify does its best to discern an appropriate interpretation, but it is far
+from perfect!</p>
+<p>Typify translates JSON Schema types in a few different ways depending on some
+basic properties of the schema:</p>
+<h5>Built-in types</h5>
+<p>Integers, floating-point numbers, strings, etc. Those all have straightforward
+representations in Rust. The only significant nuance is how to select the
+appropriate built-in type based on type attributes. For example, a JSON Schema
+might specify a maximum and/or minimum that indicates the appropriate integral
+type to use.</p>
+<p>String schemas that include a known <code>format</code> are represented with the
+appropriate Rust type. For example <code>{ &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;uuid&quot; }</code> is
+represented as a <code>uuid::Uuid</code> (which requires the <code>uuid</code> crate be included as a
+dependency).</p>
+<h5>Arrays</h5>
+<p>JSON Schema arrays can turn into one of three Rust types <code>Vec&lt;T&gt;</code>, <code>HashSet&lt;T&gt;</code>,
+and tuples depending on the schema properties. An array may have a fixed length
+that matches a fixed list of item types; this is well represented by a Rust
+tuple. The distinction between <code>Vec&lt;T&gt;</code> and <code>HashSet&lt;T&gt;</code> is only if the
+schema's <code>uniqueItems</code> field is <code>false</code> or <code>true</code> respectively.</p>
+<h5>Objects</h5>
+<p>In general, objects turn into Rust structs. If, however, the schema defines no
+properties, Typify emits a <code>HashMap&lt;String, T&gt;</code> if the <code>additionalProperties</code>
+schema specifies <code>T</code> or a <code>HashMap&lt;String, serde_json::Value&gt;</code> otherwise.</p>
+<p>Properties of generated <code>struct</code> that are not in the <code>required</code> set are
+typically represented as an <code>Option&lt;T&gt;</code> with the <code>#[serde(default)]</code> attribute
+applied. Non-required properties with types that already have a default value
+(such as a <code>Vec&lt;T&gt;</code>) simply get the <code>#[serde(default)]</code> attribute (so you won't
+see e.g. <code>Option&lt;Vec&lt;T&gt;&gt;</code>).</p>
+<h6>Alternate Map types</h6>
+<p>By default, Typify uses <code>std::collections::HashMap</code> as described above.</p>
+<p>If you prefer to use <code>std::collections::BTreeMap</code> or a map type from a crate such
+as <code>indexmap::IndexMap</code>, you can specify this by calling <code>with_map_type</code> on the
+<code>TypeSpaceSettings</code> object, and providing the full path to the type you want to
+use. E.g. <code>::std::collections::BTreeMap</code> or <code>::indexmap::IndexMap</code>.</p>
+<p>Note that for a custom map type to work you must have <code>T</code> defined to generate
+a struct as described in <a href="https://github.com/oxidecomputer/typify/blob/c99b5fbd97aece0037f0cbfe3a67b91b18fcd2de/typify-macro/README.md#objects">Objects</a>. If <code>T</code> is not defined, typify
+will generate code using a <code>serde_json::Map&lt;String, serde_json::Value&gt;</code> instead.</p>
+<p>See the documentation for <code>TypeSpaceSettings::with_map_type</code> for the
+requirements for a map type.</p>
+<h5>OneOf</h5>
+<p>The <code>oneOf</code> construct maps to a Rust enum. Typify maps this to the various
+<a href="https://serde.rs/enum-representations.html">serde enum types</a>.</p>
+<h5>AllOf</h5>
+<p>The 'allOf' construct is handled by merging schemas. While most of the time,
+typify tries to preserve and share type names, it can't always do this when
+merging schemas. You may end up with fields replicated across type; optimizing
+this generation is an area of active work.</p>
+<h5>AnyOf</h5>
+<p>The <code>anyOf</code> construct is much trickier. If can be close to an <code>enum</code> (<code>oneOf</code>),
+but where no particular variant might be canonical or unique for particular
+data. While today we (imprecisely) model these as structs with optional,
+flattened members, this is one of the weaker areas of code generation.</p>
+<p>Issues describing example schemas and desired output are welcome and helpful.</p>
+<h5>AdditionalProperties</h5>
+<p>The <code>additionalProperties</code> constraint lets a schema define what <em>non-specified</em>
+properties are permitted. A value of <code>false</code> means that no other properties are
+permitted (this is expressed in Rust with the <code>#[serde(deny_unknown_fields)]</code>
+annotation). The absence of <code>additionalProperties</code> or a value of <code>true</code> are
+equivalent constructions that mean that any other property is permitted.</p>
+<p>Without other properties, an object that permits additional properties will be
+represented as a map type. In conjunction with other properties, typify employs
+a heuristic interpretation. Absent or with a value of <code>true</code>, additional
+properties are ignored. If, however, <code>additionalProperties</code> has another value
+(i.e. a schema), the generated type will have a map field annotated with
+<code>#[serde(flatten)]</code>.</p>
+<p>Note that this is true of <strong>any</strong> schema value for <code>additionalProperties</code> that
+is not a boolean. This includes values that would be equivalent with regard to
+validation such as the schema <code>{}</code> or <code>{ &quot;not&quot;: false }</code> or any of the other
+infinity of equivalent schemas. One can therefore construct a <code>struct</code> with
+named properties <strong>and</strong> a flattened map of additional properties by using a
+value for <code>additionalProperties</code> that is equivalent to <code>true</code> or absent with
+regard to validation, by using some e.g. <code>{}</code>.</p>
+<h4>Rust -&gt; Schema -&gt; Rust</h4>
+<p>Schemas derived from Rust types may include an extension that provides
+information about the original type:</p>
+<pre><code>{
+  "type": "object",
+  "properties": { .. },
+  "x-rust-type": {
+    "crate": "crate-o-types",
+    "version": "1.0.0",
+    "path": "crate_o_types::some_mod::SomeType"
+  }
+}
+</code></pre>
+<p>The extension includes the name of the crate, a Cargo-style version
+requirements spec, and the full path (that must start with ident-converted name
+of the crate).</p>
+<p>Each of the modes of using typify allow for a list of crates and versions to be
+specified. In this case, if the user specifies &quot;crate-o-types@1.0.1&quot; for
+example, then typify would use its <code>SomeType</code> type rather than generating one
+according to the schema.</p>
+<h5>Using types from other crates</h5>
+<p>Each mode of using typify has a method for controlling the use of types with
+<code>x-rust-type</code> annotations. The default is to ignore them. The recommended
+method is to specify each crate and version you intend to use. You can
+additionally supply the <code>*</code> version for crates (which may result in
+incompatibilities) or you can define a policy to allow the use of all &quot;unknown&quot;
+crates (which may require that addition of dependencies for those crates).</p>
+<p>For the CLI:</p>
+<pre><code>$ cargo typify --unknown-crates allow --crate oxnet@1.0.0 ...
+</code></pre>
+<p>For the builder:</p>
+<pre><code class="syntax-highlight language-rust"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">settings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">typify</span><span class="p">::</span><span class="n">TypeSpaceSettings</span><span class="p">::</span><span class="n">default</span><span class="p">();</span>
+<span class="n">settings</span><span class="p">.</span><span class="n">with_unknown_crates</span><span class="p">(</span><span class="n">typify</span><span class="p">::</span><span class="n">UnknownPolicy</span><span class="p">::</span><span class="n">Allow</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">with_crate</span><span class="p">(</span><span class="s">&quot;oxnet&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">typify</span><span class="p">::</span><span class="n">CrateVers</span><span class="p">::</span><span class="n">Version</span><span class="p">(</span><span class="s">&quot;1.0.0&quot;</span><span class="p">.</span><span class="n">parse</span><span class="p">().</span><span class="n">unwrap</span><span class="p">()));</span>
+</code></pre>
+<p>For the macro:</p>
+<pre><code class="syntax-highlight language-rust"><span class="n">typify</span><span class="p">::</span><span class="n">import_types</span><span class="o">!</span><span class="p">(</span>
+<span class="w">  </span><span class="n">schema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;schema.json&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">unknown_crates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Allow</span><span class="p">,</span>
+<span class="w">  </span><span class="n">crates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s">&quot;oxnet&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;1.0.0&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">)</span>
+</code></pre>
+<h5>Version requirements</h5>
+<p>The <code>version</code> field within the <code>x-rust-type</code> extension follows the Cargo
+version requirements specification. If the extension specifies <code>0.1.0</code> of a
+crate and the user states that they're using <code>0.1.1</code>, then the type is used;
+conversely, if the extension specifies <code>0.2.2</code> and the user is only using
+<code>0.2.0</code> the type is not used.</p>
+<p>Crate authors may choose to adhere to greater stability than otherwise provided
+by semver. If the extension version is <code>&gt;=0.1.0, &lt;1.0.0</code> then the crate author
+is committing to the schema compatibility of the given type on all releases
+until <code>1.0.0</code>. It is important that crate authors populate the <code>version</code> field
+in a way that upholds type availability. For example, while <code>*</code> is a valid
+value, it is only conceivably valid if the type in question were available in
+the first ever version of a crate published and never changed incompatibly in
+any subsequent version.</p>
+<h5>Type parameters</h5>
+<p>The <code>x-rust-type</code> extension may also specify type parameters:</p>
+<pre><code>{
+  "$defs": {
+    "Sprocket": {
+      "type": "object",
+      "properties": { .. },
+      "x-rust-type": {
+        "crate": "util",
+        "version": "0.1.0",
+        "path": "util::Sprocket",
+        "parameters": [
+          {
+            "$ref": "#/$defs/Gizmo"
+          }
+        ]
+      }
+    },
+    "Gizmo": {
+      "type": "object",
+      "properties": { .. },
+      "x-rust-type": {
+        "crate": "util",
+        "version": "0.1.0",
+        "path": "util::Gizmo"
+      }
+    }
+  }
+}
+</code></pre>
+<p>With the <code>util@0.1.0</code> crate specified during type generation, schemas
+referencing <code>#/$defs/Sprocket</code> would use the (non-generated) type
+<code>util::Sprocket&lt;util::Gizmo&gt;</code>.</p>
+<p>The <code>parameters</code> field is an array of schemas. They may be inline schemas or
+referenced schemas.</p>
+<h5>Including <code>x-rust-type</code> in your library</h5>
+<p>The schema for the expected value is as follows:</p>
+<pre><code>{
+  "description": "schema for the x-rust-type extension",
+  "type": "object",
+  "properties": {
+    "crate": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "version": {
+      "description": "semver requirements per a Cargo.toml dependencies entry",
+      "type": "string"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_]+(::[a-zA-Z0-9+]+)*$"
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Schema"
+      }
+    }
+  },
+  "required": [
+    "crate",
+    "path",
+    "version"
+  ]
+}
+</code></pre>
+<p>The <code>version</code> field expresses the stability of your type. For example, if
+<code>0.1.0</code> indicates that <code>0.1.1</code> users would be fine whereas <code>0.2.0</code> users would
+not use the type (instead generating it). You can communicate a future
+commitment beyond what semver implies by using the <a href="https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#version-requirement-syntax">Cargo version requirement
+syntax</a>.
+For example <code>&gt;=0.1.0, &lt;1.0.0</code> says that the type will remain structurally
+compatible from version <code>0.1.0</code> until <code>1.0.0</code>.</p>
+<h4>Formatting</h4>
+<p>You can format generated code using crates such as
+<a href="https://docs.rs/rustfmt-wrapper">rustfmt-wrapper</a> and
+<a href="https://docs.rs/prettyplease">prettyplease</a>. This can be particularly useful
+when checking in code or emitting code from a <code>build.rs</code>.</p>
+<p>The examples below show different ways to convert a <code>TypeSpace</code> to a string
+(<code>typespace</code> is a <code>typify::TypeSpace</code>).</p>
+<h5><code>rustfmt</code></h5>
+<p>Best for generation of code that might be checked in alongside hand-written
+code such as in the case of an <code>xtask</code> or stand-alone code generator (such as
+<code>cargo-typify</code>).</p>
+<pre><code class="syntax-highlight language-rust"><span class="n">rustfmt_wrapper</span><span class="p">::</span><span class="n">rustfmt</span><span class="p">(</span><span class="n">typespace</span><span class="p">.</span><span class="n">to_stream</span><span class="p">().</span><span class="n">to_string</span><span class="p">())</span><span class="o">?</span>
+</code></pre>
+<h5><code>prettyplease</code></h5>
+<p>Best for <code>build.rs</code> scripts where transitive dependencies might not have
+<code>rustfmt</code> installed so should be self-contained.</p>
+<pre><code class="syntax-highlight language-rust"><span class="n">prettyplease</span><span class="p">::</span><span class="n">unparse</span><span class="p">(</span><span class="o">&amp;</span><span class="n">syn</span><span class="p">::</span><span class="n">parse2</span><span class="p">::</span><span class="o">&lt;</span><span class="n">syn</span><span class="p">::</span><span class="n">File</span><span class="o">&gt;</span><span class="p">(</span><span class="n">typespace</span><span class="p">.</span><span class="n">to_stream</span><span class="p">())</span><span class="o">?</span><span class="p">)</span>
+</code></pre>
+<h5>No formatting</h5>
+<p>If no human will ever see the code (and this is almost never the case).</p>
+<pre><code class="syntax-highlight language-rust"><span class="n">typespace</span><span class="p">.</span><span class="n">to_stream</span><span class="p">().</span><span class="n">to_string</span><span class="p">()</span>
+</code></pre>
+<h4>WIP</h4>
+<p>Typify is a work in progress. Changes that affect output will be indicated with
+a breaking change to the crate version number.</p>
+<p>In general, if you have a JSON Schema that causes Typify to fail or if the
+generated type isn't what you expect, please file an issue.</p>
+<p>There are some known areas where we'd like to improve:</p>
+<h5>Complex JSON Schema types</h5>
+<p>JSON schema can express a wide variety of types. Some of them are easy to model
+in Rust; others aren't. There's a lot of work to be done to handle esoteric
+types. Examples from users are very helpful in this regard.</p>
+<h5>Bounded numbers</h5>
+<p>Bounded numbers aren't very well handled. Consider, for example, the schema:</p>
+<pre><code>{
+  "type": "integer",
+  "minimum": 1,
+  "maximum": 6
+}
+</code></pre>
+<p>The resulting types won't enforce those value constraints.</p>
+<h5>Configurable dependencies</h5>
+<p>A string schema with <code>format</code> set to <code>uuid</code> will result in the <code>uuid::Uuid</code>
+type; similarly, a <code>format</code> of <code>date</code> translates to
+<code>chrono::naive::NaiveDate</code>. For users that don't want dependencies on
+<code>uuid</code> or <code>chrono</code> it would be useful for Typify to optionally represent those
+as <code>String</code> (or as some other, consumer-specified type).</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p>No feature declarations recorded.</p></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/proc-macro2/"><code>crates-io/proc-macro2</code></a><small>Alias: proc-macro2</small></th><td><code>^1.0.101</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/quote/"><code>crates-io/quote</code></a><small>Alias: quote</small></th><td><code>^1.0.41</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/schemars/"><code>crates-io/schemars</code></a><small>Alias: schemars</small></th><td><code>^0.8.22</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/semver/"><code>crates-io/semver</code></a><small>Alias: semver</small></th><td><code>^1.0.27</code><small>Default features: enabled</small><small>Requests: serde</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/serde/"><code>crates-io/serde</code></a><small>Alias: serde</small></th><td><code>^1.0.228</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/serde_json/"><code>crates-io/serde_json</code></a><small>Alias: serde_json</small></th><td><code>^1.0.145</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/serde_tokenstream/"><code>crates-io/serde_tokenstream</code></a><small>Alias: serde_tokenstream</small></th><td><code>^0.2.2</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/syn/"><code>crates-io/syn</code></a><small>Alias: syn</small></th><td><code>^2.0</code><small>Default features: enabled</small><small>Requests: extra-traits, full</small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/typify-impl/"><code>crates-io/typify-impl</code></a><small>Alias: typify-impl</small></th><td><code>^0.5.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/typify/versions/0.5.0/">crates-io/typify 0.5.0</a><span>Requires ^0.5.0 · alias typify-macro · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="notice">No compiled assets are indexed for this version. This does not establish whether upstream supports a platform.</p><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td></td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/typify-macro/versions/0.5.0/">0.5.0</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/typify-macro/0.5.0">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0</strong></p><details class="document-file"><summary>LICENSE · Registry-generated</summary><div class="readme"><pre><code>typify-macro 0.5.0, as published on crates.io, carries no license file. Its manifest declares the license `Apache-2.0` (an SPDX expression; each identifier's text is at https://spdx.org/licenses/). See https://crates.io/crates/typify-macro/0.5.0.
+
+incan.pub wrote this file when it adopted the package as the Loaf `crates-io/typify-macro`.
+</code></pre></div><p class="table-note">sha256:e1d73dd6987b7cb6f9d18a7a851eab3b01e6e6370c71f06dba80007b6b663493</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:eece753234cd043a69af001dc548a9e581884effb5cdebff7c577de8188a3de6</code></dd><dt>Upstream checksum</dt><dd><code>sha256:911c32f3c8514b048c1b228361bebb5e6d73aeec01696e8cc0e82e2ffef8ab7a</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at b1a5c57</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/typify-macro&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.5.0&quot;</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;typify_macro&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;proc-macro&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">proc-macro2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/proc-macro2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.101&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">quote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/quote&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.41&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">schemars</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/schemars&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.8.22&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">semver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/semver&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.27&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;serde&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.228&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde_json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_json&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.145&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">serde_tokenstream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/serde_tokenstream&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.2&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">syn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/syn&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;extra-traits&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;full&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="n">typify-impl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/typify-impl&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.5.0&quot;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:c16ad44b089ea95b80a8268b1b4bea9659316cff539b72898eb9c185fceda78c&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Not declared</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/typify-macro/0.5.0">crates.io package</a></li><li><a href="https://github.com/oxidecomputer/typify">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>No indexed build</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">typify-macro</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/typify-macro"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.5.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

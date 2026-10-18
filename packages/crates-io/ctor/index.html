@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ctor 1.0.13 · Incan.pub</title><meta name="description" content="Global, no_std-compatible constructors for all platforms that run before main (like C/C++ __attribute__((constructor)))"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/ctor</p><div class="title-row"><h1>ctor</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/ctor/versions/1.0.13/" selected>1.0.13</option></select></label></div><p class="description">Global, no_std-compatible constructors for all platforms that run before main (like C/C++ __attribute__((constructor)))</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0 OR MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><p>The crate is part of the <a href="https://crates.io/crates/linktime"><code>linktime</code></a> project.</p>
+<p><a href="https://github.com/mmastrac/linktime">GitHub</a> <a href="https://crates.io/crates/link-section">Crates.io License</a> <a href="https://github.com/mmastrac/linktime/actions/workflows/rust.yml">Build Status</a></p>
+<table>
+<thead>
+<tr>
+<th>crate</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>linktime</code>&lt;br&gt;<a href="https://docs.rs/linktime">docs.rs</a> <a href="https://crates.io/crates/linktime">crates.io</a></td>
+<td>Convenience crate for <code>ctor</code>, <code>dtor</code> and <code>link-section</code></td>
+</tr>
+<tr>
+<td><code>ctor</code>&lt;br&gt;<a href="https://docs.rs/ctor">docs.rs</a> <a href="https://crates.io/crates/ctor">crates.io</a></td>
+<td>Module initialization functions before main</td>
+</tr>
+<tr>
+<td><code>dtor</code>&lt;br&gt;<a href="https://docs.rs/dtor">docs.rs</a> <a href="https://crates.io/crates/dtor">crates.io</a></td>
+<td>Module shutdown functions before main</td>
+</tr>
+<tr>
+<td><code>link-section</code>&lt;br&gt;<a href="https://docs.rs/link-section">docs.rs</a> <a href="https://crates.io/crates/link-section">crates.io</a></td>
+<td>Linker-managed typed (slices) and untyped sections</td>
+</tr>
+<tr>
+<td><code>scattered-collect</code>&lt;br&gt;<a href="https://docs.rs/scattered-collect">docs.rs</a> <a href="https://crates.io/crates/scattered-collect">crates.io</a></td>
+<td>Linker-managed collections: slices, sorted slices, maps</td>
+</tr>
+</tbody>
+</table>
+<h3>ctor</h3>
+<p>Module initialization functions for Rust (like <code>__attribute__((constructor))</code> in
+C/C++) for Linux, macOS, Windows, WASM, BSD-likes, and many others.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">ctor</span><span class="p">::</span><span class="n">ctor</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">libc_print</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="cp">#[ctor(unsafe)]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">foo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">libc_println</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Life before main!&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h4>MSRV</h4>
+<p>For most platforms, this library currently has a MSRV of <strong>Rust &gt;= 1.60</strong>.</p>
+<p>The priority feature requires a MSRV of <strong>Rust &gt;= 1.85</strong> on macOS targets.</p>
+<p>MSRV for WASM targets is <strong>Rust &gt;= 1.85</strong>.</p>
+<h4>Lightweight</h4>
+<p><code>ctor</code> has no dependencies other than the <code>linktime-proc-macro</code> and
+<code>link-section</code> crates. The proc-macro is only used to delegate to the
+declarative macro and should have minimal effect on compilation time.</p>
+<h4>Support</h4>
+<p>This library works and is regularly tested on Linux, macOS, Windows, and
+FreeBSD, with both <code>+crt-static</code> and <code>-crt-static</code> and <code>bin</code>/<code>cdylib</code> outputs.</p>
+<p>Contributions to support other platforms or improve testing are welcome.</p>
+<table>
+<thead>
+<tr>
+<th>OS</th>
+<th>Supported</th>
+<th>CI Tested</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linux</td>
+<td>✅</td>
+<td>🏅</td>
+</tr>
+<tr>
+<td>macOS</td>
+<td>✅</td>
+<td>🏅</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>✅</td>
+<td>🏅</td>
+</tr>
+<tr>
+<td>WASM 🕸️</td>
+<td>✅</td>
+<td>🏅</td>
+</tr>
+<tr>
+<td>FreeBSD</td>
+<td>✅</td>
+<td>💨</td>
+</tr>
+<tr>
+<td>NetBSD</td>
+<td>✅</td>
+<td>💨</td>
+</tr>
+<tr>
+<td>OpenBSD</td>
+<td>✅</td>
+<td>💨</td>
+</tr>
+<tr>
+<td>DragonFlyBSD</td>
+<td>✅</td>
+<td>💨</td>
+</tr>
+<tr>
+<td>Illumos</td>
+<td>✅</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Android</td>
+<td>✅</td>
+<td>-</td>
+</tr>
+<tr>
+<td>iOS</td>
+<td>✅</td>
+<td>-</td>
+</tr>
+<tr>
+<td>AIX</td>
+<td>✅</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Haiku</td>
+<td>✅</td>
+<td>-</td>
+</tr>
+<tr>
+<td>VxWorks</td>
+<td>✅</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Xtensa</td>
+<td>✅</td>
+<td>-</td>
+</tr>
+<tr>
+<td>NTO</td>
+<td>✅</td>
+<td>-</td>
+</tr>
+<tr>
+<td>UEFI</td>
+<td>⚠️</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>
+<p>🏅 Full CI (miri, address sanitizer, etc.)</p>
+</li>
+<li>
+<p>💨 Smoke tests (varying levels)</p>
+</li>
+<li>
+<p>⚠️ Needs more feedback</p>
+</li>
+<li>
+<p>🕸️ WASM <code>wasm-unknown-unknown</code>, <code>wasm-wasip1</code>, <code>wasm-wasip2</code> are supported.</p>
+</li>
+<li>
+<p><code>wasm-unknown-unknown</code> requires host environment support for <code>atexit</code> if used
+with <code>dtor</code>.</p>
+</li>
+<li>
+<p><code>wasm-wasip2</code> may require you to manually call <code>__wasm_call_ctors</code> and
+<code>__wasm_call_dtors</code> at the appropriate times.</p>
+</li>
+</ul>
+<h4>Warnings</h4>
+<p>Rust's philosophy is that nothing happens before or after main and this library
+explicitly subverts that. The code that runs in the <code>ctor</code> and <code>dtor</code> functions
+should be careful to limit itself to <code>libc</code> functions and code that does not
+rely on Rust's stdlib services.</p>
+<p>See <a href="crate::life_before_main"><code>::life_before_main</code></a> for more information.</p>
+<h4>Usage</h4>
+<p><code>#[ctor]</code> decorates a function item to be called as a module constructor. Both
+free (a global <code>fn()</code>) and impl functions (<code>Self::method()</code>) are supported.</p>
+<p>The example below marks the function <code>foo</code> as a module constructor, called when
+a static library is loaded or an executable is started:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">atomic</span><span class="p">::{</span><span class="n">AtomicBool</span><span class="p">,</span><span class="w"> </span><span class="n">Ordering</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">ctor</span><span class="p">::</span><span class="n">ctor</span><span class="p">;</span>
+
+<span class="k">static</span><span class="w"> </span><span class="n">INITED</span><span class="p">:</span><span class="w"> </span><span class="nc">AtomicBool</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AtomicBool</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+
+<span class="cp">#[ctor(unsafe)]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">foo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ... (do something)</span>
+<span class="w">    </span><span class="n">INITED</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">Ordering</span><span class="p">::</span><span class="n">SeqCst</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>Implementation methods can also be decorated with <code>#[ctor]</code>, as long as they
+have no <code>self</code> parameter:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">ctor</span><span class="p">::</span><span class="n">ctor</span><span class="p">;</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">MyStruct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">MyStruct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="sd">/// Ensure the required C library is loaded at startup time.</span>
+<span class="w">    </span><span class="cp">#[ctor(unsafe)]</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">load_required_c_library</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// ... (do something)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h5><code>static</code> items</h5>
+<p>The <code>#[ctor]</code> macro also supports decorating <code>static</code> items, which are
+initialized at startup time. <code>static</code> items declared in this way must not be
+accessed from other threads before the module constructors have run (if this is
+done without caution, the initializer may panic).</p>
+<p>The below example creates a <code>HashMap</code> populated with strings, which would
+normally not be possible with <code>const</code> items:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">ctor</span><span class="p">::</span><span class="n">ctor</span><span class="p">;</span>
+
+<span class="cp">#[ctor(unsafe)]</span>
+<span class="sd">/// This is an immutable static, evaluated at init time</span>
+<span class="k">static</span><span class="w"> </span><span class="n">STATIC_CTOR</span><span class="p">:</span><span class="w"> </span><span class="nc">HashMap</span><span class="o">&lt;</span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="w">    </span><span class="n">m</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;foo&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">m</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;bar&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">m</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;baz&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">m</span>
+<span class="p">};</span>
+</code></pre>
+<h5>As a building block</h5>
+<p>The <code>#[ctor]</code> macro can be used as a building block for more complex
+initialization logic. Use the <a href="crate::declarative::ctor"><code>declarative::ctor</code></a> to
+easily export macros that re-use <code>ctor</code> functionality.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">ctor</span><span class="p">::</span><span class="n">ctor</span><span class="p">;</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="n">Driver</span><span class="p">:</span><span class="w"> </span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">Send</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">Sync</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="k">static</span><span class="w"> </span><span class="n">DRIVERS</span><span class="p">:</span><span class="w"> </span><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">Mutex</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Driver</span><span class="o">&gt;&gt;&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">Mutex</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">());</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">register_driver</span><span class="p">(</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">driver</span><span class="p">:</span><span class="w"> </span><span class="nc">impl</span><span class="w"> </span><span class="n">Driver</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">DRIVERS</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="n">push</span><span class="p">(</span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">driver</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="cp">#[ctor(unsafe, priority = late)]</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">walk_drivers</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">driver</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">DRIVERS</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">unwrap</span><span class="p">().</span><span class="n">iter</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="fm">macro_rules!</span><span class="w"> </span><span class="n">register_driver</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">(</span><span class="cp">$name</span><span class="p">:</span><span class="nc">expr</span><span class="p">,</span><span class="w"> </span><span class="cp">$driver</span><span class="p">:</span><span class="nc">expr</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">$crate</span><span class="p">::</span><span class="n">ctor</span><span class="p">::</span><span class="n">declarative</span><span class="p">::</span><span class="n">ctor</span><span class="o">!</span><span class="p">(</span>
+<span class="w">            </span><span class="cp">#[ctor(unsafe, anonymous, priority = 1)]</span>
+<span class="w">            </span><span class="k">fn</span><span class="w"> </span><span class="nf">register</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">register_driver</span><span class="p">(</span><span class="cp">$name</span><span class="p">,</span><span class="w"> </span><span class="cp">$driver</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">);</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">MyDriver</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">Driver</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">MyDriver</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="n">register_driver</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;my_driver&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">MyDriver</span><span class="w"> </span><span class="p">{});</span>
+</code></pre>
+<h4>Under the Hood</h4>
+<p>The <code>#[ctor]</code> macro makes use of linker sections to ensure that a function is
+run at startup time.</p>
+<p>The above example translates into the following Rust code (approximately):</p>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[used]</span>
+<span class="cp">#[cfg_attr(target_os = </span><span class="s">&quot;linux&quot;</span><span class="cp">, link_section = </span><span class="s">&quot;.init_array&quot;</span><span class="cp">)]</span>
+<span class="cp">#[cfg_attr(target_vendor = </span><span class="s">&quot;apple&quot;</span><span class="cp">, link_section = </span><span class="s">&quot;__DATA,__mod_init_func,mod_init_funcs&quot;</span><span class="cp">)]</span>
+<span class="cp">#[cfg_attr(target_os = </span><span class="s">&quot;windows&quot;</span><span class="cp">, link_section = </span><span class="s">&quot;.CRT$XCU&quot;</span><span class="cp">)]</span>
+<span class="cm">/* ... other platforms elided ... */</span>
+<span class="k">static</span><span class="w"> </span><span class="n">FOO</span><span class="p">:</span><span class="w"> </span><span class="nc">extern</span><span class="w"> </span><span class="k">fn</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">extern</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">foo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="n">foo</span>
+<span class="p">};</span>
+</code></pre>
+<h4>Inspiration</h4>
+<p>The idea for <code>ctor</code> was originally inspired by the Neon project.</p>
+<h3>Re-exporting from another crate</h3>
+<p>The macros assume this crate is available as a direct dependency, resolving their
+support paths through the crate's own name. If you re-export this crate's items as
+part of your own crate (so that downstream users don't need to depend on it
+directly), you have two options:</p>
+<ul>
+<li>(preferred) use the declarative macro form. It resolves its support paths
+relative to your re-export, so no extra configuration is required.</li>
+<li>Alternatively, pass the <code>crate_path</code> attribute to redirect the macro's
+generated output to the path where this crate has been re-exported.</li>
+</ul>
+<p>See the <code>crate_path</code> entry in the <em>Macro Attributes</em> section below for the exact
+syntax for this crate.</p>
+<h3>Crate Features</h3>
+<table>
+<thead>
+<tr>
+<th>Cargo feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>priority</code></td>
+<td>Enable support for the priority parameter.</td>
+</tr>
+<tr>
+<td><code>proc_macro</code></td>
+<td>Enable support for the proc-macro <code>#[ctor]</code> attribute. The declarative form (<code>ctor!(...)</code>) is always available. It is recommended that crates re-exporting the <code>ctor</code> macro disable this feature and only use the declarative form.</td>
+</tr>
+<tr>
+<td><code>std</code></td>
+<td>Enable support for the standard library.</td>
+</tr>
+</tbody>
+</table>
+<h3>Macro Attributes</h3>
+<p>&lt;table&gt;&lt;tr&gt;&lt;th&gt;Attribute&lt;/th&gt;&lt;th&gt;Description&lt;/th&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;anonymous&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Do not give the constructor a name in the generated code (allows for
+multiple constructors with the same name). Equivalent to wrapping the
+constructor in an anonymous const (i.e.: <code>const _ = { ... };</code>).</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;body(link_section = &quot;.text.startup&quot;)&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Place the constructor body in a custom link section. By default, this
+uses the appropriate platform-specific link section.</p>
+<p>Co-locating startup functions may improve performance by allowing the binary
+to page them in and out of memory together.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;crate_path = ::path::to::ctor::crate&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>The path to the <code>ctor</code> crate containing the support macros. If you
+re-export <code>ctor</code> items as part of your crate, you can use this to
+redirect the macro’s output to the correct crate.</p>
+<p>Using the declarative <a href="crate::declarative::ctor!"><code>ctor!</code></a> form is
+preferred over this parameter.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;export_name_prefix = &quot;ctor_&quot;&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Specify a custom export name prefix for the constructor function.</p>
+<p>If specified, an export with the given prefix will be generated in the form:</p>
+<p><code>&lt;prefix&gt;&lt;priority&gt;_&lt;unique_id&gt;</code></p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;link_section = &quot;.ctors&quot;&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Place the constructor function pointer in a custom link section. By
+default, this uses the appropriate platform-specific link section.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;naked&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Use the least-possibly mangled version of the linker invocation for this
+constructor. This is not recommended for general use as it may prevent
+authors of binary crates from having low-level control over the order of
+initialization.</p>
+<p>There are no guarantees about the order of execution of constructors
+with this attribute, just that it will be called at some point before
+<code>main</code>.</p>
+<p><code>naked</code> constructors are always executed directly by the underlying C
+library and/or dynamic loader.</p>
+<p><code>naked</code> cannot be used with the <code>priority</code> attribute.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;priority = N | early | late&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>The priority of the constructor. Higher-<code>N</code>-priority constructors are
+run last. <code>N</code> must be between 0 and 999 inclusive for ordering
+guarantees (<code>N</code> &gt;= 1000 ordering is platform-defined).</p>
+<p>Priority is specified as numeric value, string literal, or the
+identifiers <code>early</code>, <code>default</code>, or <code>late</code>. The integer value will be
+clamped to a platform-defined range (typically 0-65535), while string
+priorities are passed through unprocessed.</p>
+<p>Most platforms reserve the numeric values range of 0..100 for their own
+internal use and it may not be safe to access platform services (<code>libc</code>
+or other) in constructors with those priorities.</p>
+<p>Priority is applied as follows:</p>
+<ul>
+<li><code>N</code> is run in increasing order, from <code>0 &lt;= N &lt;= 999</code>.</li>
+<li><code>early</code> is run at a priority level where it is safe to access the C
+runtime. This is equivalent to a priority of 101 on most platforms.</li>
+<li><code>default</code> is the default, and is run after <code>early</code>. This is
+equivalent to a priority of 500.</li>
+<li><code>late</code> is run last, and will be positioned to run after most
+constructors, even outside the range <code>0 &lt;= N &lt;= 999</code>. The equivalent
+priority is platform-defined.</li>
+<li><code>main</code> is run, for binary targets.</li>
+</ul>
+<p>Ordering with explicit priority values outside of <code>0 &lt;= N &lt;= 999</code> is
+platform-defined with respect to the list above, however platforms will
+order constructors within a given priority range in ascending order
+(i.e.: 10000 will run before 20000).</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;unsafe&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Marks a ctor as unsafe. Required.</p>
+<p>The <code>ctor</code> crate rejects <code>#[ctor]</code> without marking the item unsafe;
+that error can be suppressed by passing
+<code>RUSTFLAGS=&quot;--cfg linktime_no_fail_on_missing_unsafe&quot;</code> to Cargo.</p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;code&gt;used(linker)&lt;/code&gt;&lt;/td&gt;&lt;td&gt;</p>
+<p>Mark generated function pointers <code>used(linker)</code>. Requires nightly
+for the nightly-only feature <code>feature(used_with_arg)</code> (see
+<a href="https://github.com/rust-lang/rust/issues/93798">https://github.com/rust-lang/rust/issues/93798</a>).</p>
+<p>This can be made the default by using the <code>cfg</code> flag
+<code>linktime_used_linker</code> (<code>RUSTFLAGS=&quot;--cfg linktime_used_linker&quot;</code>).</p>
+<p>For a crate using this macro to function correctly with and without
+this flag, it is recommended to add the following line to the top of
+lib.rs in the crate root:</p>
+<p><code>#![cfg_attr(linktime_used_linker, feature(used_with_arg))]</code></p>
+<p>&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;</p>
+<h3>Defaults</h3>
+<h4><code>body_link_section</code></h4>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[cfg(target_os = </span><span class="s">&quot;linux&quot;</span><span class="cp">)]</span>
+<span class="n">body_link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.text.startup&quot;</span>
+
+<span class="cp">#[cfg(target_os = </span><span class="s">&quot;android&quot;</span><span class="cp">)]</span>
+<span class="n">body_link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.text.startup&quot;</span>
+
+<span class="cp">#[cfg(target_os = </span><span class="s">&quot;freebsd&quot;</span><span class="cp">)]</span>
+<span class="n">body_link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.text.startup&quot;</span>
+
+<span class="cp">#[cfg(all(target_os = </span><span class="s">&quot;windows&quot;</span><span class="cp">, any(target_env = </span><span class="s">&quot;gnu&quot;</span><span class="cp">, target_env = </span><span class="s">&quot;msvc&quot;</span><span class="cp">)))]</span>
+<span class="n">body_link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.text$A&quot;</span>
+
+<span class="cp">#[cfg(all(target_os = </span><span class="s">&quot;windows&quot;</span><span class="cp">, not(any(target_env = </span><span class="s">&quot;gnu&quot;</span><span class="cp">, target_env = </span><span class="s">&quot;msvc&quot;</span><span class="cp">))))]</span>
+<span class="n">body_link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.text.startup&quot;</span>
+
+<span class="cp">#[cfg(target_vendor = </span><span class="s">&quot;apple&quot;</span><span class="cp">)]</span>
+<span class="n">body_link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;__TEXT,__text_startup,regular,pure_instructions&quot;</span>
+
+<span class="c1">// default</span>
+<span class="n">body_link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span>
+</code></pre>
+<h4><code>export_name_prefix</code></h4>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[cfg(target_os = </span><span class="s">&quot;aix&quot;</span><span class="cp">)]</span>
+<span class="n">export_name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;__sinit&quot;</span>
+
+<span class="c1">// default</span>
+<span class="n">export_name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span>
+</code></pre>
+<h4><code>link_section</code></h4>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[cfg(target_vendor = </span><span class="s">&quot;apple&quot;</span><span class="cp">)]</span>
+<span class="n">link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;__DATA,__mod_init_func,mod_init_funcs&quot;</span>
+
+<span class="cp">#[cfg(any(target_os = </span><span class="s">&quot;linux&quot;</span><span class="cp">, target_os = </span><span class="s">&quot;android&quot;</span><span class="cp">, target_os = </span><span class="s">&quot;freebsd&quot;</span><span class="cp">,</span>
+<span class="cp">target_os = </span><span class="s">&quot;netbsd&quot;</span><span class="cp">, target_os = </span><span class="s">&quot;openbsd&quot;</span><span class="cp">, target_os = </span><span class="s">&quot;dragonfly&quot;</span><span class="cp">,</span>
+<span class="cp">target_os = </span><span class="s">&quot;illumos&quot;</span><span class="cp">, target_os = </span><span class="s">&quot;haiku&quot;</span><span class="cp">, target_os = </span><span class="s">&quot;vxworks&quot;</span><span class="cp">, target_os =</span>
+<span class="s">&quot;nto&quot;</span><span class="cp">, target_family = </span><span class="s">&quot;wasm&quot;</span><span class="cp">))]</span>
+<span class="n">link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.init_array&quot;</span>
+
+<span class="cp">#[cfg(target_os = </span><span class="s">&quot;none&quot;</span><span class="cp">)]</span>
+<span class="n">link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.init_array&quot;</span>
+
+<span class="cp">#[cfg(target_arch = </span><span class="s">&quot;xtensa&quot;</span><span class="cp">)]</span>
+<span class="n">link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.ctors&quot;</span>
+
+<span class="cp">#[cfg(all(target_os = </span><span class="s">&quot;windows&quot;</span><span class="cp">, any(target_env = </span><span class="s">&quot;gnu&quot;</span><span class="cp">, target_env = </span><span class="s">&quot;msvc&quot;</span><span class="cp">)))]</span>
+<span class="n">link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.CRT$XCU&quot;</span>
+
+<span class="cp">#[cfg(all(target_os = </span><span class="s">&quot;windows&quot;</span><span class="cp">, not(any(target_env = </span><span class="s">&quot;gnu&quot;</span><span class="cp">, target_env = </span><span class="s">&quot;msvc&quot;</span><span class="cp">))))]</span>
+<span class="n">link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.ctors&quot;</span>
+
+<span class="cp">#[cfg(target_os = </span><span class="s">&quot;uefi&quot;</span><span class="cp">)]</span>
+<span class="n">link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.init_array&quot;</span>
+
+<span class="cp">#[cfg(target_os = </span><span class="s">&quot;aix&quot;</span><span class="cp">)]</span>
+<span class="n">link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span>
+
+<span class="c1">// default</span>
+<span class="n">link_section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;.init_array&quot;</span>
+</code></pre>
+<h4><code>priority</code></h4>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[cfg(feature = </span><span class="s">&quot;priority&quot;</span><span class="cp">)]</span>
+<span class="n">priority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">default</span>
+
+<span class="c1">// default</span>
+<span class="n">priority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span>
+</code></pre>
+<h4><code>r#unsafe</code></h4>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[cfg(linktime_no_fail_on_missing_unsafe)]</span>
+<span class="n">r</span><span class="p">#</span><span class="k">unsafe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">no_fail_on_missing_unsafe</span><span class="p">)</span>
+
+<span class="c1">// default</span>
+<span class="n">r</span><span class="p">#</span><span class="k">unsafe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span>
+</code></pre>
+<h4><code>used_linker</code></h4>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[cfg(linktime_used_linker)]</span>
+<span class="n">used_linker</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">used_linker</span>
+
+<span class="c1">// default</span>
+<span class="n">used_linker</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span>
+</code></pre>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>proc_macro</code></li><li><code>priority</code></li></ul></td></tr><tr><th scope="row"><code>priority</code></th><td>Yes<small>default → priority</small></td><td><ul class="effects"><li><code>dep:link-section</code></li></ul></td></tr><tr><th scope="row"><code>proc_macro</code></th><td>Yes<small>default → proc_macro</small></td><td><ul class="effects"><li><code>dep:linktime-proc-macro</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/link-section/"><code>crates-io/link-section</code></a><small>Alias: link-section</small></th><td><code>^0.19.3</code><small>Default features: disabled</small><small>Requests: </small></td><td>Enabled through default → priority</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/linktime-proc-macro/"><code>crates-io/linktime-proc-macro</code></a><small>Alias: linktime-proc-macro</small></th><td><code>^0.2.3</code><small>Default features: enabled</small><small>Requests: ctor</small></td><td>Enabled through default → proc_macro</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><p>No declared dependents in this checkpoint.</p></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, priority, proc_macro, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:acbbcc771277dce68880ece7fb9a5f0dd7be79e291c4d326b69e3ee701aed44d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:9e4a10aaf6f2900a8b989197d67f658163f64d954139d920e017664aa6ae8ad5</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, priority, proc_macro, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:39f49637ed9cc447c676af46118c471e38b6967c51e74316396c9f38fe8b9fc5</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54023396">Attestation reference</a><small>Archive: sha256:69a3c72444258ed5c4544b79632e427d6788a032ca8ec169326972f26c73e783</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, priority, proc_macro, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:2647a4909d4c89229e011a22ce80ac700a6b70ccd4d322ae6b936c7a3b4ddbe8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674722">Attestation reference</a><small>Archive: sha256:1a1b0e8511a4308b299d497992afb0c6bf06aae99fb40844b76fa3bfde7427fb</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, priority, proc_macro, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1a4294bbce72e40b6dd1784fe9e50ad57547801e029a69f39dc9c37c00b1097b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54076720">Attestation reference</a><small>Archive: sha256:ff58e696862556d3f4fbfeeb5bc7fb87c042ded42986b2f3f06634a5e4e4af44</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/ctor/versions/1.0.13/">1.0.13</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/ctor/1.0.13">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>All notable changes to this crate will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h4>[1.0.13] - 2026-08-09</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>linktime-proc-macro</code> dependency to 0.2.3 (consistent 64-bit hash chunks
+and cross-crate section-name fix).</li>
+</ul>
+<h5>Documentation</h5>
+<ul>
+<li>Documented the <code>crate_path</code> override for re-exporting the macro from another
+crate.</li>
+</ul>
+<h4>[1.0.12] - 2026-07-29</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>linktime-proc-macro</code> dependency to 0.2.1 (makes link-section names more stable).</li>
+</ul>
+<h4>[1.0.11] - 2026-07-26</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Pointer-align the priority ctor anchor on Apple platforms (#502).</li>
+</ul>
+<h4>[1.0.10] - 2026-07-21</h4>
+<h5>Changed</h5>
+<ul>
+<li>Faster atomics and #[cold] for <code>Static::deref</code> initialization (@yvt PR #501)</li>
+</ul>
+<h4>[1.0.9] - 2026-07-15</h4>
+<h5>Fixed</h5>
+<ul>
+<li>Ensure the single executing priority ctor is kept alive on Apple platforms (#496).</li>
+</ul>
+<h4>[1.0.8] - 2026-07-06</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>link-section</code> dependency to 0.19.0.</li>
+</ul>
+<h4>[1.0.7] - 2026-05-28</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>link-section</code> dependency to 0.18.0.</li>
+<li>Improve error messages for bad attribute values.</li>
+</ul>
+<h4>[1.0.6] - 2026-05-16</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>link-section</code> dependency to 0.17.0.</li>
+<li>MSRV bumped to 1.85.0 (if <code>priority</code> feature is enabled), otherwise remains at
+1.60.0.
+<ul>
+<li>To restore MSRV to 1.60.0, use <code>ctor = { version = &quot;1.0.6&quot;, default-features = false, features = [&quot;proc_macro&quot;, &quot;std&quot;] }</code> in your Cargo.toml.</li>
+</ul>
+</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li><code>#[ctor]</code> requires significantly less macro recursion.</li>
+</ul>
+<h4>[1.0.5] - 2026-05-11</h4>
+<h5>Changed</h5>
+<ul>
+<li>Repair MSRV breakage for WASM targets.</li>
+</ul>
+<h4>[1.0.4] - 2026-05-08</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for win7, uwp and other windows targets</li>
+<li>Support for UEFI targets (<code>.init_array</code> matching gnu-efi)</li>
+<li>Fallback to <code>.init_array</code> for unsupported targets (with a warning)</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>target_vendor = &quot;pc&quot;</code> is now <code>target_os = &quot;windows&quot;</code>. This should be a
+strictly increasing set of support for windows targets.</li>
+</ul>
+<h4>[1.0.3] - 2026-05-07</h4>
+<h5>Fixed</h5>
+<ul>
+<li>A <code>default</code> priority value is now supported and is the default. This is
+equivalent to a priority of 500 on most platforms. The previous <code>priority</code>
+default of 0 was unsafe for C library access on some platforms.</li>
+<li>The <code>early</code> priority value is now equivalent to a priority of 101 on most platforms.</li>
+</ul>
+<h4>[1.0.2] - 2026-05-06</h4>
+<h5>Changed</h5>
+<ul>
+<li>Bump <code>link-section</code> dependency to 0.15.0.</li>
+<li>Use <code>const</code> rather than <code>static</code> items for collected constructors on macOS.</li>
+<li>Allow various forms of <code>&amp;'static</code> for <code>#[ctor]</code> statics which desugar to
+<code>&amp;'static Static</code>.</li>
+<li>Static items delegate <code>Display</code> directly as well.</li>
+<li>Support for multiple <code>#[ctor]</code> items in a single <code>#[ctor]</code> block:</li>
+</ul>
+<pre><code class="syntax-highlight language-rust"><span class="cp">#[ctor]</span>
+<span class="k">static</span><span class="w"> </span><span class="n">CTOR</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="k">fn</span><span class="p">()]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<h4>[1.0.1] - 2026-05-04</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>wasm32-unknown-unknown</code> would run ctor items on each call of an exported
+function.</li>
+</ul>
+<h4>[1.0.0] - 2026-05-03</h4>
+<h5>Changed</h5>
+<ul>
+<li>Stabilized (yay!). Identical to 0.13.1. Thanks to all the contributors who
+helped along the way! Please file any upgrade issues in
+<a href="https://github.com/mmastrac/linktime/issues">https://github.com/mmastrac/linktime/issues</a>.</li>
+<li>For those upgrading from earlier versions, the major changes for you to note
+are:
+<ul>
+<li><code>dtor</code> was split into the <code>dtor</code> crate. You'll need to add it to your
+dependencies like so:<pre><code class="syntax-highlight language-toml"><span class="k">[dependencies]</span>
+<span class="n">dtor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span><span class="w"> </span><span class="c1"># or later</span>
+</code></pre>
+</li>
+<li><code>#[ctor(unsafe)]</code> is now required for <code>#[ctor]</code> items. If you are building a
+binary, you can use <code>RUSTFLAGS=&quot;--cfg linktime_no_fail_on_missing_unsafe&quot;</code>
+(or alternatively, specify this in your <code>config.toml</code> file) to bypass the
+error.</li>
+<li>For those re-exporting <code>ctor</code> from their own crates: the
+<code>ctor::declarative::ctor!</code> macro should be preferred over
+<code>#[ctor(crate_path = ...)]</code>. The latter form will continue to work, but
+the declarative macro is far more stable for most use cases. See
+<a href="https://docs.rs/ctor/latest/ctor/declarative/macro.ctor.html">https://docs.rs/ctor/latest/ctor/declarative/macro.ctor.html</a> for more
+details.</li>
+</ul>
+</li>
+</ul>
+<h4>[0.13.1] - 2026-05-02</h4>
+<h5>Changed</h5>
+<ul>
+<li>Crate examples were reorganized.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Documentation fixes (<code>--cfg</code> flags were incorrect).</li>
+<li>Incorrect crate feature in docs.</li>
+</ul>
+<h4>[0.13.0] - 2026-05-02</h4>
+<h5>Changed</h5>
+<ul>
+<li><code>#[ctor(priority = naked)]</code> is now <code>#[ctor(naked)]</code>.</li>
+<li><code>unsafe</code> is now required for <code>#[ctor]</code> items and the
+<code>no_warn_on_missing_unsafe</code> feature is gone.
+<ul>
+<li><code>RUSTFLAGS=&quot;--cfg linktime_no_fail_on_missing_unsafe&quot;</code> can bypass the error.</li>
+</ul>
+</li>
+<li><code>used_linker</code> feature moved to <code>--cfg linktime_used_linker</code> flag.</li>
+</ul>
+<h5>Added</h5>
+<ul>
+<li>Re-added link section option for body of <code>#[ctor]</code> items (supported for Linux/Android/FreeBSD/Apple).</li>
+</ul>
+<h4>[0.12.0] - 2026-04-30</h4>
+<h5>Added</h5>
+<ul>
+<li>Support for <code>#[ctor]</code> on <code>impl</code> items. To be valid, the <code>fn</code> must have no
+<code>self</code> parameter and must not access any generic parameters from the outer
+item.</li>
+<li>Added <code>life before main</code> documentation to all crates.</li>
+<li><code>early</code> and <code>late</code> priority values are now supported on all platforms.</li>
+</ul>
+<h5>Removed</h5>
+<ul>
+<li>Deprecated <code>dtor</code> feature and crate dependency from <code>ctor</code> crate (use the
+<code>dtor</code> crate directly).</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>AIX uses &quot;standard&quot; priority values from 0 to 999, early and late (mapped to
+80000000 to 80000999).</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>If the <code>priority</code> feature is enabled, <code>ctor</code> priority sorting is now stable
+and consistent across platforms: <code>early</code>/<code>0</code>/<code>unspecified</code>, then <code>1 &lt;= N &lt; 1000</code>, then <code>late</code>.</li>
+<li>If a <code>link_section</code> or <code>export_name_prefix</code> is specified, a <code>priority</code> value
+must not be specified (now a compiler error).</li>
+<li>Migrated to using the <code>linktime-proc-macro</code> crate for proc-macro support.</li>
+</ul>
+<h4>[0.11.1] - 2026-04-28</h4>
+<h5>Changed</h5>
+<ul>
+<li>Deprecated <code>dtor</code> macros in favor of the <code>dtor</code> crate.</li>
+<li>Migrated to using the <code>linktime-proc-macro</code> crate for proc-macro support.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fixed some stray <code>dtor</code> references in ctor docs.</li>
+</ul>
+<h4>[0.11.0] - 2026-04-28</h4>
+<h5>Added</h5>
+<ul>
+<li>AIX support for <code>ctor</code>/<code>dtor</code> crates.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li>Significant rewrite to ctor/dtor macros and documentation.</li>
+<li>Macro attributes and crate features are auto-documented.</li>
+<li>Rewrote <code>statics</code> code in <code>ctor</code> to not require <code>std</code>.</li>
+</ul>
+<h4>[0.10.1] - 2026-04-22</h4>
+<h5>Added</h5>
+<ul>
+<li>Included licenses in all files.</li>
+<li>Bumped proc-macro dependency versions.</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+<li>Fix MSRV in ctor docs.</li>
+<li>Various hardening fixes under Miri.</li>
+<li>Adding priority to <code>ctor</code>s accidentally enabled the anonymous flag.</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+<li><code>ctor</code> exports all <code>dtor</code> macros from <code>dtor</code> crate rather than reimplementing them.</li>
+</ul>
+</div><p class="table-note">sha256:3ac108ad1752583c69eebcd41e70d29ba4b41e7bbc83f6584afcb3eec960c279</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0 OR MIT</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "{}"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright {yyyy} {name of copyright owner}
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+</code></pre></div><p class="table-note">sha256:a8ad31b1c3f40dca5a84119351b8fa8ddc868edd77fad8a8ebf6d8f2d16fa4ae</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</code></pre></div><p class="table-note">sha256:bccaa8b6c09f94e81f06696e179dbe058464bbdfbc823b6d49cada1d71e84ac3</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:ffb79b727e42b25cec6b5bf307a98dc6012c37de3c4eb86939d941fc58a4dd37</code></dd><dt>Upstream checksum</dt><dd><code>sha256:914a755b7c2d4af2bdcff7ce1739e2db9a1b81a9b07123d8015786ae03c0980d</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/ctor&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.0.13&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;proc_macro&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;priority&quot;</span><span class="p">]</span>
+<span class="n">priority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:link-section&quot;</span><span class="p">]</span>
+<span class="n">proc_macro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:linktime-proc-macro&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ctor&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">link-section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/link-section&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.19.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">linktime-proc-macro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/linktime-proc-macro&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;ctor&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Matt Mastracci &lt;matthew@mastracci.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.60</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/ctor/1.0.13">crates.io package</a></li><li><a href="https://github.com/mmastrac/linktime">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">ctor</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/ctor"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=1.0.13"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

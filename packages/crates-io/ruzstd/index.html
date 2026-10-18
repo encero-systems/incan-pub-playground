@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ruzstd 0.9.0 · Incan.pub</title><meta name="description" content="A decoder for the zstd compression format"><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/ruzstd</p><div class="title-row"><h1>ruzstd</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/ruzstd/versions/0.9.0/" selected>0.9.0</option><option value="../../../packages/crates-io/ruzstd/versions/0.8.3/">0.8.3</option></select></label></div><p class="description">A decoder for the zstd compression format</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">Readme.md · Author-provided</p><div class="readme"><h3>Ruzstd (a pure rust zstd format implementation)</h3>
+<p><a href="https://docs.rs/ruzstd">Released API docs</a>
+<a href="https://github.com/killingspark/zstd-rs/actions?query=workflow%3ACI">CI</a></p>
+<h3>What is this</h3>
+<p>A pure Rust implementation of the Zstandard compression format, as defined in <a href="https://www.rfc-editor.org/rfc/rfc8878.pdf">RFC8878</a>.</p>
+<p>This crate contains a fully operational implementation of the decompression portion of the standard.
+It also provides a compressor which is usable, but it does not yet reach the speed, ratio or configurability of the original zstd library.</p>
+<p>This crate is currently actively maintained.</p>
+<h3>Current Status</h3>
+<h4>Decompression</h4>
+<p>The <code>decoding</code> module provides a complete
+implementation of a Zstandard decompressor.</p>
+<p>In terms of speed, <code>ruzstd</code> is behind the original C implementation
+which has a rust binding located <a href="https://github.com/gyscos/zstd-rs">here</a>.</p>
+<p>Measuring with the 'time' utility the original zstd and my decoder both
+decoding the same enwik9.zst file from a ramfs, my decoder is about 3.5
+times slower. Enwik9 is highly compressible, for less compressible data
+(like a ubuntu installation .iso) my decoder comes close to only being
+1.4 times slower.</p>
+<h4>Compression</h4>
+<p>On the compression side:</p>
+<ul>
+<li>Support for generating compressed blocks at any compression level
+<ul>
+<li>[x] Uncompressed</li>
+<li>[x] Fastest (roughly level 1)</li>
+<li>[ ] Default (roughly level 3)</li>
+<li>[ ] Better (roughly level 7)</li>
+<li>[ ] Best (roughly level 11)</li>
+</ul>
+</li>
+<li>[x] Checksums</li>
+<li>[ ] Dictionaries</li>
+</ul>
+<h4>Dictionary Generation</h4>
+<p>When the <code>dict_builder</code> feature is enabled, the <code>dictionary</code> module
+provides the ability to create new dictionaries.</p>
+<p>On the <code>github-users</code> sample set, our implementation benchmarks within
+0.2% of the official implementation (as of commit
+<code>09e52d07340acdb2e13817b066e8be6e424f7258</code>):</p>
+<pre><code>uncompressed: 100.00% (7484607 bytes)
+no dict: 34.99% of original size (2618872 bytes)
+reference dict: 16.16% of no dict size (2195672 bytes smaller)
+our dict: 16.28% of no dict size (2192400 bytes smaller)
+</code></pre>
+<p>The dictionary generator only provides support for creating &quot;raw
+content&quot; dictionaries. Tagged dictionaries are currently unsupported.</p>
+<p>See <a href="https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md#dictionary-format">https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md#dictionary-format</a>
+for clarification.</p>
+<h3>How can you use it?</h3>
+<h4>Compression</h4>
+<p>The easiest is to use the provided <code>compress</code>/<code>compress_to_vec</code> functions</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">ruzstd</span><span class="p">::</span><span class="n">encoding</span><span class="p">::{</span><span class="n">compress</span><span class="p">,</span><span class="w"> </span><span class="n">compress_to_vec</span><span class="p">,</span><span class="w"> </span><span class="n">CompressionLevel</span><span class="p">};</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">data</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="kt">u8</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">todo!</span><span class="p">();</span>
+<span class="c1">// Either</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">compressed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="n">compress</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">compressed</span><span class="p">,</span><span class="w"> </span><span class="n">CompressionLevel</span><span class="p">::</span><span class="n">Fastest</span><span class="p">);</span>
+<span class="c1">// or</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">compressed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compress_to_vec</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">CompressionLevel</span><span class="p">::</span><span class="n">Fastest</span><span class="p">);</span>
+</code></pre>
+<p>Or you can use the <code>FrameDecoder</code> manually to compress data. This allows you to process encoded data while it is being encoded instead of collecting into a big vector.</p>
+<h4>Decompression</h4>
+<p>Additionally to the descriptions and the docs you can have a look at the zstd / zstd_streaming binaries. They showcase how this library can be used.</p>
+<h5>Easy</h5>
+<p>The easiest is to wrap the io::Read into a StreamingDecoder which itself implements io::Read. It will decode blocks as necessary to fulfill the read requests</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">ruzstd</span><span class="p">::</span><span class="n">decoding</span><span class="p">::</span><span class="n">StreamingDecoder</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">ruzstd</span><span class="p">::</span><span class="n">io</span><span class="p">::</span><span class="n">Read</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="kt">u8</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">todo!</span><span class="p">(</span><span class="s">&quot;Get a reader from a File or any other source&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">decoder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">StreamingDecoder</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">source</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="n">decoder</span><span class="p">.</span><span class="n">read_to_end</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">result</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+</code></pre>
+<p>This might be a problem if you are accepting user provided data. Frames can be REALLY big when decoded. If this is the case you should either check how big the frame
+actually is or use the memory efficient approach described below.</p>
+<h5>Memory efficient</h5>
+<p>If memory is a concern you can decode frames partially. There are two ways to do this:</p>
+<h6>Streaming decoder</h6>
+<p>Use the StreamingDecoder and use a while loop to fill your buffer (see src/bin/zstd_stream.rs for an example). This is the
+recommended approach.</p>
+<h6>Use the lower level FrameDecoder</h6>
+<p>For an example see the src/bin/zstd.rs file. Basically you can decode the frame until either a
+given block count has been decoded or the decodebuffer has reached a certain size. Then you can collect no longer needed bytes from the buffer and do something with them, discard them and resume decoding the frame in a loop until the frame has been decoded completely.</p>
+<h4>Roadmap</h4>
+<ol>
+<li>More Performance optimizations
+<ol>
+<li>sequence_decoding and reverse_bitreader::get_bits. Those account for about 50% of the whole time used in decoding</li>
+<li>Matching suffixes. This accounts for &gt;60% of the whole time used in encoding</li>
+</ol>
+</li>
+<li>Implement encoder features
+<ol>
+<li>More levels</li>
+<li>Dictionaries</li>
+<li>Checksums</li>
+</ol>
+</li>
+</ol>
+<h4>Testing</h4>
+<p>Tests take two forms.</p>
+<ol>
+<li>Tests using well-formed files that have to decode correctly and are checked against their originals</li>
+<li>Tests using malformed input that have been generated by the fuzzer. These don't have to decode (they are garbage) but they must not make the decoder panic</li>
+</ol>
+<h4>Fuzzing</h4>
+<p>Fuzzing has been done on</p>
+<ol>
+<li>Random input with no initial corpus</li>
+<li>The *.zst in /fuzz_decodecorpus</li>
+</ol>
+<h5>You want to help fuzz?</h5>
+<p>Use <code>cargo +nightly fuzz run decode</code> or some other fuzz target to run the fuzzer. It is seeded with files created with decodecorpus.</p>
+<p>If the fuzzer finds a crash it will be saved to the artifacts dir by the fuzzer. Run <code>cargo test artifacts</code> to run the artifacts tests.
+This will tell you where the decoder panics exactly. If you are able to fix the issue please feel free to do a pull request. If not please still submit the offending input and I will see how to fix it myself.</p>
+<h3>Contributing</h3>
+<p>Contributions will be published under the same MIT license as this project. Please make an entry in the Changelog.md file when you make a PR.</p>
+<h4>AI Contributions</h4>
+<p>Contributions may be created by using whatever tools you like. They must be read, verified and decided to be a value added to the project by a human (you! not a maintainer) before submitting a PR and the communication about the PR must be handled by a human and not an agent. This is meant to be more or less in the spirit of the <a href="https://llvm.org/docs/AIToolPolicy.html">LLVM policy</a> adapted to a much smaller project.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>hash</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>dict_builder</code></th><td>No</td><td><ul class="effects"><li><code>std</code></li><li><code>dep:fastrand</code></li></ul></td></tr><tr><th scope="row"><code>fuzz_exports</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>hash</code></th><td>Yes<small>default → hash</small></td><td><ul class="effects"><li><code>dep:twox-hash</code></li></ul></td></tr><tr><th scope="row"><code>rustc-dep-of-std</code></th><td>No</td><td><ul class="effects"><li><code>dep:core</code></li><li><code>dep:alloc</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><code>crates-io/rustc-std-workspace-alloc</code><small>Alias: alloc</small></th><td><code>^1.0.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/rustc-std-workspace-core</code><small>Alias: core</small></th><td><code>^1.0.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/fastrand/"><code>crates-io/fastrand</code></a><small>Alias: fastrand</small></th><td><code>^2.3.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../packages/crates-io/twox-hash/"><code>crates-io/twox-hash</code></a><small>Alias: twox-hash</small></th><td><code>^2.0</code><small>Default features: disabled</small><small>Requests: xxhash64</small></td><td>Enabled through default → hash</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/backtrace/versions/0.3.76/">crates-io/backtrace 0.3.76</a><span>Requires ^0.8.1 · alias ruzstd · cfg(not(all(windows, target_env = &quot;msvc&quot;, not(target_vendor = &quot;uwp&quot;))))</span></li><li><a href="../../../packages/crates-io/object/versions/0.40.0/">crates-io/object 0.40.0</a><span>Requires ^0.9.0 · alias ruzstd · </span></li><li><a href="../../../packages/crates-io/object/versions/0.39.1/">crates-io/object 0.39.1</a><span>Requires ^0.8.1 · alias ruzstd · </span></li><li><a href="../../../packages/crates-io/object/versions/0.37.3/">crates-io/object 0.37.3</a><span>Requires ^0.8.1 · alias ruzstd · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, hash, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:79bc1507f8747879255a763081575147ba3ee9f411744cd9a802cb03d376ab1f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:1f34300d5bec62be611e508d7ac57bbee382b3e30ea47277c643b74021a66378</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, hash, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:92812aa3324162590f597d995b1e3cb0ff84408729bd5fb28177232255363879</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54020554">Attestation reference</a><small>Archive: sha256:dd980d590cd4af829c0265faf8d93afaabc97812297513e4c80e06c1f13e8c7f</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, hash, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:644213481d9c7b8a65f2897058770185fc387c092c4e1cfdec392333a7e05541</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:80704c59620b0454e483748f01cf9fa92aa8b82ab73dff00c6cc8131271df757</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, hash, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:f72546ae88b595e38de45f0ad009e346d7f11c78a3ef963827f6903d6c902ebd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54075092">Attestation reference</a><small>Archive: sha256:6ea8e6993937a1394b4b618382d8a44f6e739c8d61a061d9f25c9af0e0f9e9e7</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/ruzstd/versions/0.9.0/">0.9.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/ruzstd/0.9.0">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../packages/crates-io/ruzstd/versions/0.8.3/">0.8.3</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/ruzstd/0.8.3">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>MIT License
+
+Copyright (c) 2019 Moritz Borcherding
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:d715eb0d9cfe1cc0cc22577e387436aa568b31ca272a7c837004dc0cdde925b5</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:052969ec2e2575491ac0fab4709556164f24c2b06e3e4d94014e8dd015f82fd0</code></dd><dt>Upstream checksum</dt><dd><code>sha256:a252f5e20f038fe7b4ea53e073e65398d652c864cc162fc77c56c2f13717b888</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/ruzstd&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.9.0&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;hash&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">dict_builder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:fastrand&quot;</span><span class="p">]</span>
+<span class="n">fuzz_exports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">hash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:twox-hash&quot;</span><span class="p">]</span>
+<span class="n">rustc-dep-of-std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:core&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dep:alloc&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ruzstd&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustc-std-workspace-alloc&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustc-std-workspace-core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">fastrand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/fastrand&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.3.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">twox-hash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/twox-hash&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^2.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;xxhash64&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Moritz Borcherding &lt;moritz.borcherding@web.de&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.87</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/ruzstd/0.9.0">crates.io package</a></li><li><a href="https://github.com/KillingSpark/zstd-rs">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">ruzstd</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/ruzstd"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.9.0"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

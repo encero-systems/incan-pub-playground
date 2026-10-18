@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>rustc-hash 2.1.3 · Incan.pub</title><meta name="description" content="A speedy, non-cryptographic hashing algorithm used by rustc"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/rustc-hash</p><div class="title-row"><h1>rustc-hash</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/rustc-hash/versions/2.1.3/" selected>2.1.3</option><option value="../../../../../packages/crates-io/rustc-hash/versions/2.1.1/">2.1.1</option><option value="../../../../../packages/crates-io/rustc-hash/versions/1.1.0/">1.1.0</option></select></label></div><p class="description">A speedy, non-cryptographic hashing algorithm used by rustc</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Apache-2.0 OR MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>rustc-hash</h3>
+<p><a href="https://crates.io/crates/rustc-hash">crates.io</a>
+<a href="https://docs.rs/rustc-hash">Documentation</a></p>
+<p>A speedy, non-cryptographic hashing algorithm used by <code>rustc</code>.
+The <a href="https://doc.rust-lang.org/std/collections/struct.HashMap.html">hash map in <code>std</code></a> uses SipHash by default, which provides resistance against DOS attacks.
+These attacks aren't a concern in the compiler so we prefer to use a quicker,
+non-cryptographic hash algorithm.</p>
+<p>The original hash algorithm provided by this crate was one taken from Firefox,
+hence the hasher it provides is called FxHasher. This name is kept for backwards
+compatibility, but the underlying hash has since been replaced. The current
+design for the hasher is a polynomial hash finished with a single bit rotation,
+together with a wyhash-inspired compression function for strings/slices, both
+designed by Orson Peters.</p>
+<p>For <code>rustc</code> we have tried many different hashing algorithms. Hashing speed is
+critical, especially for single integers. Spending more CPU cycles on a higher
+quality hash does not reduce hash collisions enough to make the compiler faster
+on real-world benchmarks.</p>
+<h4>Usage</h4>
+<p>This crate provides <code>FxHashMap</code> and <code>FxHashSet</code> as collections.
+They are simply type aliases for their <code>std::collection</code> counterparts using the Fx hasher.</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">rustc_hash</span><span class="p">::</span><span class="n">FxHashMap</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">map</span><span class="p">:</span><span class="w"> </span><span class="nc">FxHashMap</span><span class="o">&lt;</span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FxHashMap</span><span class="p">::</span><span class="n">default</span><span class="p">();</span>
+<span class="n">map</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">22</span><span class="p">,</span><span class="w"> </span><span class="mi">44</span><span class="p">);</span>
+</code></pre>
+<h5><code>no_std</code></h5>
+<p>The <code>std</code> feature is on by default to enable collections.
+It can be turned off in <code>Cargo.toml</code> like so:</p>
+<pre><code class="syntax-highlight language-toml"><span class="n">rustc-hash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;2.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>nightly</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>rand</code></th><td>No</td><td><ul class="effects"><li><code>dep:rand</code></li><li><code>std</code></li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/rand/"><code>crates-io/rand</code></a><small>Alias: rand</small></th><td><code>^0.9</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/bindgen/versions/0.73.2/">crates-io/bindgen 0.73.2</a><span>Requires ^2.1.0 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/countme/versions/3.0.1/">crates-io/countme 3.0.1</a><span>Requires ^1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/cranelift-codegen/versions/0.123.17/">crates-io/cranelift-codegen 0.123.17</a><span>Requires ^2.0.0 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/quinn/versions/0.11.12/">crates-io/quinn 0.11.12</a><span>Requires ^2 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/quinn-proto/versions/0.11.19/">crates-io/quinn-proto 0.11.19</a><span>Requires ^2 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra-ap-rustc_pattern_analysis/versions/0.143.0/">crates-io/ra-ap-rustc_pattern_analysis 0.143.0</a><span>Requires ^2.0.0 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra-ap-rustc_type_ir/versions/0.143.0/">crates-io/ra-ap-rustc_type_ir 0.143.0</a><span>Requires ^2.0.0 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_base_db/versions/0.0.325/">crates-io/ra_ap_base_db 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_cfg/versions/0.0.325/">crates-io/ra_ap_cfg 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir/versions/0.0.325/">crates-io/ra_ap_hir 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir_def/versions/0.0.325/">crates-io/ra_ap_hir_def 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir_expand/versions/0.0.325/">crates-io/ra_ap_hir_expand 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_hir_ty/versions/0.0.325/">crates-io/ra_ap_hir_ty 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_ide_db/versions/0.0.325/">crates-io/ra_ap_ide_db 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_intern/versions/0.0.325/">crates-io/ra_ap_intern 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_mbe/versions/0.0.325/">crates-io/ra_ap_mbe 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_proc_macro_api/versions/0.0.325/">crates-io/ra_ap_proc_macro_api 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_project_model/versions/0.0.325/">crates-io/ra_ap_project_model 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_span/versions/0.0.325/">crates-io/ra_ap_span 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_syntax/versions/0.0.325/">crates-io/ra_ap_syntax 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_syntax-bridge/versions/0.0.325/">crates-io/ra_ap_syntax-bridge 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_test_utils/versions/0.0.325/">crates-io/ra_ap_test_utils 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_tt/versions/0.0.325/">crates-io/ra_ap_tt 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_vfs/versions/0.0.325/">crates-io/ra_ap_vfs 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/ra_ap_vfs-notify/versions/0.0.325/">crates-io/ra_ap_vfs-notify 0.0.325</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/regalloc2/versions/0.12.2/">crates-io/regalloc2 0.12.2</a><span>Requires ^2.0.0 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/rowan/versions/0.15.17/">crates-io/rowan 0.15.17</a><span>Requires ^1.0.1 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/salsa/versions/0.25.2/">crates-io/salsa 0.25.2</a><span>Requires ^2 · alias rustc-hash · </span></li><li><a href="../../../../../packages/crates-io/selectors/versions/0.41.0/">crates-io/selectors 0.41.0</a><span>Requires ^2.1.1 · alias rustc-hash · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:56802f61fce5e26816d6141513b6192cf05a4b5de4628263c687b2d0eec77d77</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621102">Attestation reference</a><small>Archive: sha256:cac2311c1aaca2842b673e8656f01fe2e99432c1c0d3efff9d8ed707963115a4</small></li><li><code>sha256:9286d2e86ab2e854da3e10cb65450ea912012b361d329bb92a9d3f4cba2eebaf</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53449647">Attestation reference</a><small>Archive: sha256:56805b1a40d95832305de943688e0c05b04fa3bc07b27c67db3d3be243a72f1b</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0a04ad769a82568f932ebca8cd52109bbb5b0d73469f20d982472894fccf6421</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54020554">Attestation reference</a><small>Archive: sha256:b9db811c36b3cd38aabb8c5eff35b2905c8f76da2ab45abf2692fe57358190ae</small></li><li><code>sha256:68a14e1359f7cb53cea6ff2e4d347747457c85f7403aab3e1afa913bdeea3cdc</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:fb1696999f87c3bc3c71795325fef85630a251039f59a1186d4feb478af4517e</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1fbac942edc55b433189e6236f2d0e82c29dd09a230a72fc6cc4fd61630c908c</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53449186">Attestation reference</a><small>Archive: sha256:44548caf9cd1dbdd7e24f96e175227c43e49817825bc87bb10647a832c6a99bb</small></li><li><code>sha256:673c9dd69febf7ed2275afc2af1d047849257546775ea785821bb1ce7db83a3f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:e7271de65bf69609c843bc279275afb4bd010bdab3ea3afd0cc9f644624d9c0a</small></li><li><code>sha256:8bd481fe1bd8d72fdbd4e5db6d0f867c999f44d03b6d8a6db0e492e985f33405</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674109">Attestation reference</a><small>Archive: sha256:0cc9c47fd38ba6a47b9d1bfe518e904dfaeb96e03809b5bb3fc510ad710fb4b6</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:3956f290857ef2562238b20bf5b4d3b920b3334655c98089bc86e4bf9cc813d9</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:85195643f4c15df4ddd9e1cdf6903e99b8be030eb81477b3e0bd91cfaa73c61b</small></li><li><code>sha256:a52f7823ea29bcde5574a1abb18e35d8be4b1c643a646249e2f281f30cacb628</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53449897">Attestation reference</a><small>Archive: sha256:d57ee4c2d3047f6ae0e9f67e63bdd20a42811a6aec900b6d203be0fe2b43e686</small></li><li><code>sha256:c3379853aea80f97907954c68efb803356a227fbcee8ab9bd83a0f3fda17c099</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54075092">Attestation reference</a><small>Archive: sha256:619db07c3723d9791fd37da51b91ffdc2599650d6b31a48afb35fdaf6cc5a373</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/rustc-hash/versions/2.1.3/">2.1.3</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/rustc-hash/2.1.3">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rustc-hash/versions/2.1.1/">2.1.1</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/rustc-hash/2.1.1">Upstream record</a></td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/rustc-hash/versions/1.1.0/">1.1.0</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/rustc-hash/1.1.0">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>2.1.3</h3>
+<ul>
+<li><a href="https://github.com/rust-lang/rustc-hash/pull/77">Use derive_const to fix <code>feature = &quot;nightly&quot;</code> build</a></li>
+<li><a href="https://github.com/rust-lang/rustc-hash/pull/64">Internally update to rand 0.9</a></li>
+</ul>
+<h3>2.1.2</h3>
+<ul>
+<li><a href="https://github.com/rust-lang/rustc-hash/pull/65">Refactor byte hashing to remove unreachable panic</a></li>
+</ul>
+<h3>2.1.1</h3>
+<ul>
+<li>Change the internal algorithm to better accomodate large hashmaps.
+This mitigates a <a href="https://github.com/rust-lang/rust/issues/135477">regression with 2.0 in rustc</a>.
+See <a href="https://github.com/rust-lang/rustc-hash/pull/55">PR#55</a> for more details on the change (this PR was not merged).
+This problem might be improved with changes to hashbrown in the future.</li>
+</ul>
+<h4>2.1.0</h4>
+<ul>
+<li>Implement <code>Clone</code> for <code>FxRandomState</code></li>
+<li>Implement <code>Clone</code> for <code>FxSeededState</code></li>
+<li>Use SPDX license expression in license field</li>
+</ul>
+<h4>2.0.0</h4>
+<ul>
+<li>Replace hash with faster and better finalized hash.
+This replaces the previous &quot;fxhash&quot; algorithm originating in Firefox
+with a custom hasher designed and implemented by Orson Peters (<a href="https://github.com/orlp"><code>@orlp</code></a>).
+It was measured to have slightly better performance for rustc, has better theoretical properties
+and also includes a significantly better string hasher.</li>
+<li>Fix <code>no_std</code> builds</li>
+</ul>
+<h4>1.2.0 (<strong>YANKED</strong>)</h4>
+<p><strong>Note: This version has been yanked due to issues with the <code>no_std</code> feature!</strong></p>
+<ul>
+<li>Add a <code>FxBuildHasher</code> unit struct</li>
+<li>Improve documentation</li>
+<li>Add seed API for supplying custom seeds other than 0</li>
+<li>Add <code>FxRandomState</code> based on <code>rand</code> (behind the <code>rand</code> feature) for random seeds</li>
+<li>Make many functions <code>const fn</code></li>
+<li>Implement <code>Clone</code> for <code>FxHasher</code> struct</li>
+</ul>
+</div><p class="table-note">sha256:9ca2e29b07801845c6cb9c468cc65529c9d5257bcfdd3b0446ff66152721efc0</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Apache-2.0 OR MIT</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                              Apache License
+                        Version 2.0, January 2004
+                     http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+   "License" shall mean the terms and conditions for use, reproduction,
+   and distribution as defined by Sections 1 through 9 of this document.
+
+   "Licensor" shall mean the copyright owner or entity authorized by
+   the copyright owner that is granting the License.
+
+   "Legal Entity" shall mean the union of the acting entity and all
+   other entities that control, are controlled by, or are under common
+   control with that entity. For the purposes of this definition,
+   "control" means (i) the power, direct or indirect, to cause the
+   direction or management of such entity, whether by contract or
+   otherwise, or (ii) ownership of fifty percent (50%) or more of the
+   outstanding shares, or (iii) beneficial ownership of such entity.
+
+   "You" (or "Your") shall mean an individual or Legal Entity
+   exercising permissions granted by this License.
+
+   "Source" form shall mean the preferred form for making modifications,
+   including but not limited to software source code, documentation
+   source, and configuration files.
+
+   "Object" form shall mean any form resulting from mechanical
+   transformation or translation of a Source form, including but
+   not limited to compiled object code, generated documentation,
+   and conversions to other media types.
+
+   "Work" shall mean the work of authorship, whether in Source or
+   Object form, made available under the License, as indicated by a
+   copyright notice that is included in or attached to the work
+   (an example is provided in the Appendix below).
+
+   "Derivative Works" shall mean any work, whether in Source or Object
+   form, that is based on (or derived from) the Work and for which the
+   editorial revisions, annotations, elaborations, or other modifications
+   represent, as a whole, an original work of authorship. For the purposes
+   of this License, Derivative Works shall not include works that remain
+   separable from, or merely link (or bind by name) to the interfaces of,
+   the Work and Derivative Works thereof.
+
+   "Contribution" shall mean any work of authorship, including
+   the original version of the Work and any modifications or additions
+   to that Work or Derivative Works thereof, that is intentionally
+   submitted to Licensor for inclusion in the Work by the copyright owner
+   or by an individual or Legal Entity authorized to submit on behalf of
+   the copyright owner. For the purposes of this definition, "submitted"
+   means any form of electronic, verbal, or written communication sent
+   to the Licensor or its representatives, including but not limited to
+   communication on electronic mailing lists, source code control systems,
+   and issue tracking systems that are managed by, or on behalf of, the
+   Licensor for the purpose of discussing and improving the Work, but
+   excluding communication that is conspicuously marked or otherwise
+   designated in writing by the copyright owner as "Not a Contribution."
+
+   "Contributor" shall mean Licensor and any individual or Legal Entity
+   on behalf of whom a Contribution has been received by Licensor and
+   subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   copyright license to reproduce, prepare Derivative Works of,
+   publicly display, publicly perform, sublicense, and distribute the
+   Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+   this License, each Contributor hereby grants to You a perpetual,
+   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+   (except as stated in this section) patent license to make, have made,
+   use, offer to sell, sell, import, and otherwise transfer the Work,
+   where such license applies only to those patent claims licensable
+   by such Contributor that are necessarily infringed by their
+   Contribution(s) alone or by combination of their Contribution(s)
+   with the Work to which such Contribution(s) was submitted. If You
+   institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Work
+   or a Contribution incorporated within the Work constitutes direct
+   or contributory patent infringement, then any patent licenses
+   granted to You under this License for that Work shall terminate
+   as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+   Work or Derivative Works thereof in any medium, with or without
+   modifications, and in Source or Object form, provided that You
+   meet the following conditions:
+
+   (a) You must give any other recipients of the Work or
+       Derivative Works a copy of this License; and
+
+   (b) You must cause any modified files to carry prominent notices
+       stating that You changed the files; and
+
+   (c) You must retain, in the Source form of any Derivative Works
+       that You distribute, all copyright, patent, trademark, and
+       attribution notices from the Source form of the Work,
+       excluding those notices that do not pertain to any part of
+       the Derivative Works; and
+
+   (d) If the Work includes a "NOTICE" text file as part of its
+       distribution, then any Derivative Works that You distribute must
+       include a readable copy of the attribution notices contained
+       within such NOTICE file, excluding those notices that do not
+       pertain to any part of the Derivative Works, in at least one
+       of the following places: within a NOTICE text file distributed
+       as part of the Derivative Works; within the Source form or
+       documentation, if provided along with the Derivative Works; or,
+       within a display generated by the Derivative Works, if and
+       wherever such third-party notices normally appear. The contents
+       of the NOTICE file are for informational purposes only and
+       do not modify the License. You may add Your own attribution
+       notices within Derivative Works that You distribute, alongside
+       or as an addendum to the NOTICE text from the Work, provided
+       that such additional attribution notices cannot be construed
+       as modifying the License.
+
+   You may add Your own copyright statement to Your modifications and
+   may provide additional or different license terms and conditions
+   for use, reproduction, or distribution of Your modifications, or
+   for any such Derivative Works as a whole, provided Your use,
+   reproduction, and distribution of the Work otherwise complies with
+   the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+   names, trademarks, service marks, or product names of the Licensor,
+   except as required for reasonable and customary use in describing the
+   origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+   agreed to in writing, Licensor provides the Work (and each
+   Contributor provides its Contributions) on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied, including, without limitation, any warranties or conditions
+   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+   PARTICULAR PURPOSE. You are solely responsible for determining the
+   appropriateness of using or redistributing the Work and assume any
+   risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+   whether in tort (including negligence), contract, or otherwise,
+   unless required by applicable law (such as deliberate and grossly
+   negligent acts) or agreed to in writing, shall any Contributor be
+   liable to You for damages, including any direct, indirect, special,
+   incidental, or consequential damages of any character arising as a
+   result of this License or out of the use or inability to use the
+   Work (including but not limited to damages for loss of goodwill,
+   work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses), even if such Contributor
+   has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+   the Work or Derivative Works thereof, You may choose to offer,
+   and charge a fee for, acceptance of support, warranty, indemnity,
+   or other liability obligations and/or rights consistent with this
+   License. However, in accepting such obligations, You may act only
+   on Your own behalf and on Your sole responsibility, not on behalf
+   of any other Contributor, and only if You agree to indemnify,
+   defend, and hold each Contributor harmless for any liability
+   incurred by, or claims asserted against, such Contributor by reason
+   of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS</code></pre></div><p class="table-note">sha256:95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.</code></pre></div><p class="table-note">sha256:30fefc3a7d6a0041541858293bcbea2dde4caa4c0a5802f996a7f7e8c0085652</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:d783d6a3be00369f3bf5ba5827d3a167c278a712dce64d68dbcc242e7010edef</code></dd><dt>Upstream checksum</dt><dd><code>sha256:6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rustc-hash&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2.1.3&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">nightly</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">rand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:rand&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc_hash&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">rand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/rand&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.9&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>The Rust Project Developers</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd>1.77</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/rustc-hash/2.1.3">crates.io package</a></li><li><a href="https://github.com/rust-lang/rustc-hash">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">rustc-hash</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/rustc-hash"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=2.1.3"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>const_panic 0.2.17 · Incan.pub</title><meta name="description" content="const panic with formatting"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/const_panic</p><div class="title-row"><h1>const_panic</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/const_panic/versions/0.2.17/" selected>0.2.17</option></select></label></div><p class="description">const panic with formatting</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>Zlib</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><p><a href="https://github.com/rodrimati1992/const_panic/actions">Rust</a>
+<a href="https://crates.io/crates/const_panic">crates-io</a>
+<a href="https://docs.rs/const_panic/*">api-docs</a></p>
+<p>For panicking with formatting in const contexts.</p>
+<p>This library exists because the panic macro was stabilized for use in const contexts
+in Rust 1.57.0, without formatting support.</p>
+<p>All of the types that implement the <a href="https://docs.rs/const_panic/*/const_panic/fmt/trait.PanicFmt.html"><code>PanicFmt</code></a> trait can be formatted in panics.</p>
+<h3>Examples</h3>
+<ul>
+<li><a href="https://github.com/rodrimati1992/const_panic/blob/7cdbcd528691aaecc59a0b9f9163ce4f1aaf767d/README.md#basic">Basic</a></li>
+<li><a href="https://github.com/rodrimati1992/const_panic/blob/7cdbcd528691aaecc59a0b9f9163ce4f1aaf767d/README.md#custom-types">Custom Types</a></li>
+</ul>
+<h5>Basic</h5>
+<pre><code>use const_panic::concat_assert;
+
+const FOO: u32 = 10;
+const BAR: u32 = 0;
+const _: () = assert_non_zero(FOO, BAR);
+
+#[track_caller]
+const fn assert_non_zero(foo: u32, bar: u32) {
+    concat_assert!{
+        foo != 0 &amp;&amp; bar != 0,
+        "\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar
+    }
+}
+</code></pre>
+<p>The above code fails to compile with this error:</p>
+<pre><code>error[E0080]: evaluation of constant value failed
+ --&gt; src/lib.rs:20:15
+  |
+8 | const _: () = assert_non_zero(FOO, BAR);
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^ the evaluated program panicked at '
+neither foo nor bar can be zero!
+foo: 10
+bar: 0', src/lib.rs:8:15
+</code></pre>
+<p>When called at runtime</p>
+<pre><code>use const_panic::concat_assert;
+
+assert_non_zero(10, 0);
+
+#[track_caller]
+const fn assert_non_zero(foo: u32, bar: u32) {
+    concat_assert!{
+        foo != 0 &amp;&amp; bar != 0,
+        "\nneither foo nor bar can be zero!\nfoo: ", foo, "\nbar: ", bar
+    }
+}
+</code></pre>
+<p>it prints this:</p>
+<pre><code>thread 'main' panicked at '
+neither foo nor bar can be zero!
+foo: 10
+bar: 0', src/lib.rs:6:1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+</code></pre>
+<h5>Custom types</h5>
+<p>Panic formatting for custom types can be done in these ways
+(in increasing order of verbosity):</p>
+<ul>
+<li>Using the <a href="https://docs.rs/const_panic/*/const_panic/derive.PanicFmt.html"><code>PanicFmt</code> derive</a> macro
+(requires the opt-in <code>&quot;derive&quot;</code> feature)</li>
+<li>Using the <a href="https://docs.rs/const_panic/*/const_panic/macro.impl_panicfmt.html"><code>impl_panicfmt</code></a> macro
+(requires the default-enabled <code>&quot;non_basic&quot;</code> feature)</li>
+<li>Using the <a href="https://docs.rs/const_panic/*/const_panic/macro.flatten_panicvals.html"><code>flatten_panicvals</code></a> macro
+(requires the default-enabled <code>&quot;non_basic&quot;</code> feature)</li>
+<li>Manually implementing the <a href="https://docs.rs/const_panic/*/const_panic/fmt/trait.PanicFmt.html"><code>PanicFmt</code></a> trait as described in its docs.</li>
+</ul>
+<p>This example uses the <a href="https://docs.rs/const_panic/*/const_panic/derive.PanicFmt.html"><code>PanicFmt</code> derive</a> approach.</p>
+<pre><code>use const_panic::{PanicFmt, concat_panic};
+
+const LAST: u8 = {
+    Foo{
+        x: &amp;[],
+        y: Bar(false, true),
+        z: Qux::Left(23),
+    }.pop().1
+};
+
+impl Foo&lt;'_&gt; {
+    /// Pops the last element
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.x` is empty
+    #[track_caller]
+    const fn pop(mut self) -&gt; (Self, u8) {
+        if let [rem @ .., last] = self.x {
+            self.x = rem;
+            (self, *last)
+        } else {
+            concat_panic!(
+                "\nexpected a non-empty Foo, found: \n",
+                // uses alternative Debug formatting for `self`,
+                // otherwise this would use regular Debug formatting.
+                alt_debug: self
+            )
+        }
+    }
+}
+
+#[derive(PanicFmt)]
+struct Foo&lt;'a&gt; {
+    x: &amp;'a [u8],
+    y: Bar,
+    z: Qux,
+}
+
+#[derive(PanicFmt)]
+struct Bar(bool, bool);
+
+#[derive(PanicFmt)]
+enum Qux {
+    Up,
+    Down { x: u32, y: u32 },
+    Left(u64),
+}
+
+</code></pre>
+<p>The above code fails to compile with this error:</p>
+<pre><code>error[E0080]: evaluation of constant value failed
+  --&gt; src/lib.rs:57:5
+   |
+7  | /     Foo{
+8  | |         x: &amp;[],
+9  | |         y: Bar(false, true),
+10 | |         z: Qux::Left(23),
+11 | |     }.pop().1
+   | |___________^ the evaluated program panicked at '
+expected a non-empty Foo, found:
+Foo {
+    x: [],
+    y: Bar(
+        false,
+        true,
+    ),
+    z: Left(
+        23,
+    ),
+}', src/lib.rs:11:7
+
+
+</code></pre>
+<h3>Limitations</h3>
+<p>Arguments to the formatting/panicking macros must have a fully inferred concrete type,
+because <code>const_panic</code> macros use duck typing to call methods on those arguments.</p>
+<p>One effect of that limitation is that you will have to pass suffixed
+integer literals (eg: <code>100u8</code>) when those integers aren't inferred to be a concrete type.</p>
+<h5>Panic message length</h5>
+<p>The panic message can only be up to <a href="https://docs.rs/const_panic/*/const_panic/constant.MAX_PANIC_MSG_LEN.html"><code>MAX_PANIC_MSG_LEN</code></a> long,
+after which it is truncated.
+The length can be configured by users,
+as described in <a href="https://docs.rs/const_panic/*/const_panic/constant.MAX_PANIC_MSG_LEN.html">the docs for the constant</a>.</p>
+<h3>Cargo features</h3>
+<ul>
+<li>
+<p><code>&quot;non_basic&quot;</code>(enabled by default):
+Enables support for formatting structs, enums, and arrays.
+&lt;br&gt;
+Without this feature, you can effectively only format primitive types
+(custom types can manually implement formatting with more difficulty).</p>
+</li>
+<li>
+<p><code>&quot;rust_latest_stable&quot;</code>(disabled by default):
+Enables all the <code>&quot;rust_1_*&quot;</code> features.</p>
+</li>
+<li>
+<p><code>&quot;rust_1_64&quot;</code>(disabled by default):
+Enables formatting of additional items that require Rust 1.64.0 to do so.</p>
+</li>
+<li>
+<p><code>&quot;rust_1_82&quot;</code>(disabled by default):
+Enables formatting of additional items that require Rust 1.82.0 to do so.</p>
+</li>
+<li>
+<p><code>&quot;rust_1_88&quot;</code>(disabled by default):
+Enables formatting of additional items that require Rust 1.88.0 to do so.</p>
+</li>
+<li>
+<p><code>&quot;derive&quot;</code>(disabled by default):
+Enables the <a href="https://docs.rs/const_panic/*/const_panic/derive.PanicFmt.html"><code>PanicFmt</code> derive</a> macro.</p>
+</li>
+</ul>
+<h3>Plans</h3>
+<p>None for now</p>
+<h3>No-std support</h3>
+<p><code>const_panic</code> is <code>#![no_std]</code>, it can be used anywhere Rust can be used.</p>
+<h3>Minimum Supported Rust Version</h3>
+<p>This requires Rust 1.57.0, because it uses the <code>panic</code> macro in a const context.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>__ui_tests</code></th><td>No</td><td><ul class="effects"><li><code>trybuild</code></li><li><code>test</code></li></ul></td></tr><tr><th scope="row"><code>const_panic_proc_macros</code></th><td>No</td><td><ul class="effects"><li><code>dep:const_panic_proc_macros</code></li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>non_basic</code></li></ul></td></tr><tr><th scope="row"><code>derive</code></th><td>No</td><td><ul class="effects"><li><code>const_panic_proc_macros</code></li><li><code>non_basic</code></li></ul></td></tr><tr><th scope="row"><code>docsrs</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>non_basic</code></th><td>Yes<small>default → non_basic</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>rust_1_64</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>rust_1_82</code></th><td>No</td><td><ul class="effects"><li><code>rust_1_64</code></li></ul></td></tr><tr><th scope="row"><code>rust_1_88</code></th><td>No</td><td><ul class="effects"><li><code>rust_1_82</code></li></ul></td></tr><tr><th scope="row"><code>rust_latest_stable</code></th><td>No</td><td><ul class="effects"><li><code>rust_1_88</code></li></ul></td></tr><tr><th scope="row"><code>test</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>trybuild</code></th><td>No</td><td><ul class="effects"><li><code>dep:trybuild</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><code>crates-io/const_panic_proc_macros</code><small>Alias: const_panic_proc_macros</small></th><td><code>=0.2.17</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><code>crates-io/trybuild</code><small>Alias: trybuild</small></th><td><code>^1.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Optional · not enabled by defaults</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/typewit/"><code>crates-io/typewit</code></a><small>Alias: typewit</small></th><td><code>^1.9.0</code><small>Default features: disabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/konst/versions/0.4.3/">crates-io/konst 0.4.3</a><span>Requires ^0.2.13 · alias const_panic · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, non_basic, rust_1_64, rust_1_82, rust_1_88</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:fb2f83a30d61bc4f0325a4984923469a5d7b6150d2a54c9ed17f5cf4a8b68429</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53625310">Attestation reference</a><small>Archive: sha256:ab686cccdf587e74ae326533c764cf5407fa5575373c7a020804941bc2b4d1d1</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, non_basic, rust_1_64, rust_1_82, rust_1_88</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:87594dcf7744624e4ddee81e44f14182011f4a2f4b99c546e850b26875bc8503</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54026807">Attestation reference</a><small>Archive: sha256:f41229664d2dc7d9e6529900641d369d474d38308a9a11ab82e5d75d6952de0a</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, non_basic, rust_1_64, rust_1_82, rust_1_88</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1810f7d93e8ef828e74172384a1396d06c99f0f2625529a2bb1999e8b3bb0f04</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674983">Attestation reference</a><small>Archive: sha256:7067a65b0ffd95bff9fcb85fb72c2a8b72c098b9bf1c53c2de2dcfc2d8b02c85</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, non_basic, rust_1_64, rust_1_82, rust_1_88</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1d30d40b6f9f7bd5dfcced9d88b9ced196c51d50d2bece5e7c40ca28bd4e5f8d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54082755">Attestation reference</a><small>Archive: sha256:379ac17727270ba2201b0b1c198ed3771fe73a98faa029cf49da2cfe179b588a</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/const_panic/versions/0.2.17/">0.2.17</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/const_panic/0.2.17">Upstream record</a></td></tr></tbody></table></div><p class="muted">No changelog document is recorded for this version.</p></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>Zlib</strong></p><details class="document-file"><summary>LICENSE-ZLIB.md · Author-provided</summary><div class="readme"><p>Copyright (c) 2021 Matias Rodriguez.</p>
+<p>This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.</p>
+<p>Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:</p>
+<ol>
+<li>The origin of this software must not be misrepresented; you must not
+claim that you wrote the original software. If you use this software
+in a product, an acknowledgment in the product documentation would be
+appreciated but is not required.</li>
+<li>Altered source versions must be plainly marked as such, and must not be
+misrepresented as being the original software.</li>
+<li>This notice may not be removed or altered from any source distribution.</li>
+</ol>
+</div><p class="table-note">sha256:573e362dc50a6d9eb444cea38ef61587e16a0645cb8098ba13a2c42fdde72acd</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:2faa9d8b899522810dab4500f25e67bfecbde6a694c90cae1b7e8d9f81afb427</code></dd><dt>Upstream checksum</dt><dd><code>sha256:9603f79528ece8163c496f8932121cb36cfe46259e9c907bb3d8205139d7caa3</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/const_panic&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.2.17&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">__ui_tests</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;trybuild&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">]</span>
+<span class="n">const_panic_proc_macros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:const_panic_proc_macros&quot;</span><span class="p">]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;non_basic&quot;</span><span class="p">]</span>
+<span class="n">derive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;const_panic_proc_macros&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;non_basic&quot;</span><span class="p">]</span>
+<span class="n">docsrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">non_basic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">rust_1_64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">rust_1_82</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;rust_1_64&quot;</span><span class="p">]</span>
+<span class="n">rust_1_88</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;rust_1_82&quot;</span><span class="p">]</span>
+<span class="n">rust_latest_stable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;rust_1_88&quot;</span><span class="p">]</span>
+<span class="n">test</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">trybuild</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:trybuild&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;const_panic&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">const_panic_proc_macros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/const_panic_proc_macros&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;=0.2.17&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">trybuild</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/trybuild&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="n">typewit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/typewit&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1.9.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">default-features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>rodrimati1992 &lt;rodrimatt1985@gmail.com&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.57</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/const_panic/0.2.17">crates.io package</a></li><li><a href="https://github.com/rodrimati1992/const_panic/">Source repository</a></li><li>Documentation</li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">const_panic</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/const_panic"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.2.17"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

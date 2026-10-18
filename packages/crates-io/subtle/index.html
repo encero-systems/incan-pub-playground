@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>subtle 2.6.1 · Incan.pub</title><meta name="description" content="Pure-Rust traits and utilities for constant-time cryptographic implementations."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/subtle</p><div class="title-row"><h1>subtle</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/subtle/versions/2.6.1/" selected>2.6.1</option></select></label></div><p class="description">Pure-Rust traits and utilities for constant-time cryptographic implementations.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>BSD-3-Clause</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>subtle <a href="https://crates.io/crates/subtle"></a> <a href="https://doc.dalek.rs/subtle"></a> <a href="https://travis-ci.org/dalek-cryptography/subtle"></a></h3>
+<p><strong>Pure-Rust traits and utilities for constant-time cryptographic implementations.</strong></p>
+<p>It consists of a <code>Choice</code> type, and a collection of traits using <code>Choice</code>
+instead of <code>bool</code> which are intended to execute in constant-time.  The <code>Choice</code>
+type is a wrapper around a <code>u8</code> that holds a <code>0</code> or <code>1</code>.</p>
+<pre><code class="syntax-highlight language-toml"><span class="n">subtle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2.6&quot;</span>
+</code></pre>
+<p>This crate represents a “best-effort” attempt, since side-channels
+are ultimately a property of a deployed cryptographic system
+including the hardware it runs on, not just of software.</p>
+<p>The traits are implemented using bitwise operations, and should execute in
+constant time provided that a) the bitwise operations are constant-time and
+b) the bitwise operations are not recognized as a conditional assignment and
+optimized back into a branch.</p>
+<p>For a compiler to recognize that bitwise operations represent a conditional
+assignment, it needs to know that the value used to generate the bitmasks is
+really a boolean <code>i1</code> rather than an <code>i8</code> byte value. In an attempt to
+prevent this refinement, the crate tries to hide the value of a <code>Choice</code>'s
+inner <code>u8</code> by passing it through a volatile read. For more information, see
+the <em>About</em> section below.</p>
+<p>Rust versions from 1.51 or higher have const generics support. You may enable
+<code>const-generics</code> feautre to have <code>subtle</code> traits implemented for arrays <code>[T; N]</code>.</p>
+<p>Versions prior to <code>2.2</code> recommended use of the <code>nightly</code> feature to enable an
+optimization barrier; this is not required in versions <code>2.2</code> and above.</p>
+<p>Note: the <code>subtle</code> crate contains <code>debug_assert</code>s to check invariants during
+debug builds. These invariant checks involve secret-dependent branches, and
+are not present when compiled in release mode. This crate is intended to be
+used in release mode.</p>
+<h4>Documentation</h4>
+<p>Documentation is available <a href="https://docs.rs/subtle">here</a>.</p>
+<h4>Minimum Supported Rust Version</h4>
+<p>Rust <strong>1.41</strong> or higher.</p>
+<p>Minimum supported Rust version can be changed in the future, but it will be done with a minor version bump.</p>
+<h4>About</h4>
+<p>This library aims to be the Rust equivalent of Go’s <code>crypto/subtle</code> module.</p>
+<p>Old versions of the optimization barrier in <code>impl From&lt;u8&gt; for Choice</code> were
+based on Tim Maclean's <a href="https://www.chosenplaintext.ca/open-source/rust-timing-shield/security">work on <code>rust-timing-shield</code></a>,
+which attempts to provide a more comprehensive approach for preventing
+software side-channels in Rust code.
+From version <code>2.2</code>, it was based on Diane Hosfelt and Amber Sprenkels' work on
+&quot;Secret Types in Rust&quot;.</p>
+<p><code>subtle</code> is authored by isis agora lovecruft and Henry de Valence.</p>
+<h4>Warning</h4>
+<p>This code is a low-level library, intended for specific use-cases implementing
+cryptographic protocols.  It represents a best-effort attempt to protect
+against some software side-channels.  Because side-channel resistance is not a
+property of software alone, but of software together with hardware, any such
+effort is fundamentally limited.</p>
+<p><strong>USE AT YOUR OWN RISK</strong></p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>const-generics</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>core_hint_black_box</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>default</code></th><td>Yes<small>default</small></td><td><ul class="effects"><li><code>std</code></li><li><code>i128</code></li></ul></td></tr><tr><th scope="row"><code>i128</code></th><td>Yes<small>default → i128</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>nightly</code></th><td>No</td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr><tr><th scope="row"><code>std</code></th><td>Yes<small>default → std</small></td><td><ul class="effects"><li class="muted">No additional activation edges declared.</li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p>No dependencies declared.</p></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/aws-sigv4/versions/1.6.0/">crates-io/aws-sigv4 1.6.0</a><span>Requires ^2.5.0 · alias subtle · </span></li><li><a href="../../../packages/crates-io/cookie/versions/0.18.2/">crates-io/cookie 0.18.2</a><span>Requires ^2.3 · alias subtle · </span></li><li><a href="../../../packages/crates-io/crypto-bigint/versions/0.7.5/">crates-io/crypto-bigint 0.7.5</a><span>Requires ^2.6 · alias subtle · </span></li><li><a href="../../../packages/crates-io/crypto-bigint/versions/0.5.5/">crates-io/crypto-bigint 0.5.5</a><span>Requires ^2.4 · alias subtle · </span></li><li><a href="../../../packages/crates-io/ctutils/versions/0.4.3/">crates-io/ctutils 0.4.3</a><span>Requires ^2.6 · alias subtle · </span></li><li><a href="../../../packages/crates-io/curve25519-dalek/versions/5.0.0/">crates-io/curve25519-dalek 5.0.0</a><span>Requires ^2.6.0 · alias subtle · </span></li><li><a href="../../../packages/crates-io/digest/versions/0.10.7/">crates-io/digest 0.10.7</a><span>Requires ^2.4 · alias subtle · </span></li><li><a href="../../../packages/crates-io/ed25519-dalek/versions/3.0.0/">crates-io/ed25519-dalek 3.0.0</a><span>Requires ^2.3.0 · alias subtle · </span></li><li><a href="../../../packages/crates-io/elliptic-curve/versions/0.14.1/">crates-io/elliptic-curve 0.14.1</a><span>Requires ^2.6 · alias subtle · </span></li><li><a href="../../../packages/crates-io/elliptic-curve/versions/0.13.8/">crates-io/elliptic-curve 0.13.8</a><span>Requires ^2 · alias subtle · </span></li><li><a href="../../../packages/crates-io/ff/versions/0.14.0/">crates-io/ff 0.14.0</a><span>Requires ^2.2.1 · alias subtle · </span></li><li><a href="../../../packages/crates-io/ff/versions/0.13.1/">crates-io/ff 0.13.1</a><span>Requires ^2.2.1 · alias subtle · </span></li><li><a href="../../../packages/crates-io/generic-array/versions/1.4.5/">crates-io/generic-array 1.4.5</a><span>Requires ^2 · alias subtle · </span></li><li><a href="../../../packages/crates-io/group/versions/0.14.0/">crates-io/group 0.14.0</a><span>Requires ^2.2.1 · alias subtle · </span></li><li><a href="../../../packages/crates-io/group/versions/0.13.0/">crates-io/group 0.13.0</a><span>Requires ^2.2.1 · alias subtle · </span></li><li><a href="../../../packages/crates-io/hybrid-array/versions/0.4.15/">crates-io/hybrid-array 0.4.15</a><span>Requires ^2 · alias subtle · </span></li><li><a href="../../../packages/crates-io/pkcs8/versions/0.10.2/">crates-io/pkcs8 0.10.2</a><span>Requires ^2 · alias subtle · </span></li><li><a href="../../../packages/crates-io/primefield/versions/0.14.0/">crates-io/primefield 0.14.0</a><span>Requires ^2.6 · alias subtle · </span></li><li><a href="../../../packages/crates-io/rfc6979/versions/0.4.0/">crates-io/rfc6979 0.4.0</a><span>Requires ^2 · alias subtle · </span></li><li><a href="../../../packages/crates-io/rsa/versions/0.9.10/">crates-io/rsa 0.9.10</a><span>Requires ^2.1.1 · alias subtle · </span></li><li><a href="../../../packages/crates-io/rustls/versions/0.23.45/">crates-io/rustls 0.23.45</a><span>Requires ^2.5.0 · alias subtle · </span></li><li><a href="../../../packages/crates-io/sec1/versions/0.8.1/">crates-io/sec1 0.8.1</a><span>Requires ^2 · alias subtle · </span></li><li><a href="../../../packages/crates-io/sec1/versions/0.7.3/">crates-io/sec1 0.7.3</a><span>Requires ^2 · alias subtle · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:6b7c7731a025956b4b15cbb1d7bd6ee6eb6764fbcb9f56f536d85dbe5df27fae</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:87680e0cd5de86720bc1c86d2f090edf332a7f4344faef589ffb5a62213dfe93</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>const-generics</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:dd0979213083e130d24b99c9e3d9094a199d91505fe5eed5dd73c862e9c35069</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:2a89c2f04f540d3a01688eba91acc0865ec5a768e313b0a108e96f6620497acf</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>const-generics, i128</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:42fa4f9efab883ff062e9015c580e9ce158d9aeabd55978dcbbdc5010a5276cb</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53620439">Attestation reference</a><small>Archive: sha256:d3c428fc029065953bfc109cd9c44d7ac9722622246c4bdf02760347c7906b79</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, i128, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7c69617ac3b9e0f6c6b586e2679003328bd011f15aa2c7196df91af389d17f71</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:b00a2c454fca8ef6fb4940be55036d78d973aa3beb8dcdb741803e81a501e0cc</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>i128</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:b305c6122e55b3a3a863781ce59c98d5f985ee1ded0e05573897013b3c7a436b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53621604">Attestation reference</a><small>Archive: sha256:911f75f652fba346753a50e422a77a3e040b1ba8e7402f744834cd3777c23afa</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d9676b9a483ae744968fb29147950414ff861f9681ee5938c3bc736dcb6827c2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:becdb9e969be8a1ebed78d16be5fd972fb0bdbc773bf7f9fe11aab5a01f3929c</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>const-generics</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:29d82ae1373448fa167c836e1614d1398b98895388ec56364b20b9b8fdf0c475</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:7f65e00f21cfca5ca005aa06a44bdcd837b53cdb1349f57a923244721ff8d7cf</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>const-generics, i128</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:d5cb1bb6792fed2c7398efbb46880249cee3be49f0070a8d2ddf5ef023fcfa49</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:a3c73259e2b4d8bd268401bfd22728d8de92fcdbec24162d96286fb0f5b3f048</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, i128, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ffa5f2a52ab2354c854fa4700dac2d24929be8ff27a0379c855e35b6e299c7a8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:86f49387b50285e291a0535b0c0e39ee419425f065fbd12dbe1ca77179acf508</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>i128</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:e0dea9a70158acc7867e22ac803a6146159339b9a1a4fd3562e42a5ac88424f7</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54041797">Attestation reference</a><small>Archive: sha256:b14c78f5dea3a9344437d1924a6b88d969d6ae90e4bd282573703599e854b868</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1a21000ab65faeaf7259f37e3681635623a8dced245b623baf7c4b98f89efd30</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:8c95213e5f813cf9a4277e03c87adc7fe513a1e32fd3ecaece70f845cb09af0d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>const-generics</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0597e60b050d1bd1a2c6ea300ef6f735703743aa58d288d1a6d01e35dfb62908</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:4b47bafb48c8f51d36898ed3da2bb2a64dc8b388518a33cdbac3ae520182147d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>const-generics, i128</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1c1de965df05008363ba10a2ab8abf87159b9124596fda9cae4a7ed927ee98cf</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53909670">Attestation reference</a><small>Archive: sha256:c8a4fa3eed5f31a60df531879d9ce5014f8aab4dd468a815edbab197bf1d8443</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, i128, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0d333a097322f2a937ef267119236ae653f81d20edce4370d19ef1557b9cd9de</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:131f9811b04ed841c3db554badb26bec65a09d2eba98426b805d69d907d89983</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>i128</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:12970c8d80f3f8125907bd5310d4b5c93c5cf2b8338d33ae3ca1c1b6ed31e266</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674850">Attestation reference</a><small>Archive: sha256:225fd4cc671563d2d9cd9f470790b22be5ee9ab297d552df046f41b9007c3584</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ef792532711d3d471a5a2fd1f375c3ee67011d230fe2e29fe57bf025330dbb18</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:473cbbe648975657a139e7756755e1b2ba0ae03743a422fc9784f85bad8673dc</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>const-generics</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:05c96318186aae5223842fb56df041fd3438560e9ad761d0a0ba6f29b5268012</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:59d8de54c70b1fa4ee6ab4ca64d0a8b802db85c42635361c934963ef8d8e82cc</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>const-generics, i128</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:a786aa28c97439e0d4531441fd99cf70971200c262533deba8dfabf28eeeddab</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:fbb28fde2424c0e841421f7343ba8925e4ffc0995db117d3dd5f260caa0ac601</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>default, i128, std</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ec155aef7337c913f2ba577c6f74ad923c64881bc12d401b64642bd29e46a2fe</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:9e91a047916e2cb785671ca8909912cb07c2f071e55a493eb6b80f607b7c9e3a</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small>i128</small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:c5498f706e6220ccc845ec0f0313765286d6fcef8ec9aff66edbdc7a5313824e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54078384">Attestation reference</a><small>Archive: sha256:ee305dacc1bb0c6de401f6bb28788b30c7b2763fdf55092163ac591c7c5f698e</small></li></ul></details></td></tr></tbody></table></div><details class="document-file"><summary>Recorded build-fact bindings</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Features</th></tr></thead><tbody><tr><th scope="row">aarch64-apple-darwin</th><td>debug</td><td>harvested</td><td></td></tr><tr><th scope="row">aarch64-apple-darwin</th><td>release</td><td>harvested</td><td></td></tr></tbody></table></div></details></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/subtle/versions/2.6.1/">2.6.1</a></th><td>2026-10-06</td><td><a href="https://crates.io/crates/subtle/2.6.1">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Changelog</h3>
+<p>Entries are listed in reverse chronological order.</p>
+<h4>2.5.0</h4>
+<ul>
+<li>Add constant-timedness note to the documentation for <code>CtOption::unwrap_or_else</code>.</li>
+<li>Add <code>CtOption::expect</code>.</li>
+<li>Add <code>ConstantTimeEq::ct_ne</code> with default implementation.</li>
+<li>Add new <code>core_hint_black_box</code> feature from Diane Hosfelt and Amber
+Sprenkels which utilises the original <code>black_box</code> functionality from
+when subtle was first written, which has now found it's way into the
+Rust standard library.</li>
+<li>Add new <code>const-generics</code> feature from @survived which adds support
+for subtle traits for generic arrays <code>[T; N]</code>.</li>
+<li>Add new feature for supporting <code>core::cmp::Ordering</code> for types which
+implement subtle traits, patch from @tarcieri.</li>
+<li>Update <code>rand</code> dependency to 0.8.</li>
+</ul>
+<h4>2.4.1</h4>
+<ul>
+<li>Fix a bug in how the README was included in the documentation builds
+which caused nightly builds to break.</li>
+</ul>
+<h4>2.4.0</h4>
+<ul>
+<li>Add new <code>ConstantTimeGreater</code> and <code>ConstantTimeLess</code> traits, as well
+as implementations for unsigned integers, by @isislovecruft.</li>
+</ul>
+<h4>2.3.0</h4>
+<ul>
+<li>Add <code>impl ConstantTimeEq for Choice</code> by @tarcieri.</li>
+<li>Add <code>impl From&lt;CtOption&lt;T&gt;&gt; for Option&lt;T&gt;</code> by @CPerezz.  This is useful for
+handling library code that produces <code>CtOption</code>s in contexts where timing
+doesn't matter.</li>
+<li>Introduce an MSRV policy.</li>
+</ul>
+<h4>2.2.3</h4>
+<ul>
+<li>Remove the <code>nightly</code>-only asm-based <code>black_box</code> barrier in favor of the
+volatile-based one, fixing compilation on current nightlies.</li>
+</ul>
+<h4>2.2.2</h4>
+<ul>
+<li>Update README.md to clarify that 2.2 and above do not require the <code>nightly</code>
+feature.</li>
+</ul>
+<h4>2.2.1</h4>
+<ul>
+<li>Adds an <code>or_else</code> combinator for <code>CtOption</code>, by @ebfull.</li>
+<li>Optimized <code>black_box</code> for <code>nightly</code>, by @jethrogb.</li>
+<li>Optimized <code>black_box</code> for <code>stable</code>, by @dsprenkels.</li>
+<li>Fixed CI for <code>no_std</code>, by @dsprenkels.</li>
+<li>Fixed fuzz target compilation, by @3for.</li>
+</ul>
+<h4>2.2.0</h4>
+<ul>
+<li>Error during <code>cargo publish</code>, yanked.</li>
+</ul>
+<h4>2.1.1</h4>
+<ul>
+<li>Adds the &quot;crypto&quot; tag to crate metadata.</li>
+<li>New shorter, more efficient ct_eq() for integers, contributed by Thomas Pornin.</li>
+</ul>
+<h4>2.1.0</h4>
+<ul>
+<li>Adds a new <code>CtOption&lt;T&gt;</code> which acts as a constant-time <code>Option&lt;T&gt;</code>
+(thanks to @ebfull for the implementation).</li>
+<li><code>Choice</code> now itself implements <code>ConditionallySelectable</code>.</li>
+</ul>
+<h4>2.0.0</h4>
+<ul>
+<li>Stable version with traits reworked from 1.0.0 to interact better
+with the orphan rules.</li>
+</ul>
+</div><p class="table-note">sha256:02f92a31269311c965b1dfa705f22f341dc9cce73af08a8c9840c91b8ceb79df</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>BSD-3-Clause</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2016-2017 Isis Agora Lovecruft, Henry de Valence. All rights reserved.
+Copyright (c) 2016-2024 Isis Agora Lovecruft. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+</code></pre></div><p class="table-note">sha256:d1fc1bc0d155df60b2e7705b6b2ae02a05c96f948e1cec6e2fb86360b09f346b</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:fa1f9904c7cdd29237d448514b3c20e457ea0b668a965e5421803cb4cd4255e5</code></dd><dt>Upstream checksum</dt><dd><code>sha256:13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># harvested from the release capture at efce0ce</span>
+<span class="c1">#</span>
+<span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/subtle&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2.6.1&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">const-generics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">core_hint_black_box</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;i128&quot;</span><span class="p">]</span>
+<span class="n">i128</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">nightly</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">std</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;subtle&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:9ebe09693379e402e89284142b16dc935412d6addfd66c604969e8f15a42d5e0&quot;</span>
+
+<span class="k">[[rust.facts]]</span>
+<span class="n">toolchain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rustc 1.98.0 (88d9e12ae 2026-08-18)&quot;</span>
+<span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aarch64-apple-darwin&quot;</span>
+<span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="n">harvested-from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sha256:0c8061b2662bc8ca14686e8ca0bdae3a8ac591e732140705967e33167a5b2d9d&quot;</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Isis Lovecruft &lt;isis@patternsinthevoid.net&gt;, Henry de Valence &lt;hdevalence@hdevalence.ca&gt;</dd><dt>Adopted</dt><dd>2026-10-06</dd><dt>Minimum Rust</dt><dd></dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/subtle/2.6.1">crates.io package</a></li><li><a href="https://github.com/dalek-cryptography/subtle">Source repository</a></li><li><a href="https://docs.rs/subtle">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">subtle</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/subtle"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=2.6.1"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

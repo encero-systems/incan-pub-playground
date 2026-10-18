@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>async-broadcast 0.7.2 · Incan.pub</title><meta name="description" content="Async broadcast channels"><link rel="stylesheet" href="../../../../../assets/site/site.css"><link rel="stylesheet" href="../../../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/async-broadcast</p><div class="title-row"><h1>async-broadcast</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../../../packages/crates-io/async-broadcast/versions/0.7.2/" selected>0.7.2</option></select></label></div><p class="description">Async broadcast channels</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT OR Apache-2.0</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>async-broadcast</h3>
+<p><a href="https://github.com/smol-rs/async-broadcast/actions">Build</a>
+<a href="https://github.com/smol-rs/async-broadcast">License</a>
+<a href="https://crates.io/crates/async-broadcast">Cargo</a>
+<a href="https://docs.rs/async-broadcast">Documentation</a></p>
+<p>An async multi-producer multi-consumer broadcast channel, where each consumer gets a clone of every
+message sent on the channel. For obvious reasons, the channel can only be used to broadcast types
+that implement <code>Clone</code>.</p>
+<p>A channel has the <code>Sender</code> and <code>Receiver</code> side. Both sides are cloneable and can be shared
+among multiple threads.</p>
+<p>When all <code>Sender</code>s or all <code>Receiver</code>s are dropped, the channel becomes closed. When a channel is
+closed, no more messages can be sent, but remaining messages can still be received.</p>
+<p>The channel can also be closed manually by calling <code>Sender::close()</code> or
+<code>Receiver::close()</code>.</p>
+<h4>Examples</h4>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">async_broadcast</span><span class="p">::{</span><span class="n">broadcast</span><span class="p">,</span><span class="w"> </span><span class="n">TryRecvError</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">futures_lite</span><span class="p">::{</span><span class="n">future</span><span class="p">::</span><span class="n">block_on</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="p">::</span><span class="n">StreamExt</span><span class="p">};</span>
+
+<span class="n">block_on</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="k">move</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">s1</span><span class="p">,</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">r1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">broadcast</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">s2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s1</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">r2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r1</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Send 2 messages from two different senders.</span>
+<span class="w">    </span><span class="n">s1</span><span class="p">.</span><span class="n">broadcast</span><span class="p">(</span><span class="mi">7</span><span class="p">).</span><span class="k">await</span><span class="p">.</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="n">s2</span><span class="p">.</span><span class="n">broadcast</span><span class="p">(</span><span class="mi">8</span><span class="p">).</span><span class="k">await</span><span class="p">.</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Channel is now at capacity so sending more messages will result in an error.</span>
+<span class="w">    </span><span class="fm">assert!</span><span class="p">(</span><span class="n">s2</span><span class="p">.</span><span class="n">try_broadcast</span><span class="p">(</span><span class="mi">9</span><span class="p">).</span><span class="n">unwrap_err</span><span class="p">().</span><span class="n">is_full</span><span class="p">());</span>
+<span class="w">    </span><span class="fm">assert!</span><span class="p">(</span><span class="n">s1</span><span class="p">.</span><span class="n">try_broadcast</span><span class="p">(</span><span class="mi">10</span><span class="p">).</span><span class="n">unwrap_err</span><span class="p">().</span><span class="n">is_full</span><span class="p">());</span>
+
+<span class="w">    </span><span class="c1">// We can use `recv` method of the `Stream` implementation to receive messages.</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">r1</span><span class="p">.</span><span class="n">next</span><span class="p">().</span><span class="k">await</span><span class="p">.</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="mi">7</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">r1</span><span class="p">.</span><span class="n">recv</span><span class="p">().</span><span class="k">await</span><span class="p">.</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="mi">8</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">r2</span><span class="p">.</span><span class="n">next</span><span class="p">().</span><span class="k">await</span><span class="p">.</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="mi">7</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">r2</span><span class="p">.</span><span class="n">recv</span><span class="p">().</span><span class="k">await</span><span class="p">.</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="mi">8</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// All receiver got all messages so channel is now empty.</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">r1</span><span class="p">.</span><span class="n">try_recv</span><span class="p">(),</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">TryRecvError</span><span class="p">::</span><span class="n">Empty</span><span class="p">));</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">r2</span><span class="p">.</span><span class="n">try_recv</span><span class="p">(),</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">TryRecvError</span><span class="p">::</span><span class="n">Empty</span><span class="p">));</span>
+
+<span class="w">    </span><span class="c1">// Drop both senders, which closes the channel.</span>
+<span class="w">    </span><span class="nb">drop</span><span class="p">(</span><span class="n">s1</span><span class="p">);</span>
+<span class="w">    </span><span class="nb">drop</span><span class="p">(</span><span class="n">s2</span><span class="p">);</span>
+
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">r1</span><span class="p">.</span><span class="n">try_recv</span><span class="p">(),</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">TryRecvError</span><span class="p">::</span><span class="n">Closed</span><span class="p">));</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">r2</span><span class="p">.</span><span class="n">try_recv</span><span class="p">(),</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">TryRecvError</span><span class="p">::</span><span class="n">Closed</span><span class="p">));</span>
+<span class="p">})</span>
+</code></pre>
+<h4>Difference with <code>async-channel</code></h4>
+<p>This crate is similar to <a href="https://crates.io/crates/async-channel"><code>async-channel</code></a> in that they both provide an MPMC channel but the main
+difference being that in <code>async-channel</code>, each message sent on the channel is only received by one
+of the receivers. <code>async-broadcast</code> on the other hand, delivers each message to every receiver
+(IOW broadcast) by cloning it for each receiver.</p>
+<h4>Difference with other broadcast crates</h4>
+<ul>
+<li>
+<p><a href="https://crates.io/crates/broadcaster"><code>broadcaster</code></a>: The main difference would be that <code>broadcaster</code> doesn't have a sender and
+receiver split and both sides use clones of the same BroadcastChannel instance. The messages are
+sent are sent to all channel clones. While this can work for many cases, the lack of sender and
+receiver split, means that often times, you'll find yourself having to drain the channel on the
+sending side yourself.</p>
+</li>
+<li>
+<p><a href="https://crates.io/crates/postage"><code>postage</code></a>: this crate provides a <a href="https://docs.rs/postage/0.4.1/postage/broadcast/fn.channel.html">broadcast API</a> similar to <code>async_broadcast</code>. However, it:</p>
+<ul>
+<li>(at the time of this writing) duplicates <a href="https://crates.io/crates/futures">futures</a> API, which isn't ideal.</li>
+<li>Does not support overflow mode nor has the concept of inactive receivers, so a slow or inactive
+receiver blocking the whole channel is not a solvable problem.</li>
+<li>Provides all kinds of channels, which is generally good but if you just need a broadcast
+channel, <code>async_broadcast</code> is probably a better choice.</li>
+</ul>
+</li>
+<li>
+<p><a href="https://docs.rs/tokio/1.6.0/tokio/sync"><code>tokio::sync</code></a>: Tokio's <code>sync</code> module provides a <a href="https://docs.rs/tokio/1.6.0/tokio/sync/broadcast/index.html">broadcast channel</a> API. The differences
+here are:</p>
+<ul>
+<li>While this implementation does provide <a href="https://docs.rs/tokio/1.6.0/tokio/sync/broadcast/index.html#lagging">overflow mode</a>, it is the default behavior and not
+opt-in.</li>
+<li>There is no equivalent of inactive receivers.</li>
+<li>While it's possible to build tokio with only the <code>sync</code> module, it comes with other APIs that
+you may not need.</li>
+</ul>
+</li>
+</ul>
+<h4>Safety</h4>
+<p>This crate uses <code>#![deny(unsafe_code)]</code> to ensure everything is implemented in
+100% Safe Rust.</p>
+<h4>Contributing</h4>
+<p>Want to join us? Check out our <a href="https://github.com/smol-rs/async-broadcast/blob/master/.github/CONTRIBUTING.md">&quot;Contributing&quot; guide</a> and take a
+look at some of these issues:</p>
+<ul>
+<li><a href="https://github.com/smol-rs/async-broadcast/labels/good%20first%20issue">Issues labeled &quot;good first issue&quot;</a></li>
+<li><a href="https://github.com/smol-rs/async-broadcast/labels/help%20wanted">Issues labeled &quot;help wanted&quot;</a></li>
+</ul>
+<h4>License</h4>
+<p>&lt;sup&gt;
+Licensed under either of &lt;a href=&quot;LICENSE-APACHE&quot;&gt;Apache License, Version
+2.0&lt;/a&gt; or &lt;a href=&quot;LICENSE-MIT&quot;&gt;MIT license&lt;/a&gt; at your option.
+&lt;/sup&gt;</p>
+<p>&lt;br/&gt;</p>
+<p>&lt;sub&gt;
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this crate by you, as defined in the Apache-2.0 license, shall
+be dual licensed as above, without any additional terms or conditions.
+&lt;/sub&gt;</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p>No feature declarations recorded.</p></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/event-listener/"><code>crates-io/event-listener</code></a><small>Alias: event-listener</small></th><td><code>^5.0.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/event-listener-strategy/"><code>crates-io/event-listener-strategy</code></a><small>Alias: event-listener-strategy</small></th><td><code>^0.5.0</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/futures-core/"><code>crates-io/futures-core</code></a><small>Alias: futures-core</small></th><td><code>^0.3.21</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><a href="../../../../../packages/crates-io/pin-project-lite/"><code>crates-io/pin-project-lite</code></a><small>Alias: pin-project-lite</small></th><td><code>^0.2.13</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../../../packages/crates-io/zbus/versions/5.19.0/">crates-io/zbus 5.19.0</a><span>Requires ^0.7.0 · alias async-broadcast · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:0f9680c16079a42a1dc3141cbd64ad5822acf16c425cd23bf10529989de4e3b8</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53680597">Attestation reference</a><small>Archive: sha256:51df71e94ca5d667fe855fd8abf090ce57da8bc7660f47a8dbfdf64f0cdab42c</small></li><li><code>sha256:1bce10f4a28b016efd7c0a9191ac5cfa4365cd6e0aff695e2652616ca4c0830b</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53627907">Attestation reference</a><small>Archive: sha256:3e3c3ba46034a0bcdb28c331241a1045e2ed9d8bc92302e8f110595d6740f5b2</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:16e6ba31e2ff88047b62d57c680042483497a444a3fade589d834ef3801dbb5a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54048029">Attestation reference</a><small>Archive: sha256:772a33a25159fff747704e032d4efd5459baa90994485709f1a2adc3fe0a9545</small></li><li><code>sha256:c98aecb2c9128a4d77f9be04cd7ad5dc98480dcb1acba3735275a3bca7d8ac75</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54073925">Attestation reference</a><small>Archive: sha256:3584d706154b2ddfb0bc057e02c55a9600f2b3e4dfba19a336e78bb865d6b2c3</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:107afa14e1ef4f076417628a2fb106ea6afc44469bb68b166020fc072907e57f</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53910931">Attestation reference</a><small>Archive: sha256:bc6347fc498d4125d26cf214232cdb109211a17eaf0072f6b9138f65d9ff7e6a</small></li><li><code>sha256:9bf346a73ddd972e804e29173459b31af96c92a0beb0e9e1fb3be2ddb6dfcd3e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674753">Attestation reference</a><small>Archive: sha256:18bd55cf801c04881b60e1658ae7fe117068b8f9b834c447742a8903546631f6</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:1f7f05a5435ac4da41d396b71aa9ff7535b890cdd69b68bcda74fa9d167fd49a</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080089">Attestation reference</a><small>Archive: sha256:7dcc41e8be43a013436d0f8265d5f3a14195a4e3cf03cfda9af32569a282a80c</small></li><li><code>sha256:4771d3617ae11849d16dc08301142c2d60d0ce17ab5e182374ff1c9a9be75f2d</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54090856">Attestation reference</a><small>Archive: sha256:5d1351a8c86d2145ae08b7910c3e56a0beab8efcdbe8db52da880960681030dd</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../../../packages/crates-io/async-broadcast/versions/0.7.2/">0.7.2</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/async-broadcast/0.7.2">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><h3>Version 0.7.2</h3>
+<ul>
+<li>Add <code>Sender::broadcast_blocking</code> and <code>Receiver::recv_blocking</code>. #41</li>
+<li>Use <code>Mutex</code> instead of <code>RwLock</code> for securing the inner data. #42</li>
+<li>Many non-user-facing internal improvements and fixes.</li>
+</ul>
+<h3>Version 0.7.1</h3>
+<ul>
+<li>Add a <code>poll_recv()</code> method to the <code>Receiver</code> type. This allows for <code>Receiver</code>
+to be used in <code>poll</code>-based contexts. (#56)</li>
+</ul>
+<h3>Version 0.7.0</h3>
+<ul>
+<li><strong>Breaking:</strong> <code>Recv</code> and <code>Send</code> are now <code>!Unpin</code> to allow for future optimizations.</li>
+<li>Port to event-listener v5.0.</li>
+</ul>
+<h3>Version 0.6.0</h3>
+<ul>
+<li>Bump to event-listener v3.0.0.</li>
+<li>Add smol-rs logo to docs.</li>
+</ul>
+<h3>Version 0.5.1</h3>
+<ul>
+<li>Drop <code>parking_lot</code> dependency, in favor of sync primitives in std.</li>
+</ul>
+<h3>Version 0.5.0</h3>
+<ul>
+<li>API to disable waiting for active receivers (#35).</li>
+</ul>
+<h3>Version 0.4.1</h3>
+<ul>
+<li>Drop unneeded easy-parallel dep.</li>
+<li>Bumb dependencies to the current versions.</li>
+<li>Update <code>parking_lot</code> to 0.12.1.</li>
+<li>fix incorrect documentation for <code>TrySendError::is_disconnected</code>.</li>
+</ul>
+<h3>Version 0.4.0</h3>
+<ul>
+<li>Add <code>RecvError::Overflowed</code> for detecting missing messages.</li>
+<li>Avoid overflows on 32- and 16-bit systems (#22).</li>
+<li>Add overflow message count.</li>
+<li><code>Clone</code> impl of <code>Receiver</code> now properly duplicates it.</li>
+<li>Add <code>Receiver::new_receiver</code>.</li>
+<li>Add <code>Receiver::new_sender</code> and <code>Sender::new_receiver</code>, allowing generating senders from receivers
+and vice versa, respectively.</li>
+<li>Switch to <code>parking_lot::RwLock</code> instead of <code>std::sync::Mutex</code>.</li>
+</ul>
+<h3>Version 0.3.4</h3>
+<ul>
+<li>Avoid the last clone in <code>try_recv</code> (#18).</li>
+<li>Add some basic benchmarks.</li>
+</ul>
+<h3>Version 0.3.3</h3>
+<ul>
+<li>Close channel if the last receiver to drop is inactive.</li>
+</ul>
+<h3>Version 0.3.2</h3>
+<ul>
+<li>Fix a underflow panic (#14).</li>
+<li>Document difference with other broadcast APIs.</li>
+</ul>
+<h3>Version 0.3.1</h3>
+<ul>
+<li>Channel API in InactiveReceiver (#11).</li>
+<li>{Sender,Receiver}::inactive_receiver_count method.</li>
+</ul>
+<h3>Version 0.3.0</h3>
+<ul>
+<li>overflow mode.</li>
+<li>ability to modify channel capacity.</li>
+<li>Inactive receivers (#2).</li>
+<li>Document difference to <code>async-channel</code> crate (#6).</li>
+</ul>
+<h3>Version 0.2.0</h3>
+<ul>
+<li>First real release.</li>
+</ul>
+<h3>Version 0.1.0</h3>
+<ul>
+<li>Dummy release to get the name registered on crates.io.</li>
+</ul>
+</div><p class="table-note">sha256:db6256a24e1125aa9b2113ab0862cfce73b6e8e8ad4db2a8b4975f1456e9df27</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT OR Apache-2.0</strong></p><details class="document-file"><summary>LICENSE-APACHE · Author-provided</summary><div class="readme"><pre><code>                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   Copyright 2020 Yoshua Wuyts
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+</code></pre></div><p class="table-note">sha256:e4705ddab847449a2cdcb3c88b005ea10330aa249d9148ca2eef9c84c5d29895</p></details><details class="document-file"><summary>LICENSE-MIT · Author-provided</summary><div class="readme"><pre><code>The MIT License (MIT)
+
+Copyright (c) 2020 Yoshua Wuyts
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre></div><p class="table-note">sha256:24e5860bf589d8501643e6ea51ffb3df66db2867492b09033d486183efbfa970</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:f49559ecef2ceda61004e964b87726fa1be96025ebe50609c6d345240beb7ed9</code></dd><dt>Upstream checksum</dt><dd><code>sha256:435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/async-broadcast&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.7.2&quot;</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;async_broadcast&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2021&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">event-listener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/event-listener&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^5.0.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">event-listener-strategy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/event-listener-strategy&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.5.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">futures-core</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/futures-core&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.3.21&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">pin-project-lite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/pin-project-lite&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.2.13&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Stjepan Glavina &lt;stjepang@gmail.com&gt;, Yoshua Wuyts &lt;yoshuawuyts@gmail.com&gt;, Zeeshan Ali Khan &lt;zeeshanak@gnome.org&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.60</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/async-broadcast/0.7.2">crates.io package</a></li><li><a href="https://github.com/smol-rs/async-broadcast">Source repository</a></li><li><a href="https://docs.rs/async-broadcast">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../../../" aria-label="Incan.pub home"><img src="../../../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">async-broadcast</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/async-broadcast"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.7.2"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>

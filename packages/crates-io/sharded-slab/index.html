@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>sharded-slab 0.1.7 · Incan.pub</title><meta name="description" content="A lock-free concurrent slab."><link rel="stylesheet" href="../../../assets/site/site.css"><link rel="stylesheet" href="../../../assets/site/syntax.css"><link rel="stylesheet" href="../../../assets/site/forge.css?v=forge-4"><link rel="stylesheet" href="../../../assets/site/header.css?v=shared-1"><link rel="stylesheet" href="../../../assets/site/footer.css?v=compact-2"><link rel="stylesheet" href="../../../assets/site/registry.css?v=registry-1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&amp;family=Exo+2:wght@300;400;500;600;700;800&amp;display=swap"><script defer src="../../../assets/site/site.js?v=registry-1"></script></head>
+<body class="forge-theme registry-theme"><a class="skip" href="#readme">Skip to package</a><header class="site-header"><div class="header-inner">
+  <a class="brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+  <nav aria-label="Main navigation">
+    <details class="header-search"><summary aria-label="Search packages"><img src="../../../assets/site/icons/magnifying-glass.svg" alt="" aria-hidden="true"><span>Search</span></summary>
+      <form class="global-search" action="../../../catalog/" method="get" role="search"><label class="sr-only" for="search">Search packages</label><input id="search" name="q" type="search" placeholder="Find a package…" autocomplete="off"><button type="submit">Search</button></form>
+    </details>
+    <a href="../../../catalog/">Catalog</a>
+    <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Docs</a>
+    <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+  </nav>
+</div></header>
+<div class="forge-masthead"><div class="masthead-inner"><div class="package-heading"><div><p class="identity">crates-io/sharded-slab</p><div class="title-row"><h1>sharded-slab</h1><label class="version-picker"><span class="sr-only">Package version</span><select data-version aria-label="Package version"><option value="../../../packages/crates-io/sharded-slab/versions/0.1.7/" selected>0.1.7</option></select></label></div><p class="description">A lock-free concurrent slab.</p><div class="package-byline"><span class="origin">Adopted from crates.io</span><span>Rust library</span><span>MIT</span></div></div><button class="primary add-button" data-open="install-dialog"><img src="../../../assets/site/icons/plus.svg" alt="" aria-hidden="true">Add to project</button></div></div></div><main class="page-shell package-shell"><div class="document-layout"><nav class="on-this-page section-rail" aria-label="On this page"><a href="#readme">README</a><a href="#features">Features</a><a href="#dependencies">Dependencies</a><a href="#dependents">Dependents</a><a href="#builds">Indexed builds</a><a href="#releases">Versions &amp; notes</a><a href="#licenses">Licenses</a><a href="#popularity">Popularity</a><a href="#security">Security</a><a href="#provenance">Provenance</a></nav><article class="package-document"><section id="readme"><div class="section-heading"><h2>README</h2><span class="eyebrow">Recorded documentation</span></div><p class="section-intro">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p><p class="document-source">README.md · Author-provided</p><div class="readme"><h3>sharded-slab</h3>
+<p>A lock-free concurrent slab.</p>
+<p><a href="https://crates.io/crates/sharded-slab">Crates.io</a>
+<a href="https://docs.rs/sharded-slab/latest">Documentation</a>
+<a href="https://github.com/hawkw/sharded-slab/actions?workflow=CI">CI Status</a>
+<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/LICENSE">GitHub License</a>
+maintenance status</p>
+<p>Slabs provide pre-allocated storage for many instances of a single data
+type. When a large number of values of a single type are required,
+this can be more efficient than allocating each item individually. Since the
+allocated items are the same size, memory fragmentation is reduced, and
+creating and removing new items can be very cheap.</p>
+<p>This crate implements a lock-free concurrent slab, indexed by <code>usize</code>s.</p>
+<p><strong>Note</strong>: This crate is currently experimental. Please feel free to use it in
+your projects, but bear in mind that there's still plenty of room for
+optimization, and there may still be some lurking bugs.</p>
+<h4>Usage</h4>
+<p>First, add this to your <code>Cargo.toml</code>:</p>
+<pre><code class="syntax-highlight language-toml"><span class="n">sharded-slab</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1.7&quot;</span>
+</code></pre>
+<p>This crate provides two types, <a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/struct.Slab.html"><code>Slab</code></a> and <a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/struct.Pool.html"><code>Pool</code></a>, which provide slightly
+different APIs for using a sharded slab.</p>
+<p><a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/struct.Slab.html"><code>Slab</code></a> implements a slab for <em>storing</em> small types, sharing them between
+threads, and accessing them by index. New entries are allocated by <a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/struct.Slab.html#method.insert">inserting</a>
+data, moving it in by value. Similarly, entries may be deallocated by <a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/struct.Slab.html#method.take">taking</a>
+from the slab, moving the value out. This API is similar to a <code>Vec&lt;Option&lt;T&gt;&gt;</code>,
+but allowing lock-free concurrent insertion and removal.</p>
+<p>In contrast, the <a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/struct.Pool.html"><code>Pool</code></a> type provides an <a href="https://en.wikipedia.org/wiki/Object_pool_pattern">object pool</a> style API for
+<em>reusing storage</em>. Rather than constructing values and moving them into
+the pool, as with <a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/struct.Slab.html"><code>Slab</code></a>, <a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/struct.Pool.html#method.create">allocating an entry</a> from the pool
+takes a closure that's provided with a mutable reference to initialize
+the entry in place. When entries are deallocated, they are <a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/trait.Clear.html">cleared</a> in
+place. Types which own a heap allocation can be cleared by dropping any
+<em>data</em> they store, but retaining any previously-allocated capacity. This
+means that a <a href="https://docs.rs/sharded-slab/0.1.4/sharded_slab/struct.Pool.html"><code>Pool</code></a> may be used to reuse a set of existing heap
+allocations, reducing allocator load.</p>
+<h5>Examples</h5>
+<p>Inserting an item into the slab, returning an index:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">sharded_slab</span><span class="p">::</span><span class="n">Slab</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">slab</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Slab</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;hello world&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">slab</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">).</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;hello world&quot;</span><span class="p">);</span>
+</code></pre>
+<p>To share a slab across threads, it may be wrapped in an <code>Arc</code>:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">sharded_slab</span><span class="p">::</span><span class="n">Slab</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">Arc</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">slab</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Arc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Slab</span><span class="p">::</span><span class="n">new</span><span class="p">());</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">slab2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">thread2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">thread</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="k">move</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slab2</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;hello from thread two&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">slab2</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">).</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;hello from thread two&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">key</span>
+<span class="p">});</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">key1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;hello from thread one&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">slab</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key1</span><span class="p">).</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;hello from thread one&quot;</span><span class="p">);</span>
+
+<span class="c1">// Wait for thread 2 to complete.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">key2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thread2</span><span class="p">.</span><span class="n">join</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="c1">// The item inserted by thread 2 remains in the slab.</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">slab</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key2</span><span class="p">).</span><span class="n">unwrap</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;hello from thread two&quot;</span><span class="p">);</span>
+</code></pre>
+<p>If items in the slab must be mutated, a <code>Mutex</code> or <code>RwLock</code> may be used for
+each item, providing granular locking of items rather than of the slab:</p>
+<pre><code class="syntax-highlight language-rust"><span class="k">use</span><span class="w"> </span><span class="n">sharded_slab</span><span class="p">::</span><span class="n">Slab</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::{</span><span class="n">Arc</span><span class="p">,</span><span class="w"> </span><span class="n">Mutex</span><span class="p">};</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">slab</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Arc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Slab</span><span class="p">::</span><span class="n">new</span><span class="p">());</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">Mutex</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;hello world&quot;</span><span class="p">))).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">slab2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">thread2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">thread</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="k">move</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">hello</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slab2</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;item missing&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">hello</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hello</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;mutex poisoned&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="o">*</span><span class="n">hello</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;hello everyone!&quot;</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="n">thread2</span><span class="p">.</span><span class="n">join</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">hello</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;item missing&quot;</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">hello</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hello</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;mutex poisoned&quot;</span><span class="p">);</span>
+<span class="fm">assert_eq!</span><span class="p">(</span><span class="n">hello</span><span class="p">.</span><span class="n">as_str</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;hello everyone!&quot;</span><span class="p">);</span>
+</code></pre>
+<h4>Comparison with Similar Crates</h4>
+<ul>
+<li>
+<p><a href="https://crates.io/crates/slab"><code>slab</code></a>: Carl Lerche's <code>slab</code> crate provides a slab implementation with a
+similar API, implemented by storing all data in a single vector.</p>
+<p>Unlike <code>sharded-slab</code>, inserting and removing elements from the slab requires
+mutable access. This means that if the slab is accessed concurrently by
+multiple threads, it is necessary for it to be protected by a <code>Mutex</code> or
+<code>RwLock</code>. Items may not be inserted or removed (or accessed, if a <code>Mutex</code> is
+used) concurrently, even when they are unrelated. In many cases, the lock can
+become a significant bottleneck. On the other hand, <code>sharded-slab</code> allows
+separate indices in the slab to be accessed, inserted, and removed
+concurrently without requiring a global lock. Therefore, when the slab is
+shared across multiple threads, this crate offers significantly better
+performance than <code>slab</code>.</p>
+<p>However, the lock free slab introduces some additional constant-factor
+overhead. This means that in use-cases where a slab is <em>not</em> shared by
+multiple threads and locking is not required, <code>sharded-slab</code> will likely
+offer slightly worse performance.</p>
+<p>In summary: <code>sharded-slab</code> offers significantly improved performance in
+concurrent use-cases, while <code>slab</code> should be preferred in single-threaded
+use-cases.</p>
+</li>
+</ul>
+<h4>Safety and Correctness</h4>
+<p>Most implementations of lock-free data structures in Rust require some
+amount of unsafe code, and this crate is not an exception. In order to catch
+potential bugs in this unsafe code, we make use of <a href="https://crates.io/crates/loom"><code>loom</code></a>, a
+permutation-testing tool for concurrent Rust programs. All <code>unsafe</code> blocks
+this crate occur in accesses to <code>loom</code> <code>UnsafeCell</code>s. This means that when
+those accesses occur in this crate's tests, <code>loom</code> will assert that they are
+valid under the C11 memory model across multiple permutations of concurrent
+executions of those tests.</p>
+<p>In order to guard against the <a href="https://en.wikipedia.org/wiki/ABA_problem">ABA problem</a>, this crate makes use of
+<em>generational indices</em>. Each slot in the slab tracks a generation counter
+which is incremented every time a value is inserted into that slot, and the
+indices returned by <code>Slab::insert</code> include the generation of the slot when
+the value was inserted, packed into the high-order bits of the index. This
+ensures that if a value is inserted, removed,  and a new value is inserted
+into the same slot in the slab, the key returned by the first call to
+<code>insert</code> will not map to the new value.</p>
+<p>Since a fixed number of bits are set aside to use for storing the generation
+counter, the counter will wrap  around after being incremented a number of
+times. To avoid situations where a returned index lives long enough to see the
+generation counter wrap around to the same value, it is good to be fairly
+generous when configuring the allocation of index bits.</p>
+<h4>Performance</h4>
+<p>These graphs were produced by <a href="https://github.com/hawkw/sharded-slab/blob/master/benches/bench.rs">benchmarks</a> of the sharded slab implementation,
+using the <a href="https://crates.io/crates/criterion"><code>criterion</code></a> crate.</p>
+<p>The first shows the results of a benchmark where an increasing number of
+items are inserted and then removed into a slab concurrently by five
+threads. It compares the performance of the sharded slab implementation
+with a <code>RwLock&lt;slab::Slab&gt;</code>:</p>
+<p>&lt;img width=&quot;1124&quot; alt=&quot;Screen Shot 2019-10-01 at 5 09 49 PM&quot; src=&quot;https://user-images.githubusercontent.com/2796466/66078398-cd6c9f80-e516-11e9-9923-0ed6292e8498.png&quot;&gt;</p>
+<p>The second graph shows the results of a benchmark where an increasing
+number of items are inserted and then removed by a <em>single</em> thread. It
+compares the performance of the sharded slab implementation with an
+<code>RwLock&lt;slab::Slab&gt;</code> and a <code>mut slab::Slab</code>.</p>
+<p>&lt;img width=&quot;925&quot; alt=&quot;Screen Shot 2019-10-01 at 5 13 45 PM&quot; src=&quot;https://user-images.githubusercontent.com/2796466/66078469-f0974f00-e516-11e9-95b5-f65f0aa7e494.png&quot;&gt;</p>
+<p>These benchmarks demonstrate that, while the sharded approach introduces
+a small constant-factor overhead, it offers significantly better
+performance across concurrent accesses.</p>
+<h4>License</h4>
+<p>This project is licensed under the <a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/LICENSE">MIT license</a>.</p>
+<h5>Contribution</h5>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this project by you, shall be licensed as MIT, without any
+additional terms or conditions.</p>
+</div></section><section id="features"><div class="section-heading"><h2>Features</h2><span class="eyebrow">Declared activation</span></div><p class="section-intro">Default activation follows the complete local feature graph. Forwarded edges remain declarations, not a resolved build.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Feature</th><th scope="col">Default</th><th scope="col">Activation edges</th></tr></thead><tbody><tr><th scope="row"><code>loom</code></th><td>No</td><td><ul class="effects"><li><code>dep:loom</code></li></ul></td></tr></tbody></table></div></section><section id="dependencies"><div class="section-heading"><h2>Dependencies</h2><span class="eyebrow">Version requirements</span></div><p class="section-intro">Version requirements are declarations, not resolved versions. Target conditions apply to each declaration individually.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Dependency</th><th scope="col">Requirement &amp; features</th><th scope="col">Activation</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/lazy_static/"><code>crates-io/lazy_static</code></a><small>Alias: lazy_static</small></th><td><code>^1</code><small>Default features: enabled</small><small>Requests: </small></td><td>Required</td></tr><tr><th scope="row"><code>crates-io/loom</code><small>Alias: loom</small></th><td><code>^0.5</code><small>Default features: enabled</small><small>Requests: checkpoint</small></td><td>Optional · not enabled by defaults · when cfg(loom)</td></tr></tbody></table></div></section><section id="dependents"><div class="section-heading"><h2>Dependents</h2><span class="eyebrow">Whole index</span></div><p class="section-intro">Direct declarations from all indexed versions. Requirements and target/feature conditions may select a different version than the one shown here.</p><ul class="relation-list"><li><a href="../../../packages/crates-io/tracing-subscriber/versions/0.3.23/">crates-io/tracing-subscriber 0.3.23</a><span>Requires ^0.1.4 · alias sharded-slab · </span></li></ul></section><section id="builds"><div class="section-heading"><h2>Indexed builds</h2><span class="eyebrow">Bound assets</span></div><p class="section-intro">Exact indexed bindings; units retain their individual identities. Attestation links are registry references, not an independent signature verification by this site.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Target / profile</th><th scope="col">Toolchain / features</th><th scope="col">Evidence</th></tr></thead><tbody><tr><th scope="row"><code>aarch64-apple-darwin</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:7368ba303d0dcce69339fdf516f0750cd6c1e8cb3c744d65fbb7e1a34387f603</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636611">Attestation reference</a><small>Archive: sha256:f44508722d32412743e13df981bc3b113e9417adb383ff001fd5e1ed74b54a50</small></li><li><code>sha256:e7eeb2613947935c69a6c7304e78693d5d38e56bbce9c1819bfb059bb7678491</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53636675">Attestation reference</a><small>Archive: sha256:4e7f6f6bb378adc5cb45b27b54f841599d419f5a52514bbd9a2a443d6d14f359</small></li></ul></details></td></tr><tr><th scope="row"><code>aarch64-apple-darwin</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:ea329d18604b7daad7d8d009bdee7a993cd57ea87d5b0814d715b53440b57244</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54043641">Attestation reference</a><small>Archive: sha256:17f80325285f6cb2bcecc617bf0485abe07d25173fb48f5fee6bf6e2e3f30f75</small></li><li><code>sha256:ef967d37e4471a05b461596823859952f45cbc14bdb4ddc458e4676dec73fc18</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54069719">Attestation reference</a><small>Archive: sha256:dd2dd83ae2136912e3c2c33f5f1e0e5dbac3972e29eae8247d7dbaf315a94bbd</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>debug</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:3918529fd0620312707ae6dfeeb36a9b54c7764f0bfdbe2345d9300be12543e2</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53674816">Attestation reference</a><small>Archive: sha256:2b836d3d1b1c05df42bd7b70e34fa9a9b1a4a58e8b5322580db00d69b02e91ce</small></li><li><code>sha256:913331be1370beb27b2650133a23dd99be89e131e59df4347b7938ce4339ef48</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/53675376">Attestation reference</a><small>Archive: sha256:f5e87454464fd99bca1f00953dec81105bb925067dcd61dc2227538fa96c5e5d</small></li></ul></details></td></tr><tr><th scope="row"><code>x86_64-unknown-linux-gnu</code><small>release</small></th><td>rustc 1.98.0 (88d9e12ae 2026-08-18)<small></small></td><td><details><summary>Inspect units</summary><ul class="unit-list"><li><code>sha256:37868892129704534871fe7ee6d929c2cb0f389f534a976c3a31953f818439cd</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54084326">Attestation reference</a><small>Archive: sha256:4854f48a6ecc06780702663f1420aab28b6fc89657517c18fc578f6f14e0b637</small></li><li><code>sha256:fea6afa3d56c70c29bcb80e38dbd68ce03a30001769ad2e2284a6ceeed71459e</code> · <a href="https://github.com/encero-systems/incan.pub/attestations/54080515">Attestation reference</a><small>Archive: sha256:f529b4daee821b7093979d411c32d4445f34afe6ab71356420180a90ab0e565b</small></li></ul></details></td></tr></tbody></table></div></section><section id="releases"><div class="section-heading"><h2>Versions &amp; release notes</h2><span class="eyebrow">Indexed versions</span></div><p class="section-intro">Dates below record adoption into the registry, not upstream publication. Changelogs are shown as packaged; they can cover multiple releases.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Package records"><table><thead><tr><th scope="col">Version</th><th scope="col">Adopted</th><th scope="col">Upstream</th></tr></thead><tbody><tr><th scope="row"><a href="../../../packages/crates-io/sharded-slab/versions/0.1.7/">0.1.7</a></th><td>2026-10-07</td><td><a href="https://crates.io/crates/sharded-slab/0.1.7">Upstream record</a></td></tr></tbody></table></div><details class="document-file"><summary>CHANGELOG.md · Author-provided</summary><div class="readme"><p>&lt;a name=&quot;v0.1.7&quot;&gt;&lt;/a&gt;</p>
+<h5>v0.1.7 (2023-10-04)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>index out of bounds in <code>get()</code> and <code>get_owned()</code> (#88) (<a href="https://github.com/hawkw/sharded-slab/commit/fdbc930fb14b0f6f8b77cd6efdad5a1bdf8d3c04">fdbc930f</a>)</li>
+<li><strong>unique_iter:</strong>  prevent panics if a slab is empty (#88) (<a href="https://github.com/hawkw/sharded-slab/commit/bd599e0b2a60a953f25f27ba1fa86682150e05c2">bd599e0b</a>, closes <a href="https://github.com/hawkw/sharded-slab/issues/73">#73</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.1.6&quot;&gt;&lt;/a&gt;</p>
+<h4>0.1.6 (2023-09-27)</h4>
+<h6>Features</h6>
+<ul>
+<li>publicly export <code>UniqueIter</code> (#87) (<a href="https://github.com/hawkw/sharded-slab/commit/e4d6482db05d5767b47eae1b0217faad30f2ebd5">e4d6482d</a>, closes <a href="https://github.com/hawkw/sharded-slab/issues/77">#77</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>use a smaller <code>CustomConfig</code> for 32-bit tests (#84) (<a href="https://github.com/hawkw/sharded-slab/commit/828ffff9f82cfc41ed66b4743563c4dddc97c1ce">828ffff9</a>, closes <a href="https://github.com/hawkw/sharded-slab/issues/82">#82</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.1.5&quot;&gt;&lt;/a&gt;</p>
+<h4>0.1.5 (2023-08-28)</h4>
+<h6>Bug Fixes</h6>
+<ul>
+<li><strong>Slab:</strong>  invalid generation in case of custom config (#80) (<a href="https://github.com/hawkw/sharded-slab/commit/ca09027944812d024676029a3dde62d27ef22015">ca090279</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.1.4&quot;&gt;&lt;/a&gt;</p>
+<h5>0.1.4 (2021-10-12)</h5>
+<h6>Features</h6>
+<ul>
+<li>emit a nicer panic when thread count overflows <code>MAX_SHARDS</code> (#64) (<a href="https://github.com/hawkw/sharded-slab/commit/f1ed058a3ee296eff033fc0fb88f62a8b2f83f10">f1ed058a</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.1.3&quot;&gt;&lt;/a&gt;</p>
+<h5>0.1.3 (2021-08-02)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>set up MSRV in CI (#61) (<a href="https://github.com/hawkw/sharded-slab/commit/dfcc9080a62d08e359f298a9ffb0f275928b83e4">dfcc9080</a>, closes <a href="https://github.com/hawkw/sharded-slab/issues/60">#60</a>)</li>
+<li><strong>tests:</strong>  duplicate <code>hint</code> mod defs with loom (<a href="https://github.com/hawkw/sharded-slab/commit/0ce3fd91feac8b4edb4f1ece6aebfc4ba4e50026">0ce3fd91</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.1.2&quot;&gt;&lt;/a&gt;</p>
+<h5>0.1.2 (2021-08-01)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li>make debug assertions drop safe (<a href="https://github.com/hawkw/sharded-slab/commit/26d35a695c9e5d7c62ab07cc5e66a0c6f8b6eade">26d35a69</a>)</li>
+</ul>
+<h6>Features</h6>
+<ul>
+<li>improve panics on thread ID bit exhaustion (<a href="https://github.com/hawkw/sharded-slab/commit/9ecb8e614f107f68b5c6ba770342ae72af1cd07b">9ecb8e61</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.1.1&quot;&gt;&lt;/a&gt;</p>
+<h4>0.1.1 (2021-1-4)</h4>
+<h6>Bug Fixes</h6>
+<ul>
+<li>change <code>loom</code> to an optional dependency (<a href="https://github.com/hawkw/sharded-slab/commit/9bd442b57bc56153a67d7325144ebcf303e0fe98">9bd442b5</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.1.0&quot;&gt;&lt;/a&gt;</p>
+<h4>0.1.0 (2020-10-20)</h4>
+<h6>Bug Fixes</h6>
+<ul>
+<li>fix <code>remove</code> and <code>clear</code> returning true when the key is stale (<a href="https://github.com/hawkw/sharded-slab/commit/b52d38b2d2d3edc3a59d3dba6b75095bbd864266">b52d38b2</a>)</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li><strong>Pool:</strong>  change <code>Pool::create</code> to return a mutable guard (#48) (<a href="https://github.com/hawkw/sharded-slab/commit/778065ead83523e0a9d951fbd19bb37fda3cc280">778065ea</a>, closes <a href="https://github.com/hawkw/sharded-slab/issues/41">#41</a>, <a href="https://github.com/hawkw/sharded-slab/issues/16">#16</a>)</li>
+<li><strong>Slab:</strong>  rename <code>Guard</code> to <code>Entry</code> for consistency (<a href="https://github.com/hawkw/sharded-slab/commit/425ad39805ee818dc6b332286006bc92c8beab38">425ad398</a>)</li>
+</ul>
+<h6>Features</h6>
+<ul>
+<li>add missing <code>Debug</code> impls (<a href="https://github.com/hawkw/sharded-slab/commit/71a8883ff4fd861b95e81840cb5dca167657fe36">71a8883f</a>)</li>
+<li><strong>Pool:</strong>
+<ul>
+<li>add <code>Pool::create_owned</code> and <code>OwnedRefMut</code> (<a href="https://github.com/hawkw/sharded-slab/commit/f7774ae0c5be99340f1e7941bde62f7044f4b4d8">f7774ae0</a>)</li>
+<li>add <code>Arc&lt;Pool&gt;::get_owned</code> and <code>OwnedRef</code> (<a href="https://github.com/hawkw/sharded-slab/commit/3e566d91e1bc8cc4630a8635ad24b321ec047fe7">3e566d91</a>, closes <a href="https://github.com/hawkw/sharded-slab/issues/29">#29</a>)</li>
+<li>change <code>Pool::create</code> to return a mutable guard (#48) (<a href="https://github.com/hawkw/sharded-slab/commit/778065ead83523e0a9d951fbd19bb37fda3cc280">778065ea</a>, closes <a href="https://github.com/hawkw/sharded-slab/issues/41">#41</a>, <a href="https://github.com/hawkw/sharded-slab/issues/16">#16</a>)</li>
+</ul>
+</li>
+<li><strong>Slab:</strong>
+<ul>
+<li>add <code>Arc&lt;Slab&gt;::get_owned</code> and <code>OwnedEntry</code> (<a href="https://github.com/hawkw/sharded-slab/commit/53a970a2298c30c1afd9578268c79ccd44afba05">53a970a2</a>, closes <a href="https://github.com/hawkw/sharded-slab/issues/29">#29</a>)</li>
+<li>rename <code>Guard</code> to <code>Entry</code> for consistency (<a href="https://github.com/hawkw/sharded-slab/commit/425ad39805ee818dc6b332286006bc92c8beab38">425ad398</a>)</li>
+<li>add <code>slab</code>-style <code>VacantEntry</code> API (<a href="https://github.com/hawkw/sharded-slab/commit/6776590adeda7bf4a117fb233fc09cfa64d77ced">6776590a</a>, closes <a href="https://github.com/hawkw/sharded-slab/issues/16">#16</a>)</li>
+</ul>
+</li>
+</ul>
+<h6>Performance</h6>
+<ul>
+<li>allocate shard metadata lazily (#45) (<a href="https://github.com/hawkw/sharded-slab/commit/e543a06d7474b3ff92df2cdb4a4571032135ff8d">e543a06d</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.0.9&quot;&gt;&lt;/a&gt;</p>
+<h5>0.0.9 (2020-04-03)</h5>
+<h6>Features</h6>
+<ul>
+<li><strong>Config:</strong>  validate concurrent refs (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/9b32af58">9b32af58</a>, closes <a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/21">#21</a>)</li>
+<li><strong>Pool:</strong>
+<ul>
+<li>add <code>fmt::Debug</code> impl for <code>Pool</code> (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/ffa5c7a0">ffa5c7a0</a>)</li>
+<li>add <code>Default</code> impl for <code>Pool</code> (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/d2399365">d2399365</a>)</li>
+<li>add a sharded object pool for reusing heap allocations (#19) (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/89734508">89734508</a>, closes <a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/2">#2</a>, <a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/15">#15</a>)</li>
+</ul>
+</li>
+<li><strong>Slab::take:</strong>  add exponential backoff when spinning (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/6b743a27">6b743a27</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>incorrect wrapping when overflowing maximum ref count (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/aea693f3">aea693f3</a>, closes <a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/22">#22</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.0.8&quot;&gt;&lt;/a&gt;</p>
+<h5>0.0.8 (2020-01-31)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li><code>remove</code> not adding slots to free lists (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/dfdd7aee">dfdd7aee</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.0.7&quot;&gt;&lt;/a&gt;</p>
+<h5>0.0.7 (2019-12-06)</h5>
+<h6>Bug Fixes</h6>
+<ul>
+<li><strong>Config:</strong>  compensate for 0 being a valid TID (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/b601f5d9">b601f5d9</a>)</li>
+<li><strong>DefaultConfig:</strong>
+<ul>
+<li>const overflow on 32-bit (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/74d42dd1">74d42dd1</a>, closes <a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/10">#10</a>)</li>
+<li>wasted bit patterns on 64-bit (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/8cf33f66">8cf33f66</a>)</li>
+</ul>
+</li>
+</ul>
+<p>&lt;a name=&quot;0.0.6&quot;&gt;&lt;/a&gt;</p>
+<h4>0.0.6 (2019-11-08)</h4>
+<h6>Features</h6>
+<ul>
+<li><strong>Guard:</strong>  expose <code>key</code> method #8 (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/748bf39b">748bf39b</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.0.5&quot;&gt;&lt;/a&gt;</p>
+<h4>0.0.5 (2019-10-31)</h4>
+<h6>Performance</h6>
+<ul>
+<li>consolidate per-slot state into one AtomicUsize (#6) (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/f1146d33">f1146d33</a>)</li>
+</ul>
+<h6>Features</h6>
+<ul>
+<li>add Default impl for Slab (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/61bb3316">61bb3316</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.0.4&quot;&gt;&lt;/a&gt;</p>
+<h4>0.0.4 (2019-21-30)</h4>
+<h6>Features</h6>
+<ul>
+<li>prevent items from being removed while concurrently accessed (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/872c81d1">872c81d1</a>)</li>
+<li>added <code>Slab::remove</code> method that marks an item to be removed when the last thread
+accessing it finishes (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/872c81d1">872c81d1</a>)</li>
+</ul>
+<h6>Bug Fixes</h6>
+<ul>
+<li>nicer handling of races in remove (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/475d9a06">475d9a06</a>)</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li>renamed <code>Slab::remove</code> to <code>Slab::take</code> (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/872c81d1">872c81d1</a>)</li>
+<li><code>Slab::get</code> now returns a <code>Guard</code> type (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/872c81d1">872c81d1</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.0.3&quot;&gt;&lt;/a&gt;</p>
+<h4>0.0.3 (2019-07-30)</h4>
+<h6>Bug Fixes</h6>
+<ul>
+<li>split local/remote to fix false sharing &amp; potential races (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/69f95fb0">69f95fb0</a>)</li>
+<li>set next pointer <em>before</em> head (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/cc7a0bf1">cc7a0bf1</a>)</li>
+</ul>
+<h6>Breaking Changes</h6>
+<ul>
+<li>removed potentially racy <code>Slab::len</code> and <code>Slab::capacity</code> methods (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/27af7d6c">27af7d6c</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.0.2&quot;&gt;&lt;/a&gt;</p>
+<h4>0.0.2 (2019-03-30)</h4>
+<h6>Bug Fixes</h6>
+<ul>
+<li>fix compilation failure in release mode (<a href="https://github.com/hawkw/sharded-slab/blob/40579b92debe2ef283a455eb379945e023080ff3/617031da">617031da</a>)</li>
+</ul>
+<p>&lt;a name=&quot;0.0.1&quot;&gt;&lt;/a&gt;</p>
+<h4>0.0.1 (2019-02-30)</h4>
+<ul>
+<li>Initial release</li>
+</ul>
+</div><p class="table-note">sha256:7e3afcfd86e5fb650b0193a4c6e5247bf8d82ca2162202883cdba2a55d1b1452</p></details></section><section id="licenses"><div class="section-heading"><h2>License documents</h2><span class="eyebrow">Recorded files</span></div><p>Declared license: <strong>MIT</strong></p><details class="document-file"><summary>LICENSE · Author-provided</summary><div class="readme"><pre><code>Copyright (c) 2019 Eliza Weisman
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</code></pre></div><p class="table-note">sha256:eafbfa606bc005ed7fd2f623d65af17ffe4ef7c017221ac14405bf4140771ea9</p></details></section><section id="popularity"><div class="section-heading"><h2>Popularity</h2><span class="eyebrow">Separate observations</span></div><p class="muted">No download snapshot has been collected for this package. Missing observations are not zero downloads.</p></section><section id="security"><div class="section-heading"><h2>Security</h2><span class="eyebrow">Coverage</span></div><p>Yanked: No. Registry advisory records: 0.</p><p class="notice">An upstream vulnerability feed has not been collected. No advisories here does not establish that a package is free of vulnerabilities.</p></section><section id="provenance"><div class="section-heading"><h2>Provenance</h2><span class="eyebrow">Pinned evidence</span></div><dl class="provenance"><dt>Index checkpoint</dt><dd><a href="https://github.com/encero-systems/incan.pub/tree/18c77d028d27bcd9bb4f7c951834521236c93e4b">18c77d028d27bcd9bb4f7c951834521236c93e4b</a></dd><dt>Source Loaf</dt><dd><code>sha256:b1cf5376cce28c30219a190c286968f6ffd8c3edfc16530d2e070a49d5b41c11</code></dd><dt>Upstream checksum</dt><dd><code>sha256:f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6</code></dd><dt>Adopted by</dt><dd>encero-systems/incan.pub maintainers</dd></dl><details><summary>Recorded loaf.toml</summary><pre><code class="syntax-highlight language-toml"><span class="c1"># Projection of the incan.pub event log; regenerate with `incan-pub build`, never edit.</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;crates-io/sharded-slab&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.1.7&quot;</span>
+
+<span class="k">[project.features]</span>
+<span class="n">loom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dep:loom&quot;</span><span class="p">]</span>
+
+<span class="k">[rust]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sharded_slab&quot;</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;lib&quot;</span>
+<span class="n">edition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2018&quot;</span>
+<span class="n">build-script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+
+<span class="k">[dependencies]</span>
+<span class="n">lazy_static</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/lazy_static&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^1&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="n">loom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">loaf</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;crates-io/loom&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;^0.5&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;checkpoint&quot;</span><span class="p">],</span><span class="w"> </span><span class="n">optional</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;cfg(loom)&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></details></section></article><aside class="metadata" id="metadata" aria-label="Package metadata"><div class="metadata-block"><h2>Metadata</h2><dl><dt>Authors</dt><dd>Eliza Weisman &lt;eliza@buoyant.io&gt;</dd><dt>Adopted</dt><dd>2026-10-07</dd><dt>Minimum Rust</dt><dd>1.42.0</dd></dl><h3 class="metadata-label">Links</h3><ul class="source-links"><li><a href="https://crates.io/crates/sharded-slab/0.1.7">crates.io package</a></li><li><a href="https://github.com/hawkw/sharded-slab">Source repository</a></li><li><a href="https://docs.rs/sharded-slab/">Documentation</a></li></ul></div><div class="metadata-block"><h2>Indexed platforms</h2><a class="platform" href="#builds"><img src="../../../assets/platform-apple.svg" alt=""><span>macOS<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-linux.svg" alt=""><span>Linux<small>Indexed</small></span></a><a class="platform" href="#builds"><img src="../../../assets/platform-windows.svg" alt=""><span>Windows<small>No indexed build</small></span></a></div><button class="text-button" data-open="footer-reporting-dialog">Report abuse</button></aside></div></main><footer class="site-footer" id="footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-about">
+        <a class="footer-brand" href="../../../" aria-label="Incan.pub home"><img src="../../../assets/incan-wordmark.png" alt="Incan"><span>.pub</span></a>
+        <p>Building blocks for Oven.</p>
+        <a class="footer-about-link" href="https://github.com/encero-systems/incan.pub#readme">About Incan.pub <span aria-hidden="true">↗</span></a>
+      </div>
+      <nav class="footer-group" aria-label="Registry">
+        <h2>Registry</h2>
+        <a href="../../../catalog/">Package catalog</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md">How loaves work</a>
+        <a href="https://github.com/encero-systems/incan.pub/blob/main/docs/model.md#what-gets-things-in">Publishing</a>
+      </nav>
+      <nav class="footer-group" aria-label="Ecosystem">
+        <h2>Ecosystem</h2>
+        <a href="https://incan.io/">Incan.io</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://github.com/encero-systems/incan.pub/tree/main/docs">Documentation</a>
+      </nav>
+      <nav class="footer-group" aria-label="Project and support">
+        <h2>Project &amp; support</h2>
+        <a href="https://github.com/encero-systems/incan.pub">GitHub</a>
+        <a href="https://www.linkedin.com/groups/42515004/">Community</a>
+        <button type="button" data-open="footer-reporting-dialog">Reporting &amp; security</button>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Encero Systems</span>
+      <span>Registry snapshot · 1311 packages</span>
+      <a href="../../../package-data-design.md">Data contract</a>
+    </div>
+  </div>
+</footer>
+<dialog id="footer-reporting-dialog" aria-labelledby="footer-reporting-title">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form>
+  <h2 id="footer-reporting-title">Reporting &amp; security</h2>
+  <p>Abuse reporting and a confidential registry security contact are not configured in this playground. No report is sent here.</p>
+  <p>For a package vulnerability, follow its upstream repository’s security policy. You can find its source link in the package’s Metadata section.</p>
+</dialog>
+<dialog id="install-dialog" aria-labelledby="install-title"><form method="dialog"><button class="dialog-close" aria-label="Close">Close</button></form><h2 id="install-title">Add to your project</h2><p>Add this exact indexed version to <code>loaf.toml</code>.</p><pre class="install-code"><code id="install-snippet"><span class="toml-section">[dependencies]</span>
+<span class="toml-key">sharded-slab</span> = { <span class="toml-key">loaf</span> = <span class="toml-string">"crates-io/sharded-slab"</span>, <span class="toml-key">version</span> = <span class="toml-string">"=0.1.7"</span> }</code></pre><button class="primary" data-copy="install-snippet">Copy TOML</button><p class="copy-status" role="status"></p></dialog></body></html>
