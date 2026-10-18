@@ -135,6 +135,37 @@ test('catalog DOM controls compose filters, page navigation, reset, history and 
  dom.window.close();
 });
 
+test('catalog row clicks follow their own link without intercepting search or controls',async()=>{
+ const {JSDOM}=await import('jsdom');
+ const dom=new JSDOM(await readFile('catalog/index.html','utf8'),{url:'https://example.test/incan-pub-playground/catalog/',runScripts:'outside-only'});
+ try{
+  const w=dom.window,d=w.document,navigations=[];
+  w.eval(await readFile('assets/site/site.js','utf8'));
+  d.addEventListener('click',event=>{if(event.target.matches('a.package-link')){navigations.push({href:event.target.href,ctrl:event.ctrlKey,meta:event.metaKey});event.preventDefault();}});
+  d.addEventListener('auxclick',event=>{if(event.target.matches('a.package-link')){navigations.push({href:event.target.href,button:event.button});event.preventDefault();}});
+  const click=(element,options={})=>element.dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true,...options}));
+  // Static rows work before the search summary arrives.
+  let row=d.querySelector('#catalog-rows tr'),href=row.querySelector('a').href;
+  for(const cell of row.cells)click(cell);
+  assert.equal(navigations.length,4);assert.ok(navigations.every(n=>n.href===href));
+  const query=d.getElementById('catalog-search');click(query);query.focus();assert.equal(d.activeElement,query);assert.equal(navigations.length,4);
+  click(d.getElementById('license'));assert.equal(navigations.length,4);
+  // Search replaces rows; delegation must still select the correct new package.
+  w.catalogModel={selectPackages,licenseIdentifiers};w.fetch=async()=>({ok:true,json:async()=>search});
+  const source=(await readFile('assets/site/catalog.js','utf8')).replace(/^import[^\n]+\n/,'const {selectPackages,licenseIdentifiers}=window.catalogModel;\n');
+  await w.eval('(async()=>{'+source+'})()');
+  query.value='arrow-ord';query.dispatchEvent(new w.Event('input',{bubbles:true}));await new Promise(resolve=>setTimeout(resolve,150));
+  assert.equal(navigations.length,4);assert.ok(d.querySelectorAll('#catalog-rows tr').length<50);
+  row=d.querySelector('#catalog-rows a[href$="/arrow-ord/"]').closest('tr');href=row.querySelector('a').href;
+  click(row.cells[1],{metaKey:true});assert.deepEqual(navigations.at(-1),{href,ctrl:false,meta:true});
+  const before=navigations.length;click(row.querySelector('a'),{ctrlKey:true});assert.equal(navigations.length,before+1);assert.equal(navigations.at(-1).ctrl,true);
+  row.cells[2].dispatchEvent(new w.MouseEvent('auxclick',{button:1,bubbles:true,cancelable:true}));assert.deepEqual(navigations.at(-1),{href,button:1});
+  const button=d.createElement('button');row.cells[1].append(button);const count=navigations.length;click(button);assert.equal(navigations.length,count);
+  const range=d.createRange();range.selectNodeContents(row.cells[0]);query.blur();w.getSelection().removeAllRanges();w.getSelection().addRange(range);assert.ok(w.getSelection().toString());click(row.cells[1]);assert.equal(navigations.length,count);w.getSelection().removeAllRanges();
+  click(row.cells[1]);assert.equal(navigations.at(-1).href,href);assert.equal(navigations.length,count+1);
+ }finally{dom.window.close();}
+});
+
 test('homepage random ticker uses the full catalog and retains a static fallback',async()=>{
  const {JSDOM}=await import('jsdom');
  for(const unavailable of [false,true]){

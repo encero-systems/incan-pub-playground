@@ -13,6 +13,24 @@ for (const button of document.querySelectorAll('[data-copy]')) {
   });
 }
 const filters = document.getElementById('filters');
+// Keep table semantics and native name links without stretching links over <tr>.
+// Delegation also covers rows replaced by search, filters and pagination.
+for (const body of document.querySelectorAll('.catalog-table tbody')) {
+  body.classList.add('row-navigation');
+  function navigateRow(event) {
+    if (event.defaultPrevented || event.button > 1 || window.getSelection()?.toString()) return;
+    if (event.target.closest('a,button,input,select,textarea,label,summary,[contenteditable]')) return;
+    const row = event.target.closest('tr');
+    if (!row || row.parentElement !== body) return;
+    const link = row.querySelector('a.package-link');
+    if (!link) return;
+    // Forward modifiers and middle clicks to the actual anchor's native action.
+    link.dispatchEvent(new MouseEvent(event.type, event));
+    event.preventDefault();
+  }
+  body.addEventListener('click', navigateRow);
+  body.addEventListener('auxclick', navigateRow);
+}
 if (filters && !filters.hasAttribute('data-registry')) {
   const search = document.getElementById('search');
   const license = document.getElementById('license');
