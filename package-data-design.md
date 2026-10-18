@@ -72,6 +72,29 @@ The website must:
 
 RFC 125 provides scoped publication and immutable package identity. The interim v0 documentation excludes third-party scopes/ownership, and current event admission requires the crates-io scope. Native owner publishing requires registry work; the UI should not invent existing owner records or verified badges. A relationship between editions would need an agreed metadata/event contract rather than website-only guesswork.
 
+## C libraries (Cloves)
+
+A Clove is an ordinary Loaf whose facet is `c` ([RFC 159](https://github.com/encero-systems/incan/pull/2234)). The registry adopts upstream C libraries as Cloves under the scope `c/`, with the upstream library's name and version, for example `c/zstd` 1.5.7. "Clove" is a friendly name, not a separate kind of package. A Clove keeps every Loaf rule above: full scoped identity in routes (`packages/c/zstd/`), the version list and yank state, Builds, Releases and Security. What changes is the sections a Rust crate's page is built around, because a C library has no Cargo features, no crates.io page and usually no dependencies.
+
+Label the facet "C library" and show "Clove" beside it as the friendly name, for example a clove mark with "Clove · C library". A reader must understand the page without knowing the name.
+
+| Page content | Source | Rendering rule |
+| --- | --- | --- |
+| Configurations (in place of Features) | `[c.configurations]` of the adopted manifest | One entry per named configuration: its name, the configuration it `extends`, its definitions (name and value) and its additional sources. Show the resolved definitions and source list (after `extends`), because that is what a unit's identity names. Render no purpose for a configuration or a definition beyond what the library's own documentation says. |
+| Public headers | `[c].public-headers` | List the exact paths, each linked to the file in the digest-verified source archive. They are the library's API. Do not generate symbol summaries. |
+| Compile units | `[[c.compile]]` | Show the recorded source globs and each entry's target predicate (`cfg(target_arch = "x86_64")`). An expanded file list may come from the archive's file list; it is never guessed. |
+| Dependencies | — | A C facet names no library outside its Loaf, so a Clove has no Dependencies section. Omit it rather than rendering an empty list. |
+| Linked by (in place of Dependents) | Build facts whose `link` record names the Clove (`library = { loaf, version, configuration }`) over a pinned index | One row per binding: the crate version, the binding's target, profile and features, and the Clove version and configuration it links. Group by configuration. Only recorded bindings appear: a `-sys` crate that still records its own C compiles does not link the Clove, even when it vendors the same sources. |
+| Builds | Clove unit assets | One row per target, configuration and profile. Name the toolchain release (Clang and LLVM version) and the platform files: the glibc 2.28 sysroot for Linux targets, the SDK identity the unit recorded for Apple and Windows targets. Link the toolchain release's reproduction-gate run. A missing Apple or Windows unit means no registry builder has built it, not that the library lacks support for the target. |
+| Upstream | The external-source record: upstream release URL, version and checksum, or the crate version whose vendored sources the Clove was derived from | Show the release tarball and its checksum, or the source crate version. A recorded supersession event links to the owner's package; the `c/` versions stay available and are never redirected. |
+| Popularity | Incan registry pulls | A C source release has no download statistics to collect. Show registry pulls only, labeled as such. A wrapping crate's crates.io downloads are never shown as the Clove's. |
+| Overview, license | README and license files in the source archive, `[project].license` | As for every Loaf. |
+| Add to project | The Clove's configuration names | Show the Incan binding form, `link = c.loaf_library("c/zstd", configuration="default")`, with the configurations to choose from. A Rust project reaches a Clove through the `-sys` crate that links it, so there is no Rust snippet. |
+
+RFC 159's own example, not yet a publication: `c/zstd` 1.5.7 has the configurations `default` (`ZSTD_MULTITHREAD = 1`) and `legacy-dictbuilder` (extends `default`, adds `lib/legacy/*.c` and `lib/dictBuilder/*.c`, defines `ZSTD_LEGACY_SUPPORT = 1`). A `zstd-sys` binding for `x86_64-unknown-linux-gnu`, release, with the features `legacy`, `std` and `zdict_builder` links `legacy-dictbuilder`. Its page lists that binding under Linked by, and a release unit per target under Builds.
+
+The catalog projection carries what these sections read. A Clove's catalog entry has `facets`, a `c` object (`library`, `public-headers`, `compile`, `configurations` as recorded) and `upstream` (release URL and checksum, or the source crate version). The pinned index provides the Linked by edges. The registry adds these when it adopts its first Clove; until then no page renders a Clove, and the website does not mock one from the RFC example.
+
 ## Evidence inspected
 
 - Registry main checkout: `5572388c600dce9c7ea85009d9a645c62363e3a9`.
@@ -81,3 +104,4 @@ RFC 125 provides scoped publication and immutable package identity. The interim 
 - [Current event admission](https://github.com/encero-systems/incan.pub/blob/5572388c600dce9c7ea85009d9a645c62363e3a9/src/events.incn).
 - [Registry model](https://github.com/encero-systems/incan.pub/blob/5572388c600dce9c7ea85009d9a645c62363e3a9/docs/model.md), [v0 scope](https://github.com/encero-systems/incan.pub/blob/5572388c600dce9c7ea85009d9a645c62363e3a9/docs/v0.md), and [existing CI](https://github.com/encero-systems/incan.pub/blob/5572388c600dce9c7ea85009d9a645c62363e3a9/.github/workflows/check.yml).
 - [RFC 125](https://github.com/encero-systems/incan/blob/main/workspaces/docs-site/docs/RFCs/125_incan_pub_loaf_registry_and_baked_asset_distribution.md), especially scoped names, static website projection and Rust-only source Loaves. RFC policy is not proof of implemented owner publishing.
+- RFC 159 draft in [encero-systems/incan#2234](https://github.com/encero-systems/incan/pull/2234): the C facet, Clove units, crate-to-Clove bindings and registry adoption under `c/`. The managed C toolchain release it names is in [encero-systems/incan.pub#4](https://github.com/encero-systems/incan.pub/pull/4) ([docs/c-toolchain.md](https://github.com/encero-systems/incan.pub/blob/feature/c-toolchain/docs/c-toolchain.md)).
