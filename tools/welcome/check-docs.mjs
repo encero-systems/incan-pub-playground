@@ -104,3 +104,22 @@ for (const [from, to] of [['explore','dates'],['explore','traits'],['explore','o
 assert.match(documents.get('date-api.html').querySelector('main').textContent,/upcoming API generator has not produced it/);
 assert.match(documents.get('oven.html').querySelector('main').textContent,/0.5 command baseline/);
 console.log('Passed: topic learning/lookup routes and API/version provenance.');
+
+// The configuration pilot must connect the complete task to unchanged contracts.
+for (const [from, to] of [['index','configuration'],['nav-library','configuration'],['configuration','fs-api'],['configuration','toml-api'],['configuration','json-api'],['configuration','configuration-pilot'],['configuration-pilot','configuration'],['fs-api','configuration'],['toml-api','configuration'],['json-api','configuration']]) {
+ assert.ok([...documents.get(from+'.html').querySelectorAll('a[href]')].some(a=>a.getAttribute('href').split('#')[0]===to+'.html'),from+' -> '+to);
+}
+const config = documents.get('configuration.html');
+const configCode = [...config.querySelectorAll('pre code')].map(node=>node.textContent);
+assert.ok(configCode.includes(await readFile(new URL('configuration-pilot/config_toml.incn',input),'utf8')),'Displayed complete TOML example matches its source');
+assert.ok(configCode.includes(await readFile(new URL('configuration-pilot/decode_json.incn',input),'utf8')),'Displayed JSON decoder matches its source');
+assert.match(config.querySelector('main').textContent,/not yet been compiled or run/);
+assert.match(config.querySelector('main').textContent,/Other fields are ignored/);
+assert.match(config.querySelector('main').textContent,/returns normally/);
+const configEvidence=JSON.parse(await readFile(new URL('configuration-pilot/evidence.json',input),'utf8'));
+for(const file of configEvidence.inputs){
+ const bytes=await readFile(new URL('configuration-pilot/evidence/'+file.path,input));
+ assert.equal(bytes.length,file.bytes,file.path);
+ assert.equal(sha(bytes),file.sha256,file.path);
+}
+console.log('Passed: configuration guide/reference routes, displayed example fidelity, source evidence and execution-status boundaries.');

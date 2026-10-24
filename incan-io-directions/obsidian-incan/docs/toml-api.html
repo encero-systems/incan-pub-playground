@@ -1,0 +1,434 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="generator" content="Incan · Pallay · markdown-rs 1.0.0"><meta name="theme-color" content="#080c0a"><title>TOML API · Incan documentation</title><link rel="icon" href="../assets/incan-logo.png"><link rel="stylesheet" href="../assets/fonts/fonts.css"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"></head><body><div class="docs-page"><a class="docs-skip" href="#main">Skip to content</a><header class="site-header">
+    <div class="masthead wrap">
+      <a aria-label="Incan home" class="brand" href="../#welcome">
+        <img alt="Incan" class="brand-lockup" height="244" src="../assets/brand-source.png" width="759">
+      </a>
+      <a class="menu-toggle" href="#docs-navigation">Browse docs ↓</a>
+      <nav aria-label="Main navigation" id="site-nav">
+        <a href="nav-learn.html">Learn</a>
+        <a href="index.html">Docs</a>
+        <a href="nav-oven.html">Oven</a>
+        <a href="https://encero-systems.github.io/incan-pub-playground/">Incan.pub</a>
+        <a href="../#project">Project</a>
+      </nav>
+      <form action="https://incan.io/dev/" class="header-search" role="search">
+        <label class="sr-only" for="docs-query">Search Incan documentation</label>
+        <input autocomplete="off" id="docs-query" name="q" placeholder="Search docs…" type="search">
+        <button type="submit">Search</button>
+      </form>
+      <a class="release-status" href="https://incan.io/dev/roadmap/">Preview · 0.6</a>
+    </div>
+  </header><div class="docs-layout wrap"><aside class="docs-sidebar" id="docs-navigation"><a class="docs-overview" href="index.html">Documentation</a><details class="docs-browse" open><summary>Browse by topic</summary><nav aria-label="Documentation sections"><ul><li><a href="nav-learn.html">Learn</a></li><li><a href="nav-language.html">Language</a></li><li><a href="nav-library.html">Standard library</a><ul class="docs-topic-links"><li><a href="nav-library.html#collections">Collections</a></li><li><a href="nav-library.html#text-and-encoding">Text and encoding</a></li><li><a href="nav-library.html#files-and-streams">Files and streams</a></li><li><a href="nav-library.html#json-and-toml">JSON and TOML</a></li><li><a href="nav-library.html#dates-and-times">Dates and times</a></li><li><a href="nav-library.html#async-and-concurrency">Async and concurrency</a></li><li><a href="nav-library.html#results">Results</a></li><li><a href="nav-library.html#trait-apis">Trait APIs</a></li><li><a href="nav-library.html#testing">Testing</a></li><li><a href="nav-library.html#reflection-and-registries">Reflection and registries</a></li><li><a href="nav-library.html#graphs">Graphs</a></li><li><a href="nav-library.html#logging-and-telemetry">Logging and telemetry</a></li><li><a href="nav-library.html#hashing-and-checksums">Hashing and checksums</a></li><li><a href="nav-library.html#compression">Compression</a></li><li><a href="nav-library.html#regular-expressions">Regular expressions</a></li><li><a href="nav-library.html#identifiers">Identifiers</a></li><li><a href="nav-library.html#environment-and-mathematics">Environment and mathematics</a></li><li><a href="configuration.html">Guide: read configuration</a></li><li><a aria-current="page" href="toml-api.html">std.toml reference</a></li></ul></li><li><a href="nav-oven.html">Oven &amp; tools</a></li><li><a href="nav-interop.html">Interoperability</a></li><li><a href="nav-contribute.html">Contribute</a></li><li><a href="nav-project.html">Project</a></li></ul></nav></details><a href="explore.html">Choose a learning route →</a><a class="docs-all" href="content-map.html">Content migration map</a></aside><main class="doc-article" id="main" tabindex="-1"><div class="doc-breadcrumb"><a href="index.html">Docs</a><a href="nav-library.html"> / Standard library</a></div><details class="docs-mobile-toc"><summary>On this page</summary><nav aria-label="On this page, compact"><a class="toc-h2" href="#module-functions">Module functions</a><a class="toc-h3" href="#locate-paths">locate paths</a><a class="toc-h2" href="#serialization-traits">Serialization traits</a><a class="toc-h2" href="#tomlvalue">TomlValue</a><a class="toc-h3" href="#parsing-and-serialization">Parsing and serialization</a><a class="toc-h3" href="#typed-lookup">Typed lookup</a><a class="toc-h3" href="#dynamic-inspection">Dynamic inspection</a><a class="toc-h3" href="#value-extraction">Value extraction</a><a class="toc-h2" href="#tomlkind">TomlKind</a><a class="toc-h2" href="#tomldatetime">TomlDatetime</a><a class="toc-h2" href="#tomllocation">TomlLocation</a><a class="toc-h2" href="#tomlerror">TomlError</a><a class="toc-h2" href="#tomlerrorkind">TomlErrorKind</a><a class="toc-h2" href="#serialization-limits">Serialization limits</a></nav></details><h1 id="stdtoml-reference"><code>std.toml</code> reference</h1>
+<p><code>std.toml</code> parses TOML documents, serializes typed values, and reports source locations. Its functions accept and return text; they do not perform file I/O. For a worked example, see <a href="https://incan.io/dev/language/how-to/toml/">Read and write TOML data</a>.</p>
+<h2 id="module-functions">Module functions</h2>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Return type</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parse(source: str)</code></td>
+<td><code>Result[TomlValue, TomlError]</code></td>
+<td>Parse a complete document into a table-valued root. Syntax errors have kind <code>TomlErrorKind.Decode</code>.</td>
+</tr>
+<tr>
+<td><code>deserialize[T with TomlDeserialize](source: str)</code></td>
+<td><code>Result[T, TomlError]</code></td>
+<td>Decode the original text as <code>T</code>. Syntax errors, missing required fields, and incompatible field types have kind <code>TomlErrorKind.Decode</code>.</td>
+</tr>
+<tr>
+<td><code>serialize[T with TomlSerialize](value: T)</code></td>
+<td><code>Result[str, TomlError]</code></td>
+<td>Serialize a supported document with default formatting. Unsupported document shapes, including scalar roots, produce an error with kind <code>TomlErrorKind.Encode</code>.</td>
+</tr>
+<tr>
+<td><code>serialize_pretty[T with TomlSerialize](value: T)</code></td>
+<td><code>Result[str, TomlError]</code></td>
+<td>Serialize with expanded formatting. Supported shapes and errors are the same as for <code>serialize</code>.</td>
+</tr>
+<tr>
+<td><code>locate(source: str, path: list[str])</code></td>
+<td><code>Result[Option[TomlLocation], TomlError]</code></td>
+<td>Find the source span of a value reached through table keys. Missing keys or unavailable spans return <code>Ok(None)</code>; malformed source produces an error with kind <code>TomlErrorKind.Decode</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The <code>source</code> arguments contain TOML text, not filenames. Deserialization reads that original text so structural errors can retain source locations. Nested models and lists of models serialize as tables and arrays of tables.</p>
+<h3 id="locate-paths"><code>locate</code> paths</h3>
+<p>Each <code>path</code> element is one decoded table key. For example, <code>[&quot;dependencies&quot;, &quot;my.library&quot;, &quot;version&quot;]</code> addresses a key literally named <code>my.library</code> inside <code>dependencies</code>, followed by its <code>version</code> key. Dots within an element are not path separators.</p>
+<p>Table-key paths include inline tables. Array-index traversal is not supported. Returned spans identify values, not key tokens. <code>locate</code> reparses <code>source</code> for each call; it does not retain a parsed document between calls.</p>
+<h2 id="serialization-traits">Serialization traits</h2>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Trait</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TomlSerialize</code></td>
+<td>Required by <code>serialize</code> and <code>serialize_pretty</code>.</td>
+</tr>
+<tr>
+<td><code>TomlDeserialize</code></td>
+<td>Required by <code>deserialize</code>. Decoded values own their data and do not borrow the input text.</td>
+</tr>
+</tbody>
+</table></div>
+<p>With <code>from std import toml</code>, <code>@derive(toml)</code> supplies both traits for a model. No additional <code>@rust.derive</code> is required. <code>TomlDatetime</code> already implements both traits. Use the methods on <code>TomlValue</code> to serialize dynamic documents; <code>TomlValue</code> does not implement these model codec traits.</p>
+<h2 id="tomlvalue"><code>TomlValue</code></h2>
+<p>A parsed value with its original source context and one of the seven <a href="#tomlkind">TOML kinds</a>. TOML has no null value. Parsed document roots are tables; nested values can have any kind.</p>
+<h3 id="parsing-and-serialization">Parsing and serialization</h3>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Return type</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TomlValue.parse(source: str)</code></td>
+<td><code>Result[TomlValue, TomlError]</code></td>
+<td>Static equivalent of the module-level <code>parse</code>.</td>
+</tr>
+<tr>
+<td><code>value.to_toml()</code></td>
+<td><code>Result[str, TomlError]</code></td>
+<td>Serialize the value as a document. Scalar document roots produce an error with kind <code>TomlErrorKind.Encode</code>.</td>
+</tr>
+<tr>
+<td><code>value.to_toml_pretty()</code></td>
+<td><code>Result[str, TomlError]</code></td>
+<td>Serialize with expanded formatting, with the same document-shape restrictions as <code>to_toml</code>.</td>
+</tr>
+<tr>
+<td><code>value.clone()</code></td>
+<td><code>TomlValue</code></td>
+<td>Copy the selected tree and share its original source text.</td>
+</tr>
+<tr>
+<td><code>value.location()</code></td>
+<td><code>Option[TomlLocation]</code></td>
+<td>Return the original value span when available, without reparsing the document.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="typed-lookup">Typed lookup</h3>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Return type</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value.get[T](path: str)</code></td>
+<td><code>Result[T, TomlError]</code></td>
+<td>Read a required value at a dotted table path. Missing values produce <code>Missing</code>; incompatible values or intermediate containers produce <code>Type</code>; malformed paths produce <code>InvalidPath</code>.</td>
+</tr>
+<tr>
+<td><code>value.get_optional[T](path: str)</code></td>
+<td><code>Result[Option[T], TomlError]</code></td>
+<td>Return <code>Ok(None)</code> only when the path is absent. A present invalid value or an incompatible intermediate container is an error.</td>
+</tr>
+<tr>
+<td><code>value.get_key[T](key: str)</code></td>
+<td><code>Result[T, TomlError]</code></td>
+<td>Read one required literal table key. An empty key and keys containing dots are valid. A non-table receiver produces <code>Type</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p>All three methods declare <code>T with (DeserializeOwned, RustSerialize)</code>, where the bounds are the imported Rust traits <code>serde::de::DeserializeOwned</code> and <code>serde::Serialize</code>. Supported values include <code>str</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>TomlDatetime</code>, lists, string-keyed dictionaries, and models whose members are supported. Apply <code>@derive(toml)</code> to models; no Rust annotations are needed. Every member of a collection is validated. Unsupported native trait implementations fail at compilation rather than becoming runtime lookup errors.</p>
+<p>Typed lookup is strict about TOML kinds, including inside collections: integers do not satisfy <code>float</code>, and datetime values do not satisfy <code>str</code>. Selected model decoding validates the model&#39;s fields. Errors retain the document path, including array indices such as <code>project.targets[2]</code>, and source coordinates when available. Decoded values own their data.</p>
+<h4 id="path-syntax">Path syntax</h4>
+<p><code>get</code>, <code>get_optional</code>, and <code>get_value</code> split their <code>path</code> argument on dots. Each component is a decoded table key and must be nonempty. Empty paths, leading or trailing dots, and consecutive dots produce <code>InvalidPath</code>, even when an earlier key is absent. Paths are relative to the receiving value.</p>
+<p><code>get[str](&quot;project.name&quot;)</code> always traverses <code>project</code> and then <code>name</code>. It never falls back to a literal key named <code>project.name</code>; use <code>get_key[str](&quot;project.name&quot;)</code> for that key. There is no quoting, escaping, or array-index syntax in lookup paths. Brackets in a component are literal key characters. Read a typed list or use dynamic <code>get_index</code> to access an array element.</p>
+<h3 id="dynamic-inspection">Dynamic inspection</h3>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Return type</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value.kind()</code></td>
+<td><code>TomlKind</code></td>
+<td>Return the value&#39;s runtime kind.</td>
+</tr>
+<tr>
+<td><code>value.get_value(path: str)</code></td>
+<td><code>Result[TomlValue, TomlError]</code></td>
+<td>Read a required dynamic snapshot using the same path and error rules as <code>get</code>.</td>
+</tr>
+<tr>
+<td><code>value.get_value_key(key: str)</code></td>
+<td><code>Result[TomlValue, TomlError]</code></td>
+<td>Read one required literal table member.</td>
+</tr>
+<tr>
+<td><code>value.get_index(index: int)</code></td>
+<td><code>Result[TomlValue, TomlError]</code></td>
+<td>Read an array element. Negative or out-of-range indices produce <code>Missing</code>; a non-array receiver produces <code>Type</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Successful dynamic lookups copy the selected subtree and share the original source text and its coordinates. They do not mutate the document. <code>TomlValue</code> is not a typed <code>get[T]</code> target; use <code>get_value</code> for dynamic inspection.</p>
+<h3 id="value-extraction">Value extraction</h3>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Return type</th>
+<th>Accepted kind</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value.as_int()</code></td>
+<td><code>Result[int, TomlError]</code></td>
+<td><code>TomlKind.Integer</code></td>
+</tr>
+<tr>
+<td><code>value.as_float()</code></td>
+<td><code>Result[float, TomlError]</code></td>
+<td><code>TomlKind.Float</code>, including TOML infinity and NaN</td>
+</tr>
+<tr>
+<td><code>value.as_bool()</code></td>
+<td><code>Result[bool, TomlError]</code></td>
+<td><code>TomlKind.Boolean</code></td>
+</tr>
+<tr>
+<td><code>value.as_str()</code></td>
+<td><code>Result[str, TomlError]</code></td>
+<td><code>TomlKind.String</code></td>
+</tr>
+<tr>
+<td><code>value.as_datetime()</code></td>
+<td><code>Result[TomlDatetime, TomlError]</code></td>
+<td><code>TomlKind.Datetime</code></td>
+</tr>
+<tr>
+<td><code>value.as_array()</code></td>
+<td><code>Result[list[TomlValue], TomlError]</code></td>
+<td><code>TomlKind.Array</code></td>
+</tr>
+<tr>
+<td><code>value.as_table()</code></td>
+<td><code>Result[Dict[str, TomlValue], TomlError]</code></td>
+<td><code>TomlKind.Table</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Every extractor returns an error with kind <code>Type</code> for a different kind. No extractor coerces between kinds: an integer does not satisfy <code>as_float</code>, and a datetime does not satisfy <code>as_str</code>. Extracted arrays and tables own copies of their member values, including nested contents.</p>
+<h2 id="tomlkind"><code>TomlKind</code></h2>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Variant</th>
+<th><code>as_str()</code> result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TomlKind.String</code></td>
+<td><code>&quot;string&quot;</code></td>
+</tr>
+<tr>
+<td><code>TomlKind.Integer</code></td>
+<td><code>&quot;integer&quot;</code></td>
+</tr>
+<tr>
+<td><code>TomlKind.Float</code></td>
+<td><code>&quot;float&quot;</code></td>
+</tr>
+<tr>
+<td><code>TomlKind.Boolean</code></td>
+<td><code>&quot;boolean&quot;</code></td>
+</tr>
+<tr>
+<td><code>TomlKind.Datetime</code></td>
+<td><code>&quot;datetime&quot;</code></td>
+</tr>
+<tr>
+<td><code>TomlKind.Array</code></td>
+<td><code>&quot;array&quot;</code></td>
+</tr>
+<tr>
+<td><code>TomlKind.Table</code></td>
+<td><code>&quot;table&quot;</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>kind.as_str() -&gt; str</code> returns the stable spelling listed above.</p>
+<h2 id="tomldatetime"><code>TomlDatetime</code></h2>
+<p>A TOML offset datetime, local datetime, local date, or local time. These forms retain their distinct value semantics through serialization. Local forms have no implicit timezone.</p>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Return type</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>datetime.as_str()</code></td>
+<td><code>str</code></td>
+<td>Return the canonical text for the retained datetime form, including an explicit offset when present.</td>
+</tr>
+<tr>
+<td><code>datetime.clone()</code></td>
+<td><code>TomlDatetime</code></td>
+<td>Copy the datetime value.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="tomllocation"><code>TomlLocation</code></h2>
+<p>The source span returned by <code>locate</code> or <code>TomlValue.location</code>.</p>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Public field</th>
+<th>Type</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>line</code></td>
+<td><code>int</code></td>
+<td>One-based line containing the start of the value.</td>
+</tr>
+<tr>
+<td><code>column</code></td>
+<td><code>int</code></td>
+<td>One-based Unicode character position within that line.</td>
+</tr>
+<tr>
+<td><code>byte_start</code></td>
+<td><code>int</code></td>
+<td>Zero-based UTF-8 offset of the start of the value.</td>
+</tr>
+<tr>
+<td><code>byte_end</code></td>
+<td><code>int</code></td>
+<td>Exclusive zero-based UTF-8 end offset.</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>TomlLocation</code> implements <code>Eq</code>; equality compares its location fields. Character columns and byte offsets use different units and can differ for non-ASCII input.</p>
+<h2 id="tomlerror"><code>TomlError</code></h2>
+<p>The error returned by parsing, deserialization, source-location lookup, and serialization.</p>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Public field</th>
+<th>Type</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kind</code></td>
+<td><code>TomlErrorKind</code></td>
+<td>Parse, lookup, type, or serialization category.</td>
+</tr>
+<tr>
+<td><code>detail</code></td>
+<td><code>str</code></td>
+<td>Diagnostic text.</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td><code>Option[str]</code></td>
+<td>Document path for a lookup or extraction error, including array indices. An empty string identifies the root; non-lookup errors have <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>line</code></td>
+<td><code>Option[int]</code></td>
+<td>One-based starting line, when a source span is available.</td>
+</tr>
+<tr>
+<td><code>column</code></td>
+<td><code>Option[int]</code></td>
+<td>One-based Unicode character column, when available.</td>
+</tr>
+<tr>
+<td><code>byte_start</code></td>
+<td><code>Option[int]</code></td>
+<td>Zero-based UTF-8 start offset, when available.</td>
+</tr>
+<tr>
+<td><code>byte_end</code></td>
+<td><code>Option[int]</code></td>
+<td>Exclusive zero-based UTF-8 end offset, when available.</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>error.message() -&gt; str</code> returns <code>&quot;{path}: {detail}&quot;</code> for a nonempty path, and <code>detail</code> otherwise.</p>
+<p>Coordinates follow the same conventions as <code>TomlLocation</code>. Decode errors can lack a corresponding source token; their position fields are then <code>None</code>. Missing values and invalid paths have no corresponding value span. Serialization errors always have <code>None</code> positions because there is no input document.</p>
+<h2 id="tomlerrorkind"><code>TomlErrorKind</code></h2>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Variant</th>
+<th><code>as_str()</code> result</th>
+<th>Operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TomlErrorKind.Decode</code></td>
+<td><code>&quot;decode&quot;</code></td>
+<td><code>parse</code>, <code>deserialize</code>, and <code>locate</code></td>
+</tr>
+<tr>
+<td><code>TomlErrorKind.Encode</code></td>
+<td><code>&quot;serialize&quot;</code></td>
+<td><code>serialize</code>, <code>serialize_pretty</code>, and the <code>TomlValue.to_toml</code> methods</td>
+</tr>
+<tr>
+<td><code>TomlErrorKind.Missing</code></td>
+<td><code>&quot;missing&quot;</code></td>
+<td>Required lookup of an absent key or array index</td>
+</tr>
+<tr>
+<td><code>TomlErrorKind.InvalidPath</code></td>
+<td><code>&quot;invalid_path&quot;</code></td>
+<td>Malformed dotted lookup path</td>
+</tr>
+<tr>
+<td><code>TomlErrorKind.Type</code></td>
+<td><code>&quot;type&quot;</code></td>
+<td>Typed lookup, extraction, or traversal through an incompatible container</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>kind.as_str() -&gt; str</code> returns the stable spelling listed above.</p>
+<h2 id="serialization-limits">Serialization limits</h2>
+<p>Serialization preserves TOML values, including datetime kinds. It does not preserve comments, original key order, or authored formatting. Pretty serialization has the same limitation. This module has no API for editing an authored document while preserving those details.</p>
+<div class="doc-source">Incan documentation · <a href="sources/language/reference/stdlib/toml.md">Page source ↓</a></div><nav aria-label="More documentation" class="doc-next"><a href="index.html">← Documentation overview</a><a href="https://incan.io/dev/">Continue on the docsite ↗</a></nav></main><aside class="docs-toc"><nav aria-label="On this page"><p class="docs-eyebrow">On this page</p><a class="toc-h2" href="#module-functions">Module functions</a><a class="toc-h3" href="#locate-paths">locate paths</a><a class="toc-h2" href="#serialization-traits">Serialization traits</a><a class="toc-h2" href="#tomlvalue">TomlValue</a><a class="toc-h3" href="#parsing-and-serialization">Parsing and serialization</a><a class="toc-h3" href="#typed-lookup">Typed lookup</a><a class="toc-h3" href="#dynamic-inspection">Dynamic inspection</a><a class="toc-h3" href="#value-extraction">Value extraction</a><a class="toc-h2" href="#tomlkind">TomlKind</a><a class="toc-h2" href="#tomldatetime">TomlDatetime</a><a class="toc-h2" href="#tomllocation">TomlLocation</a><a class="toc-h2" href="#tomlerror">TomlError</a><a class="toc-h2" href="#tomlerrorkind">TomlErrorKind</a><a class="toc-h2" href="#serialization-limits">Serialization limits</a><a class="docs-top" href="#main">Back to top ↑</a></nav></aside></div><footer class="footer wrap ruled">
+    <div class="footer-identity">
+      <a aria-label="Built with Incan — back to home" class="brand footer-brand" href="../#welcome"><img alt="Built with Incan" class="built-with-stamp" height="724" src="../assets/built-with-incan-mono.png" width="2172"></a>
+      <a class="encero-credit" href="https://encero.systems">
+        <span aria-hidden="true" class="encero-credit-divider">|</span>
+        <em>by</em>
+        <span class="encero-credit-name">ENCERO</span>
+      </a>
+    </div>
+    <nav aria-label="Footer navigation"><a href="../media.html">Media kit</a><a href="https://incan.io/dev/release_notes/">Releases</a><a href="https://incan.io/dev/roadmap/">Roadmap</a><a href="https://incan.io/dev/contributing/">Contribute</a><a href="https://github.com/encero-systems/incan">GitHub <span aria-hidden="true" class="icon github"></span></a></nav>
+    <small class="copyright">© 2026 Encero Systems</small>
+  </footer></div></body></html>

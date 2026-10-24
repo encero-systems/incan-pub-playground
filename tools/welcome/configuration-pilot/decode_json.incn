@@ -1,0 +1,14 @@
+from std.json import JsonError, JsonValue
+
+
+def decode_settings(source: str) -> Result[Settings, JsonError]:
+    """Read selected JSON fields without treating an invalid port as absent."""
+    document = JsonValue.parse(source)?
+    server = document.require("server")?
+    name = server.require("name")?.expect_str()?
+    mut port = 8080
+    match server.get("port"):
+        None => pass
+        Some(value) =>
+            port = value.expect_int()?
+    return Ok(Settings(name=name, port=port))

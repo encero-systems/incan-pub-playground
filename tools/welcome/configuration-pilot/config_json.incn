@@ -1,0 +1,50 @@
+"""Read selected server settings and reject invalid application values."""
+
+from std.fs import Path
+from std.json import JsonError, JsonValue
+
+
+model Settings:
+    """The settings the application needs after loading configuration."""
+
+    name: str
+    port: int
+
+
+def decode_settings(source: str) -> Result[Settings, JsonError]:
+    """Read selected JSON fields without treating an invalid port as absent."""
+    document = JsonValue.parse(source)?
+    server = document.require("server")?
+    name = server.require("name")?.expect_str()?
+    mut port = 8080
+    match server.get("port"):
+        None => pass
+        Some(value) =>
+            port = value.expect_int()?
+    return Ok(Settings(name=name, port=port))
+
+
+def validate_settings(settings: Settings) -> Result[Settings, str]:
+    """Apply this application's rules after checking field types."""
+    if settings.name.strip() == "":
+        return Err("server.name must not be blank")
+    if settings.port < 1 or settings.port > 65535:
+        return Err("server.port must be between 1 and 65535")
+    return Ok(settings)
+
+
+def load_settings(filename: str) -> Result[Settings, str]:
+    """Read, decode and validate; describe a failure at its boundary."""
+    match Path(filename).read_text(encoding="utf-8", errors="strict"):
+        Err(error) => return Err(f"Cannot read {filename}: {error.message()}")
+        Ok(source) =>
+            match decode_settings(source):
+                Err(error) => return Err(f"Invalid configuration: {error.message()}")
+                Ok(settings) => return validate_settings(settings)
+
+
+def main() -> None:
+    """Report the checked settings; this example does not start a server."""
+    match load_settings("app.json"):
+        Ok(settings) => println(f"Configuration ready: {settings.name} on port {settings.port}")
+        Err(message) => println(message)
