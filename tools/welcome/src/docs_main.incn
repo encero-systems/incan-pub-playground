@@ -7,7 +7,7 @@ from markdown_docs import pages, blocks, DocProjection, plain, resolve_link, par
 from docs_layout import shell, overview, docs_stylesheet
 from docs_diagrams import diagram_runtime
 from docs_architecture import architecture_document
-from docs_catalog import load_catalog, section_content, section_headings, migration_content
+from docs_catalog import load_catalog, section_content, section_headings, migration_content, module_content
 from markdown_docs import DocPage
 
 
@@ -134,6 +134,14 @@ pub def build_docs(directory: str) -> None:
         )
         write(destination + "/" + key + ".html", output)
         outputs[key + ".html"] = JsonValue.string(digest_text(output))
+    for module in catalog.modules:
+        key = "module-" + module.key
+        page = DocPage(key=key, title=module.name, group="Standard library", source="", description=module.description)
+        write(
+            destination + "/" + key + ".html",
+            html(module.name, shell(page, module_content(module, catalog), [], catalog)),
+        )
+        outputs[key + ".html"] = JsonValue.string(digest_text(read(destination + "/" + key + ".html")))
     migration = DocPage(key="content-map", title="Content migration map", group="Editorial", source="", description="")
     write(
         destination + "/content-map.html",

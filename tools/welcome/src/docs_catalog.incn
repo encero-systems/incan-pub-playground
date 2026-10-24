@@ -20,6 +20,7 @@ pub model ContentPage:
     pub section: str
     pub topic: str
     pub role: str
+    pub doc_type: str
     pub action: str
     pub rationale: str
     pub current_url: str
@@ -28,9 +29,18 @@ pub model ContentPage:
     pub proposed_url: str
 
 
+pub model LibraryModule:
+    pub key: str
+    pub name: str
+    pub description: str
+    pub reference: str
+    pub sources: list[str]
+
+
 pub model ContentCatalog:
     pub sections: list[DocSection]
     pub entries: list[ContentPage]
+    pub modules: list[LibraryModule]
 
 
 def field(value: JsonValue, key: str) -> str:
@@ -94,6 +104,7 @@ pub def load_catalog() -> ContentCatalog:
                 section=field(row, "section"),
                 topic=field(row, "topic"),
                 role=field(row, "role"),
+                doc_type=field(row, "doc_type"),
                 action=field(row, "action"),
                 rationale=field(row, "rationale"),
                 current_url=field(row, "current_url"),
@@ -102,7 +113,24 @@ pub def load_catalog() -> ContentCatalog:
                 proposed_url=field(row, "proposed_url"),
             ),
         )
-    return ContentCatalog(sections=sections, entries=entries)
+    mut modules: list[LibraryModule] = []
+    for row in array(data, "library_modules"):
+        mut sources: list[str] = []
+        for value in array(row, "sources"):
+            match value.as_str():
+                Some(source) => sources.append(source)
+                None =>
+                    assert false, "Module source must be text"
+        modules.append(
+            LibraryModule(
+                key=field(row, "key"),
+                name=field(row, "name"),
+                description=field(row, "description"),
+                reference=field(row, "reference"),
+                sources=sources,
+            ),
+        )
+    return ContentCatalog(sections=sections, entries=entries, modules=modules)
 
 
 pub def topic_id(title: str) -> str:
@@ -110,6 +138,8 @@ pub def topic_id(title: str) -> str:
 
 
 pub def section_for(key: str, catalog: ContentCatalog) -> str:
+    if key.startswith("module-"):
+        return "library"
     if key.startswith("nav-"):
         return key[4:]
     if key in ["dates", "date-api", "collections", "configuration", "configuration-pilot"]:
@@ -150,6 +180,8 @@ pub def visible_topics(section: DocSection, catalog: ContentCatalog) -> list[str
 
 
 pub def section_headings(section: DocSection, catalog: ContentCatalog) -> list[DocumentNode]:
+    if section.key == "library":
+        return []
     return [el("a", {"href": "#" + topic_id(topic), "class": "toc-h2"}, [txt(topic)]) for topic in visible_topics(
         section,
         catalog,
@@ -166,10 +198,37 @@ pub def navigation(active: str, catalog: ContentCatalog) -> DocumentNode:
         mut children = [el("a", attrs, [txt(section.title)])]
         if section.key == active_section:
             mut nearby: list[DocumentNode] = []
-            for topic in visible_topics(section, catalog):
-                nearby.append(
-                    el("li", {}, [el("a", {"href": "nav-" + section.key + ".html#" + topic_id(topic)}, [txt(topic)])]),
-                )
+            if section.key == "library":
+                for module in catalog.modules:
+                    if module_for(active, catalog) == module.key:
+                        mut module_attrs = {"href": "module-" + module.key + ".html"}
+                        if active == "module-" + module.key:
+                            module_attrs["aria-current"] = "page"
+                        nearby.append(el("li", {}, [el("a", module_attrs, [txt(module.name)])]))
+                        nearby.append(
+                            el(
+                                "li",
+                                {},
+                                [el("a", {"href": "module-" + module.key + ".html#how-to"}, [txt("How-to guides")])],
+                            ),
+                        )
+                        nearby.append(
+                            el("li", {}, [el("a", {"href": module_reference(module, catalog)}, [txt("Reference")])]),
+                        )
+                if module_for(active, catalog) == "":
+                    for module in catalog.modules:
+                        nearby.append(
+                            el("li", {}, [el("a", {"href": "module-" + module.key + ".html"}, [txt(module.name)])]),
+                        )
+            else:
+                for topic in visible_topics(section, catalog):
+                    nearby.append(
+                        el(
+                            "li",
+                            {},
+                            [el("a", {"href": "nav-" + section.key + ".html#" + topic_id(topic)}, [txt(topic)])],
+                        ),
+                    )
             mut current_title = ""
             for page in catalog.entries:
                 if page.preview == active + ".html":
@@ -219,11 +278,17 @@ def entry_node(page: ContentPage) -> DocumentNode:
     return el(
         "li",
         {"data-source": page.source},
-        [el("a", {"href": page_link(page)}, [txt(page.title)]), el("small", {}, [txt(page.role + " · " + location)])],
+        [el("a", {"href": page_link(page)}, [txt(page.title)]), el(
+            "small",
+            {},
+            [type_badge(page.doc_type), txt(" · " + location)],
+        )],
     )
 
 
 pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[DocumentNode]:
+    if section.key == "library":
+        return library_index(catalog)
     mut result = [el("p", {"class": "docs-eyebrow"}, [txt(section.title)]), el("h1", {}, [txt(section.headline)]), el(
         "p",
         {"class": "doc-lead"},
@@ -280,7 +345,7 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
                     [el("a", {"href": "dates.html"}, [txt("Work with dates and times")]), el(
                         "small",
                         {},
-                        [txt("Reworked guide · Read here →")],
+                        [txt("How-to · Read here →")],
                     )],
                 ),
             )
@@ -291,7 +356,7 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
                     [el("a", {"href": "date-api.html"}, [txt("Date API preview")]), el(
                         "small",
                         {},
-                        [txt("Authored API sample · Read here →")],
+                        [txt("Reference · Authored sample · Read here →")],
                     )],
                 ),
             )
@@ -303,7 +368,7 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
                     [el("a", {"href": "traits.html"}, [txt("Traits and capabilities")]), el(
                         "small",
                         {},
-                        [txt("Reworked guide · Read here →")],
+                        [txt("How-to · Read here →")],
                     )],
                 ),
             )
@@ -314,7 +379,7 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
                     [el("a", {"href": "traits-reference.html"}, [txt("Trait rules")]), el(
                         "small",
                         {},
-                        [txt("Language rules · Read here →")],
+                        [txt("Reference · Read here →")],
                     )],
                 ),
             )
@@ -326,7 +391,7 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
                     [el("a", {"href": "oven.html"}, [txt("Build and run a project")]), el(
                         "small",
                         {},
-                        [txt("Reworked guide · documented 0.5 baseline")],
+                        [txt("How-to · documented 0.5 baseline")],
                     )],
                 ),
             )
@@ -491,7 +556,7 @@ pub def migration_content(catalog: ContentCatalog) -> list[DocumentNode]:
                         "td",
                         {},
                         [el("a", {"href": page.source_url}, [txt(page.title)]), el("small", {}, [txt(page.source)])],
-                    ), el("td", {}, [txt(page.topic), el("small", {}, [txt(page.role)])]), el(
+                    ), el("td", {}, [txt(page.topic), el("small", {}, [txt(page.doc_type + " · " + page.role)])]), el(
                         "td",
                         {},
                         [el("strong", {}, [txt(page.action)]), el("p", {}, [txt(page.rationale)]), el(
@@ -536,4 +601,162 @@ pub def migration_content(catalog: ContentCatalog) -> list[DocumentNode]:
 
 
 pub def catalog_stylesheet() -> str:
-    return "\n.docs-browse>summary{display:none}.docs-sidebar> a:last-child{font-size:11px}.docs-sidebar li{margin-bottom:8px}.docs-sidebar .docs-topic-links{margin:8px 0 18px 12px;border-left:1px solid var(--outline);padding-left:8px}.docs-topic-links a{font-size:11px}.docs-route-note{font-size:12px!important;color:var(--quiet);border-left:2px solid #856d3e;padding-left:16px;margin-block:28px!important}.docs-directory{grid-template-columns:repeat(2,minmax(0,1fr))}.docs-directory,.docs-topic-list{grid-auto-flow:column;grid-template-rows:repeat(var(--column-rows),auto)}.docs-directory .docs-card{padding:22px}.docs-directory .docs-card h2{font-size:22px;margin-top:0}.docs-directory .docs-card p{margin-bottom:12px}.docs-start{display:grid;gap:0;border-block:1px solid var(--outline);margin:30px 0}.docs-start a{padding:16px 0;text-decoration:none;display:grid;gap:3px;border-bottom:1px solid var(--outline)}.docs-start a:last-child{border:0}.docs-start strong{font-size:16px;color:var(--gold-bright)}.docs-start span{font-size:12px;color:var(--muted)}.docs-topic-list{list-style:none;padding:0!important;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}.docs-topic-list li{margin:0!important;padding:13px 0!important;border-bottom:1px solid var(--outline)}.docs-topic-list a{font-size:14px}.docs-topic-list small{display:block;font-size:10px;color:var(--quiet);margin-top:5px}.docs-topic-records,.docs-migration-group{border-top:1px solid var(--outline);padding-block:20px}.docs-topic-records summary,.docs-migration-group summary{cursor:pointer;color:var(--gold-bright);font-weight:600}.docs-topic-records p{margin-top:18px;font-size:12px;color:var(--muted)}.docs-migration-group td:first-child{width:27%}.docs-migration-group td:nth-child(2){width:20%}.docs-migration-group small{display:block;overflow-wrap:anywhere;font-size:10px;color:var(--quiet);margin-top:8px}.docs-migration-group p{font-size:12px;margin-top:8px}.docs-migration-group th{white-space:nowrap}.docs-sidebar li a[aria-current]{border-color:var(--cyan)}\n@media(max-width:740px){.docs-browse>summary{display:block;cursor:pointer;color:var(--gold);padding:10px 0}.docs-browse nav{margin-block:12px}.docs-browse ul{display:block}.docs-browse li{margin-bottom:4px}.docs-browse li a{border:0;border-left:2px solid transparent;border-radius:0;padding:6px 12px}.docs-sidebar .docs-topic-links{display:none}.docs-sidebar .docs-all{display:block;margin-top:12px}.docs-sidebar{padding-bottom:14px}.docs-directory,.docs-topic-list{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}.docs-directory{gap:10px}.docs-directory .docs-card{padding:18px}.docs-directory .docs-card h2{font-size:20px}}\n\n.docs-mobile-toc:not(:has(nav a)),.docs-toc:not(:has(.toc-h2,.toc-h3)){display:none}@media(max-width:740px){.docs-browse ul{display:flex;flex-wrap:wrap;gap:5px}.docs-browse li{margin:0}.docs-browse li a{border:1px solid var(--outline);border-radius:4px;padding:5px 9px}.docs-sidebar .docs-all{display:inline-block;margin:0 0 0 16px}.docs-sidebar .docs-overview{margin-bottom:4px}.docs-browse>summary{padding:6px 0}.docs-browse nav{margin:4px 0 12px}.docs-sidebar>a:not(.docs-overview){font-size:11px}}\n"
+    return "\n.docs-browse>summary{display:none}.docs-sidebar> a:last-child{font-size:11px}.docs-sidebar li{margin-bottom:8px}.docs-sidebar .docs-topic-links{margin:8px 0 18px 12px;border-left:1px solid var(--outline);padding-left:8px}.docs-topic-links a{font-size:11px}.docs-route-note{font-size:12px!important;color:var(--quiet);border-left:2px solid #856d3e;padding-left:16px;margin-block:28px!important}.docs-directory{grid-template-columns:repeat(2,minmax(0,1fr))}.docs-directory,.docs-topic-list{grid-auto-flow:column;grid-template-rows:repeat(var(--column-rows),auto)}.docs-directory .docs-card{padding:22px}.docs-directory .docs-card h2{font-size:22px;margin-top:0}.docs-directory .docs-card p{margin-bottom:12px}.docs-start{display:grid;gap:0;border-block:1px solid var(--outline);margin:30px 0}.docs-start a{padding:16px 0;text-decoration:none;display:grid;gap:3px;border-bottom:1px solid var(--outline)}.docs-start a:last-child{border:0}.docs-start strong{font-size:16px;color:var(--gold-bright)}.docs-start span{font-size:12px;color:var(--muted)}.docs-topic-list{list-style:none;padding:0!important;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}.docs-topic-list li{margin:0!important;padding:13px 0!important;border-bottom:1px solid var(--outline)}.docs-topic-list a{font-size:14px}.docs-topic-list small{display:block;font-size:10px;color:var(--quiet);margin-top:5px}.docs-topic-records,.docs-migration-group{border-top:1px solid var(--outline);padding-block:20px}.docs-topic-records summary,.docs-migration-group summary{cursor:pointer;color:var(--gold-bright);font-weight:600}.docs-topic-records p{margin-top:18px;font-size:12px;color:var(--muted)}.docs-migration-group td:first-child{width:27%}.docs-migration-group td:nth-child(2){width:20%}.docs-migration-group small{display:block;overflow-wrap:anywhere;font-size:10px;color:var(--quiet);margin-top:8px}.docs-migration-group p{font-size:12px;margin-top:8px}.docs-migration-group th{white-space:nowrap}.docs-sidebar li a[aria-current]{border-color:var(--cyan)}\n@media(max-width:740px){.docs-browse>summary{display:block;cursor:pointer;color:var(--gold);padding:10px 0}.docs-browse nav{margin-block:12px}.docs-browse ul{display:block}.docs-browse li{margin-bottom:4px}.docs-browse li a{border:0;border-left:2px solid transparent;border-radius:0;padding:6px 12px}.docs-sidebar .docs-topic-links{display:none}.docs-sidebar .docs-all{display:block;margin-top:12px}.docs-sidebar{padding-bottom:14px}.docs-directory,.docs-topic-list{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}.docs-directory{gap:10px}.docs-directory .docs-card{padding:18px}.docs-directory .docs-card h2{font-size:20px}}\n\n.docs-mobile-toc:not(:has(nav a)),.docs-toc:not(:has(.toc-h2,.toc-h3)){display:none}@media(max-width:740px){.docs-browse ul{display:flex;flex-wrap:wrap;gap:5px}.docs-browse li{margin:0}.docs-browse li a{border:1px solid var(--outline);border-radius:4px;padding:5px 9px}.docs-sidebar .docs-all{display:inline-block;margin:0 0 0 16px}.docs-sidebar .docs-overview{margin-bottom:4px}.docs-browse>summary{padding:6px 0}.docs-browse nav{margin:4px 0 12px}.docs-sidebar>a:not(.docs-overview){font-size:11px}}\n.doc-type{display:inline-block;font-size:10px;line-height:1.5;letter-spacing:.06em;padding:2px 7px;border:1px solid var(--outline);border-radius:4px;color:var(--gold-bright);white-space:nowrap}.doc-type[data-doc-type=Reference]{color:var(--cyan)}.doc-type-line{margin:0 0 14px!important}.module-tabs{display:flex;flex-wrap:wrap;gap:16px;border-block:1px solid var(--outline);padding:12px 0;margin:0 0 26px;font-size:12px}.module-index{list-style:none;padding:0!important;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(var(--column-rows),auto);grid-auto-flow:column;gap:0 28px}.module-index>li{padding:18px 0!important;margin:0!important;border-bottom:1px solid var(--outline);scroll-margin-top:110px}.module-name{font-family:var(--mono);font-size:16px;font-weight:600}.module-index p{font-size:13px;line-height:1.6;margin:6px 0 10px}.module-reference{font-size:11px}.module-primary{padding:16px;border:1px solid var(--outline);border-radius:5px;background:#42e8ef05}.docs-module-links{list-style:none;padding:0!important}.docs-module-links li{padding:13px 0!important;margin:0!important;border-bottom:1px solid var(--outline)}.docs-module-links small{display:block;margin-top:6px;font-size:11px;color:var(--quiet)}.module-empty{font-size:13px;color:var(--quiet)}.module-section{scroll-margin-top:110px}@media(max-width:740px){.module-index{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}.module-tabs{gap:10px;font-size:11px}}"
+
+
+pub def type_badge(kind: str) -> DocumentNode:
+    """Keep the editorial type visible independently of topic and release status."""
+    return el("span", {"class": "doc-type", "data-doc-type": kind}, [txt(kind)])
+
+
+pub def page_type(key: str, catalog: ContentCatalog) -> str:
+    if key.startswith("nav-") or key.startswith("module-") or key in ["index", "explore", "content-map"]:
+        return "Overview"
+    authored = {"configuration": "How-to", "configuration-pilot": "Explanation", "dates": "How-to", "date-api": "Reference", "traits": "How-to", "traits-reference": "Reference", "oven": "How-to", "architecture": "Explanation"}
+    if key in authored:
+        return authored[key]
+    for page in catalog.entries:
+        if page.preview == key + ".html":
+            return page.doc_type
+    assert false, "Missing documentation type: " + key
+    return ""
+
+
+pub def module_for(key: str, catalog: ContentCatalog) -> str:
+    if key.startswith("module-"):
+        return key[7:]
+    if key in ["dates", "date-api"]:
+        return "datetime"
+    for module in catalog.modules:
+        for page in catalog.entries:
+            if page.source == module.reference and page.preview == key + ".html":
+                return module.key
+    return ""
+
+
+pub def module_reference(module: LibraryModule, catalog: ContentCatalog) -> str:
+    for page in catalog.entries:
+        if page.source == module.reference:
+            return page_link(page)
+    assert false, "Module needs a reference: " + module.name
+    return ""
+
+
+pub def module_tabs(key: str, catalog: ContentCatalog) -> list[DocumentNode]:
+    for module in catalog.modules:
+        if module.key == module_for(key, catalog):
+            return [el(
+                "nav",
+                {"class": "module-tabs", "aria-label": module.name + " documentation"},
+                [el("a", {"href": "module-" + module.key + ".html"}, [txt(module.name + " · Overview")]), el(
+                    "a",
+                    {"href": "module-" + module.key + ".html#how-to"},
+                    [txt("How-to guides")],
+                ), el("a", {"href": module_reference(module, catalog)}, [txt("Reference")])],
+            )]
+    return []
+
+
+pub def library_index(catalog: ContentCatalog) -> list[DocumentNode]:
+    mut items: list[DocumentNode] = []
+    mut seen_topics: list[str] = []
+    for module in catalog.modules:
+        mut anchors: list[DocumentNode] = []
+        for page in catalog.entries:
+            if page.source == module.reference and page.section == "library" and page.topic not in seen_topics:
+                anchors.append(el("span", {"id": topic_id(page.topic)}, []))
+                seen_topics.append(page.topic)
+        mut location = "Current docsite ↗"
+        if not module_reference(module, catalog).startswith("https:"):
+            location = str("Read here →")
+        items.append(
+            el(
+                "li",
+                {"id": "module-" + module.key},
+                anchors + [el(
+                    "a",
+                    {"href": "module-" + module.key + ".html", "class": "module-name"},
+                    [txt(module.name)],
+                ), el("p", {}, [txt(module.description)]), el(
+                    "a",
+                    {"href": module_reference(module, catalog), "class": "module-reference", "aria-label": module.name + " reference"},
+                    [type_badge("Reference"), txt(" · " + location)],
+                )],
+            ),
+        )
+    return [el("h1", {}, [txt("Standard library")]), el(
+        "p",
+        {"class": "doc-lead"},
+        [txt("Find a module by name. Open its overview for guides and explanations, or go straight to its reference.")],
+    ), el(
+        "p",
+        {"class": "docs-route-note"},
+        [txt(
+            "Alphabetical index of the modules documented in this snapshot. Reference links marked Current docsite open the existing documentation.",
+        )],
+    ), el("ul", {"class": "module-index", "style": "--column-rows:" + str((len(items) + 1) // 2)}, items), el(
+        "p",
+        {},
+        [el("a", {"href": "configuration.html"}, [type_badge("How-to"), txt(" Read and validate configuration →")])],
+    )]
+
+
+pub def module_content(module: LibraryModule, catalog: ContentCatalog) -> list[DocumentNode]:
+    mut result = [el("h1", {}, [txt(module.name)]), el("p", {"class": "doc-lead"}, [txt(module.description)]), el(
+        "p",
+        {"class": "module-primary"},
+        [el(
+            "a",
+            {"href": module_reference(module, catalog), "aria-label": module.name + " reference"},
+            [type_badge("Reference"), txt(" Open the complete module reference →")],
+        )],
+    )]
+    for kind in ["How-to", "Tutorial", "Explanation", "Reference"]:
+        mut items: list[DocumentNode] = []
+        if kind == "How-to" and module.key == "datetime":
+            items.append(
+                el(
+                    "li",
+                    {},
+                    [el("a", {"href": "dates.html"}, [txt("Work with dates and times")]), el(
+                        "small",
+                        {},
+                        [type_badge(kind), txt(" · Reworked guide · Read here →")],
+                    )],
+                ),
+            )
+        if kind == "How-to" and module.key in ["fs", "json", "toml"]:
+            items.append(
+                el(
+                    "li",
+                    {},
+                    [el("a", {"href": "configuration.html"}, [txt("Read and validate configuration")]), el(
+                        "small",
+                        {},
+                        [type_badge(kind), txt(" · Read here →")],
+                    )],
+                ),
+            )
+        for source in module.sources:
+            for page in catalog.entries:
+                if page.source == source and page.doc_type == kind:
+                    items.append(entry_node(page))
+        mut label = "Reference"
+        if kind == "How-to":
+            label = str("How-to guides")
+        if kind == "Tutorial":
+            label = str("Tutorials")
+        if kind == "Explanation":
+            label = str("Explanations")
+        result.append(el("section", {"id": kind.lower(), "class": "module-section"}, [el("h2", {}, [txt(label)])]))
+        if len(items) == 0:
+            result.append(
+                el(
+                    "p",
+                    {"class": "module-empty"},
+                    [txt("No separate " + kind.lower() + " page is listed for this module in the current snapshot.")],
+                ),
+            )
+        else:
+            result.append(el("ul", {"class": "docs-module-links"}, items))
+    return result

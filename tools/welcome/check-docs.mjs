@@ -123,3 +123,16 @@ for(const file of configEvidence.inputs){
  assert.equal(sha(bytes),file.sha256,file.path);
 }
 console.log('Passed: configuration guide/reference routes, displayed example fidelity, source evidence and execution-status boundaries.');
+
+// Explicit document types and an exact, complete module-reference route.
+for(const [name,doc] of documents){
+ const type=doc.querySelector('main > .doc-type-line [data-doc-type]')?.dataset.docType;
+ assert.ok(['Tutorial','How-to','Reference','Explanation','Overview'].includes(type),'Missing/invalid page type: '+name);
+}
+assert.equal(documents.get('configuration.html').querySelector('.doc-type-line [data-doc-type]').dataset.docType,'How-to');
+assert.equal(documents.get('getting-started.html').querySelector('.doc-type-line [data-doc-type]').dataset.docType,'Tutorial');
+assert.equal(documents.get('compile-runtime.html').querySelector('.doc-type-line [data-doc-type]').dataset.docType,'Explanation');
+assert.equal(documents.get('datetime-api.html').querySelector('.doc-type-line [data-doc-type]').dataset.docType,'Reference');
+assert.equal(documents.get('module-datetime.html').querySelector('.module-primary a').getAttribute('href'),'datetime-api.html');
+assert.ok(documents.get('datetime-api.html').querySelector('.doc-breadcrumb a[href="module-datetime.html"]'));
+console.log('Passed: document-type badges, alphabetical module homes, direct datetime reference and module breadcrumb.');

@@ -28,20 +28,38 @@ for(const section of map.sections){
  assert.equal(doc.querySelector('[aria-current=page]').getAttribute('href'),`nav-${section.key}.html`);
  hubs.set(section.key,doc);
 }
+const moduleDocs = new Map();
+assert.equal(new Set(map.library_modules.map(m=>m.key)).size,map.library_modules.length);
+assert.deepEqual(map.library_modules.map(m=>m.name),map.library_modules.map(m=>m.name).sort(),'Alphabetical module index');
+for(const module of map.library_modules){
+ const doc=new JSDOM(await readFile(new URL(`module-${module.key}.html`,output),'utf8')).window.document;
+ moduleDocs.set(module.key,doc);
+ assert.equal(doc.querySelector('h1').textContent,module.name);
+ assert.ok(module.sources.includes(module.reference));
+ for(const source of module.sources)assert.ok(map.pages.some(p=>p.source===source),source);
+ const reference=map.pages.find(p=>p.source===module.reference);
+ assert.equal(doc.querySelector('.module-primary a').getAttribute('href'),reference.preview||reference.current_url);
+ assert.ok([...hubs.get('library').querySelectorAll('a')].some(a=>a.getAttribute('href')===`module-${module.key}.html`));
+ assert.ok([...hubs.get('library').querySelectorAll('.module-reference')].some(a=>a.getAttribute('href')===(reference.preview||reference.current_url)));
+ for(const type of ['How-to','Tutorial','Explanation','Reference'])assert.ok(doc.getElementById(type.toLowerCase()));
+}
 for (const p of map.pages) {
  assert.match(p.sha256,/^[0-9a-f]{64}$/);
  assert.ok(p.bytes>=0);
  assert.ok(p.rationale.length>20);
  assert.ok(p.source_url.includes('/blob/'+map.source_commit+'/'));
+ assert.ok(['Tutorial','How-to','Reference','Explanation','Overview','Supporting material'].includes(p.doc_type),p.source);
  if(p.role==='support') {assert.equal(p.proposed_url,'');assert.equal(p.action,'support');continue;}
  assert.ok(sections.has(p.section),p.source);
  assert.ok(sections.get(p.section).topics.includes(p.topic),p.source);
  assert.ok(p.current_url.startsWith('https://incan.io/dev/'),p.source);
  assert.ok(p.proposed_url.startsWith('/docs/'),p.source);
  if(p.action==='replace-hub')continue;
- const item=[...hubs.get(p.section).querySelectorAll('li[data-source]')].find(n=>n.dataset.source===p.source);
+ const containers=p.section==='library'?[...moduleDocs.values()]:[hubs.get(p.section)];
+ const item=containers.flatMap(doc=>[...doc.querySelectorAll('li[data-source]')]).find(n=>n.dataset.source===p.source);
  assert.ok(item,'Unreachable reader page: '+p.source);
  assert.equal(item.querySelector('a').getAttribute('href'),p.preview||p.current_url);
+ assert.equal(item.querySelector('[data-doc-type]').dataset.docType,p.doc_type);
  assert.match(item.textContent,p.preview?/Read here/:/Current docsite/);
 }
 // Canonical collisions must represent deliberate consolidation, not accidental filename reuse.
