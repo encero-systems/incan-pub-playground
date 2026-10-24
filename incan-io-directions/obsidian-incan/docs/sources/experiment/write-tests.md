@@ -1,20 +1,14 @@
-# Write tests
+# How testing works in Incan
 
-A useful test makes a promise about your program explicit. When the implementation changes, the test tells you whether that promise still holds. This chapter shows how to place those checks, cover several inputs without repeating yourself, and share setup when several tests need it.
+A function's type describes the values it accepts and returns. It says less about the relationship between them. A function that accepts a string and returns a string might trim whitespace, change capitalization, or return its input untouched. All three implementations can have the same type. A test records a more specific expectation about the behavior.
 
-By the end, you should be able to choose a home for a test, express its expected result, and recognize when a parameter set or a fixture makes the test easier to understand.
+Incan tests are functions containing such expectations. The test runner finds them, supplies any setup they require, and reports whether their assertions hold. Understanding how these pieces fit together helps explain both what a passing suite tells us and what it leaves open.
 
-## Before you begin
+The examples in this chapter assume familiarity with functions, imports and basic string operations. They illustrate the testing model; they do not form a project to build or a sequence of exercises.
 
-You need an Incan project that already builds and a toolchain with the documented testing support. You should be comfortable defining a function, importing a name, and reading string and list values. The [getting-started tutorial](../tooling/tutorials/getting_started.md) covers project setup if you need it. No other chapter in this pilot is required first.
+## An expectation made explicit
 
-The examples use a small name-normalization function: it removes surrounding whitespace and converts the name to lowercase. Each code block is complete for its named file. You can use them independently; in an application, tests should exercise the real production function rather than maintain their own copy.
-
-> **0.6 content preview.** The examples follow the recorded development documentation but have not been executed against the release candidate. [Review notes and release checks](testing-editor-pilot.md) track that remaining verification.
-
-## Choose where the test belongs
-
-Start with the behavior you want to protect. For a small helper, keeping the test beside the implementation makes their relationship easy to see. Incan supports an inline `module tests:` block for this purpose. Save this example as `src/names.incn`:
+Consider a function that prepares a name for comparison by removing surrounding whitespace and converting it to lowercase. Its signature describes a string-to-string operation. The assertion below captures a particular consequence of that operation:
 
 ```incan
 """Normalize names and check the behavior beside its implementation."""
@@ -31,27 +25,29 @@ module tests:
         assert_eq(normalize_name("  Alice  "), "alice")
 ```
 
-The function promises to turn `"  Alice  "` into `"alice"`. The test calls the function with the padded name and compares the returned value with that expectation. It tests the result a caller cares about, so an implementation change can preserve the test as long as it preserves that behavior.
+The input contains two kinds of variation: spaces around the name and an uppercase initial. The expected value, `"alice"`, says that neither should remain. If the function stopped converting to lowercase, its type would still be correct, but this test would fail.
 
-The inline block can access names in its enclosing file, including private helpers. Test-only imports belong inside that block. Its names do not become production module members, and normal build/run output omits the test body. A production file may contain at most one `module tests:` block.
+The expected value is written independently of the implementation. A test that calculated its expectation by repeating the same trimming and lowercasing operations could reproduce the implementation's mistake. Writing down the result makes the intended behavior available for comparison.
 
-When a test checks a public interface or spans several modules, a separate test file is often a clearer home. Name it `test_*.incn` or `*_test.incn`, declare tests at the top level, and import the public code you want to exercise. Do not wrap those declarations in another `module tests:` block. Conversely, putting a top-level `test_*` function in an ordinary production file does not make it a collected test.
+That does not make the expectation infallible. Lowercasing is appropriate for this example's comparison rule; it would be a questionable rule for displaying someone's name. A failed assertion identifies a disagreement between the program and the test. Deciding which one should change still requires an understanding of the program's purpose.
 
-The distinction is the test's context: an inline block gives access to the implementation beside it; a conventional test file exercises code through imports. Both forms can be collected from the project root.
+The language `assert` statement expresses an expectation as a condition. Helpers from `std.testing`, such as `assert_eq`, express common comparisons. Several assertions can describe one coherent behavior; the useful boundary is whether a failure can be understood in terms of that behavior. The [assertion reference](../language/reference/stdlib/testing.md#assertion-functions) describes the available comparisons and their signatures.
 
-## Assert the behavior you care about
+## Tests and the code they examine
 
-An assertion is the point where the promise becomes a check. In the example, `assert_eq` compares the function's result with `"alice"`. The language `assert` statement is useful when the expectation is naturally a condition. Choose the form that makes a failure easiest to understand.
+The example places its test inside `module tests:` in the same file as the function. An inline test block can see names in the enclosing file, including private helpers. That makes it possible to examine an implementation detail without making it part of the module's public interface. The block's imports and declarations belong to the test context, and normal build/run output omits its test body.
 
-A test does not need to stop at one assertion. Several related checks can describe one behavior. If the checks start describing unrelated promises, separate tests will make it easier to identify what broke.
+A conventional test file provides another context. Its name matches `test_*.incn` or `*_test.incn`, and its tests are top-level functions. Such a file can import the code it examines through the same public interface available to other callers. Tests that span modules or check a public interface often fit naturally there.
 
-For `Option` and `Result`, first establish which variant you expect. Helpers such as `assert_is_some`, `assert_is_ok` and `assert_is_err` check that variant and return the contained value, allowing the next assertion to examine it without an unchecked unwrap. The [assertion reference](../language/reference/stdlib/testing.md#assertion-functions) gives the exact signatures and optional messages; [runtime error checks](../language/reference/stdlib/testing.md#assert_raises) cover expected raised errors.
+The two locations answer different questions about visibility. An inline test can examine how a module is put together. A separate test can examine what the module exposes to its callers. Neither location, by itself, determines how useful the test is: that depends on the behavior being checked.
 
-## Cover several inputs
+Location also matters to discovery. A top-level function named `test_*` in an ordinary production file is not collected merely because of its name; inline tests belong inside the file's test block. Likewise, a run restricted to the `tests/` directory does not include inline tests in `src/`. The scope of a run is therefore part of the meaning of its result.
 
-One padded name is a useful start, but it leaves other behavior unexamined. Does an uppercase name become lowercase? Does an empty name stay empty? These questions use the same operation and comparison, so they fit one parameterized test.
+## One behavior, several cases
 
-Save this independent example as `tests/test_normalization.incn`. The small function is included to make the example self-contained; import your production function when adapting it to an application.
+The first assertion checks one input. It says nothing about an empty string, and it does not distinguish trimming from lowercasing: both happen in the same call. Several carefully chosen cases make those expectations easier to see.
+
+Parameterization gives each case the same test body while allowing its input and expected value to differ. Here the small function is repeated so that the relationship remains visible in the example:
 
 ```incan
 """Exercise normalization with named input cases."""
@@ -72,15 +68,17 @@ def test_normalize_name(name: str, expected: str) -> None:
     assert_eq(normalize_name(name), expected)
 ```
 
-Each row supplies a `name` and an `expected` value. The runner collects a separate case for each row, so a failure in `uppercase` can be distinguished from one in `empty`. The IDs describe the situations being checked; they are more useful during diagnosis than a collection of indistinguishable repeated calls.
+The three rows describe three situations. `padded` combines surrounding whitespace with mixed case, `uppercase` checks capitalization without whitespace, and `empty` records that an empty string remains empty. The runner treats each row as a separate case, so its report can identify which situation failed.
 
-Use parameterization when the same behavior must hold for several inputs. Keep distinct tests when the setup or the meaning of the check changes substantially. If a particular row needs its own marks, `param_case` provides that additional control; see the [parametrization reference](../language/reference/stdlib/testing.md#fixtures-and-parametrization).
+Named cases also communicate the reasoning behind the selection. A long list of strings may exercise the function repeatedly without making clear what each string contributes. A short list whose cases represent distinct behavior is easier to maintain and interpret.
 
-## Share setup with fixtures
+Parameterization is useful when the cases share a question. When the setup or expected behavior changes substantially, separate tests can make those differences clearer. The syntax is a means of expressing the relationship between cases; reducing the number of function declarations is a secondary benefit.
 
-Parameter sets vary the inputs to a check. Fixtures solve a different problem: supplying setup that several checks need. A fixture declares a value once, and a test requests it by adding a parameter with the fixture's name. The runner resolves that dependency.
+## Fixtures express dependencies
 
-This deliberately small example can live in `tests/test_fixture.incn`:
+A test may need more than input values. It might require a temporary directory, a configured environment, or a resource that must be closed afterward. That preparation is part of the test's context. A fixture gives it a name and allows tests to declare that they depend on it.
+
+Incan resolves a fixture through a test parameter with the same name. A string is enough to show the relationship:
 
 ```incan
 """Supply a shared input without repeating setup in each test."""
@@ -101,39 +99,32 @@ def test_normalize(padded_name: str) -> None:
     assert_eq(padded_name.strip().lower(), "alice")
 ```
 
-Both tests request `padded_name`, but each makes a different assertion. This string would be easy to repeat; it keeps the injection mechanism visible before you apply it to more substantial setup. A fixture becomes useful when repetition obscures a test or when setup has a lifetime that needs managing.
+Both tests declare a dependency on `padded_name`. The runner calls the fixture and supplies its value as the argument. The test body can then concentrate on the operation and its expected result.
 
-Start with the default function scope, which provides fresh setup for each case. A broader scope trades that isolation for reuse: module scope shares within a source file, while session scope shares within a worker batch. A session fixture is **not one global instance across all parallel workers**. Choose the smallest scope that meets the test's needs, particularly when the value is mutable or represents an external resource.
+For a string this small, repeating the value would be perfectly reasonable. The fixture shows its value more clearly when preparation is substantial, shared by several tests, or associated with cleanup. Giving that preparation a name makes the dependency visible at the test's boundary.
 
-When setup needs cleanup, a fixture can use one top-level `yield`. Setup runs before it, the yielded value is injected, and teardown follows. Teardown runs after an assertion failure while the worker remains alive; terminating the process can bypass it. Async fixtures use the same decorator with `async def` and exactly one `yield`; setup and teardown are awaited, and dependencies are torn down in reverse order. The [fixture contract](../language/reference/stdlib/testing.md#fixtures-and-parametrization) describes these lifetime rules in detail.
+Fixtures can themselves depend on other fixtures. This forms a chain of preparation leading to the test. If preparation fails, the test may never reach its assertion. Such an error describes a failure to establish the required context, which is different from observing the program return an unexpected result.
 
-As the suite grows, shared `conftest.incn` fixtures can serve conventional tests under the matching `tests/**` subtree. They do not apply to inline blocks in production source directories. Built-in `tmp_path`, `tmp_workdir` and `env` fixtures are requested by parameter name when a test needs isolated files, a working directory or environment changes.
+Parameterization and fixtures can be used together. Parameterization describes the cases to examine; a fixture describes the context needed to examine them. Keeping those roles clear makes it easier to understand why a test has a particular argument.
 
-## Mark intent explicitly
+## Scope, isolation and cleanup
 
-Some tests need context beyond their assertion. A costly check may be excluded from everyday runs; a known failure may need to remain visible while a fix is pending. Marks make those decisions explicit instead of hiding them in comments or deleting the check.
+A fixture's scope determines how long its prepared value can be reused. With the default function scope, each case receives fresh setup. Module scope permits reuse within a source file. Session scope permits reuse within a worker batch; it does not create one global instance shared by every parallel worker.
 
-Import each decorator from `std.testing`. Use `@skip(reason)` when a check cannot run yet, and `@xfail(reason)` when its failure is known and should remain tracked. An unexpectedly passing xfail is a failure signal: review the reason and remove the mark when the underlying problem is fixed. `@slow` identifies costly tests, and `@mark("smoke")` creates a selectable group. Register `"smoke"` in `TEST_MARKERS` when using strict marker checking. For a test whose name does not begin with `test_`, use `@test`.
+Reuse can avoid expensive preparation, but it also introduces a relationship between tests. If two tests receive the same mutable resource, a change made by one may affect the other. A test that passes alone and fails in a suite may be exposing that shared state. Choosing a scope therefore involves both the cost of preparation and the independence of the tests.
 
-Conditional `skipif` and `xfailif` evaluate collection-time conditions; `platform()` and `feature(name)` support those decisions. [Run tests](run-tests.md#select-the-work-you-need) explains how marks affect selection. Check the [executor's timeout limitation](run-tests.md#respect-the-executor-boundary) before relying on timeout enforcement.
+Cleanup is the other side of the resource's lifetime. In a fixture with `yield`, preparation precedes the yield, the yielded value is supplied to the test, and teardown follows. Teardown can run after an assertion failure while the worker remains alive. Terminating the worker process can prevent it from running, so a fixture is not an unconditional guarantee that an external resource will be recovered.
 
-## Check your result
+The [fixture reference](../language/reference/stdlib/testing.md#fixtures-and-parametrization) gives the precise rules for scopes, dependencies, asynchronous fixtures and teardown. Those rules become especially important when the resource outlives a single test or is shared beyond the test process.
 
-From the project root, list the tests before running them:
+## What a test result tells us
 
-```bash
-incan test --list .
-incan test .
-```
+Before an assertion can succeed or fail, the runner must discover the test, include it in the selected run, and prepare it for execution. These stages explain why a successful command is not, on its own, evidence that every intended behavior was checked. A test outside the selected paths, or excluded by a mark, contributes no passing assertion to that run.
 
-If you saved all three examples, look for the inline test, the three named normalization cases, and the two fixture tests. Those are the expected checks for this preview, not a transcript of a verified release-candidate run. If one is missing, check its file name and test context first. Listing only `tests/` will not find the inline test in `src/names.incn`.
+Marks add context to selection and reporting. A skipped test records that a check is not being executed. An expected-failure mark records that a failure is currently anticipated. Neither has the same meaning as an ordinary passing test. Reasons attached to these marks help preserve that distinction as the suite changes. The [runner chapter](run-tests.md#select-the-work-you-need) covers the commands that control selection.
 
-To check that an assertion protects the intended behavior, temporarily change the inline test's expected value from `"alice"` to `"Alice"` and run `incan test src/names.incn`. The comparison should fail. Restore `"alice"` and run again; it should pass. A collection or compilation error means the test has not reached that comparison yet. [Investigating a failure](run-tests.md#investigate-a-failure) helps distinguish those stages.
+A passing test establishes that its observed result agreed with its expectation under the conditions of that run. It does not establish that every possible input behaves correctly, or that the expectation itself captures the right requirement. A useful suite makes its chosen cases and conditions clear enough that another reader can judge what confidence they provide.
 
-You now have three ways to keep checks readable: place them in an appropriate context, express repeated input cases together, and share setup through explicit dependencies. Use whichever the behavior needs; a small test does not need all three.
+For the operational side—listing cases, narrowing a failure and interpreting CI results—see [Run tests](run-tests.md). Exact APIs belong in the [std.testing reference](../language/reference/stdlib/testing.md). The existing [language-book tutorial](../language/tutorials/book/13_unit_tests.md) provides a guided introduction.
 
-## Go further
-
-- [Run tests](run-tests.md) — select cases, diagnose failures and report results in CI.
-- [Unit tests in the language book](../language/tutorials/book/13_unit_tests.md) — a progressive introduction to testing.
-- [std.testing reference](../language/reference/stdlib/testing.md) — exact assertion, fixture and decorator contracts.
+> **Preview status.** This chapter follows the recorded development documentation. Its illustrative examples have not been executed against the matching 0.6 release candidate. [Editorial notes and release checks](testing-editor-pilot.md) record the remaining verification, including the executor's timeout limitation.

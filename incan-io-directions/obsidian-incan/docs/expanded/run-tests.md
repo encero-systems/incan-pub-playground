@@ -6,7 +6,7 @@ A test result is only useful when you know what ran. This chapter follows a test
 
 You need a working Incan project with at least one test and the toolchain selected for that project. Run the commands from the project root. You should know how to open a terminal there and recognize the difference between a file path and a test name.
 
-You can use your existing suite; completing another chapter is not required. If you have no tests yet, [Write tests](write-tests.md) contains complete examples. Commands below that mention `normalize` or `src/names.incn` use those examples; substitute a name or path from your own suite.
+You can use your existing suite; completing another chapter is not required. If you have no tests yet, the [language-book tutorial](../language/tutorials/book/13_unit_tests.md) introduces them. Commands below use `normalize` and `src/names.incn` as example names; substitute a test name or path from your own suite. [How testing works in Incan](write-tests.md) explains the model behind these commands.
 
 > **0.6 content preview.** The commands follow the recorded runner documentation. Execution against the release candidate is still pending, including verification of the Oven Alpha timeout limitation described below.
 
@@ -20,7 +20,7 @@ incan test --list .
 
 The final `.` selects the project-root directory. That scope can include conventional test files as well as inline test blocks inside production files. Selecting only `tests/` would leave out an inline test in `src/`, even if that test belongs to the same project.
 
-Read the list before interpreting a successful run. A missing test cannot fail, so a green result alone does not establish that your intended behavior was checked. Conventional files must match `test_*.incn` or `*_test.incn`; within a valid test context, functions use `test_*` names or `@test`. For inline tests, check that the declaration is inside the production file's `module tests:` block. [Choosing a test location](write-tests.md#choose-where-the-test-belongs) explains those contexts.
+Read the list before interpreting a successful run. A missing test cannot fail, so a green result alone does not establish that your intended behavior was checked. Conventional files must match `test_*.incn` or `*_test.incn`; within a valid test context, functions use `test_*` names or `@test`. For inline tests, check that the declaration is inside the production file's `module tests:` block. [Tests and the code they examine](write-tests.md#tests-and-the-code-they-examine) explains those contexts.
 
 Once the list contains the expected cases, run that scope:
 
@@ -56,7 +56,7 @@ Marks let you select by purpose instead of spelling. For example, `incan test -m
 | Run xfail tests as ordinary tests | `incan test --run-xfail .` |
 | Enable a collection-time feature probe | `incan test --feature new_parser .` |
 
-The last option supplies a value to collection-time `feature(...)` checks. It does not configure arbitrary application behavior. [Marking test intent](write-tests.md#mark-intent-explicitly) explains the authoring side, and the [CLI reference](../tooling/reference/cli_reference.md) provides the full option contract.
+The last option supplies a value to collection-time `feature(...)` checks. It does not configure arbitrary application behavior. [What a test result tells us](write-tests.md#what-a-test-result-tells-us) explains how these distinctions affect interpretation, and the [CLI reference](../tooling/reference/cli_reference.md) provides the full option contract.
 
 ## Investigate a failure
 
@@ -72,7 +72,7 @@ Read the diagnostic alongside the test ID. For an assertion failure, compare the
 
 Additional output is useful when it answers a specific question. `--nocapture` exposes output from passing tests, while `--durations 10` identifies the slowest cases. If a failure seems to depend on order, use `--shuffle --seed 12345` and retain the seed so the ordering experiment can be repeated.
 
-Parallel workers can shorten an independent suite: `incan test --jobs 4 .` requests four workers. Before increasing concurrency, check whether tests share external files or services. A session fixture is per worker batch, not one instance shared across all workers. Isolation and fixture lifetime matter more than the worker count; [fixture setup](write-tests.md#share-setup-with-fixtures) explains those choices.
+Parallel workers can shorten an independent suite: `incan test --jobs 4 .` requests four workers. Before increasing concurrency, check whether tests share external files or services. A session fixture is per worker batch, not one instance shared across all workers. Isolation and fixture lifetime matter more than the worker count; [scope and isolation](write-tests.md#scope-isolation-and-cleanup) explains those choices.
 
 ## Make CI fail usefully
 
@@ -102,7 +102,7 @@ Once those checks hold, you can distinguish three outcomes: the intended tests p
 
 ## Go further
 
-- [Write tests](write-tests.md) — test placement, assertions, parameter sets and fixtures.
+- [How testing works in Incan](write-tests.md) — test placement, assertions, parameter sets and fixtures.
 - [Troubleshooting](../tooling/how-to/troubleshooting.md) — toolchain and build failures.
 - [CLI reference](../tooling/reference/cli_reference.md) — exact commands and options.
 - [Review notes and release checks](testing-editor-pilot.md) — source discrepancies and pending verification.
