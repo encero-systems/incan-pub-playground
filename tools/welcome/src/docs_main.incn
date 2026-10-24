@@ -7,6 +7,8 @@ from markdown_docs import pages, blocks, DocProjection, plain, resolve_link, par
 from docs_layout import shell, overview, docs_stylesheet
 from docs_diagrams import diagram_runtime
 from docs_architecture import architecture_document
+from docs_catalog import load_catalog, section_content, section_headings, migration_content
+from markdown_docs import DocPage
 
 
 def read(path: str) -> str:
@@ -70,6 +72,7 @@ def self_check() -> None:
 
 pub def build_docs(directory: str) -> None:
     self_check()
+    catalog = load_catalog()
     destination = directory + "/docs"
     match Path(destination).mkdir(parents=true, exist_ok=true):
         Ok(_) => pass
@@ -77,7 +80,7 @@ pub def build_docs(directory: str) -> None:
             assert false, error.message()
     write(destination + "/docs.css", docs_stylesheet())
     write(destination + "/docs-diagrams.js", diagram_runtime())
-    write(destination + "/index.html", html("Documentation", overview()))
+    write(destination + "/index.html", html("Documentation", overview(catalog)))
     mut results: list[JsonValue] = []
     mut inputs: Dict[str, JsonValue] = {}
     mut outputs: Dict[str, JsonValue] = {}
@@ -95,7 +98,7 @@ pub def build_docs(directory: str) -> None:
         mut root = projection.decorate(DocumentNode(tag="", children=blocks(expanded.text)))
         if page.key == "architecture":
             root = architecture_document(root)
-        output = html(page.title, shell(page, root.children, projection.headings), projection.diagrams)
+        output = html(page.title, shell(page, root.children, projection.headings, catalog), projection.diagrams)
         Path(destination + "/expanded").mkdir(parents=true, exist_ok=true).unwrap()
         write(destination + "/expanded/" + page.key + ".md", expanded.text)
         outputs["expanded/" + page.key + ".md"] = JsonValue.string(digest_text(expanded.text))
@@ -122,7 +125,26 @@ pub def build_docs(directory: str) -> None:
                 ), "snippet_inputs": JsonValue.array([JsonValue.string(path) for path in expanded.inputs])},
             ),
         )
-    for name in ["markdown_docs", "docs_layout", "docs_main", "docs_diagrams", "docs_architecture"]:
+    for section in catalog.sections:
+        key = "nav-" + section.key
+        page = DocPage(key=key, title=section.title, group=section.title, source="", description=section.description)
+        output = html(
+            section.title,
+            shell(page, section_content(section, catalog), section_headings(section, catalog), catalog),
+        )
+        write(destination + "/" + key + ".html", output)
+        outputs[key + ".html"] = JsonValue.string(digest_text(output))
+    migration = DocPage(key="content-map", title="Content migration map", group="Editorial", source="", description="")
+    write(
+        destination + "/content-map.html",
+        html(migration.title, shell(migration, migration_content(catalog), [], catalog)),
+    )
+    for name in ["content-map.json", "content-strategy.md"]:
+        write(destination + "/" + name, read(name))
+        inputs[name] = JsonValue.string(digest_text(read(name)))
+        outputs[name] = JsonValue.string(digest_text(read(name)))
+    outputs["content-map.html"] = JsonValue.string(digest_text(read(destination + "/content-map.html")))
+    for name in ["docs_catalog", "markdown_docs", "docs_layout", "docs_main", "docs_diagrams", "docs_architecture"]:
         path = "src/" + name + ".incn"
         inputs[path] = JsonValue.string(digest_text(read(path)))
     for path in ["docs-source/manifest.json", "docs-source/LICENSE", "incan.lock", "loaf.toml", "incan.toml"]:

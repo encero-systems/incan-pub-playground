@@ -61,7 +61,9 @@ for (const page of receipt.pages) {
   assert.ok(!document.querySelector('main').textContent.includes('??? info'));
   assert.ok(!document.querySelector('main').textContent.includes('===*Incan*'));
 }
-documents.set('index.html', new JSDOM(await readFile(new URL('index.html', target), 'utf8')).window.document);
+for (const name of Object.keys(receipt.outputs).filter(name=>name.endsWith('.html'))) {
+ if (!documents.has(name)) documents.set(name, new JSDOM(await readFile(new URL(name, target), 'utf8')).window.document);
+}
 for (const [name, document] of documents) {
   for (const node of document.querySelectorAll('a[href],img[src],link[href]')) {
     const value = node.getAttribute('href') ?? node.getAttribute('src');

@@ -1,0 +1,498 @@
+"""Topic navigation and editorial inventory authored in Incan from a pinned content map."""
+
+from std.fs import Path
+from std.json import JsonValue
+from pub::pallay import DocumentNode
+from components import el, txt
+
+
+pub model DocSection:
+    pub key: str
+    pub title: str
+    pub headline: str
+    pub description: str
+    pub topics: list[str]
+
+
+pub model ContentPage:
+    pub source: str
+    pub title: str
+    pub section: str
+    pub topic: str
+    pub role: str
+    pub action: str
+    pub rationale: str
+    pub current_url: str
+    pub source_url: str
+    pub preview: str
+    pub proposed_url: str
+
+
+pub model ContentCatalog:
+    pub sections: list[DocSection]
+    pub entries: list[ContentPage]
+
+
+def field(value: JsonValue, key: str) -> str:
+    match value.get(key):
+        Some(item) =>
+            match item.as_str():
+                Some(text) => return text
+                None => pass
+        None => pass
+    assert false, "Missing text field in content map: " + key
+    return ""
+
+
+def array(value: JsonValue, key: str) -> list[JsonValue]:
+    match value.get(key):
+        Some(item) =>
+            match item.as_array():
+                Some(items) => return items
+                None => pass
+        None => pass
+    assert false, "Missing array in content map: " + key
+    return []
+
+
+pub def load_catalog() -> ContentCatalog:
+    mut source = ""
+    match Path("content-map.json").read_text(encoding="utf-8", errors="strict"):
+        Ok(text) =>
+            source = text
+        Err(error) =>
+            assert false, error.message()
+    mut data = JsonValue.null()
+    match JsonValue.parse(source):
+        Ok(value) =>
+            data = value
+        Err(error) =>
+            assert false, error.message()
+    mut sections: list[DocSection] = []
+    for row in array(data, "sections"):
+        mut topics: list[str] = []
+        for topic in array(row, "topics"):
+            match topic.as_str():
+                Some(value) => topics.append(value)
+                None =>
+                    assert false, "Topic must be text"
+        sections.append(
+            DocSection(
+                key=field(row, "key"),
+                title=field(row, "title"),
+                headline=field(row, "headline"),
+                description=field(row, "description"),
+                topics=topics,
+            ),
+        )
+    mut entries: list[ContentPage] = []
+    for row in array(data, "pages"):
+        entries.append(
+            ContentPage(
+                source=field(row, "source"),
+                title=field(row, "title"),
+                section=field(row, "section"),
+                topic=field(row, "topic"),
+                role=field(row, "role"),
+                action=field(row, "action"),
+                rationale=field(row, "rationale"),
+                current_url=field(row, "current_url"),
+                source_url=field(row, "source_url"),
+                preview=field(row, "preview"),
+                proposed_url=field(row, "proposed_url"),
+            ),
+        )
+    return ContentCatalog(sections=sections, entries=entries)
+
+
+pub def topic_id(title: str) -> str:
+    return title.lower().replace(" & ", "-").replace(" ", "-")
+
+
+pub def section_for(key: str, catalog: ContentCatalog) -> str:
+    if key.startswith("nav-"):
+        return key[4:]
+    if key in ["dates", "date-api", "collections"]:
+        return "library"
+    if key in ["traits", "traits-reference", "enums", "compile-runtime"]:
+        return "language"
+    if key == "oven":
+        return "oven"
+    for page in catalog.entries:
+        if page.preview == key + ".html":
+            return page.section
+    return ""
+
+
+pub def section_title(key: str, catalog: ContentCatalog) -> str:
+    for section in catalog.sections:
+        if section.key == key:
+            return section.title
+    return "Documentation"
+
+
+pub def page_link(page: ContentPage) -> str:
+    if page.preview != "":
+        return page.preview
+    return page.current_url
+
+
+pub def visible_topics(section: DocSection, catalog: ContentCatalog) -> list[str]:
+    mut result: list[str] = []
+    for topic in section.topics:
+        mut visible = false
+        for page in catalog.entries:
+            if page.section == section.key and page.topic == topic and page.action != "replace-hub":
+                visible = true
+        if visible:
+            result.append(topic)
+    return result
+
+
+pub def section_headings(section: DocSection, catalog: ContentCatalog) -> list[DocumentNode]:
+    return [el("a", {"href": "#" + topic_id(topic), "class": "toc-h2"}, [txt(topic)]) for topic in visible_topics(
+        section,
+        catalog,
+    )]
+
+
+pub def navigation(active: str, catalog: ContentCatalog) -> DocumentNode:
+    active_section = section_for(active, catalog)
+    mut groups: list[DocumentNode] = []
+    for section in catalog.sections:
+        mut attrs = {"href": "nav-" + section.key + ".html"}
+        if active == "nav-" + section.key:
+            attrs["aria-current"] = "page"
+        mut children = [el("a", attrs, [txt(section.title)])]
+        if section.key == active_section:
+            mut nearby: list[DocumentNode] = []
+            for topic in visible_topics(section, catalog):
+                nearby.append(
+                    el("li", {}, [el("a", {"href": "nav-" + section.key + ".html#" + topic_id(topic)}, [txt(topic)])]),
+                )
+            mut current_title = ""
+            for page in catalog.entries:
+                if page.preview == active + ".html":
+                    current_title = str(page.title)
+            titles = {"dates": "Dates and times", "date-api": "Date API preview", "traits": "Traits and capabilities", "traits-reference": "Trait rules", "oven": "Build and run a project"}
+            if active in titles:
+                current_title = str(titles[active])
+            if current_title != "":
+                nearby.append(
+                    el("li", {}, [el("a", {"href": active + ".html", "aria-current": "page"}, [txt(current_title)])]),
+                )
+            children.append(el("ul", {"class": "docs-topic-links"}, nearby))
+        groups.append(el("li", {}, children))
+    mut overview_attrs = {"class": "docs-overview", "href": "index.html"}
+    if active == "index":
+        overview_attrs["aria-current"] = "page"
+    mut explore_attrs = {"href": "explore.html"}
+    if active == "explore":
+        explore_attrs["aria-current"] = "page"
+    return el(
+        "aside",
+        {"class": "docs-sidebar", "id": "docs-navigation"},
+        [el("a", overview_attrs, [txt("Documentation")]), el(
+            "details",
+            {"class": "docs-browse", "open": ""},
+            [el("summary", {}, [txt("Browse by topic")]), el(
+                "nav",
+                {"aria-label": "Documentation sections"},
+                [el("ul", {}, groups)],
+            )],
+        ), el("a", explore_attrs, [txt("Choose a learning route →")]), el(
+            "a",
+            {"class": "docs-all", "href": "content-map.html"},
+            [txt("Content migration map")],
+        )],
+    )
+
+
+def entry_node(page: ContentPage) -> DocumentNode:
+    mut location = "Current docsite ↗"
+    if page.preview != "":
+        location = str("Read here →")
+    return el(
+        "li",
+        {"data-source": page.source},
+        [el("a", {"href": page_link(page)}, [txt(page.title)]), el("small", {}, [txt(page.role + " · " + location)])],
+    )
+
+
+pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[DocumentNode]:
+    mut result = [el("p", {"class": "docs-eyebrow"}, [txt(section.title)]), el("h1", {}, [txt(section.headline)]), el(
+        "p",
+        {"class": "doc-lead"},
+        [txt(section.description)],
+    ), el(
+        "p",
+        {"class": "docs-route-note"},
+        [txt(
+            "Pages marked Current docsite open the existing documentation. Their original release context still applies.",
+        )],
+    )]
+    if section.key == "library":
+        result.append(
+            el(
+                "div",
+                {"class": "inc-learning-panel"},
+                [el("strong", {}, [txt("Guidance and API contracts, together.")]), el(
+                    "p",
+                    {},
+                    [txt(
+                        "Choose a module here, then move between its guide and exact API. Existing reference stays available while source-generated documentation is developed. The Date API sample is an authored preview.",
+                    )],
+                )],
+            ),
+        )
+    for topic in section.topics:
+        mut items: list[DocumentNode] = []
+        if topic == "Dates and times":
+            items.append(
+                el(
+                    "li",
+                    {},
+                    [el("a", {"href": "dates.html"}, [txt("Work with dates and times")]), el(
+                        "small",
+                        {},
+                        [txt("Reworked guide · Read here →")],
+                    )],
+                ),
+            )
+            items.append(
+                el(
+                    "li",
+                    {},
+                    [el("a", {"href": "date-api.html"}, [txt("Date API preview")]), el(
+                        "small",
+                        {},
+                        [txt("Authored API sample · Read here →")],
+                    )],
+                ),
+            )
+        if topic == "Traits and derives":
+            items.append(
+                el(
+                    "li",
+                    {},
+                    [el("a", {"href": "traits.html"}, [txt("Traits and capabilities")]), el(
+                        "small",
+                        {},
+                        [txt("Reworked guide · Read here →")],
+                    )],
+                ),
+            )
+            items.append(
+                el(
+                    "li",
+                    {},
+                    [el("a", {"href": "traits-reference.html"}, [txt("Trait rules")]), el(
+                        "small",
+                        {},
+                        [txt("Language rules · Read here →")],
+                    )],
+                ),
+            )
+        if topic == "Build and release":
+            items.append(
+                el(
+                    "li",
+                    {},
+                    [el("a", {"href": "oven.html"}, [txt("Build and run a project")]), el(
+                        "small",
+                        {},
+                        [txt("Reworked guide · documented 0.5 baseline")],
+                    )],
+                ),
+            )
+        for page in catalog.entries:
+            if page.section == section.key and page.topic == topic and page.action != "replace-hub":
+                items.append(entry_node(page))
+        if len(items) == 0:
+            continue
+        if topic in ["RFCs", "Historical implementation", "Historical build system", "Contributor book"]:
+            result.append(
+                el(
+                    "details",
+                    {"class": "docs-topic-records", "id": topic_id(topic)},
+                    [el("summary", {}, [txt(topic + " · " + str(len(items)))]), el(
+                        "p",
+                        {},
+                        [txt(
+                            "Keep the status and release context of each source. These records are not a substitute for current language rules.",
+                        )],
+                    ), el("ul", {"class": "docs-topic-list"}, items)],
+                ),
+            )
+        else:
+            result.append(
+                el(
+                    "section",
+                    {"class": "docs-topic", "id": topic_id(topic)},
+                    [el("h2", {}, [txt(topic)]), el("ul", {"class": "docs-topic-list"}, items)],
+                ),
+            )
+    return result
+
+
+pub def landing(catalog: ContentCatalog) -> list[DocumentNode]:
+    mut cards: list[DocumentNode] = []
+    for section in catalog.sections:
+        cards.append(
+            el(
+                "a",
+                {"class": "docs-card", "href": "nav-" + section.key + ".html"},
+                [el("h2", {}, [txt(section.title)]), el("p", {}, [txt(section.description)]), el(
+                    "span",
+                    {},
+                    [txt("Explore →")],
+                )],
+            ),
+        )
+    return [el("p", {"class": "docs-eyebrow"}, [txt("Incan documentation")]), el(
+        "h1",
+        {},
+        [txt("What would you like to build?")],
+    ), el(
+        "p",
+        {"class": "doc-lead"},
+        [txt(
+            "Start with a small program, explore a language feature, or find the contract you need. Follow the topic, at your own pace.",
+        )],
+    ), el(
+        "div",
+        {"class": "docs-start"},
+        [el(
+            "a",
+            {"href": "nav-learn.html#install-and-start"},
+            [el("strong", {}, [txt("Your first program")]), el(
+                "span",
+                {},
+                [txt("Install, run, and understand the result →")],
+            )],
+        ), el(
+            "a",
+            {"href": "nav-language.html"},
+            [el("strong", {}, [txt("Learn a language feature")]), el(
+                "span",
+                {},
+                [txt("Examples and exact rules, side by side →")],
+            )],
+        ), el(
+            "a",
+            {"href": "nav-library.html"},
+            [el("strong", {}, [txt("Find a library API")]), el(
+                "span",
+                {},
+                [txt("Choose a module and look up its contract →")],
+            )],
+        )],
+    ), el("div", {"class": "docs-cards docs-directory"}, cards), el(
+        "p",
+        {"class": "docs-route-note"},
+        [txt(
+            "Navigation preview for the 0.6 website. Reworked pages open here; the remaining pages link to the current docsite. A topic assignment does not mean its content has been updated for 0.6.",
+        )],
+    )]
+
+
+pub def migration_content(catalog: ContentCatalog) -> list[DocumentNode]:
+    mut api_count = 0
+    mut mixed_count = 0
+    for page in catalog.entries:
+        if page.action == "source-api":
+            api_count += 1
+        if page.action == "split-contract":
+            mixed_count += 1
+    mut result = [el("p", {"class": "docs-eyebrow"}, [txt("Editorial workspace")]), el(
+        "h1",
+        {},
+        [txt("Every page has a home.")],
+    ), el(
+        "p",
+        {"class": "doc-lead"},
+        [txt(
+            "402 Markdown files: 379 reader pages and 23 shared or authoring inputs. Each has a topic, an editorial decision and a proposed destination.",
+        )],
+    ), el(
+        "p",
+        {},
+        [txt(
+            "This map reclassifies the complete source snapshot. It does not claim all bodies are rewritten or migrated. Proposed URLs are a redirect plan, not deployed routes. Existing pages and source provenance remain available.",
+        )],
+    ), el(
+        "p",
+        {},
+        [el("a", {"href": "content-map.json", "download": ""}, [txt("Download the complete content map (JSON) ↓")]), txt(
+            " · ",
+        ), el("a", {"href": "content-strategy.md", "download": ""}, [txt("Read the editorial decisions ↓")])],
+    ), el(
+        "div",
+        {"class": "inc-learning-panel"},
+        [el("strong", {}, [txt("API generation replaces contracts, not all reference.")]), el(
+            "p",
+            {},
+            [txt(
+                str(api_count) + " pages are source-API candidates. " + str(mixed_count) + " mixed pages need symbol contracts separated from language-wide behavior. Keep existing reference until signatures, defaults, errors, examples and stable links have verified coverage.",
+            )],
+        )],
+    )]
+    for key in ["learn", "language", "library", "oven", "interop", "contribute", "project", "support"]:
+        mut rows: list[DocumentNode] = []
+        for page in catalog.entries:
+            if page.section != key:
+                continue
+            rows.append(
+                el(
+                    "tr",
+                    {"data-source": page.source, "data-action": page.action},
+                    [el(
+                        "td",
+                        {},
+                        [el("a", {"href": page.source_url}, [txt(page.title)]), el("small", {}, [txt(page.source)])],
+                    ), el("td", {}, [txt(page.topic), el("small", {}, [txt(page.role)])]), el(
+                        "td",
+                        {},
+                        [el("strong", {}, [txt(page.action)]), el("p", {}, [txt(page.rationale)]), el(
+                            "small",
+                            {},
+                            [txt(page.proposed_url)],
+                        )],
+                    )],
+                ),
+            )
+        mut title = section_title(key, catalog)
+        if key == "support":
+            title = str("Shared inputs and authoring aids")
+        result.append(
+            el(
+                "details",
+                {"class": "docs-migration-group"},
+                [el("summary", {}, [txt(title + " · " + str(len(rows)) + " files")]), el(
+                    "div",
+                    {"class": "doc-table-wrap"},
+                    [el(
+                        "table",
+                        {},
+                        [el(
+                            "thead",
+                            {},
+                            [el(
+                                "tr",
+                                {},
+                                [el("th", {}, [txt("Source page")]), el("th", {}, [txt("New home")]), el(
+                                    "th",
+                                    {},
+                                    [txt("Editorial decision")],
+                                )],
+                            )],
+                        ), el("tbody", {}, rows)],
+                    )],
+                )],
+            ),
+        )
+    return result
+
+
+pub def catalog_stylesheet() -> str:
+    return "\n.docs-browse>summary{display:none}.docs-sidebar> a:last-child{font-size:11px}.docs-sidebar li{margin-bottom:8px}.docs-sidebar .docs-topic-links{margin:8px 0 18px 12px;border-left:1px solid var(--outline);padding-left:8px}.docs-topic-links a{font-size:11px}.docs-route-note{font-size:12px!important;color:var(--quiet);border-left:2px solid #856d3e;padding-left:16px;margin-block:28px!important}.docs-directory{grid-template-columns:repeat(2,minmax(0,1fr))}.docs-directory .docs-card{padding:22px}.docs-directory .docs-card h2{font-size:22px;margin-top:0}.docs-directory .docs-card p{margin-bottom:12px}.docs-start{display:grid;gap:0;border-block:1px solid var(--outline);margin:30px 0}.docs-start a{padding:16px 0;text-decoration:none;display:grid;gap:3px;border-bottom:1px solid var(--outline)}.docs-start a:last-child{border:0}.docs-start strong{font-size:16px;color:var(--gold-bright)}.docs-start span{font-size:12px;color:var(--muted)}.docs-topic-list{list-style:none;padding:0!important;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}.docs-topic-list li{margin:0!important;padding:13px 0!important;border-bottom:1px solid var(--outline)}.docs-topic-list a{font-size:14px}.docs-topic-list small{display:block;font-size:10px;color:var(--quiet);margin-top:5px}.docs-topic-records,.docs-migration-group{border-top:1px solid var(--outline);padding-block:20px}.docs-topic-records summary,.docs-migration-group summary{cursor:pointer;color:var(--gold-bright);font-weight:600}.docs-topic-records p{margin-top:18px;font-size:12px;color:var(--muted)}.docs-migration-group td:first-child{width:27%}.docs-migration-group td:nth-child(2){width:20%}.docs-migration-group small{display:block;overflow-wrap:anywhere;font-size:10px;color:var(--quiet);margin-top:8px}.docs-migration-group p{font-size:12px;margin-top:8px}.docs-migration-group th{white-space:nowrap}.docs-sidebar li a[aria-current]{border-color:var(--cyan)}\n@media(max-width:740px){.docs-browse>summary{display:block;cursor:pointer;color:var(--gold);padding:10px 0}.docs-browse nav{margin-block:12px}.docs-browse ul{display:block}.docs-browse li{margin-bottom:4px}.docs-browse li a{border:0;border-left:2px solid transparent;border-radius:0;padding:6px 12px}.docs-sidebar .docs-topic-links{display:none}.docs-sidebar .docs-all{display:block;margin-top:12px}.docs-sidebar{padding-bottom:14px}.docs-directory,.docs-topic-list{grid-template-columns:1fr}.docs-directory{gap:10px}.docs-directory .docs-card{padding:18px}.docs-directory .docs-card h2{font-size:20px}}\n\n.docs-mobile-toc:not(:has(nav a)),.docs-toc:not(:has(.toc-h2,.toc-h3)){display:none}@media(max-width:740px){.docs-browse ul{display:flex;flex-wrap:wrap;gap:5px}.docs-browse li{margin:0}.docs-browse li a{border:1px solid var(--outline);border-radius:4px;padding:5px 9px}.docs-sidebar .docs-all{display:inline-block;margin:0 0 0 16px}.docs-sidebar .docs-overview{margin-bottom:4px}.docs-browse>summary{padding:6px 0}.docs-browse nav{margin:4px 0 12px}.docs-sidebar>a:not(.docs-overview){font-size:11px}}\n"

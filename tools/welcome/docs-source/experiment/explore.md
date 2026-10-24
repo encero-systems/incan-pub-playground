@@ -1,29 +1,37 @@
 # Find your next step
 
-Learn a concept, put it to work, or look up an exact rule. Start with a topic; follow only the detail you need.
+Start with what you want to do. You can follow a learning path, explore a topic, or look up an exact contract.
 
-## Dates and times
+## Write your first program
 
-Choose the right clock or calendar type, then parse a date and calculate a trial period.
+[Install and start](nav-learn.html#install-and-start), then follow the [language book](nav-learn.html#language-book). Coming from Python, Rust or JavaScript? [Choose your starting point](nav-learn.html#find-your-starting-point).
 
-[Work with dates and times](dates.md) · [Look up Date](date-api.md)
+## Understand a language feature
 
-## Traits and capabilities
+[Explore the language](nav-language.html): types, functions, errors, enums, traits and modules. Guides and exact rules sit together by topic.
 
-Describe what a value can do. Define a contract, adopt it, and accept different implementations in the same function.
+Try the reworked [traits and capabilities guide](traits.md), then [look up the trait rules](traits-reference.md).
 
-[Understand traits](traits.md) · [Check the language rules](traits-reference.md)
+## Work with data and libraries
 
-## Your first project with Oven
+[Browse the standard library](nav-library.html). Start with a problem, choose a module, then reach its contract.
 
-Create a project, prepare its dependencies, run it, and build a native executable. Know which file to inspect when something goes wrong.
+For a complete sample, [work with dates and times](dates.md) and [look up Date](date-api.md). The Date API is an authored preview of future generated documentation, not generator output.
 
-[Build and run a project](oven.md)
+## Build, test and deliver
+
+[Oven and tools](nav-oven.html) covers project configuration, dependencies, builds, tests and diagnostics. The reworked [project walkthrough](oven.md) retains the documented 0.5 command baseline until the 0.6 workflow is verified.
+
+## Use Rust or C
+
+[Interoperability](nav-interop.html) brings language boundaries, checked bindings and their inspection contracts together.
+
+## Change Incan or follow its development
+
+[Contribute](nav-contribute.html) for the compiler and development workflow. [Project](nav-project.html) for releases, the roadmap, RFCs and design decisions.
 
 ---
 
 ## About this preview
 
-This is a content experiment covering three topics, not the complete documentation. The guides assume you can already read a small program. Each topic links practical examples to a single home for its detailed contracts.
-
-The Date API page is an **authored preview of future source-generated documentation**. Its signatures were checked against the local Incan source; it is not output from the upcoming API generator. The Oven walkthrough retains the documented 0.5 command baseline. The separate [0.6 architecture](../contributing/explanation/architecture_0_6.md) describes the developing compiler design.
+The navigation now classifies the complete documentation source tree. Reworked pages open here; remaining pages link to the current docsite and retain their original release context. The [content migration map](content-map.html) records every page's destination and editorial action. Classification does not mean every page has already been rewritten for 0.6.
