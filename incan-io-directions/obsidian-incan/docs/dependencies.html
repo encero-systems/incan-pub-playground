@@ -1,0 +1,75 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="generator" content="Incan · Pallay · markdown-rs 1.0.0"><meta name="theme-color" content="#080c0a"><title>Manage dependencies · Incan documentation</title><link rel="icon" href="../assets/incan-logo.png"><link rel="stylesheet" href="../assets/fonts/fonts.css"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"></head><body><div class="docs-page"><a class="docs-skip" href="#main">Skip to content</a><header class="site-header">
+    <div class="masthead wrap">
+      <a aria-label="Incan home" class="brand" href="../#welcome">
+        <img alt="Incan" class="brand-lockup" height="244" src="../assets/brand-source.png" width="759">
+      </a>
+      <a class="menu-toggle" href="#docs-navigation">Browse docs ↓</a>
+      <nav aria-label="Main navigation" id="site-nav">
+        <a href="nav-learn.html">Learn</a>
+        <a href="index.html">Docs</a>
+        <a href="nav-oven.html">Oven</a>
+        <a href="https://encero-systems.github.io/incan-pub-playground/">Incan.pub</a>
+        <a href="../#project">Project</a>
+      </nav>
+      <form action="https://incan.io/dev/" class="header-search" role="search">
+        <label class="sr-only" for="docs-query">Search Incan documentation</label>
+        <input autocomplete="off" id="docs-query" name="q" placeholder="Search docs…" type="search">
+        <button type="submit">Search</button>
+      </form>
+      <a class="release-status" href="https://incan.io/dev/roadmap/">Preview · 0.6</a>
+    </div>
+  </header><div class="docs-layout wrap"><aside class="docs-sidebar" id="docs-navigation"><a class="docs-overview" href="index.html">Documentation</a><details class="docs-browse" open><summary>Browse by topic</summary><nav aria-label="Documentation sections"><ul><li><a href="nav-learn.html">Learn</a></li><li><a href="nav-language.html">Language</a></li><li><a href="nav-library.html">Standard library</a></li><li><a href="nav-oven.html">Oven &amp; tools</a><ul class="docs-topic-links"><li><a href="nav-oven.html#project-configuration">Project configuration</a></li><li><a href="nav-oven.html#dependencies-and-packages">Dependencies and packages</a></li><li><a href="nav-oven.html#build-and-release">Build and release</a></li><li><a href="nav-oven.html#testing">Testing</a></li><li><a href="nav-oven.html#diagnostics">Diagnostics</a></li><li><a href="nav-oven.html#editor-and-formatting">Editor and formatting</a></li><li><a href="nav-oven.html#cli-and-inspection">CLI and inspection</a></li><li><a href="nav-oven.html#performance">Performance</a></li><li><a href="nav-oven.html#historical-build-system">Historical build system</a></li><li><a aria-current="page" href="dependencies.html">Manage dependencies</a></li></ul></li><li><a href="nav-interop.html">Interoperability</a></li><li><a href="nav-contribute.html">Contribute</a></li><li><a href="nav-project.html">Project</a></li></ul></nav></details><a href="explore.html">Choose a learning route →</a><a class="docs-all" href="content-map.html">Content migration map</a></aside><main class="doc-article" id="main" tabindex="-1"><div class="doc-breadcrumb"><a href="index.html">Docs</a><a href="nav-oven.html"> / Oven &amp; tools</a></div><details class="docs-mobile-toc"><summary>On this page</summary><nav aria-label="On this page, compact"><a class="toc-h2" href="#add-a-local-incan-library">Add a local Incan library</a><a class="toc-h2" href="#use-a-rust-crate">Use a Rust crate</a><a class="toc-h2" href="#request-features">Request features</a><a class="toc-h2" href="#inspect-what-was-selected">Inspect what was selected</a></nav></details><p class="doc-type-line"><span class="doc-type" data-doc-type="How-to">How-to</span></p><h1 id="manage-dependencies">Manage dependencies</h1>
+<p>Declare project dependencies in <code>loaf.toml</code>. Incan libraries use a <code>pub::</code> import; Rust crates use <code>rust::</code>.</p>
+<h2 id="add-a-local-incan-library">Add a local Incan library</h2>
+<p>The library needs its own manifest and a <code>src/lib.incn</code> exposing its public API. In the consumer&#39;s manifest:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-toml">[dependencies]
+pricing = { path = <span class="doc-token-string">&quot;../pricing&quot;</span> }
+</code></pre>
+<p>The path is relative to the manifest. Import through the declared alias:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> <span class="doc-token-keyword">pub</span>::pricing <span class="doc-token-keyword">import</span> total
+</code></pre>
+<p>Here, <code>total</code> must be a public declaration supplied by that library. Build the consumer normally:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">incan build src/main.incn
+</code></pre>
+<p>Oven prepares active path libraries first. Their artifacts live under the consumer&#39;s <code>target/incan/loaves/</code> directory.</p>
+<h2 id="use-a-rust-crate">Use a Rust crate</h2>
+<p>Declare a requirement in the manifest:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-toml">[rust-dependencies]
+regex = <span class="doc-token-string">&quot;1&quot;</span>
+</code></pre>
+<p>Then import the crate&#39;s public items without repeating the version:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> rust::regex <span class="doc-token-keyword">import</span> Regex
+
+
+<span class="doc-token-keyword">def</span> main() -&gt; <span class="doc-token-type">None</span>:
+    <span class="doc-token-keyword">match</span> Regex.new(<span class="doc-token-string">&quot;^[a-z]+$&quot;</span>):
+        Ok(pattern) =&gt; println(pattern.is_match(<span class="doc-token-string">&quot;incan&quot;</span>))
+        Err(error) =&gt; println(<span class="doc-token-type">str</span>(error))
+</code></pre>
+<p>Save this as <code>src/main.incn</code> and run <code>incan run src/main.incn</code>. It prints <code>true</code>: the input contains only lowercase letters. The error branch handles an invalid pattern.</p>
+<p>The requirement must match a unit available in the installed toolchain, including its features. Adding a declaration does not download a crate. An unavailable unit produces an error.</p>
+<p>For a single source file, an inline <code>@ &quot;VERSION&quot;</code> requirement is another way to state dependency intent. Do not combine an inline version with a manifest declaration for the same crate.</p>
+<h2 id="request-features">Request features</h2>
+<p>Use table form when a Rust crate needs feature selection:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-toml">[rust-dependencies]
+serde = { version = <span class="doc-token-string">&quot;1&quot;</span>, features = [<span class="doc-token-string">&quot;derive&quot;</span>] }
+</code></pre>
+<p>An optional dependency uses <code>optional = true</code>; a package feature activates it with <code>dep:ALIAS</code>. Requests for a dependency&#39;s own features use <code>ALIAS/FEATURE</code>. See the <a href="project-reference.html#projectfeatures">manifest reference</a> for the complete rules.</p>
+<h2 id="inspect-what-was-selected">Inspect what was selected</h2>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">incan describe-unit src/main.incn
+</code></pre>
+<p>The JSON description lists active features, Loaves, Rust crates and native artifacts. Check this when a build selects an unexpected dependency. Keep the declarations in version control; dev.8 has no <code>incan lock</code> command or lock-policy flags.</p>
+<p>For calls, type conversions and callbacks, continue with the <a href="rust-interop.html">Rust interoperability reference</a>. That imported page retains its earlier release context; its legacy CLI advice does not override this chapter.</p>
+<p><em>The complete regex example passed on the same dev.8 macOS bundle as the first-project exercise. <a href="core-topics.html">Validation details</a>.</em></p>
+<div class="doc-source">Incan documentation · <a href="sources/experiment/dependencies.md">Page source ↓</a></div><nav aria-label="More documentation" class="doc-next"><a href="index.html">← Documentation overview</a><a href="https://incan.io/dev/">Continue on the docsite ↗</a></nav></main><aside class="docs-toc"><nav aria-label="On this page"><p class="docs-eyebrow">On this page</p><a class="toc-h2" href="#add-a-local-incan-library">Add a local Incan library</a><a class="toc-h2" href="#use-a-rust-crate">Use a Rust crate</a><a class="toc-h2" href="#request-features">Request features</a><a class="toc-h2" href="#inspect-what-was-selected">Inspect what was selected</a><a class="docs-top" href="#main">Back to top ↑</a></nav></aside></div><footer class="footer wrap ruled">
+    <div class="footer-identity">
+      <a aria-label="Built with Incan — back to home" class="brand footer-brand" href="../#welcome"><img alt="Built with Incan" class="built-with-stamp" height="724" src="../assets/built-with-incan-mono.png" width="2172"></a>
+      <a class="encero-credit" href="https://encero.systems">
+        <span aria-hidden="true" class="encero-credit-divider">|</span>
+        <em>by</em>
+        <span class="encero-credit-name">ENCERO</span>
+      </a>
+    </div>
+    <nav aria-label="Footer navigation"><a href="../media.html">Media kit</a><a href="https://incan.io/dev/release_notes/">Releases</a><a href="https://incan.io/dev/roadmap/">Roadmap</a><a href="https://incan.io/dev/contributing/">Contribute</a><a href="https://github.com/encero-systems/incan">GitHub <span aria-hidden="true" class="icon github"></span></a></nav>
+    <small class="copyright">© 2026 Encero Systems</small>
+  </footer></div></body></html>

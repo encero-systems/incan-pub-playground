@@ -102,7 +102,7 @@ for (const [from, to] of [['explore','dates'],['explore','traits'],['explore','o
  assert.ok([...documents.get(from+'.html').querySelectorAll('main a')].some(a=>a.getAttribute('href').split('#')[0]===to+'.html'), from+' -> '+to);
 }
 assert.match(documents.get('date-api.html').querySelector('main').textContent,/upcoming API generator has not produced it/);
-assert.match(documents.get('oven.html').querySelector('main').textContent,/0.5 command baseline/);
+assert.match(documents.get('oven.html').querySelector('main').textContent,/chapter follows dev.8/);
 console.log('Passed: topic learning/lookup routes and API/version provenance.');
 
 // The configuration pilot must connect the complete task to unchanged contracts.
@@ -154,3 +154,19 @@ for(const file of setupEvidence.inputs){
  assert.equal(bytes.length,file.bytes);assert.equal(sha(bytes),file.sha256,file.path);
 }
 console.log('Passed: testing/editor routes, guide roles, displayed example bytes, source evidence and timeout boundary.');
+
+// New chapter routes connect learning, runnable practice and exact dev.8 contracts.
+for (const [from,to] of [['core-topics','install'],['core-topics','editor-setup'],['core-topics','projects'],['core-topics','oven'],['core-topics','dependencies'],['install','first-project'],['projects','project-reference'],['oven','cli-reference']]) {
+ assert.ok([...documents.get(from+'.html').querySelectorAll('main a[href]')].some(a=>a.getAttribute('href').split('#')[0]===to+'.html'),from+' -> '+to);
+}
+const firstProject = documents.get('first-project.html');
+assert.ok(firstProject.querySelector('a[href="../assets/first-project.zip"]'));
+const firstCode=[...firstProject.querySelectorAll('pre code')].map(n=>n.textContent);
+for (const file of ['loaf.toml','src/greeting.incn','src/main.incn','tests/test_greeting.incn']) {
+ assert.ok(firstCode.includes(await readFile(new URL('core-topics/examples/first-project/'+file,input),'utf8')),file);
+}
+const coreEvidence=JSON.parse(await readFile(new URL('core-topics/evidence.json',input),'utf8'));
+for(const file of coreEvidence.inputs)assert.equal(sha(await readFile(new URL('core-topics/evidence/'+file.path,input))),file.sha256,file.path);
+for(const file of coreEvidence.example_files)assert.equal(sha(await readFile(new URL('core-topics/'+file.path,input))),file.sha256,file.path);
+assert.equal(sha(await readFile(new URL('../assets/first-project.zip',target))),coreEvidence.download_sha256);
+console.log('Passed: dev.8 chapter/reference/exercise routes, exact displayed project, evidence and downloadable archive.');
