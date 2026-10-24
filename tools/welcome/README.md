@@ -85,3 +85,7 @@ Final approved portrait: `danny-meijer-cyan-meta.png`, with cyan curls and trans
 `src/docs_catalog.incn` owns the new seven-section navigation, section hubs and the editorial migration map. The existing 15 rendered pages retain their provenance; remaining bodies are explicitly linked to the current docsite. Source-generated API documentation is still future work. The new `docs/index.html` is the primary entry; `docs/content-map.html` exposes every classification.
 
 After building, run `node tools/welcome/check-content-map.mjs`. Supply the original docs directory as its optional argument to independently compare every Markdown filename and source digest against the inventory. `check-docs.mjs` now also validates all generated section hubs and their local anchors.
+
+### Files and configuration pilot
+
+`docs/configuration.html` combines selected-field configuration loading into one task guide across file I/O, TOML and JSON. `docs/configuration-pilot.html` records the consolidation boundaries and reader trial. Three complete reference snapshots remain separate contract homes. Example programs and pinned source evidence are in `configuration-pilot/`; the examples are source-checked but await execution with the matching 0.6 compiler. The renderer and navigation remain authored in Incan.

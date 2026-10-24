@@ -1,0 +1,220 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="generator" content="Incan · Pallay · markdown-rs 1.0.0"><meta name="theme-color" content="#080c0a"><title>Read and validate configuration · Incan documentation</title><link rel="icon" href="../assets/incan-logo.png"><link rel="stylesheet" href="../assets/fonts/fonts.css"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"></head><body><div class="docs-page"><a class="docs-skip" href="#main">Skip to content</a><header class="site-header">
+    <div class="masthead wrap">
+      <a aria-label="Incan home" class="brand" href="../#welcome">
+        <img alt="Incan" class="brand-lockup" height="244" src="../assets/brand-source.png" width="759">
+      </a>
+      <a class="menu-toggle" href="#docs-navigation">Browse docs ↓</a>
+      <nav aria-label="Main navigation" id="site-nav">
+        <a href="nav-learn.html">Learn</a>
+        <a href="index.html">Docs</a>
+        <a href="nav-oven.html">Oven</a>
+        <a href="https://encero-systems.github.io/incan-pub-playground/">Incan.pub</a>
+        <a href="../#project">Project</a>
+      </nav>
+      <form action="https://incan.io/dev/" class="header-search" role="search">
+        <label class="sr-only" for="docs-query">Search Incan documentation</label>
+        <input autocomplete="off" id="docs-query" name="q" placeholder="Search docs…" type="search">
+        <button type="submit">Search</button>
+      </form>
+      <a class="release-status" href="https://incan.io/dev/roadmap/">Preview · 0.6</a>
+    </div>
+  </header><div class="docs-layout wrap"><aside class="docs-sidebar" id="docs-navigation"><a class="docs-overview" href="index.html">Documentation</a><details class="docs-browse" open><summary>Browse by topic</summary><nav aria-label="Documentation sections"><ul><li><a href="nav-learn.html">Learn</a></li><li><a href="nav-language.html">Language</a></li><li><a href="nav-library.html">Standard library</a><ul class="docs-topic-links"><li><a href="nav-library.html#collections">Collections</a></li><li><a href="nav-library.html#text-and-encoding">Text and encoding</a></li><li><a href="nav-library.html#files-and-streams">Files and streams</a></li><li><a href="nav-library.html#json-and-toml">JSON and TOML</a></li><li><a href="nav-library.html#dates-and-times">Dates and times</a></li><li><a href="nav-library.html#async-and-concurrency">Async and concurrency</a></li><li><a href="nav-library.html#results">Results</a></li><li><a href="nav-library.html#trait-apis">Trait APIs</a></li><li><a href="nav-library.html#testing">Testing</a></li><li><a href="nav-library.html#reflection-and-registries">Reflection and registries</a></li><li><a href="nav-library.html#graphs">Graphs</a></li><li><a href="nav-library.html#logging-and-telemetry">Logging and telemetry</a></li><li><a href="nav-library.html#hashing-and-checksums">Hashing and checksums</a></li><li><a href="nav-library.html#compression">Compression</a></li><li><a href="nav-library.html#regular-expressions">Regular expressions</a></li><li><a href="nav-library.html#identifiers">Identifiers</a></li><li><a href="nav-library.html#environment-and-mathematics">Environment and mathematics</a></li><li><a aria-current="page" href="configuration.html">Read and validate configuration</a></li></ul></li><li><a href="nav-oven.html">Oven &amp; tools</a></li><li><a href="nav-interop.html">Interoperability</a></li><li><a href="nav-contribute.html">Contribute</a></li><li><a href="nav-project.html">Project</a></li></ul></nav></details><a href="explore.html">Choose a learning route →</a><a class="docs-all" href="content-map.html">Content migration map</a></aside><main class="doc-article" id="main" tabindex="-1"><div class="doc-breadcrumb"><a href="index.html">Docs</a><a href="nav-library.html"> / Standard library</a></div><details class="docs-mobile-toc"><summary>On this page</summary><nav aria-label="On this page, compact"><a class="toc-h2" href="#decide-what-to-accept">Decide what to accept</a><a class="toc-h2" href="#create-the-input-file">Create the input file</a><a class="toc-h2" href="#load-checked-settings">Load checked settings</a><a class="toc-h2" href="#understand-the-three-boundaries">Understand the three boundaries</a><a class="toc-h2" href="#check-the-failure-paths">Check the failure paths</a><a class="toc-h2" href="#use-json-instead">Use JSON instead</a><a class="toc-h2" href="#look-up-the-exact-contracts">Look up the exact contracts</a><a class="toc-h2" href="#keep-the-scope-small">Keep the scope small</a><a class="toc-h2" href="#about-this-pilot">About this pilot</a></nav></details><h1 id="read-and-validate-configuration">Read and validate configuration</h1>
+<p>Load the settings your application needs from a file, reject invalid input, and return a typed value to the rest of the program. This guide follows one path: <strong>read → decode → validate</strong>.</p>
+<blockquote>
+<p><strong>0.6 content preview.</strong> These examples have not yet been compiled or run against 0.6. They are checked against development-source contracts; the outputs below are expected results.</p>
+</blockquote>
+<h2 id="decide-what-to-accept">Decide what to accept</h2>
+<p>Our application needs a nonblank server name and a port between 1 and 65535. An absent port means <code>8080</code>; a present invalid port is an error. These are application choices, not defaults supplied by the standard library.</p>
+<p>Use TOML for this example. If your configuration arrives as JSON, use the alternative decoder below; file reading and application validation stay the same.</p>
+<p>We read selected fields from a potentially larger document. Other fields are ignored. This is <strong>not</strong> a closed-schema validator that rejects unknown keys. For a stable whole-document schema, consider model deserialization; the <a href="toml-api.html#serialization-traits">TOML model contract</a> describes that separate path.</p>
+<h2 id="create-the-input-file">Create the input file</h2>
+<p>Save this as <code>app.toml</code> in the directory from which you will run the example:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-toml">[server]
+name = <span class="doc-token-string">&quot;demo&quot;</span>
+port = 8080
+</code></pre>
+<p><code>Path(&quot;app.toml&quot;)</code> is relative to the process&#39;s working directory, not automatically to the source file. The example reads a small UTF-8 text file into memory. Large streams and configuration discovery are separate tasks.</p>
+<h2 id="load-checked-settings">Load checked settings</h2>
+<p>Save this complete program as <code>config.incn</code>. It separates the three failure boundaries without requiring the caller to know the parser&#39;s types:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-string">&quot;&quot;</span><span class="doc-token-string">&quot;Read selected server settings and reject invalid application values.&quot;</span><span class="doc-token-string">&quot;&quot;</span>
+
+<span class="doc-token-keyword">from</span> std.fs <span class="doc-token-keyword">import</span> Path
+<span class="doc-token-keyword">from</span> std <span class="doc-token-keyword">import</span> toml
+<span class="doc-token-keyword">from</span> std.toml <span class="doc-token-keyword">import</span> TomlError
+
+
+<span class="doc-token-keyword">model</span> Settings:
+    <span class="doc-token-string">&quot;&quot;</span><span class="doc-token-string">&quot;The settings the application needs after loading configuration.&quot;</span><span class="doc-token-string">&quot;&quot;</span>
+
+    name: <span class="doc-token-type">str</span>
+    port: <span class="doc-token-type">int</span>
+
+
+<span class="doc-token-keyword">def</span> decode_settings(source: <span class="doc-token-type">str</span>) -&gt; <span class="doc-token-type">Result</span>[Settings, TomlError]:
+    <span class="doc-token-string">&quot;&quot;</span><span class="doc-token-string">&quot;Read required name and default the port only when it is absent.&quot;</span><span class="doc-token-string">&quot;&quot;</span>
+    document = toml.parse(source)?
+    name = document.get[<span class="doc-token-type">str</span>](<span class="doc-token-string">&quot;server.name&quot;</span>)?
+    port = document.get_optional[<span class="doc-token-type">int</span>](<span class="doc-token-string">&quot;server.port&quot;</span>)?.unwrap_or(8080)
+    <span class="doc-token-keyword">return</span> Ok(Settings(name=name, port=port))
+
+
+<span class="doc-token-keyword">def</span> validate_settings(settings: Settings) -&gt; <span class="doc-token-type">Result</span>[Settings, <span class="doc-token-type">str</span>]:
+    <span class="doc-token-string">&quot;&quot;</span><span class="doc-token-string">&quot;Apply this application&#39;s rules after checking field types.&quot;</span><span class="doc-token-string">&quot;&quot;</span>
+    <span class="doc-token-keyword">if</span> settings.name.strip() == <span class="doc-token-string">&quot;&quot;</span>:
+        <span class="doc-token-keyword">return</span> Err(<span class="doc-token-string">&quot;server.name must not be blank&quot;</span>)
+    <span class="doc-token-keyword">if</span> settings.port &lt; 1 or settings.port &gt; 65535:
+        <span class="doc-token-keyword">return</span> Err(<span class="doc-token-string">&quot;server.port must be between 1 and 65535&quot;</span>)
+    <span class="doc-token-keyword">return</span> Ok(settings)
+
+
+<span class="doc-token-keyword">def</span> load_settings(filename: <span class="doc-token-type">str</span>) -&gt; <span class="doc-token-type">Result</span>[Settings, <span class="doc-token-type">str</span>]:
+    <span class="doc-token-string">&quot;&quot;</span><span class="doc-token-string">&quot;Read, decode and validate; describe a failure at its boundary.&quot;</span><span class="doc-token-string">&quot;&quot;</span>
+    <span class="doc-token-keyword">match</span> Path(filename).read_text(encoding=<span class="doc-token-string">&quot;utf-8&quot;</span>, errors=<span class="doc-token-string">&quot;strict&quot;</span>):
+        Err(error) =&gt; <span class="doc-token-keyword">return</span> Err(f<span class="doc-token-string">&quot;Cannot read {filename}: {error.message()}&quot;</span>)
+        Ok(source) =&gt;
+            <span class="doc-token-keyword">match</span> decode_settings(source):
+                Err(error) =&gt; <span class="doc-token-keyword">return</span> Err(f<span class="doc-token-string">&quot;Invalid configuration: {error.message()}&quot;</span>)
+                Ok(settings) =&gt; <span class="doc-token-keyword">return</span> validate_settings(settings)
+
+
+<span class="doc-token-keyword">def</span> main() -&gt; <span class="doc-token-type">None</span>:
+    <span class="doc-token-string">&quot;&quot;</span><span class="doc-token-string">&quot;Report the checked settings; this example does not start a server.&quot;</span><span class="doc-token-string">&quot;&quot;</span>
+    <span class="doc-token-keyword">match</span> load_settings(<span class="doc-token-string">&quot;app.toml&quot;</span>):
+        Ok(settings) =&gt; println(f<span class="doc-token-string">&quot;Configuration ready: {settings.name} on port {settings.port}&quot;</span>)
+        Err(message) =&gt; println(message)
+</code></pre>
+<p>With a compiler that supports the documented APIs, run <code>incan run config.incn</code> from the directory containing <code>app.toml</code>. The expected successful output is:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-text">Configuration ready: demo on port 8080
+</code></pre>
+<p>This only reports settings; it does not bind a network port or start a server. On failure, the demonstration prints a diagnostic and returns normally. A production command should map failure to its own nonzero exit status; application startup should proceed only in the <code>Ok</code> branch.</p>
+<h2 id="understand-the-three-boundaries">Understand the three boundaries</h2>
+<ol>
+<li><strong>Read:</strong> <code>read_text</code> can fail because of the path, permissions or decoding. Strict UTF-8 decoding rejects invalid input instead of replacing bytes. Reading the file directly preserves the actual failure; an existence check is not a substitute.</li>
+<li><strong>Decode:</strong> <code>get[str]</code> requires a string. <code>get_optional[int]</code> returns absence only for a missing path; an invalid present value still fails. The <code>?</code> propagates that failure before <code>unwrap_or(8080)</code> can supply a default.</li>
+<li><strong>Validate:</strong> an integer can still be an invalid port. <code>validate_settings</code> checks application meaning after decoding has established the field types.</li>
+</ol>
+<p>The short example converts failures into display text at the loading boundary. An application that needs structured recovery can retain typed errors instead. It need not change the reading or parsing contract.</p>
+<h2 id="check-the-failure-paths">Check the failure paths</h2>
+<p>Change one thing at a time, then restore the original input. Compare the category of failure rather than depending on exact parser wording.</p>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Expected outcome</th>
+<th>Where it is handled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Remove <code>port</code></td>
+<td>Use <code>8080</code></td>
+<td>Optional lookup</td>
+</tr>
+<tr>
+<td>Set <code>port = &quot;8080&quot;</code></td>
+<td>Reject the string; do not use the default</td>
+<td>Decode</td>
+</tr>
+<tr>
+<td>Set <code>port = 0</code> or <code>port = 65536</code></td>
+<td>Reject the range</td>
+<td>Application validation</td>
+</tr>
+<tr>
+<td>Set <code>name = &quot;   &quot;</code></td>
+<td>Reject the blank name</td>
+<td>Application validation</td>
+</tr>
+<tr>
+<td>Remove <code>name</code></td>
+<td>Reject the missing required field</td>
+<td>Decode</td>
+</tr>
+<tr>
+<td>Leave a quote unclosed</td>
+<td>Reject malformed TOML</td>
+<td>Parse</td>
+</tr>
+<tr>
+<td>Run from a directory without <code>app.toml</code></td>
+<td>Report a read failure</td>
+<td>File read</td>
+</tr>
+<tr>
+<td>Add an unrelated field</td>
+<td>Accept it without using it</td>
+<td>Selected-field policy</td>
+</tr>
+</tbody>
+</table></div>
+<p>The important distinction is <strong>absent versus invalid</strong>. Defaults must not conceal broken configuration.</p>
+<h2 id="use-json-instead">Use JSON instead</h2>
+<p>For the equivalent input, save <code>app.json</code>:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-json">{<span class="doc-token-string">&quot;server&quot;</span>: {<span class="doc-token-string">&quot;name&quot;</span>: <span class="doc-token-string">&quot;demo&quot;</span>, <span class="doc-token-string">&quot;port&quot;</span>: 8080}}
+</code></pre>
+<p>In the program above, replace the two TOML imports and <code>decode_settings</code> with this block. Change <code>load_settings(&quot;app.toml&quot;)</code> to <code>load_settings(&quot;app.json&quot;)</code>. Keep <code>Settings</code>, file reading and application validation unchanged.</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.json <span class="doc-token-keyword">import</span> JsonError, JsonValue
+
+
+<span class="doc-token-keyword">def</span> decode_settings(source: <span class="doc-token-type">str</span>) -&gt; <span class="doc-token-type">Result</span>[Settings, JsonError]:
+    <span class="doc-token-string">&quot;&quot;</span><span class="doc-token-string">&quot;Read selected JSON fields without treating an invalid port as absent.&quot;</span><span class="doc-token-string">&quot;&quot;</span>
+    document = JsonValue.parse(source)?
+    server = document.require(<span class="doc-token-string">&quot;server&quot;</span>)?
+    name = server.require(<span class="doc-token-string">&quot;name&quot;</span>)?.expect_str()?
+    <span class="doc-token-keyword">mut</span> port = 8080
+    <span class="doc-token-keyword">match</span> server.get(<span class="doc-token-string">&quot;port&quot;</span>):
+        <span class="doc-token-type">None</span> =&gt; <span class="doc-token-keyword">pass</span>
+        Some(value) =&gt;
+            port = value.expect_int()?
+    <span class="doc-token-keyword">return</span> Ok(Settings(name=name, port=port))
+</code></pre>
+<p><code>require</code> rejects missing required fields and invalid object receivers. <code>get(&quot;port&quot;)</code> returns <code>None</code> for a missing key, while a present JSON <code>null</code> is still a value: <code>expect_int()</code> rejects it. Strings and fractional JSON numbers are also invalid ports. The same failure-path checks apply, using JSON syntax; add a test with <code>&quot;port&quot;: null</code>.</p>
+<p>This difference in optional lookup is worth explaining once. It does not require a second file-loading tutorial.</p>
+<h2 id="look-up-the-exact-contracts">Look up the exact contracts</h2>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Contract home</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>How does text reading handle encodings and errors?</td>
+<td><a href="fs-api.html#file-contents">Path.read_text and file contents</a></td>
+</tr>
+<tr>
+<td>What counts as a missing or mistyped TOML field?</td>
+<td><a href="toml-api.html#typed-lookup">TOML typed lookup</a></td>
+</tr>
+<tr>
+<td>How do I attach a TOML diagnostic to a source location?</td>
+<td><a href="toml-api.html#tomlerror">TomlError</a></td>
+</tr>
+<tr>
+<td>What is the difference between missing JSON and null?</td>
+<td><a href="json-api.html#object-access">JSON object access</a></td>
+</tr>
+<tr>
+<td>Which JSON values can be extracted as integers?</td>
+<td><a href="json-api.html#extraction">JSON extraction</a> and <a href="json-api.html#numeric-mapping">numeric mapping</a></td>
+</tr>
+</tbody>
+</table></div>
+<p>These are complete imported reference snapshots, not generated API documentation. The guide owns this workflow and its application policy; the reference owns signatures, accepted values and error contracts.</p>
+<h2 id="keep-the-scope-small">Keep the scope small</h2>
+<p>This guide does not edit or rewrite the input file. In particular, TOML serialization does not preserve comments, ordering or formatting. It also does not implement environment overrides, secret management, live reload, large-file streaming or unknown-key rejection. Add those when the application requires them rather than making them prerequisites for reading two settings.</p>
+<h2 id="about-this-pilot">About this pilot</h2>
+<p>This task brings together the relevant parts of the existing file I/O, TOML and dynamic JSON guides. Their wider material remains available. <a href="configuration-pilot.html">See the comparison and reader trial</a> for what was consolidated, what was retained and how to judge whether this is easier to use.</p>
+<div class="doc-source">Incan documentation · <a href="sources/experiment/configuration.md">Page source ↓</a></div><nav aria-label="More documentation" class="doc-next"><a href="index.html">← Documentation overview</a><a href="https://incan.io/dev/">Continue on the docsite ↗</a></nav></main><aside class="docs-toc"><nav aria-label="On this page"><p class="docs-eyebrow">On this page</p><a class="toc-h2" href="#decide-what-to-accept">Decide what to accept</a><a class="toc-h2" href="#create-the-input-file">Create the input file</a><a class="toc-h2" href="#load-checked-settings">Load checked settings</a><a class="toc-h2" href="#understand-the-three-boundaries">Understand the three boundaries</a><a class="toc-h2" href="#check-the-failure-paths">Check the failure paths</a><a class="toc-h2" href="#use-json-instead">Use JSON instead</a><a class="toc-h2" href="#look-up-the-exact-contracts">Look up the exact contracts</a><a class="toc-h2" href="#keep-the-scope-small">Keep the scope small</a><a class="toc-h2" href="#about-this-pilot">About this pilot</a><a class="docs-top" href="#main">Back to top ↑</a></nav></aside></div><footer class="footer wrap ruled">
+    <div class="footer-identity">
+      <a aria-label="Built with Incan — back to home" class="brand footer-brand" href="../#welcome"><img alt="Built with Incan" class="built-with-stamp" height="724" src="../assets/built-with-incan-mono.png" width="2172"></a>
+      <a class="encero-credit" href="https://encero.systems">
+        <span aria-hidden="true" class="encero-credit-divider">|</span>
+        <em>by</em>
+        <span class="encero-credit-name">ENCERO</span>
+      </a>
+    </div>
+    <nav aria-label="Footer navigation"><a href="../media.html">Media kit</a><a href="https://incan.io/dev/release_notes/">Releases</a><a href="https://incan.io/dev/roadmap/">Roadmap</a><a href="https://incan.io/dev/contributing/">Contribute</a><a href="https://github.com/encero-systems/incan">GitHub <span aria-hidden="true" class="icon github"></span></a></nav>
+    <small class="copyright">© 2026 Encero Systems</small>
+  </footer></div></body></html>

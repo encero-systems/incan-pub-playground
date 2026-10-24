@@ -112,7 +112,7 @@ pub def topic_id(title: str) -> str:
 pub def section_for(key: str, catalog: ContentCatalog) -> str:
     if key.startswith("nav-"):
         return key[4:]
-    if key in ["dates", "date-api", "collections"]:
+    if key in ["dates", "date-api", "collections", "configuration", "configuration-pilot"]:
         return "library"
     if key in ["traits", "traits-reference", "enums", "compile-runtime"]:
         return "language"
@@ -174,9 +174,13 @@ pub def navigation(active: str, catalog: ContentCatalog) -> DocumentNode:
             for page in catalog.entries:
                 if page.preview == active + ".html":
                     current_title = str(page.title)
-            titles = {"dates": "Dates and times", "date-api": "Date API preview", "traits": "Traits and capabilities", "traits-reference": "Trait rules", "oven": "Build and run a project"}
+            titles = {"configuration": "Read and validate configuration", "configuration-pilot": "Configuration content pilot", "dates": "Dates and times", "date-api": "Date API preview", "traits": "Traits and capabilities", "traits-reference": "Trait rules", "oven": "Build and run a project"}
             if active in titles:
                 current_title = str(titles[active])
+            if section.key == "library" and active != "configuration":
+                nearby.append(
+                    el("li", {}, [el("a", {"href": "configuration.html"}, [txt("Guide: read configuration")])]),
+                )
             if current_title != "":
                 nearby.append(
                     el("li", {}, [el("a", {"href": active + ".html", "aria-current": "page"}, [txt(current_title)])]),
@@ -234,6 +238,15 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
     if section.key == "library":
         result.append(
             el(
+                "p",
+                {"class": "docs-route-note"},
+                [el("a", {"href": "configuration.html"}, [txt("Task guide: read and validate configuration →")]), txt(
+                    " · One workflow across files, TOML and JSON.",
+                )],
+            ),
+        )
+        result.append(
+            el(
                 "div",
                 {"class": "inc-learning-panel"},
                 [el("strong", {}, [txt("Guidance and API contracts, together.")]), el(
@@ -247,6 +260,18 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
         )
     for topic in section.topics:
         mut items: list[DocumentNode] = []
+        if section.key == "library" and topic in ["Files and streams", "JSON and TOML"]:
+            items.append(
+                el(
+                    "li",
+                    {},
+                    [el("a", {"href": "configuration.html"}, [txt("Read and validate configuration")]), el(
+                        "small",
+                        {},
+                        [txt("Task guide · Read here →")],
+                    )],
+                ),
+            )
         if topic == "Dates and times":
             items.append(
                 el(
@@ -371,6 +396,14 @@ pub def landing(catalog: ContentCatalog) -> list[DocumentNode]:
         "div",
         {"class": "docs-start"},
         [el(
+            "a",
+            {"href": "configuration.html"},
+            [el("strong", {}, [txt("Read and validate configuration")]), el(
+                "span",
+                {},
+                [txt("New guide pilot · files, TOML and JSON in one workflow →")],
+            )],
+        ), el(
             "a",
             {"href": "nav-learn.html#install-and-start"},
             [el("strong", {}, [txt("Your first program")]), el(
