@@ -146,7 +146,7 @@ pub def section_for(key: str, catalog: ContentCatalog) -> str:
         return "library"
     if key in ["traits", "traits-reference", "enums", "compile-runtime"]:
         return "language"
-    if key == "oven":
+    if key in ["oven", "testing-editor-pilot"]:
         return "oven"
     for page in catalog.entries:
         if page.preview == key + ".html":
@@ -233,7 +233,7 @@ pub def navigation(active: str, catalog: ContentCatalog) -> DocumentNode:
             for page in catalog.entries:
                 if page.preview == active + ".html":
                     current_title = str(page.title)
-            titles = {"configuration": "Read and validate configuration", "configuration-pilot": "Configuration content pilot", "dates": "Dates and times", "date-api": "Date API preview", "traits": "Traits and capabilities", "traits-reference": "Trait rules", "oven": "Build and run a project"}
+            titles = {"write-tests": "Write tests", "run-tests": "Run tests", "editor-setup": "Set up your editor", "testing-editor-pilot": "Testing and editor content pilot", "configuration": "Read and validate configuration", "configuration-pilot": "Configuration content pilot", "dates": "Dates and times", "date-api": "Date API preview", "traits": "Traits and capabilities", "traits-reference": "Trait rules", "oven": "Build and run a project"}
             if active in titles:
                 current_title = str(titles[active])
             if section.key == "library" and active != "configuration":
@@ -271,14 +271,23 @@ pub def navigation(active: str, catalog: ContentCatalog) -> DocumentNode:
     )
 
 
-def entry_node(page: ContentPage) -> DocumentNode:
+def entry_node(page: ContentPage, catalog: ContentCatalog) -> DocumentNode:
     mut location = "Current docsite ↗"
     if page.preview != "":
         location = str("Read here →")
+    mut aliases: list[str] = []
+    if page.preview != "":
+        for other in catalog.entries:
+            if other.source != page.source and other.preview == page.preview and other.section == page.section and other.topic == page.topic:
+                aliases.append(other.source)
+    titles = {"write-tests.html": "Write tests", "run-tests.html": "Run tests", "editor-setup.html": "Set up your editor"}
+    mut title = str(page.title)
+    if page.preview in titles:
+        title = str(titles[page.preview])
     return el(
         "li",
-        {"data-source": page.source},
-        [el("a", {"href": page_link(page)}, [txt(page.title)]), el(
+        {"data-source": page.source, "data-source-aliases": " ".join(aliases)},
+        [el("a", {"href": page_link(page)}, [txt(title)]), el(
             "small",
             {},
             [type_badge(page.doc_type), txt(" · " + location)],
@@ -395,9 +404,14 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
                     )],
                 ),
             )
+        mut shown_previews: list[str] = []
         for page in catalog.entries:
             if page.section == section.key and page.topic == topic and page.action != "replace-hub":
-                items.append(entry_node(page))
+                if page.preview != "" and page.preview in shown_previews:
+                    continue
+                items.append(entry_node(page, catalog))
+                if page.preview != "":
+                    shown_previews.append(page.preview)
         if len(items) == 0:
             continue
         if topic in ["RFCs", "Historical implementation", "Historical build system", "Contributor book"]:
@@ -612,7 +626,7 @@ pub def type_badge(kind: str) -> DocumentNode:
 pub def page_type(key: str, catalog: ContentCatalog) -> str:
     if key.startswith("nav-") or key.startswith("module-") or key in ["index", "explore", "content-map"]:
         return "Overview"
-    authored = {"configuration": "How-to", "configuration-pilot": "Explanation", "dates": "How-to", "date-api": "Reference", "traits": "How-to", "traits-reference": "Reference", "oven": "How-to", "architecture": "Explanation"}
+    authored = {"write-tests": "How-to", "run-tests": "How-to", "editor-setup": "How-to", "testing-editor-pilot": "Explanation", "configuration": "How-to", "configuration-pilot": "Explanation", "dates": "How-to", "date-api": "Reference", "traits": "How-to", "traits-reference": "Reference", "oven": "How-to", "architecture": "Explanation"}
     if key in authored:
         return authored[key]
     for page in catalog.entries:
@@ -625,6 +639,8 @@ pub def page_type(key: str, catalog: ContentCatalog) -> str:
 pub def module_for(key: str, catalog: ContentCatalog) -> str:
     if key.startswith("module-"):
         return key[7:]
+    if key == "write-tests":
+        return "testing"
     if key in ["dates", "date-api"]:
         return "datetime"
     for module in catalog.modules:
@@ -740,7 +756,7 @@ pub def module_content(module: LibraryModule, catalog: ContentCatalog) -> list[D
         for source in module.sources:
             for page in catalog.entries:
                 if page.source == source and page.doc_type == kind:
-                    items.append(entry_node(page))
+                    items.append(entry_node(page, catalog))
         mut label = "Reference"
         if kind == "How-to":
             label = str("How-to guides")
