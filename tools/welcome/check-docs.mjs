@@ -141,7 +141,9 @@ console.log('Passed: document-type badges, alphabetical module homes, direct dat
 for(const [from,to] of [['write-tests','run-tests'],['run-tests','write-tests'],['nav-oven','run-tests'],['nav-oven','editor-setup'],['module-testing','write-tests'],['editor-setup','testing-editor-pilot']]){
  assert.ok([...documents.get(from+'.html').querySelectorAll('a[href]')].some(a=>a.getAttribute('href').split('#')[0]===to+'.html'),from+' -> '+to);
 }
-for(const key of ['write-tests','run-tests','editor-setup'])assert.equal(documents.get(key+'.html').querySelector('.doc-type-line [data-doc-type]').dataset.docType,'How-to');
+for(const key of ['run-tests','editor-setup'])assert.equal(documents.get(key+'.html').querySelector('.doc-type-line [data-doc-type]').dataset.docType,'How-to');
+assert.equal(documents.get('write-tests.html').querySelector('.doc-type-line [data-doc-type]').dataset.docType,'Explanation');
+assert.ok(documents.get('module-testing.html').getElementById('explanation').nextElementSibling.querySelector('a[href="write-tests.html"]'),'Testing chapter is listed under Explanations');
 const authoredTests=[...documents.get('write-tests.html').querySelectorAll('pre code')].map(n=>n.textContent);
 for(const name of ['names.incn','test_normalization.incn','test_fixture.incn'])assert.ok(authoredTests.includes(await readFile(new URL('testing-editor-pilot/'+name,input),'utf8')),name);
 assert.equal(documents.get('run-tests.html').querySelectorAll('code.language-incan').length,0,'Runner guide does not repeat authoring examples');

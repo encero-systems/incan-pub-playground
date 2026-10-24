@@ -1,24 +1,20 @@
 # Testing and editor content pilot
 
-This pilot tests standalone chapters: connected explanations that readers can enter when they need to accomplish a task. Each chapter states its outcome and minimum prerequisites, develops the task through worked examples, and explains how to check the result. There is no required reading order.
+This revision tests an explanatory chapter with a single purpose: understanding how testing works in Incan. Its examples illustrate the ideas being discussed. Readers are not asked to create files, run a sequence of commands or complete an exercise.
 
-The three chapters retain their How-to classification: [Write tests](write-tests.md), [Run tests](run-tests.md), and [Set up your editor](editor-setup.md). Existing tutorials and reference contracts remain separate.
+## Read the revised chapter
 
-## Read a chapter on its own
+[How testing works in Incan](write-tests.md) begins with the relationship between a type and a behavioral expectation. It develops that idea through assertions, test visibility, parameter cases, fixture dependencies and isolation, then considers what a test result establishes. Familiarity with basic functions, imports and strings is sufficient background.
 
-Choose the task you need now:
+The page is classified as **Explanation** in its breadcrumb, badge and module navigation. The existing URL is retained so earlier links remain usable. [Run tests](run-tests.md) and [Set up your editor](editor-setup.md) remain How-to guides; they have not received the same editorial rewrite.
 
-- [Write tests](write-tests.md) — understand placement, assertions, parameter cases and shared setup. Bring a working project and familiarity with basic functions and imports.
-- [Run tests](run-tests.md) — establish what ran, narrow a failure and report meaningful CI results. Bring an existing test suite; the examples from the other chapter are optional.
-- [Set up your editor](editor-setup.md) — connect an editor to the intended toolchain and verify its feedback. Bring a project, an installed toolchain and VS Code or Cursor.
-
-The chapters introduce concepts where a decision needs them. Tables summarize choices after an explanation, and direct reference links remain available for readers who only need a signature or option. A chapter-like style does not change a document's Divio purpose: these pages help readers complete a task, while progressive tutorials and exact references remain separate.
+A separate tutorial should be built around a complete downloadable project, with displayed snippets taken from its source, a stated toolchain version and verified commands and output. That tutorial is not part of this revision. No download or runnable-project claim is attached to these illustrative examples.
 
 ## Where the material belongs
 
 | Existing material | New home | What remains separate |
 | --- | --- | --- |
-| Language and tooling testing pages: placement, assertions, fixtures, parametrization, decorators | Write tests | Full std.testing API contracts and the language-book tutorial |
+| Testing model: assertions, test visibility, parameter cases, fixture dependencies and isolation | How testing works in Incan · Explanation | Task instructions, full std.testing API contracts and the language-book tutorial |
 | Tooling testing: collection, filters, runner output, concurrency and CI | Run tests | Complete CLI option contracts |
 | Editor Setup and LSP: extension, binaries, verification, settings and recovery | Set up your editor | Contributor build instructions, protocol contracts and integration payloads |
 
@@ -26,7 +22,7 @@ The preview navigation links to the rewritten guides. Editor Setup and LSP becom
 
 ## What was deliberately removed from the main path
 
-The runner guide no longer repeats fixture or parametrization implementations. It links to the authoring guide when those concepts matter. The authoring guide points to exact signatures instead of reproducing the assertion API table. Its examples use complete scalar/string programs rather than an undefined Database client.
+The runner guide no longer repeats fixture or parametrization implementations. It links to the explanatory chapter when those concepts matter. The explanatory chapter points to exact signatures instead of reproducing the assertion API table. Its examples use complete scalar/string programs rather than an undefined Database client.
 
 Editor setup no longer requires reading about metadata command payloads before configuring an ordinary editor. Those details remain linked for integration authors. A contributor checkout is a separate route, not the default installation path.
 
@@ -42,7 +38,7 @@ The old rule suggesting one assertion per test is not retained: related assertio
 
 With the selected 0.6 release candidate:
 
-1. Save the three complete examples from Write tests at their named paths. List tests over the project root and confirm both inline and conventional cases, including the three named parameter cases.
+1. Verify the retained examples in `tools/welcome/testing-editor-pilot/` against the selected release candidate. The chapter is an explanation, so these are maintainer checks rather than reader exercises. Confirm inline and conventional discovery, including the three named parameter cases.
 2. Run the examples. Change one expected result, confirm a failing status, then restore it. Run a selected case and verify collection/selection IDs.
 3. Verify fixture isolation, marker selection and strict-marker diagnostics with dedicated fixtures. Check worker-scope behavior before promising session-wide sharing.
 4. Exercise the CI command with successful, failing and empty collections. Inspect JSON Lines, the final summary, JUnit output and exit status.
@@ -51,19 +47,13 @@ With the selected 0.6 release candidate:
 
 Website compilation and link checks validate the rendered documents; they are not evidence that these release workflows have been executed.
 
-## Reader trial
+## Editorial review
 
-Start each reader on the chapter relevant to their task, without requiring them to read either of the others. Ask them to identify the prerequisites, then complete these tasks without coaching:
+Read the explanation without running its examples. Consider whether each example makes the surrounding idea clearer, whether any paragraph unexpectedly starts instructing the reader to perform a task, and whether the chapter would remain coherent on a printed page.
 
-1. Put a unit test beside a private helper and find the command that will collect it.
-2. Reuse setup across several input cases and explain whether a session fixture is shared across parallel workers.
-3. Make an empty test collection fail CI and locate the exact API contract without searching.
-4. Diagnose an editor using an older language server than the terminal.
-5. Decide whether format-on-save or timeouts are guaranteed by this preview.
+Ask readers to explain why a function can be correctly typed yet fail its test, how parameter cases differ from fixture dependencies, and why a passing run does not establish that every intended test ran. Record unclear assumptions and places where API detail interrupts the argument. Build and link checks cannot establish that the chapter succeeds at this.
 
-Expected answers: inline `module tests:` with test-only imports; list/run the production file or project root. Parametrize cases and inject fixtures by name; session scope is per worker batch. Use `--fail-on-empty` and the std.testing/CLI reference links. Compare Incan: Doctor paths and restart after correcting them. Neither feature is guaranteed here; timeout rejection is explicitly documented for the recorded Alpha executor.
-
-Keep this approach if readers can enter any chapter, recognize what they need beforehand, follow the reasoning, and check their result without assembling instructions from several pages. Record any prerequisite that was assumed but not stated, and any point where the prose becomes an option list without explaining the decision. A successful build is not a reader-study result.
+The separate How-to guides can still be tried against concrete tasks: select a known case, make an empty collection fail CI, or diagnose an editor using an older language server than the terminal.
 
 ## Provenance
 
