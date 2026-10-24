@@ -1,6 +1,18 @@
 # Testing and editor content pilot
 
-This pilot gives repeated instructions one owner while keeping the Divio roles distinct. It introduces three How-to guides: [Write tests](write-tests.md), [Run tests](run-tests.md), and [Set up your editor](editor-setup.md). Existing tutorials and reference contracts remain separate.
+This pilot tests standalone chapters: connected explanations that readers can enter when they need to accomplish a task. Each chapter states its outcome and minimum prerequisites, develops the task through worked examples, and explains how to check the result. There is no required reading order.
+
+The three chapters retain their How-to classification: [Write tests](write-tests.md), [Run tests](run-tests.md), and [Set up your editor](editor-setup.md). Existing tutorials and reference contracts remain separate.
+
+## Read a chapter on its own
+
+Choose the task you need now:
+
+- [Write tests](write-tests.md) — understand placement, assertions, parameter cases and shared setup. Bring a working project and familiarity with basic functions and imports.
+- [Run tests](run-tests.md) — establish what ran, narrow a failure and report meaningful CI results. Bring an existing test suite; the examples from the other chapter are optional.
+- [Set up your editor](editor-setup.md) — connect an editor to the intended toolchain and verify its feedback. Bring a project, an installed toolchain and VS Code or Cursor.
+
+The chapters introduce concepts where a decision needs them. Tables summarize choices after an explanation, and direct reference links remain available for readers who only need a signature or option. A chapter-like style does not change a document's Divio purpose: these pages help readers complete a task, while progressive tutorials and exact references remain separate.
 
 ## Where the material belongs
 
@@ -41,7 +53,7 @@ Website compilation and link checks validate the rendered documents; they are no
 
 ## Reader trial
 
-Ask readers to complete these tasks without coaching:
+Start each reader on the chapter relevant to their task, without requiring them to read either of the others. Ask them to identify the prerequisites, then complete these tasks without coaching:
 
 1. Put a unit test beside a private helper and find the command that will collect it.
 2. Reuse setup across several input cases and explain whether a session fixture is shared across parallel workers.
@@ -51,7 +63,7 @@ Ask readers to complete these tasks without coaching:
 
 Expected answers: inline `module tests:` with test-only imports; list/run the production file or project root. Parametrize cases and inject fixtures by name; session scope is per worker batch. Use `--fail-on-empty` and the std.testing/CLI reference links. Compare Incan: Doctor paths and restart after correcting them. Neither feature is guaranteed here; timeout rejection is explicitly documented for the recorded Alpha executor.
 
-Keep this split if readers can identify the correct guide and complete the task without assembling repeated instructions. A successful build is not a reader-study result.
+Keep this approach if readers can enter any chapter, recognize what they need beforehand, follow the reasoning, and check their result without assembling instructions from several pages. Record any prerequisite that was assumed but not stated, and any point where the prose becomes an option list without explaining the decision. A successful build is not a reader-study result.
 
 ## Provenance
 

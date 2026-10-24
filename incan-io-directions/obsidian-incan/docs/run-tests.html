@@ -18,39 +18,41 @@
       </form>
       <a class="release-status" href="https://incan.io/dev/roadmap/">Preview · 0.6</a>
     </div>
-  </header><div class="docs-layout wrap"><aside class="docs-sidebar" id="docs-navigation"><a class="docs-overview" href="index.html">Documentation</a><details class="docs-browse" open><summary>Browse by topic</summary><nav aria-label="Documentation sections"><ul><li><a href="nav-learn.html">Learn</a></li><li><a href="nav-language.html">Language</a></li><li><a href="nav-library.html">Standard library</a></li><li><a href="nav-oven.html">Oven &amp; tools</a><ul class="docs-topic-links"><li><a href="nav-oven.html#project-configuration">Project configuration</a></li><li><a href="nav-oven.html#dependencies-and-packages">Dependencies and packages</a></li><li><a href="nav-oven.html#build-and-release">Build and release</a></li><li><a href="nav-oven.html#testing">Testing</a></li><li><a href="nav-oven.html#diagnostics">Diagnostics</a></li><li><a href="nav-oven.html#editor-and-formatting">Editor and formatting</a></li><li><a href="nav-oven.html#cli-and-inspection">CLI and inspection</a></li><li><a href="nav-oven.html#performance">Performance</a></li><li><a href="nav-oven.html#historical-build-system">Historical build system</a></li><li><a aria-current="page" href="run-tests.html">Run tests</a></li></ul></li><li><a href="nav-interop.html">Interoperability</a></li><li><a href="nav-contribute.html">Contribute</a></li><li><a href="nav-project.html">Project</a></li></ul></nav></details><a href="explore.html">Choose a learning route →</a><a class="docs-all" href="content-map.html">Content migration map</a></aside><main class="doc-article" id="main" tabindex="-1"><div class="doc-breadcrumb"><a href="index.html">Docs</a><a href="nav-oven.html"> / Oven &amp; tools</a></div><details class="docs-mobile-toc"><summary>On this page</summary><nav aria-label="On this page, compact"><a class="toc-h2" href="#check-what-will-run">Check what will run</a><a class="toc-h2" href="#select-the-work-you-need">Select the work you need</a><a class="toc-h2" href="#investigate-a-failure">Investigate a failure</a><a class="toc-h2" href="#make-ci-fail-usefully">Make CI fail usefully</a><a class="toc-h2" href="#respect-the-executor-boundary">Respect the executor boundary</a><a class="toc-h2" href="#continue">Continue</a></nav></details><p class="doc-type-line"><span class="doc-type" data-doc-type="How-to">How-to</span></p><h1 id="run-tests">Run tests</h1>
-<p>Choose what to collect, narrow a failing run, and make CI report meaningful failures. Run these commands from the project root using the toolchain selected for that project. <a href="write-tests.html">Write tests</a> owns assertions, fixtures, parameter sets and markers.</p>
+  </header><div class="docs-layout wrap"><aside class="docs-sidebar" id="docs-navigation"><a class="docs-overview" href="index.html">Documentation</a><details class="docs-browse" open><summary>Browse by topic</summary><nav aria-label="Documentation sections"><ul><li><a href="nav-learn.html">Learn</a></li><li><a href="nav-language.html">Language</a></li><li><a href="nav-library.html">Standard library</a></li><li><a href="nav-oven.html">Oven &amp; tools</a><ul class="docs-topic-links"><li><a href="nav-oven.html#project-configuration">Project configuration</a></li><li><a href="nav-oven.html#dependencies-and-packages">Dependencies and packages</a></li><li><a href="nav-oven.html#build-and-release">Build and release</a></li><li><a href="nav-oven.html#testing">Testing</a></li><li><a href="nav-oven.html#diagnostics">Diagnostics</a></li><li><a href="nav-oven.html#editor-and-formatting">Editor and formatting</a></li><li><a href="nav-oven.html#cli-and-inspection">CLI and inspection</a></li><li><a href="nav-oven.html#performance">Performance</a></li><li><a href="nav-oven.html#historical-build-system">Historical build system</a></li><li><a aria-current="page" href="run-tests.html">Run tests</a></li></ul></li><li><a href="nav-interop.html">Interoperability</a></li><li><a href="nav-contribute.html">Contribute</a></li><li><a href="nav-project.html">Project</a></li></ul></nav></details><a href="explore.html">Choose a learning route →</a><a class="docs-all" href="content-map.html">Content migration map</a></aside><main class="doc-article" id="main" tabindex="-1"><div class="doc-breadcrumb"><a href="index.html">Docs</a><a href="nav-oven.html"> / Oven &amp; tools</a></div><details class="docs-mobile-toc"><summary>On this page</summary><nav aria-label="On this page, compact"><a class="toc-h2" href="#before-you-begin">Before you begin</a><a class="toc-h2" href="#check-what-will-run">Check what will run</a><a class="toc-h2" href="#select-the-work-you-need">Select the work you need</a><a class="toc-h2" href="#investigate-a-failure">Investigate a failure</a><a class="toc-h2" href="#make-ci-fail-usefully">Make CI fail usefully</a><a class="toc-h2" href="#respect-the-executor-boundary">Respect the executor boundary</a><a class="toc-h2" href="#check-your-result">Check your result</a><a class="toc-h2" href="#go-further">Go further</a></nav></details><p class="doc-type-line"><span class="doc-type" data-doc-type="How-to">How-to</span></p><h1 id="run-tests">Run tests</h1>
+<p>A test result is only useful when you know what ran. This chapter follows a test run from discovering its cases to investigating a failure and reporting the result in CI. You will learn how to narrow the work without accidentally excluding the checks you meant to run.</p>
+<h2 id="before-you-begin">Before you begin</h2>
+<p>You need a working Incan project with at least one test and the toolchain selected for that project. Run the commands from the project root. You should know how to open a terminal there and recognize the difference between a file path and a test name.</p>
+<p>You can use your existing suite; completing another chapter is not required. If you have no tests yet, <a href="write-tests.html">Write tests</a> contains complete examples. Commands below that mention <code>normalize</code> or <code>src/names.incn</code> use those examples; substitute a name or path from your own suite.</p>
 <blockquote>
-<p><strong>0.6 content preview.</strong> These commands follow the recorded runner documentation. Release-candidate execution remains to be checked; the documented Oven Alpha timeout limitation is called out below.</p>
+<p><strong>0.6 content preview.</strong> The commands follow the recorded runner documentation. Execution against the release candidate is still pending, including verification of the Oven Alpha timeout limitation described below.</p>
 </blockquote>
 <h2 id="check-what-will-run">Check what will run</h2>
-<p>List tests before executing them:</p>
+<p>Begin by asking the runner to list the tests it can discover:</p>
 <pre aria-label="Code example" tabindex="0"><code class="language-bash">incan test --<span class="doc-token-type">list</span> .
 </code></pre>
-<p>Using <code>.</code> includes conventional test files and production files containing inline test blocks. Passing only <code>tests/</code> does not search <code>src/</code> for inline tests. Test-file names must match <code>test_*.incn</code> or <code>*_test.incn</code>; inside a valid test context, functions use <code>test_*</code> names or <code>@test</code>.</p>
-<p>If a test is missing, check the path first, then its file name and test context. <a href="write-tests.html#choose-where-the-test-belongs">Choose where the test belongs</a> explains the two supported forms.</p>
-<p>Run the project or a single file:</p>
+<p>The final <code>.</code> selects the project-root directory. That scope can include conventional test files as well as inline test blocks inside production files. Selecting only <code>tests/</code> would leave out an inline test in <code>src/</code>, even if that test belongs to the same project.</p>
+<p>Read the list before interpreting a successful run. A missing test cannot fail, so a green result alone does not establish that your intended behavior was checked. Conventional files must match <code>test_*.incn</code> or <code>*_test.incn</code>; within a valid test context, functions use <code>test_*</code> names or <code>@test</code>. For inline tests, check that the declaration is inside the production file&#39;s <code>module tests:</code> block. <a href="write-tests.html#choose-where-the-test-belongs">Choosing a test location</a> explains those contexts.</p>
+<p>Once the list contains the expected cases, run that scope:</p>
 <pre aria-label="Code example" tabindex="0"><code class="language-bash">incan test .
-incan test src/names.incn
 </code></pre>
-<p>These are alternatives: the first runs the project scope; the second narrows it to the inline example from the authoring guide.</p>
+<p>For a smaller loop while editing one file, select its path instead:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">incan test src/names.incn
+</code></pre>
+<p>These commands answer different questions. The first checks the selected project scope; the second checks the file you are working on. A narrow run is useful feedback during an edit, followed by a broader run before you rely on the change.</p>
 <h2 id="select-the-work-you-need">Select the work you need</h2>
+<p>Sometimes a file contains more cases than you need to investigate. The <code>-k</code> option matches test IDs, including parameter-case IDs. Use the names printed by <code>--list</code> to choose a meaningful match:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">incan test -k <span class="doc-token-string">&quot;normalize&quot;</span> .
+</code></pre>
+<p>In the companion examples, this selects normalization checks. In your project, choose a fragment that identifies the behavior under investigation and inspect the selected results; an overly broad fragment may match several tests.</p>
+<p>Marks let you select by purpose instead of spelling. For example, <code>incan test -m &quot;smoke and not slow&quot; .</code> selects a marker expression. Authors declare those marks in the tests; the runner interprets them when selecting work. Strict checking helps catch an unregistered mark, while slow-test and xfail options let you deliberately change the normal run policy.</p>
 <div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
 <thead>
 <tr>
-<th>Task</th>
+<th>Intention</th>
 <th>Command</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td>Match a test name or parameter-case ID</td>
-<td><code>incan test -k &quot;normalize&quot; .</code></td>
-</tr>
-<tr>
-<td>Select a marker expression</td>
-<td><code>incan test -m &quot;smoke and not slow&quot; .</code></td>
-</tr>
 <tr>
 <td>Reject unregistered markers</td>
 <td><code>incan test --strict-markers .</code></td>
@@ -73,64 +75,44 @@ incan test src/names.incn
 </tr>
 </tbody>
 </table></div>
-<p>Use the stable test ID printed by <code>--list</code> when selecting a particular parameter case. <code>-k</code> matches those IDs. A <code>--feature</code> flag supplies a value to collection-time <code>feature(...)</code> checks; it is not a general application configuration switch.</p>
+<p>The last option supplies a value to collection-time <code>feature(...)</code> checks. It does not configure arbitrary application behavior. <a href="write-tests.html#mark-intent-explicitly">Marking test intent</a> explains the authoring side, and the <a href="https://incan.io/dev/tooling/reference/cli_reference/">CLI reference</a> provides the full option contract.</p>
 <h2 id="investigate-a-failure">Investigate a failure</h2>
-<p>Start with a selected test and verbose output:</p>
+<p>First identify how far the run got. Collection finds the test cases; compilation and preparation make them runnable; execution evaluates their assertions. If preparation fails, changing an expected assertion value cannot fix it because the assertion has not run yet.</p>
+<p>For a selected failing test, request verbose output:</p>
 <pre aria-label="Code example" tabindex="0"><code class="language-bash">incan test -v -k <span class="doc-token-string">&quot;normalize&quot;</span> .
 </code></pre>
-<p>Read whether the failure happened during collection, compilation/preparation, or test execution. A build or missing-plan failure is not an assertion failure. Keep the diagnostic and toolchain version when reporting it; follow the project&#39;s supported toolchain/bake instructions rather than editing generated artifacts.</p>
-<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
-<thead>
-<tr>
-<th>Need</th>
-<th>Command</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>See output from passing tests</td>
-<td><code>incan test --nocapture .</code></td>
-</tr>
-<tr>
-<td>Find the slowest cases</td>
-<td><code>incan test --durations 10 .</code></td>
-</tr>
-<tr>
-<td>Investigate order dependence reproducibly</td>
-<td><code>incan test --shuffle --seed 12345 .</code></td>
-</tr>
-<tr>
-<td>Run independent worker batches concurrently</td>
-<td><code>incan test --jobs 4 .</code></td>
-</tr>
-</tbody>
-</table></div>
-<p>Use the same seed to reproduce an ordering experiment. When enabling workers, remember that session-scoped fixtures are per worker batch; they are not a single process-wide service shared by the entire run. Tests that touch shared external resources need appropriate isolation or the runner&#39;s scheduling constraints.</p>
+<p>Read the diagnostic alongside the test ID. For an assertion failure, compare the actual result with the expected behavior before deciding whether the implementation or the test is wrong. For a toolchain or missing-plan failure, follow the project&#39;s supported setup and bake instructions. Keep the diagnostic and compiler version when asking for help.</p>
+<p>Additional output is useful when it answers a specific question. <code>--nocapture</code> exposes output from passing tests, while <code>--durations 10</code> identifies the slowest cases. If a failure seems to depend on order, use <code>--shuffle --seed 12345</code> and retain the seed so the ordering experiment can be repeated.</p>
+<p>Parallel workers can shorten an independent suite: <code>incan test --jobs 4 .</code> requests four workers. Before increasing concurrency, check whether tests share external files or services. A session fixture is per worker batch, not one instance shared across all workers. Isolation and fixture lifetime matter more than the worker count; <a href="write-tests.html#share-setup-with-fixtures">fixture setup</a> explains those choices.</p>
 <h2 id="make-ci-fail-usefully">Make CI fail usefully</h2>
-<p>Require at least one collected test and produce both machine-readable results and a JUnit report:</p>
+<p>CI should report both failures and the unexpected absence of tests. Without an explicit empty-collection check, a successful exit can simply mean that nothing was collected. Combine that check with machine-readable output and a JUnit report:</p>
 <pre aria-label="Code example" tabindex="0"><code class="language-bash">incan test --fail-on-empty --format json --junit reports/junit.xml .
 </code></pre>
-<p>Prepare the selected Incan toolchain and project dependencies before this step. Preserve the command&#39;s exit status in CI, and collect the JUnit artifact even when tests fail.</p>
-<p>The documented result stream is JSON Lines, with <code>incan.test.v1</code> result records and a final summary. Treat runner errors and test failures as unsuccessful runs. Exit code <code>0</code> means success, but without <code>--fail-on-empty</code> it can also mean an empty collection; this is why the CI command includes the flag. The recorded guide lists <code>1</code> for test failures, missing test files and fail-on-empty failures. See the <a href="https://incan.io/dev/tooling/reference/cli_reference/">CLI reference</a> for the selected release&#39;s complete command contract.</p>
+<p>Prepare the selected toolchain and project dependencies before this command. Preserve its exit status in the CI job, and arrange to collect the JUnit artifact even when the command fails; the failing run is often the one whose report you most need.</p>
+<p>The documented result stream is JSON Lines, with <code>incan.test.v1</code> result records followed by a summary. A report consumer should read the stream as records rather than assume one JSON document. Exit code <code>0</code> means success, but can include an empty collection unless <code>--fail-on-empty</code> is supplied. The recorded guide lists <code>1</code> for test failures, missing test files and fail-on-empty failures. Consult the <a href="https://incan.io/dev/tooling/reference/cli_reference/">CLI reference</a> for the selected release&#39;s complete contract.</p>
 <h2 id="respect-the-executor-boundary">Respect the executor boundary</h2>
-<p>The recorded <strong>Oven Alpha executor rejects <code>--timeout</code> and <code>@timeout</code></strong> rather than running without the requested enforcement. Do not use either as a safety guarantee for that executor. The older authoring page describes timeout behavior more broadly; that discrepancy must be reconciled against the 0.6 release candidate.</p>
-<p>Fixture cleanup also cannot guarantee recovery after a worker process is terminated. Keep cleanup idempotent, isolate external resources and use narrow scopes when prompt release matters. <a href="write-tests.html#share-setup-with-fixtures">Write tests</a> owns fixture authoring and lifetime choices.</p>
-<h2 id="continue">Continue</h2>
+<p>The recorded <strong>Oven Alpha executor rejects <code>--timeout</code> and <code>@timeout</code></strong> rather than running without the requested enforcement. The older authoring page describes timeout behavior more broadly, so this discrepancy must be resolved against the 0.6 release candidate before timeout support is promised.</p>
+<p>Keep that boundary in mind when a test may hang or leave resources behind. Fixture teardown can run after an assertion failure while its worker remains alive, but cannot guarantee recovery after the process is terminated. Isolate external resources and make cleanup safe to repeat.</p>
+<h2 id="check-your-result">Check your result</h2>
+<p>A useful verification covers more than the passing case. First list your intended scope and confirm that a known test appears. Run it, then temporarily change one expected value so it must fail. The selected run should report a failure; restore the value and confirm that it passes again. If either result is surprising, check the selected test ID before changing the program.</p>
+<p>For CI, also try a selection that you have confirmed matches no tests, with <code>--fail-on-empty</code> enabled. It should fail rather than silently approve an empty run. Inspect the JSON Lines and JUnit output from both successful and failing runs, and verify that the job preserves the runner&#39;s status. These are release-verification steps for this preview; they have not yet been executed against the matching 0.6 candidate.</p>
+<p>Once those checks hold, you can distinguish three outcomes: the intended tests passed, a behavior failed, or the runner could not execute the intended tests. That distinction makes the result actionable both at your desk and in CI.</p>
+<h2 id="go-further">Go further</h2>
 <ul>
 <li>
-<p><a href="write-tests.html">Write tests</a> — author the checks that this runner executes.</p>
+<p><a href="write-tests.html">Write tests</a> — test placement, assertions, parameter sets and fixtures.</p>
 </li>
 <li>
-<p><a href="https://incan.io/dev/tooling/how-to/troubleshooting/">Troubleshooting</a> — diagnose toolchain and build failures.</p>
+<p><a href="https://incan.io/dev/tooling/how-to/troubleshooting/">Troubleshooting</a> — toolchain and build failures.</p>
 </li>
 <li>
-<p><a href="https://incan.io/dev/tooling/reference/cli_reference/">CLI reference</a> — exact options for the documented release.</p>
+<p><a href="https://incan.io/dev/tooling/reference/cli_reference/">CLI reference</a> — exact commands and options.</p>
 </li>
 <li>
-<p><a href="testing-editor-pilot.html">Review notes and release checks</a> — the consolidation map and remaining verification.</p>
+<p><a href="testing-editor-pilot.html">Review notes and release checks</a> — source discrepancies and pending verification.</p>
 </li>
 </ul>
-<div class="doc-source">Incan documentation · <a href="sources/experiment/run-tests.md">Page source ↓</a></div><nav aria-label="More documentation" class="doc-next"><a href="index.html">← Documentation overview</a><a href="https://incan.io/dev/">Continue on the docsite ↗</a></nav></main><aside class="docs-toc"><nav aria-label="On this page"><p class="docs-eyebrow">On this page</p><a class="toc-h2" href="#check-what-will-run">Check what will run</a><a class="toc-h2" href="#select-the-work-you-need">Select the work you need</a><a class="toc-h2" href="#investigate-a-failure">Investigate a failure</a><a class="toc-h2" href="#make-ci-fail-usefully">Make CI fail usefully</a><a class="toc-h2" href="#respect-the-executor-boundary">Respect the executor boundary</a><a class="toc-h2" href="#continue">Continue</a><a class="docs-top" href="#main">Back to top ↑</a></nav></aside></div><footer class="footer wrap ruled">
+<div class="doc-source">Incan documentation · <a href="sources/experiment/run-tests.md">Page source ↓</a></div><nav aria-label="More documentation" class="doc-next"><a href="index.html">← Documentation overview</a><a href="https://incan.io/dev/">Continue on the docsite ↗</a></nav></main><aside class="docs-toc"><nav aria-label="On this page"><p class="docs-eyebrow">On this page</p><a class="toc-h2" href="#before-you-begin">Before you begin</a><a class="toc-h2" href="#check-what-will-run">Check what will run</a><a class="toc-h2" href="#select-the-work-you-need">Select the work you need</a><a class="toc-h2" href="#investigate-a-failure">Investigate a failure</a><a class="toc-h2" href="#make-ci-fail-usefully">Make CI fail usefully</a><a class="toc-h2" href="#respect-the-executor-boundary">Respect the executor boundary</a><a class="toc-h2" href="#check-your-result">Check your result</a><a class="toc-h2" href="#go-further">Go further</a><a class="docs-top" href="#main">Back to top ↑</a></nav></aside></div><footer class="footer wrap ruled">
     <div class="footer-identity">
       <a aria-label="Built with Incan — back to home" class="brand footer-brand" href="../#welcome"><img alt="Built with Incan" class="built-with-stamp" height="724" src="../assets/built-with-incan-mono.png" width="2172"></a>
       <a class="encero-credit" href="https://encero.systems">

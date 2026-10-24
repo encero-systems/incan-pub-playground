@@ -1,84 +1,108 @@
 # Run tests
 
-Choose what to collect, narrow a failing run, and make CI report meaningful failures. Run these commands from the project root using the toolchain selected for that project. [Write tests](write-tests.md) owns assertions, fixtures, parameter sets and markers.
+A test result is only useful when you know what ran. This chapter follows a test run from discovering its cases to investigating a failure and reporting the result in CI. You will learn how to narrow the work without accidentally excluding the checks you meant to run.
 
-> **0.6 content preview.** These commands follow the recorded runner documentation. Release-candidate execution remains to be checked; the documented Oven Alpha timeout limitation is called out below.
+## Before you begin
+
+You need a working Incan project with at least one test and the toolchain selected for that project. Run the commands from the project root. You should know how to open a terminal there and recognize the difference between a file path and a test name.
+
+You can use your existing suite; completing another chapter is not required. If you have no tests yet, [Write tests](write-tests.md) contains complete examples. Commands below that mention `normalize` or `src/names.incn` use those examples; substitute a name or path from your own suite.
+
+> **0.6 content preview.** The commands follow the recorded runner documentation. Execution against the release candidate is still pending, including verification of the Oven Alpha timeout limitation described below.
 
 ## Check what will run
 
-List tests before executing them:
+Begin by asking the runner to list the tests it can discover:
 
 ```bash
 incan test --list .
 ```
 
-Using `.` includes conventional test files and production files containing inline test blocks. Passing only `tests/` does not search `src/` for inline tests. Test-file names must match `test_*.incn` or `*_test.incn`; inside a valid test context, functions use `test_*` names or `@test`.
+The final `.` selects the project-root directory. That scope can include conventional test files as well as inline test blocks inside production files. Selecting only `tests/` would leave out an inline test in `src/`, even if that test belongs to the same project.
 
-If a test is missing, check the path first, then its file name and test context. [Choose where the test belongs](write-tests.md#choose-where-the-test-belongs) explains the two supported forms.
+Read the list before interpreting a successful run. A missing test cannot fail, so a green result alone does not establish that your intended behavior was checked. Conventional files must match `test_*.incn` or `*_test.incn`; within a valid test context, functions use `test_*` names or `@test`. For inline tests, check that the declaration is inside the production file's `module tests:` block. [Choosing a test location](write-tests.md#choose-where-the-test-belongs) explains those contexts.
 
-Run the project or a single file:
+Once the list contains the expected cases, run that scope:
 
 ```bash
 incan test .
+```
+
+For a smaller loop while editing one file, select its path instead:
+
+```bash
 incan test src/names.incn
 ```
 
-These are alternatives: the first runs the project scope; the second narrows it to the inline example from the authoring guide.
+These commands answer different questions. The first checks the selected project scope; the second checks the file you are working on. A narrow run is useful feedback during an edit, followed by a broader run before you rely on the change.
 
 ## Select the work you need
 
-| Task | Command |
+Sometimes a file contains more cases than you need to investigate. The `-k` option matches test IDs, including parameter-case IDs. Use the names printed by `--list` to choose a meaningful match:
+
+```bash
+incan test -k "normalize" .
+```
+
+In the companion examples, this selects normalization checks. In your project, choose a fragment that identifies the behavior under investigation and inspect the selected results; an overly broad fragment may match several tests.
+
+Marks let you select by purpose instead of spelling. For example, `incan test -m "smoke and not slow" .` selects a marker expression. Authors declare those marks in the tests; the runner interprets them when selecting work. Strict checking helps catch an unregistered mark, while slow-test and xfail options let you deliberately change the normal run policy.
+
+| Intention | Command |
 | --- | --- |
-| Match a test name or parameter-case ID | `incan test -k "normalize" .` |
-| Select a marker expression | `incan test -m "smoke and not slow" .` |
 | Reject unregistered markers | `incan test --strict-markers .` |
 | Include slow tests | `incan test --slow .` |
 | Stop after the first failure | `incan test -x .` |
 | Run xfail tests as ordinary tests | `incan test --run-xfail .` |
 | Enable a collection-time feature probe | `incan test --feature new_parser .` |
 
-Use the stable test ID printed by `--list` when selecting a particular parameter case. `-k` matches those IDs. A `--feature` flag supplies a value to collection-time `feature(...)` checks; it is not a general application configuration switch.
+The last option supplies a value to collection-time `feature(...)` checks. It does not configure arbitrary application behavior. [Marking test intent](write-tests.md#mark-intent-explicitly) explains the authoring side, and the [CLI reference](../tooling/reference/cli_reference.md) provides the full option contract.
 
 ## Investigate a failure
 
-Start with a selected test and verbose output:
+First identify how far the run got. Collection finds the test cases; compilation and preparation make them runnable; execution evaluates their assertions. If preparation fails, changing an expected assertion value cannot fix it because the assertion has not run yet.
+
+For a selected failing test, request verbose output:
 
 ```bash
 incan test -v -k "normalize" .
 ```
 
-Read whether the failure happened during collection, compilation/preparation, or test execution. A build or missing-plan failure is not an assertion failure. Keep the diagnostic and toolchain version when reporting it; follow the project's supported toolchain/bake instructions rather than editing generated artifacts.
+Read the diagnostic alongside the test ID. For an assertion failure, compare the actual result with the expected behavior before deciding whether the implementation or the test is wrong. For a toolchain or missing-plan failure, follow the project's supported setup and bake instructions. Keep the diagnostic and compiler version when asking for help.
 
-| Need | Command |
-| --- | --- |
-| See output from passing tests | `incan test --nocapture .` |
-| Find the slowest cases | `incan test --durations 10 .` |
-| Investigate order dependence reproducibly | `incan test --shuffle --seed 12345 .` |
-| Run independent worker batches concurrently | `incan test --jobs 4 .` |
+Additional output is useful when it answers a specific question. `--nocapture` exposes output from passing tests, while `--durations 10` identifies the slowest cases. If a failure seems to depend on order, use `--shuffle --seed 12345` and retain the seed so the ordering experiment can be repeated.
 
-Use the same seed to reproduce an ordering experiment. When enabling workers, remember that session-scoped fixtures are per worker batch; they are not a single process-wide service shared by the entire run. Tests that touch shared external resources need appropriate isolation or the runner's scheduling constraints.
+Parallel workers can shorten an independent suite: `incan test --jobs 4 .` requests four workers. Before increasing concurrency, check whether tests share external files or services. A session fixture is per worker batch, not one instance shared across all workers. Isolation and fixture lifetime matter more than the worker count; [fixture setup](write-tests.md#share-setup-with-fixtures) explains those choices.
 
 ## Make CI fail usefully
 
-Require at least one collected test and produce both machine-readable results and a JUnit report:
+CI should report both failures and the unexpected absence of tests. Without an explicit empty-collection check, a successful exit can simply mean that nothing was collected. Combine that check with machine-readable output and a JUnit report:
 
 ```bash
 incan test --fail-on-empty --format json --junit reports/junit.xml .
 ```
 
-Prepare the selected Incan toolchain and project dependencies before this step. Preserve the command's exit status in CI, and collect the JUnit artifact even when tests fail.
+Prepare the selected toolchain and project dependencies before this command. Preserve its exit status in the CI job, and arrange to collect the JUnit artifact even when the command fails; the failing run is often the one whose report you most need.
 
-The documented result stream is JSON Lines, with `incan.test.v1` result records and a final summary. Treat runner errors and test failures as unsuccessful runs. Exit code `0` means success, but without `--fail-on-empty` it can also mean an empty collection; this is why the CI command includes the flag. The recorded guide lists `1` for test failures, missing test files and fail-on-empty failures. See the [CLI reference](../tooling/reference/cli_reference.md) for the selected release's complete command contract.
+The documented result stream is JSON Lines, with `incan.test.v1` result records followed by a summary. A report consumer should read the stream as records rather than assume one JSON document. Exit code `0` means success, but can include an empty collection unless `--fail-on-empty` is supplied. The recorded guide lists `1` for test failures, missing test files and fail-on-empty failures. Consult the [CLI reference](../tooling/reference/cli_reference.md) for the selected release's complete contract.
 
 ## Respect the executor boundary
 
-The recorded **Oven Alpha executor rejects `--timeout` and `@timeout`** rather than running without the requested enforcement. Do not use either as a safety guarantee for that executor. The older authoring page describes timeout behavior more broadly; that discrepancy must be reconciled against the 0.6 release candidate.
+The recorded **Oven Alpha executor rejects `--timeout` and `@timeout`** rather than running without the requested enforcement. The older authoring page describes timeout behavior more broadly, so this discrepancy must be resolved against the 0.6 release candidate before timeout support is promised.
 
-Fixture cleanup also cannot guarantee recovery after a worker process is terminated. Keep cleanup idempotent, isolate external resources and use narrow scopes when prompt release matters. [Write tests](write-tests.md#share-setup-with-fixtures) owns fixture authoring and lifetime choices.
+Keep that boundary in mind when a test may hang or leave resources behind. Fixture teardown can run after an assertion failure while its worker remains alive, but cannot guarantee recovery after the process is terminated. Isolate external resources and make cleanup safe to repeat.
 
-## Continue
+## Check your result
 
-- [Write tests](write-tests.md) — author the checks that this runner executes.
-- [Troubleshooting](../tooling/how-to/troubleshooting.md) — diagnose toolchain and build failures.
-- [CLI reference](../tooling/reference/cli_reference.md) — exact options for the documented release.
-- [Review notes and release checks](testing-editor-pilot.md) — the consolidation map and remaining verification.
+A useful verification covers more than the passing case. First list your intended scope and confirm that a known test appears. Run it, then temporarily change one expected value so it must fail. The selected run should report a failure; restore the value and confirm that it passes again. If either result is surprising, check the selected test ID before changing the program.
+
+For CI, also try a selection that you have confirmed matches no tests, with `--fail-on-empty` enabled. It should fail rather than silently approve an empty run. Inspect the JSON Lines and JUnit output from both successful and failing runs, and verify that the job preserves the runner's status. These are release-verification steps for this preview; they have not yet been executed against the matching 0.6 candidate.
+
+Once those checks hold, you can distinguish three outcomes: the intended tests passed, a behavior failed, or the runner could not execute the intended tests. That distinction makes the result actionable both at your desk and in CI.
+
+## Go further
+
+- [Write tests](write-tests.md) — test placement, assertions, parameter sets and fixtures.
+- [Troubleshooting](../tooling/how-to/troubleshooting.md) — toolchain and build failures.
+- [CLI reference](../tooling/reference/cli_reference.md) — exact commands and options.
+- [Review notes and release checks](testing-editor-pilot.md) — source discrepancies and pending verification.
