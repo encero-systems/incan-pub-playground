@@ -4,7 +4,11 @@ The Incan extension adds syntax highlighting, diagnostics, hover information and
 
 ## Install the extension
 
-Install the Incan extension package using **Extensions → Install from VSIX…**. Reload the editor, then open your project folder.
+Download the Incan extension (`.vsix`) from the [release downloads](https://github.com/encero-systems/incan/releases). Install it using **Extensions → Install from VSIX…**. Reload the editor, then open your project folder.
+
+Open the folder containing `loaf.toml`, rather than opening a source file on its own. This keeps the editor and terminal working from the same project.
+
+On native Windows, open the project normally and use `incan-lsp.exe`. If you choose WSL instead, open the project through VS Code’s WSL environment and install the extension there too.
 
 ## Connect the language server
 
@@ -17,9 +21,20 @@ The extension uses `incan-lsp` for diagnostics and code navigation. Use the lang
 }
 ```
 
-Use a full path: this setting does not expand `~` or shell variables. Restart the language server after changing it.
+Find the executable with `command -v incan-lsp` on macOS/Linux or `(Get-Command incan-lsp).Source` in PowerShell. Paste its full path into the setting; it does not expand `~` or shell variables.
 
-Open an `.incn` file and hover a function to see its signature. Use **Go to Definition** to follow a name to its declaration.
+In JSON, escape Windows backslashes. For example:
+
+```json
+{
+  "incan.lsp.enabled": true,
+  "incan.lsp.path": "C:\\Tools\\Incan\\incan-lsp.exe"
+}
+```
+
+Restart the language server after changing it.
+
+Open an `.incn` file and hover a function to see its signature. Use **Go to Definition** to follow a name to its declaration. To check diagnostics, temporarily introduce a type error, save the file, then undo it. The error should appear and clear.
 
 ## Format your code
 
