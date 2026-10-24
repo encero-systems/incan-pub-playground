@@ -1,0 +1,758 @@
+"""Second-flight surface probes built on Pallay's ordinary-Incan experience contract."""
+
+from core.experience_contract import (
+    AssuranceLevel,
+    CompiledExperience,
+    ConcurrencySemantic,
+    ExecutionPlacement,
+    ProjectionPlan,
+    ProjectionTarget,
+    ScenarioRun,
+    StateRole,
+    TraceEvent,
+    contract_lab_inspection,
+    experience_contract,
+    inspect_compiled_experience,
+    inspect_projection_plan,
+    interaction_contract,
+    interaction_placement,
+    plan_interaction,
+    state_contract,
+    target_contract,
+    ObservationPosture,
+    OutcomeKind,
+)
+
+
+pub model SurfaceProbe:
+    """Inspectable typed contract for a surface whose infrastructure remains simulated."""
+
+    pub name: str
+    pub compiled: CompiledExperience
+    pub plans: list[ProjectionPlan]
+    pub stresses: list[str]
+    pub findings: list[str]
+    pub deferred: list[str]
+
+
+pub model LiveQueryUpdate:
+    """One versioned IncQL result observed by a dashboard projection."""
+
+    pub query_id: str
+    pub revision: int
+    pub valid_time: str
+    pub knowledge_time: str
+    pub freshness: str
+    pub value: int
+
+
+pub def minutary_capture_probe() -> SurfaceProbe:
+    """Describe a private local capture surface with no required server."""
+    capture = interaction_contract(
+        "CaptureClipboard",
+        "minutary.capture_clipboard",
+        "minutary.application",
+        "host.clipboard",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.AccumulatingEvidence,
+        [],
+        ObservationPosture.NoRetention,
+    )
+    save = interaction_contract(
+        "SaveClip",
+        "minutary.save_clip",
+        "minutary.application",
+        "minutary.local_store",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.ExclusiveLinearization,
+        [],
+        ObservationPosture.LocalOnly,
+    )
+    retain = interaction_contract(
+        "SetRetention",
+        "minutary.set_retention",
+        "minutary.application",
+        "user.policy",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["actor", "retention_class", "clip_revision"],
+        ObservationPosture.LocalOnly,
+    )
+    delete = interaction_contract(
+        "DeleteClip",
+        "minutary.delete_clip",
+        "minutary.application",
+        "minutary.local_store",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["actor", "clip_id", "clip_revision"],
+        ObservationPosture.LocalOnly,
+    )
+    native = target_contract(
+        "native-local-only",
+        ProjectionTarget.Native,
+        ExecutionPlacement.LocalProcess,
+        true,
+        [interaction_placement("CaptureClipboard", ExecutionPlacement.LocalProcess), interaction_placement(
+            "SaveClip",
+            ExecutionPlacement.LocalProcess,
+        ), interaction_placement("SetRetention", ExecutionPlacement.LocalProcess), interaction_placement(
+            "DeleteClip",
+            ExecutionPlacement.LocalProcess,
+        )],
+    )
+    compiled = experience_contract(
+        "MinutaryLocalCapture",
+        "Capture sensitive material locally, make durability truthful, and keep retention inspectable.",
+        [state_contract("capture_buffer", "minutary.application", StateRole.Ephemeral, ""), state_contract(
+            "saved_clip",
+            "minutary.application",
+            StateRole.LocalDurable,
+            "minutary.local_store",
+        ), state_contract("retention_policy", "minutary.application", StateRole.Authoritative, "user.policy"), state_contract(
+            "deleted_clip",
+            "minutary.application",
+            StateRole.Revoked,
+            "minutary.local_store",
+        )],
+        [capture, save, retain, delete],
+        [native],
+    )
+    return SurfaceProbe(
+        name="minutary-local-capture",
+        compiled=compiled,
+        plans=[plan_interaction(compiled, capture, native), plan_interaction(compiled, save, native), plan_interaction(
+            compiled,
+            retain,
+            native,
+        ), plan_interaction(compiled, delete, native)],
+        stresses=["host capability", "sensitive content", "local durability", "retention", "restart recovery"],
+        findings=["A useful Pallay surface may be entirely local and require no server plan.", "Trace structure must not force sensitive captured values into retained observations."],
+        deferred=["real clipboard host binding", "encrypted store", "retention scheduler", "secure deletion proof"],
+    )
+
+
+pub def run_minutary_local_capture(capability_available: bool) -> ScenarioRun:
+    """Replay capture, local save, retention, restart, and recovery without recording content."""
+    probe = minutary_capture_probe()
+    if not capability_available:
+        return ScenarioRun(
+            name="minutary-local-capture",
+            compiled=probe.compiled,
+            plans=probe.plans,
+            trace=[_event(
+                1,
+                "CaptureClipboard",
+                "capability",
+                ExecutionPlacement.LocalProcess,
+                OutcomeKind.Rejected,
+                "Clipboard access is unavailable; no captured value or saved fact is claimed.",
+                "",
+                "",
+            )],
+            facts=[],
+            decisions=["host.clipboard:unavailable"],
+            receipts=[],
+            outcome=OutcomeKind.Rejected,
+            visible_state="clipboard_unavailable;recovery=manual_input",
+        )
+    return ScenarioRun(
+        name="minutary-local-capture",
+        compiled=probe.compiled,
+        plans=probe.plans,
+        trace=[_event(
+            1,
+            "CaptureClipboard",
+            "capability",
+            ExecutionPlacement.LocalProcess,
+            OutcomeKind.Accepted,
+            "Host returns a captured value to the local process without placing its contents in the trace.",
+            "10:00:00",
+            "10:00:00",
+        ), _event(
+            2,
+            "SaveClip",
+            "decision",
+            ExecutionPlacement.LocalProcess,
+            OutcomeKind.Accepted,
+            "Local store commits clip c-17 revision 1.",
+            "10:00:01",
+            "10:00:01",
+        ), _event(
+            3,
+            "SetRetention",
+            "decision",
+            ExecutionPlacement.LocalProcess,
+            OutcomeKind.Accepted,
+            "User policy applies local-only retention class short-lived to revision 1.",
+            "10:00:02",
+            "10:00:02",
+        ), _event(
+            4,
+            "SaveClip",
+            "recovery",
+            ExecutionPlacement.LocalProcess,
+            OutcomeKind.Accepted,
+            "After restart, the local store recovers committed clip c-17 revision 1.",
+            "10:05:00",
+            "10:05:00",
+        )],
+        facts=["clip:c-17:revision=1", "retention:short-lived:local-only", "remote-copy:none"],
+        decisions=["minutary.local_store:saved:c-17:revision=1", "user.policy:retention:short-lived:revision=1"],
+        receipts=["local-recovery:c-17:revision=1"],
+        outcome=OutcomeKind.Accepted,
+        visible_state="saved_local;retention=short-lived;remote_copy=none;recovered=true",
+    )
+
+
+pub def incql_live_dashboard_probe() -> SurfaceProbe:
+    """Describe a live dashboard whose query facts and operational decisions remain distinct."""
+    observe = interaction_contract(
+        "ObserveQuery",
+        "incql.observe_query",
+        "dashboard.application",
+        "incql.runtime",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.AccumulatingEvidence,
+        [],
+        ObservationPosture.BoundedTrace,
+    )
+    filter_view = interaction_contract(
+        "FilterDashboard",
+        "dashboard.filter",
+        "dashboard.application",
+        "dashboard.projection",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.CommutativeCombination,
+        [],
+        ObservationPosture.NoRetention,
+    )
+    acknowledge = interaction_contract(
+        "AcknowledgeAnomaly",
+        "operations.acknowledge_anomaly",
+        "operations.application",
+        "operations.service",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["actor", "anomaly_id", "query_revision", "decision_fact"],
+        ObservationPosture.GovernedEvidence,
+    )
+    browser = target_contract(
+        "browser-live-dashboard",
+        ProjectionTarget.Browser,
+        ExecutionPlacement.Client,
+        false,
+        [interaction_placement("ObserveQuery", ExecutionPlacement.Server), interaction_placement(
+            "FilterDashboard",
+            ExecutionPlacement.Client,
+        ), interaction_placement("AcknowledgeAnomaly", ExecutionPlacement.Server)],
+    )
+    compiled = experience_contract(
+        "IncQLLiveDashboard",
+        "Present versioned live query results without turning them into operational decisions.",
+        [state_contract("query_projection", "dashboard.application", StateRole.Provisional, "incql.runtime"), state_contract(
+            "freshness",
+            "dashboard.application",
+            StateRole.Provisional,
+            "incql.runtime",
+        ), state_contract(
+            "anomaly_acknowledgement",
+            "operations.application",
+            StateRole.Authoritative,
+            "operations.service",
+        )],
+        [observe, filter_view, acknowledge],
+        [browser],
+    )
+    return SurfaceProbe(
+        name="incql-live-dashboard",
+        compiled=compiled,
+        plans=[plan_interaction(compiled, observe, browser), plan_interaction(compiled, filter_view, browser), plan_interaction(
+            compiled,
+            acknowledge,
+            browser,
+        )],
+        stresses=["subscription", "freshness", "late data", "query provenance", "governed command"],
+        findings=["IncQL owns query meaning and revisions; Pallay owns their truthful visible treatment.", "Omerus may deliver updates but cannot upgrade a query result into an operational decision.", "The current state roles force an observed query fact into provisional state even though it is not a candidate.", "A projection-local filter is forced to declare concurrency and an authority-shaped decision lifecycle even though it is not a state-bearing application transition."],
+        deferred=["real IncQL subscription", "Omerus update loop", "operations service", "reconnect and backpressure"],
+    )
+
+
+pub def run_incql_live_dashboard() -> ScenarioRun:
+    """Replay a late fact revising one query result before a governed acknowledgement."""
+    probe = incql_live_dashboard_probe()
+    first = LiveQueryUpdate(
+        query_id="open-incidents",
+        revision=41,
+        valid_time="09:55",
+        knowledge_time="10:00",
+        freshness="current-at-10:00",
+        value=62,
+    )
+    revised = LiveQueryUpdate(
+        query_id="open-incidents",
+        revision=42,
+        valid_time="09:55",
+        knowledge_time="10:02",
+        freshness="revised-at-10:02",
+        value=64,
+    )
+    return ScenarioRun(
+        name="incql-live-dashboard",
+        compiled=probe.compiled,
+        plans=probe.plans,
+        trace=[_event(
+            1,
+            "ObserveQuery",
+            "observation",
+            ExecutionPlacement.Server,
+            OutcomeKind.Accepted,
+            f"IncQL emits {first.query_id} revision {first.revision} value {first.value}.",
+            first.valid_time,
+            first.knowledge_time,
+        ), _event(
+            2,
+            "ObserveQuery",
+            "projection",
+            ExecutionPlacement.Client,
+            OutcomeKind.Accepted,
+            f"Omerus delivers revision {first.revision}; Pallay presents freshness {first.freshness}.",
+            first.valid_time,
+            first.knowledge_time,
+        ), _event(
+            3,
+            "ObserveQuery",
+            "observation",
+            ExecutionPlacement.Server,
+            OutcomeKind.Accepted,
+            f"A late fact revises the same valid-time result to revision {revised.revision} value {revised.value}.",
+            revised.valid_time,
+            revised.knowledge_time,
+        ), _event(
+            4,
+            "ObserveQuery",
+            "projection",
+            ExecutionPlacement.Client,
+            OutcomeKind.Accepted,
+            f"Pallay replaces the visible query projection and labels it {revised.freshness}.",
+            revised.valid_time,
+            revised.knowledge_time,
+        ), _event(
+            5,
+            "AcknowledgeAnomaly",
+            "decision",
+            ExecutionPlacement.Server,
+            OutcomeKind.Accepted,
+            "Operations service accepts acknowledgement A-9 against query revision 42.",
+            revised.valid_time,
+            "10:03",
+        )],
+        facts=["incql:open-incidents:revision=41:value=62:valid=09:55:known=10:00", "incql:open-incidents:revision=42:value=64:valid=09:55:known=10:02"],
+        decisions=["operations.service:acknowledged:A-9:query_revision=42"],
+        receipts=["ack-receipt:A-9:query_revision=42"],
+        outcome=OutcomeKind.Accepted,
+        visible_state="open_incidents=64;query_revision=42;freshness=revised-at-10:02;A-9=acknowledged",
+    )
+
+
+pub def workbench_package_probe() -> SurfaceProbe:
+    """Describe Workbench authoring without acquiring Hees.ai admission authority."""
+    edit = interaction_contract(
+        "EditPackage",
+        "workbench.edit_package",
+        "workbench.application",
+        "workbench.local_store",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.ExclusiveLinearization,
+        [],
+        ObservationPosture.LocalOnly,
+    )
+    validate = interaction_contract(
+        "ValidateCandidate",
+        "hees.validate_candidate",
+        "workbench.application",
+        "hees.package_validator",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.AccumulatingEvidence,
+        ["package_revision", "content_dna", "validation_profile"],
+        ObservationPosture.GovernedEvidence,
+    )
+    admit = interaction_contract(
+        "SubmitAdmission",
+        "hees.submit_admission",
+        "workbench.application",
+        "hees.admission",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["candidate_revision", "findings", "content_dna", "decision_fact"],
+        ObservationPosture.GovernedEvidence,
+    )
+    native = target_contract(
+        "workbench-native",
+        ProjectionTarget.Native,
+        ExecutionPlacement.LocalProcess,
+        true,
+        [interaction_placement("EditPackage", ExecutionPlacement.LocalProcess), interaction_placement(
+            "ValidateCandidate",
+            ExecutionPlacement.ExternalAuthority,
+        ), interaction_placement("SubmitAdmission", ExecutionPlacement.ExternalAuthority)],
+    )
+    compiled = experience_contract(
+        "WorkbenchPackageEditor",
+        "Author and review Package candidates while Hees.ai remains the admission authority.",
+        [state_contract("draft", "workbench.application", StateRole.LocalDurable, "workbench.local_store"), state_contract(
+            "candidate",
+            "workbench.application",
+            StateRole.Provisional,
+            "hees.package_validator",
+        ), state_contract("admitted_package", "hees.package", StateRole.Authoritative, "hees.admission")],
+        [edit, validate, admit],
+        [native],
+    )
+    return SurfaceProbe(
+        name="workbench-package-editor",
+        compiled=compiled,
+        plans=[plan_interaction(compiled, edit, native), plan_interaction(compiled, validate, native), plan_interaction(
+            compiled,
+            admit,
+            native,
+        )],
+        stresses=["candidate review", "external validation", "admission", "Content DNA", "receipt"],
+        findings=["Workbench and Pallay may present candidates and findings but cannot mint admitted Package state."],
+        deferred=["Hees.ai adapter", "Package schema", "finding navigation", "admission receipt verification"],
+    )
+
+
+pub def collaborative_notebook_probe() -> SurfaceProbe:
+    """Describe collaborative editing as composed concurrency semantics rather than one merge switch."""
+    append = interaction_contract(
+        "AppendEditOperation",
+        "collaboration.append_operation",
+        "notebook.application",
+        "collaboration.service",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.AccumulatingEvidence,
+        [],
+        ObservationPosture.BoundedTrace,
+    )
+    presence = interaction_contract(
+        "UpdatePresence",
+        "collaboration.update_presence",
+        "notebook.application",
+        "collaboration.service",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.CommutativeCombination,
+        [],
+        ObservationPosture.NoRetention,
+    )
+    resolve = interaction_contract(
+        "ResolveEditConflict",
+        "collaboration.resolve_conflict",
+        "notebook.application",
+        "notebook.editor_authority",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["actor", "base_revision", "competing_operations", "chosen_resolution"],
+        ObservationPosture.GovernedEvidence,
+    )
+    browser = target_contract(
+        "browser-collaboration",
+        ProjectionTarget.Browser,
+        ExecutionPlacement.Client,
+        false,
+        [interaction_placement("AppendEditOperation", ExecutionPlacement.Server), interaction_placement(
+            "UpdatePresence",
+            ExecutionPlacement.Server,
+        ), interaction_placement("ResolveEditConflict", ExecutionPlacement.Server)],
+    )
+    compiled = experience_contract(
+        "CollaborativeNotebook",
+        "Preserve concurrent operations, combine only declared-safe changes, and govern true conflict resolution.",
+        [state_contract("local_operations", "notebook.application", StateRole.LocalDurable, "notebook.local_store"), state_contract(
+            "shared_history",
+            "notebook.application",
+            StateRole.Authoritative,
+            "collaboration.service",
+        ), state_contract(
+            "edit_conflict",
+            "notebook.application",
+            StateRole.ReconciliationRequired,
+            "notebook.editor_authority",
+        )],
+        [append, presence, resolve],
+        [browser],
+    )
+    return SurfaceProbe(
+        name="collaborative-notebook",
+        compiled=compiled,
+        plans=[plan_interaction(compiled, append, browser), plan_interaction(compiled, presence, browser), plan_interaction(
+            compiled,
+            resolve,
+            browser,
+        )],
+        stresses=["concurrent edits", "presence", "causal history", "automatic combination", "true conflict"],
+        findings=["Collaboration composes accumulating operations, commutative presence, and exclusive resolution.", "The current contract still lacks an explicit operation algebra or causality contract for automatic merge."],
+        deferred=["CRDT or OT adapter", "causal identity", "offline operation log", "merge preview"],
+    )
+
+
+pub def documentation_publication_probe() -> SurfaceProbe:
+    """Describe a static documentation target that requires no Omerus runtime."""
+    collect = interaction_contract(
+        "CollectRfcContent",
+        "pallay.collect_rfc_content",
+        "documentation.application",
+        "source.repository",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.AccumulatingEvidence,
+        [],
+        ObservationPosture.BoundedTrace,
+    )
+    build = interaction_contract(
+        "BuildPublication",
+        "pallay.build_publication",
+        "documentation.application",
+        "publication.builder",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.ExclusiveLinearization,
+        [],
+        ObservationPosture.BoundedTrace,
+    )
+    publish = interaction_contract(
+        "PublishVersion",
+        "publication.publish_version",
+        "documentation.application",
+        "publication.authority",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["source_revision", "publication_hash", "link_report", "decision_fact"],
+        ObservationPosture.GovernedEvidence,
+    )
+    documentation = target_contract(
+        "static-documentation",
+        ProjectionTarget.Documentation,
+        ExecutionPlacement.LocalProcess,
+        true,
+        [interaction_placement("CollectRfcContent", ExecutionPlacement.LocalProcess), interaction_placement(
+            "BuildPublication",
+            ExecutionPlacement.LocalProcess,
+        ), interaction_placement("PublishVersion", ExecutionPlacement.ExternalAuthority)],
+    )
+    compiled = experience_contract(
+        "RfcDocumentationPublication",
+        "Build MkDocs Material-class documentation artifacts without requiring an interactive runtime.",
+        [state_contract("source_collection", "documentation.application", StateRole.LocalDurable, "source.repository"), state_contract(
+            "publication_candidate",
+            "documentation.application",
+            StateRole.Provisional,
+            "publication.builder",
+        ), state_contract(
+            "published_version",
+            "documentation.application",
+            StateRole.Authoritative,
+            "publication.authority",
+        )],
+        [collect, build, publish],
+        [documentation],
+    )
+    return SurfaceProbe(
+        name="documentation-publication",
+        compiled=compiled,
+        plans=[plan_interaction(compiled, collect, documentation), plan_interaction(compiled, build, documentation), plan_interaction(
+            compiled,
+            publish,
+            documentation,
+        )],
+        stresses=["RfcCollection", "navigation", "search", "versioning", "static publication"],
+        findings=["Static publication exercises the same contract while legitimately requiring no Omerus runtime."],
+        deferred=["Markdown adapter", "search corpus", "MkDocs Material-class theme", "publication host adapter"],
+    )
+
+
+pub def deep_offline_inspection_probe() -> SurfaceProbe:
+    """Extend the offline inspection contract through replay, correction, and revocation declarations."""
+    attest = interaction_contract(
+        "AttestReport",
+        "inspection.attest",
+        "inspection.application",
+        "inspector",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.AccumulatingEvidence,
+        ["actor", "report_revision", "content_hash"],
+        ObservationPosture.GovernedEvidence,
+    )
+    persist = interaction_contract(
+        "PersistReport",
+        "inspection.persist_local",
+        "inspection.application",
+        "inspection.local_store",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.ExclusiveLinearization,
+        [],
+        ObservationPosture.LocalOnly,
+    )
+    synchronize = interaction_contract(
+        "SynchronizeReport",
+        "inspection.synchronize",
+        "inspection.application",
+        "inspection.service",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.AccumulatingEvidence,
+        ["report_id", "content_hash", "idempotency_key", "attempt_id"],
+        ObservationPosture.GovernedEvidence,
+    )
+    correct = interaction_contract(
+        "CorrectReport",
+        "inspection.correct_report",
+        "inspection.application",
+        "inspection.service",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["actor", "prior_revision", "correction_revision", "reason"],
+        ObservationPosture.GovernedEvidence,
+    )
+    revoke = interaction_contract(
+        "RevokeAssessment",
+        "inspection.revoke_assessment",
+        "inspection.application",
+        "assessment.authority",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["actor", "assessment_revision", "reason", "decision_fact"],
+        ObservationPosture.GovernedEvidence,
+    )
+    native = target_contract(
+        "native-offline",
+        ProjectionTarget.Native,
+        ExecutionPlacement.LocalProcess,
+        true,
+        [interaction_placement("AttestReport", ExecutionPlacement.LocalProcess), interaction_placement(
+            "PersistReport",
+            ExecutionPlacement.LocalProcess,
+        ), interaction_placement("SynchronizeReport", ExecutionPlacement.Server), interaction_placement(
+            "CorrectReport",
+            ExecutionPlacement.Server,
+        ), interaction_placement("RevokeAssessment", ExecutionPlacement.Server)],
+    )
+    browser = target_contract(
+        "browser-review",
+        ProjectionTarget.Browser,
+        ExecutionPlacement.Client,
+        false,
+        [interaction_placement("AttestReport", ExecutionPlacement.Client), interaction_placement(
+            "PersistReport",
+            ExecutionPlacement.Client,
+        ), interaction_placement("SynchronizeReport", ExecutionPlacement.Server), interaction_placement(
+            "CorrectReport",
+            ExecutionPlacement.Server,
+        ), interaction_placement("RevokeAssessment", ExecutionPlacement.Server)],
+    )
+    compiled = experience_contract(
+        "DeepOfflineInspection",
+        "Keep offline evidence recoverable and replay-safe through correction and revocation.",
+        [state_contract("local_report", "inspection.application", StateRole.LocalDurable, "inspection.local_store"), state_contract(
+            "sync_attempt",
+            "inspection.application",
+            StateRole.Unknown,
+            "inspection.service",
+        ), state_contract("admitted_report", "inspection.application", StateRole.Authoritative, "inspection.service"), state_contract(
+            "corrected_report",
+            "inspection.application",
+            StateRole.Authoritative,
+            "inspection.service",
+        ), state_contract("revoked_assessment", "inspection.application", StateRole.Revoked, "assessment.authority")],
+        [attest, persist, synchronize, correct, revoke],
+        [native, browser],
+    )
+    return SurfaceProbe(
+        name="deep-offline-inspection",
+        compiled=compiled,
+        plans=[plan_interaction(compiled, attest, native), plan_interaction(compiled, persist, native), plan_interaction(
+            compiled,
+            synchronize,
+            native,
+        ), plan_interaction(compiled, correct, browser), plan_interaction(compiled, revoke, browser)],
+        stresses=["durable recovery", "lost response", "idempotent replay", "unknown outcome", "correction", "revocation"],
+        findings=["Required evidence can name replay identities, but the current interaction contract does not model attempt, idempotency, or recovery structurally."],
+        deferred=["IncQL temporal projection", "real durable store", "transport retry", "correction and revocation authority adapters"],
+    )
+
+
+pub def second_flight_inspection() -> str:
+    """Inspect the two executable runs and all six typed surface probes."""
+    probes = [minutary_capture_probe(), incql_live_dashboard_probe(), workbench_package_probe(), collaborative_notebook_probe(), documentation_publication_probe(), deep_offline_inspection_probe()]
+    mut lines: list[str] = [contract_lab_inspection(), "", "Pallay Surface Contract Laboratory — Second Flight"]
+    for probe in probes:
+        lines.append("")
+        lines.append(inspect_surface_probe(probe))
+    lines.append("")
+    lines.append("Executable Minutary run")
+    lines.append(_run_summary(run_minutary_local_capture(true)))
+    lines.append("")
+    lines.append("Executable IncQL dashboard run")
+    lines.append(_run_summary(run_incql_live_dashboard()))
+    return _join(lines, "\n")
+
+
+pub def inspect_surface_probe(probe: SurfaceProbe) -> str:
+    """Return one readable contract probe with findings and deliberate deferrals."""
+    mut lines: list[str] = [f"SurfaceProbe: {probe.name}", inspect_compiled_experience(probe.compiled), "Plans"]
+    for plan in probe.plans:
+        lines.append(inspect_projection_plan(plan))
+    lines.append(f"Stresses: {_join(probe.stresses, " | ")}")
+    lines.append(f"Findings: {_join(probe.findings, " | ")}")
+    lines.append(f"Deferred: {_join(probe.deferred, " | ")}")
+    return _join(lines, "\n")
+
+
+def _event(
+    sequence: int,
+    interaction: str,
+    stage: str,
+    placement: ExecutionPlacement,
+    outcome: OutcomeKind,
+    detail: str,
+    event_time: str,
+    knowledge_time: str,
+) -> TraceEvent:
+    """Construct one trace event without adding sensitive payload values."""
+    return TraceEvent(
+        sequence=sequence,
+        interaction=interaction,
+        stage=stage,
+        placement=placement,
+        outcome=outcome,
+        detail=detail,
+        event_time=event_time,
+        knowledge_time=knowledge_time,
+        decision_time=knowledge_time,
+    )
+
+
+def _run_summary(run: ScenarioRun) -> str:
+    """Return the compact observable outcome of one executable run."""
+    return f"{run.name}: outcome={_outcome_name(run.outcome)} visible={run.visible_state} facts={_join(run.facts, " | ")} decisions={_join(
+        run.decisions,
+        " | ",
+    )}"
+
+
+def _outcome_name(outcome: OutcomeKind) -> str:
+    """Return a stable compact outcome label."""
+    match outcome:
+        OutcomeKind.Pending => return "pending"
+        OutcomeKind.Accepted => return "accepted"
+        OutcomeKind.Rejected => return "rejected"
+        OutcomeKind.Conflict => return "conflict"
+        OutcomeKind.Unknown => return "unknown"
+        OutcomeKind.Reconciled => return "reconciled"
+
+
+def _join(values: list[str], separator: str) -> str:
+    """Join strings in deterministic declaration order."""
+    mut output = ""
+    for index in range(0, len(values)):
+        if index > 0:
+            output = output + separator
+        output = output + values[index]
+    return output

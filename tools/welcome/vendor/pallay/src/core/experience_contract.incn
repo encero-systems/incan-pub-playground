@@ -1,0 +1,1244 @@
+"""Executable contract laboratory for target-neutral Pallay experience semantics."""
+
+
+pub enum ExecutionPlacement:
+    """Places where one planned experience step may execute."""
+
+    Client
+    LocalProcess
+    Server
+    ExternalAuthority
+
+
+pub enum StateRole:
+    """Semantic roles a visible or bound state may play."""
+
+    Ephemeral
+    LocalDurable
+    Requested
+    Provisional
+    Authoritative
+    Conflict
+    ReconciliationRequired
+    Unknown
+    Revoked
+
+
+pub enum ConcurrencySemantic:
+    """One application-owned concurrency meaning for a state-bearing transition."""
+
+    AccumulatingEvidence
+    ExclusiveLinearization
+    CommutativeCombination
+
+
+pub enum AssuranceLevel:
+    """Whether an interaction uses the traceable baseline or governed enrichment."""
+
+    Traceable
+    Governed
+
+
+pub enum ObservationPosture:
+    """Retention posture for observations emitted from semantic trace points."""
+
+    NoRetention
+    LocalOnly
+    BoundedTrace
+    GovernedEvidence
+
+
+pub enum OutcomeKind:
+    """Terminal or non-terminal outcomes exposed by the contract laboratory."""
+
+    Pending
+    Accepted
+    Rejected
+    Conflict
+    Unknown
+    Reconciled
+
+
+pub enum ProjectionTarget:
+    """Representative target families used by the executable fixtures."""
+
+    Browser
+    Native
+    Documentation
+    Assistant
+
+
+pub model StateContract:
+    """One named state together with its semantic owner and authority binding."""
+
+    pub name: str
+    pub owner: str
+    pub role: StateRole
+    pub authority: str
+
+
+pub model InteractionContract:
+    """One traceable interaction and its application-owned transition semantics."""
+
+    pub name: str
+    pub capability: str
+    pub owner: str
+    pub authority: str
+    pub assurance: AssuranceLevel
+    pub concurrency: ConcurrencySemantic
+    pub required_evidence: list[str]
+    pub observation: ObservationPosture
+
+
+pub model InteractionPlacementContract:
+    """Target-specific authority placement for one named interaction."""
+
+    pub interaction: str
+    pub authority_placement: ExecutionPlacement
+
+
+pub model TargetContract:
+    """Target placement choices derived from one canonical experience contract."""
+
+    pub name: str
+    pub target: ProjectionTarget
+    pub experience_placement: ExecutionPlacement
+    pub supports_offline: bool
+    pub interaction_placements: list[InteractionPlacementContract]
+
+
+pub model ExperienceContract:
+    """Canonical target-neutral contract authored before target planning."""
+
+    pub name: str
+    pub purpose: str
+    pub states: list[StateContract]
+    pub interactions: list[InteractionContract]
+    pub targets: list[TargetContract]
+
+
+pub model ContractDiagnostic:
+    """Stable diagnostic produced while compiling an experience contract."""
+
+    pub code: str
+    pub severity: str
+    pub artifact: str
+    pub message: str
+    pub help: str
+
+
+pub model CompiledExperience:
+    """Validated canonical contract consumed by target planning."""
+
+    pub contract: ExperienceContract
+    pub diagnostics: list[ContractDiagnostic]
+
+
+pub model ExecutionStep:
+    """One inspectable stage in a target-specific interaction plan."""
+
+    pub stage: str
+    pub placement: ExecutionPlacement
+    pub responsibility: str
+    pub claim: str
+
+
+pub model ProjectionPlan:
+    """Frontend, local, server, or external placement for one interaction."""
+
+    pub experience: str
+    pub interaction: str
+    pub target: str
+    pub steps: list[ExecutionStep]
+
+
+pub model TraceEvent:
+    """One semantic event in a deterministic scenario replay."""
+
+    pub sequence: int
+    pub interaction: str
+    pub stage: str
+    pub placement: ExecutionPlacement
+    pub outcome: OutcomeKind
+    pub detail: str
+    pub event_time: str
+    pub knowledge_time: str
+    pub decision_time: str
+
+
+pub model ScenarioRun:
+    """Inspectable result of replaying one executable contract fixture."""
+
+    pub name: str
+    pub compiled: CompiledExperience
+    pub plans: list[ProjectionPlan]
+    pub trace: list[TraceEvent]
+    pub facts: list[str]
+    pub decisions: list[str]
+    pub receipts: list[str]
+    pub outcome: OutcomeKind
+    pub visible_state: str
+
+
+pub model ExclusiveResourceState:
+    """Authoritative state of one exclusively claimable resource."""
+
+    pub resource_id: str
+    pub holder: str
+    pub revision: int
+
+
+pub model ExclusiveClaimResult:
+    """Result returned when an authority linearizes one claim request."""
+
+    pub state: ExclusiveResourceState
+    pub outcome: OutcomeKind
+    pub decision_fact: str
+    pub trace: list[TraceEvent]
+
+
+pub model InspectionReport:
+    """Immutable independently captured inspection evidence."""
+
+    pub report_id: str
+    pub subject_id: str
+    pub inspector: str
+    pub event_time: str
+    pub knowledge_time: str
+    pub decision_time: str
+
+
+pub model InspectionReconciliation:
+    """Application-owned reconciliation over independently admitted reports."""
+
+    pub report_ids: list[str]
+    pub temporal_facts: list[str]
+    pub outcome: OutcomeKind
+    pub assessment: str
+    pub decision_fact: str
+
+
+pub model DisclosurePackage:
+    """Purpose-bound projection that excludes fields before target planning."""
+
+    pub purpose: str
+    pub recipient: str
+    pub fields: list[str]
+    pub omitted_fields: list[str]
+
+
+pub def state_contract(name: str, owner: str, role: StateRole, authority: str) -> StateContract:
+    """Create one explicit state declaration."""
+    return StateContract(name=name, owner=owner, role=role, authority=authority)
+
+
+pub def interaction_contract(
+    name: str,
+    capability: str,
+    owner: str,
+    authority: str,
+    assurance: AssuranceLevel,
+    concurrency: ConcurrencySemantic,
+    required_evidence: list[str],
+    observation: ObservationPosture,
+) -> InteractionContract:
+    """Create one interaction declaration without custom vocabulary."""
+    return InteractionContract(
+        name=name,
+        capability=capability,
+        owner=owner,
+        authority=authority,
+        assurance=assurance,
+        concurrency=concurrency,
+        required_evidence=required_evidence,
+        observation=observation,
+    )
+
+
+pub def target_contract(
+    name: str,
+    target: ProjectionTarget,
+    experience_placement: ExecutionPlacement,
+    supports_offline: bool,
+    interaction_placements: list[InteractionPlacementContract],
+) -> TargetContract:
+    """Create one target placement declaration."""
+    return TargetContract(
+        name=name,
+        target=target,
+        experience_placement=experience_placement,
+        supports_offline=supports_offline,
+        interaction_placements=interaction_placements,
+    )
+
+
+pub def interaction_placement(
+    interaction: str,
+    authority_placement: ExecutionPlacement,
+) -> InteractionPlacementContract:
+    """Bind one interaction authority to its target-specific execution placement."""
+    return InteractionPlacementContract(interaction=interaction, authority_placement=authority_placement)
+
+
+pub def experience_contract(
+    name: str,
+    purpose: str,
+    states: list[StateContract],
+    interactions: list[InteractionContract],
+    targets: list[TargetContract],
+) -> CompiledExperience:
+    """Compile ordinary Incan declarations into a validated contract artifact."""
+    return validate_experience_contract(
+        ExperienceContract(name=name, purpose=purpose, states=states, interactions=interactions, targets=targets),
+    )
+
+
+pub def validate_experience_contract(contract: ExperienceContract) -> CompiledExperience:
+    """Validate authority and evidence invariants without selecting infrastructure."""
+    mut diagnostics: list[ContractDiagnostic] = []
+    if contract.name == "":
+        diagnostics.append(
+            _contract_diagnostic(
+                "PLY-C001",
+                "error",
+                "experience",
+                "Experience contract does not declare a stable semantic identity.",
+                "Name the experience before deriving target plans.",
+            ),
+        )
+    for state in contract.states:
+        if state.owner == "":
+            diagnostics.append(
+                _contract_diagnostic(
+                    "PLY-C002",
+                    "error",
+                    f"state:{state.name}.owner",
+                    f"State {state.name} does not declare its semantic owner.",
+                    "Bind the state to the application or system that owns its meaning.",
+                ),
+            )
+        if _state_requires_authority(state.role) and state.authority == "":
+            diagnostics.append(
+                _contract_diagnostic(
+                    "PLY-C003",
+                    "error",
+                    f"state:{state.name}.authority",
+                    f"Authoritative state {state.name} has no authority binding.",
+                    "Bind the visible claim to the authority that can issue its decision fact.",
+                ),
+            )
+    for interaction in contract.interactions:
+        if interaction.name == "" or interaction.capability == "" or interaction.owner == "":
+            diagnostics.append(
+                _contract_diagnostic(
+                    "PLY-C004",
+                    "error",
+                    f"interaction:{interaction.name}",
+                    "Interaction is missing semantic identity, capability, or owner.",
+                    "Declare the interaction identity, application capability, and semantic owner.",
+                ),
+            )
+        if interaction.assurance == AssuranceLevel.Governed:
+            if interaction.authority == "":
+                diagnostics.append(
+                    _contract_diagnostic(
+                        "PLY-C005",
+                        "error",
+                        f"interaction:{interaction.name}.authority",
+                        f"Governed interaction {interaction.name} does not declare an authority.",
+                        "Bind the interaction to the authority that accepts or rejects it.",
+                    ),
+                )
+            if len(interaction.required_evidence) == 0:
+                diagnostics.append(
+                    _contract_diagnostic(
+                        "PLY-C006",
+                        "error",
+                        f"interaction:{interaction.name}.evidence",
+                        f"Governed interaction {interaction.name} does not declare required evidence.",
+                        "Declare the evidence required to justify or later review the decision.",
+                    ),
+                )
+    if len(contract.targets) == 0:
+        diagnostics.append(
+            _contract_diagnostic(
+                "PLY-C007",
+                "error",
+                f"experience:{contract.name}.targets",
+                f"Experience {contract.name} does not declare a target placement.",
+                "Declare at least one target before deriving an execution plan.",
+            ),
+        )
+    for target in contract.targets:
+        for interaction in contract.interactions:
+            placement_count = _interaction_placement_count(target, interaction.name)
+            if placement_count == 0:
+                diagnostics.append(
+                    _contract_diagnostic(
+                        "PLY-C008",
+                        "error",
+                        f"target:{target.name}.interaction:{interaction.name}",
+                        f"Target {target.name} does not place authority for interaction {interaction.name}.",
+                        "Bind every interaction authority explicitly because one target may cross several authorities.",
+                    ),
+                )
+            if placement_count > 1:
+                diagnostics.append(
+                    _contract_diagnostic(
+                        "PLY-C009",
+                        "error",
+                        f"target:{target.name}.interaction:{interaction.name}",
+                        f"Target {target.name} places authority for interaction {interaction.name} more than once.",
+                        "Keep exactly one authority placement for each interaction on each target.",
+                    ),
+                )
+        for placement in target.interaction_placements:
+            if not _has_interaction(contract.interactions, placement.interaction):
+                diagnostics.append(
+                    _contract_diagnostic(
+                        "PLY-C010",
+                        "error",
+                        f"target:{target.name}.interaction:{placement.interaction}",
+                        f"Target {target.name} places unknown interaction {placement.interaction}.",
+                        "Bind only interactions declared by the canonical experience contract.",
+                    ),
+                )
+    return CompiledExperience(contract=contract, diagnostics=diagnostics)
+
+
+pub def plan_interaction(
+    compiled: CompiledExperience,
+    interaction: InteractionContract,
+    target: TargetContract,
+) -> ProjectionPlan:
+    """Derive an inspectable frontend/backend plan without claiming application authority."""
+    authority_placement = _authority_placement_for(target, interaction.name)
+    mut steps: list[ExecutionStep] = []
+    steps.append(
+        ExecutionStep(
+            stage="intent",
+            placement=target.experience_placement,
+            responsibility="Pallay projection",
+            claim="Capture typed user intent and correlation without claiming success.",
+        ),
+    )
+    steps.append(
+        ExecutionStep(
+            stage="delivery",
+            placement=authority_placement,
+            responsibility=interaction.owner,
+            claim=f"Deliver {interaction.capability} to its declared application boundary.",
+        ),
+    )
+    if interaction.assurance == AssuranceLevel.Governed:
+        steps.append(
+            ExecutionStep(
+                stage="authorization",
+                placement=authority_placement,
+                responsibility=interaction.authority,
+                claim="Evaluate actor, policy, revision, and declared evidence.",
+            ),
+        )
+    steps.append(
+        ExecutionStep(
+            stage="execution",
+            placement=authority_placement,
+            responsibility=interaction.owner,
+            claim="Execute application behavior under its declared concurrency semantic.",
+        ),
+    )
+    steps.append(
+        ExecutionStep(
+            stage="decision",
+            placement=authority_placement,
+            responsibility=interaction.authority,
+            claim="Return an accepted, rejected, conflicting, unknown, or reconciled result.",
+        ),
+    )
+    steps.append(
+        ExecutionStep(
+            stage="projection",
+            placement=target.experience_placement,
+            responsibility="Pallay projection",
+            claim="Present the returned result without upgrading its authority.",
+        ),
+    )
+    return ProjectionPlan(
+        experience=compiled.contract.name,
+        interaction=interaction.name,
+        target=target.name,
+        steps=steps,
+    )
+
+
+pub def request_exclusive_claim(
+    state: ExclusiveResourceState,
+    actor: str,
+    expected_revision: int,
+    interaction_name: str,
+    authority: str,
+    experience_placement: ExecutionPlacement,
+    authority_placement: ExecutionPlacement,
+    sequence_start: int,
+) -> ExclusiveClaimResult:
+    """Let one authority deterministically linearize an exclusive claim."""
+    mut trace: list[TraceEvent] = [_trace(
+        sequence_start,
+        interaction_name,
+        "intent",
+        experience_placement,
+        OutcomeKind.Pending,
+        f"{actor} requests {state.resource_id} at revision {expected_revision}.",
+        "",
+        "",
+        "",
+    )]
+    if state.holder != "" or expected_revision != state.revision:
+        decision_fact = f"{authority}:conflict:{state.resource_id}:holder={state.holder}:revision={state.revision}"
+        trace.append(
+            _trace(
+                sequence_start + 1,
+                interaction_name,
+                "decision",
+                authority_placement,
+                OutcomeKind.Conflict,
+                decision_fact,
+                "",
+                "",
+                "",
+            ),
+        )
+        trace.append(
+            _trace(
+                sequence_start + 2,
+                interaction_name,
+                "projection",
+                experience_placement,
+                OutcomeKind.Conflict,
+                f"Show that {state.holder} already holds {state.resource_id}.",
+                "",
+                "",
+                "",
+            ),
+        )
+        return ExclusiveClaimResult(state=state, outcome=OutcomeKind.Conflict, decision_fact=decision_fact, trace=trace)
+    accepted_state = ExclusiveResourceState(resource_id=state.resource_id, holder=actor, revision=state.revision + 1)
+    decision_fact = f"{authority}:accepted:{state.resource_id}:holder={actor}:revision={accepted_state.revision}"
+    trace.append(
+        _trace(
+            sequence_start + 1,
+            interaction_name,
+            "decision",
+            authority_placement,
+            OutcomeKind.Accepted,
+            decision_fact,
+            "",
+            "",
+            "",
+        ),
+    )
+    trace.append(
+        _trace(
+            sequence_start + 2,
+            interaction_name,
+            "projection",
+            experience_placement,
+            OutcomeKind.Accepted,
+            f"Show {actor} as the authoritative holder of {state.resource_id}.",
+            "",
+            "",
+            "",
+        ),
+    )
+    return ExclusiveClaimResult(
+        state=accepted_state,
+        outcome=OutcomeKind.Accepted,
+        decision_fact=decision_fact,
+        trace=trace,
+    )
+
+
+pub def reconcile_inspection_reports(first: InspectionReport, second: InspectionReport) -> InspectionReconciliation:
+    """Preserve both reports and reconcile only their derived subject assessment."""
+    report_ids = [first.report_id, second.report_id]
+    temporal_facts = [f"{first.report_id}:event={first.event_time}:knowledge={first.knowledge_time}:decision={first.decision_time}", f"{second.report_id}:event={second.event_time}:knowledge={second.knowledge_time}:decision={second.decision_time}"]
+    if first.subject_id != second.subject_id:
+        return InspectionReconciliation(
+            report_ids=report_ids,
+            temporal_facts=temporal_facts,
+            outcome=OutcomeKind.Accepted,
+            assessment="separate_subjects",
+            decision_fact="assessment.authority:reports remain attached to separate subjects",
+        )
+    return InspectionReconciliation(
+        report_ids=report_ids,
+        temporal_facts=temporal_facts,
+        outcome=OutcomeKind.Reconciled,
+        assessment=f"{first.subject_id}:assessment_requires_both_reports",
+        decision_fact=f"assessment.authority:reconciled:{first.subject_id}:{first.report_id}+{second.report_id}",
+    )
+
+
+pub def build_disclosure_package(
+    purpose: str,
+    recipient: str,
+    eligible_fields: list[str],
+    permitted_fields: list[str],
+) -> DisclosurePackage:
+    """Remove unpermitted fields before constructing a target-facing package."""
+    mut fields: list[str] = []
+    mut omitted_fields: list[str] = []
+    for field in eligible_fields:
+        if _contains(permitted_fields, field):
+            fields.append(field)
+        else:
+            omitted_fields.append(field)
+    return DisclosurePackage(purpose=purpose, recipient=recipient, fields=fields, omitted_fields=omitted_fields)
+
+
+pub def run_authenticated_workspace(authenticated: bool) -> ScenarioRun:
+    """Replay server-authoritative save and share behavior for one signed-in workspace."""
+    save = interaction_contract(
+        "SaveDraft",
+        "workspace.save",
+        "workspace.application",
+        "workspace.service",
+        AssuranceLevel.Traceable,
+        ConcurrencySemantic.ExclusiveLinearization,
+        [],
+        ObservationPosture.BoundedTrace,
+    )
+    share = interaction_contract(
+        "ShareWorkspace",
+        "workspace.share",
+        "workspace.application",
+        "workspace.service",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.CommutativeCombination,
+        ["actor", "recipient", "workspace_revision"],
+        ObservationPosture.GovernedEvidence,
+    )
+    browser = target_contract(
+        "browser-client-server",
+        ProjectionTarget.Browser,
+        ExecutionPlacement.Client,
+        false,
+        [interaction_placement("SaveDraft", ExecutionPlacement.Server), interaction_placement(
+            "ShareWorkspace",
+            ExecutionPlacement.Server,
+        )],
+    )
+    compiled = experience_contract(
+        "AuthenticatedWorkspace",
+        "Save durable workspace state and share it with an authorized collaborator.",
+        [state_contract("draft", "workspace.application", StateRole.Provisional, ""), state_contract(
+            "saved_revision",
+            "workspace.application",
+            StateRole.Authoritative,
+            "workspace.service",
+        ), state_contract("share_grant", "workspace.application", StateRole.Authoritative, "workspace.service")],
+        [save, share],
+        [browser],
+    )
+    plans = [plan_interaction(compiled, save, browser), plan_interaction(compiled, share, browser)]
+    if not authenticated:
+        trace = [_trace(
+            1,
+            "SaveDraft",
+            "authorization",
+            ExecutionPlacement.Server,
+            OutcomeKind.Rejected,
+            "Session is missing; no save or share decision is claimed.",
+            "",
+            "",
+            "",
+        )]
+        return ScenarioRun(
+            name="authenticated-save-and-share",
+            compiled=compiled,
+            plans=plans,
+            trace=trace,
+            facts=[],
+            decisions=["workspace.service:rejected:authentication_required"],
+            receipts=[],
+            outcome=OutcomeKind.Rejected,
+            visible_state="sign_in_required",
+        )
+    trace = [_trace(
+        1,
+        "SaveDraft",
+        "intent",
+        ExecutionPlacement.Client,
+        OutcomeKind.Pending,
+        "Save revision 12.",
+        "",
+        "",
+        "",
+    ), _trace(
+        2,
+        "SaveDraft",
+        "decision",
+        ExecutionPlacement.Server,
+        OutcomeKind.Accepted,
+        "Saved revision 12.",
+        "",
+        "",
+        "",
+    ), _trace(
+        3,
+        "ShareWorkspace",
+        "intent",
+        ExecutionPlacement.Client,
+        OutcomeKind.Pending,
+        "Share with collaborator B.",
+        "",
+        "",
+        "",
+    ), _trace(
+        4,
+        "ShareWorkspace",
+        "decision",
+        ExecutionPlacement.Server,
+        OutcomeKind.Accepted,
+        "Grant collaborator B access to revision 12.",
+        "",
+        "",
+        "",
+    )]
+    return ScenarioRun(
+        name="authenticated-save-and-share",
+        compiled=compiled,
+        plans=plans,
+        trace=trace,
+        facts=["workspace:revision=12", "share:recipient=collaborator-b"],
+        decisions=["workspace.service:save:accepted", "workspace.service:share:accepted"],
+        receipts=["share-receipt:workspace=alpha:revision=12:recipient=collaborator-b"],
+        outcome=OutcomeKind.Accepted,
+        visible_state="saved_and_shared",
+    )
+
+
+pub def run_incident_assignment_conflict() -> ScenarioRun:
+    """Replay two asynchronous claims that one server authority must linearize."""
+    claim = interaction_contract(
+        "ClaimIncident",
+        "incident.claim",
+        "incident.application",
+        "incident.service",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["actor", "incident_revision", "decision_fact"],
+        ObservationPosture.GovernedEvidence,
+    )
+    browser = target_contract(
+        "browser-client-server",
+        ProjectionTarget.Browser,
+        ExecutionPlacement.Client,
+        false,
+        [interaction_placement("ClaimIncident", ExecutionPlacement.Server)],
+    )
+    compiled = experience_contract(
+        "LiveIncidentAssignment",
+        "Claim one shared incident without presenting two simultaneous owners.",
+        [state_contract("assignment", "incident.application", StateRole.Authoritative, "incident.service")],
+        [claim],
+        [browser],
+    )
+    first = request_exclusive_claim(
+        ExclusiveResourceState(resource_id="ticket-123", holder="", revision=7),
+        "James",
+        7,
+        "ClaimIncident",
+        "incident.service",
+        ExecutionPlacement.Client,
+        ExecutionPlacement.Server,
+        1,
+    )
+    second = request_exclusive_claim(
+        first.state,
+        "Kevin",
+        7,
+        "ClaimIncident",
+        "incident.service",
+        ExecutionPlacement.Client,
+        ExecutionPlacement.Server,
+        4,
+    )
+    mut trace = first.trace
+    for event in second.trace:
+        trace.append(event)
+    return ScenarioRun(
+        name="exclusive-incident-assignment",
+        compiled=compiled,
+        plans=[plan_interaction(compiled, claim, browser)],
+        trace=trace,
+        facts=[first.decision_fact, second.decision_fact],
+        decisions=[first.decision_fact, second.decision_fact],
+        receipts=[],
+        outcome=second.outcome,
+        visible_state=f"assigned_to={second.state.holder};revision={second.state.revision};kevin=conflict",
+    )
+
+
+pub def run_offline_inspection_reconciliation() -> ScenarioRun:
+    """Replay independently offline evidence arriving at different knowledge times."""
+    attest = interaction_contract(
+        "AttestReport",
+        "inspection.attest",
+        "inspection.application",
+        "inspector",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.AccumulatingEvidence,
+        ["actor", "report_revision", "captured_observations"],
+        ObservationPosture.GovernedEvidence,
+    )
+    synchronize = interaction_contract(
+        "SynchronizeReport",
+        "inspection.synchronize",
+        "inspection.application",
+        "inspection.service",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.AccumulatingEvidence,
+        ["report_id", "content_hash", "idempotency_key"],
+        ObservationPosture.GovernedEvidence,
+    )
+    native = target_contract(
+        "native-offline-first",
+        ProjectionTarget.Native,
+        ExecutionPlacement.LocalProcess,
+        true,
+        [interaction_placement("AttestReport", ExecutionPlacement.LocalProcess), interaction_placement(
+            "SynchronizeReport",
+            ExecutionPlacement.Server,
+        )],
+    )
+    browser = target_contract(
+        "browser-server",
+        ProjectionTarget.Browser,
+        ExecutionPlacement.Client,
+        false,
+        [interaction_placement("AttestReport", ExecutionPlacement.Client), interaction_placement(
+            "SynchronizeReport",
+            ExecutionPlacement.Server,
+        )],
+    )
+    compiled = experience_contract(
+        "OfflineInspection",
+        "Preserve independent inspection evidence and reconcile the derived subject assessment.",
+        [state_contract("local_report", "inspection.application", StateRole.LocalDurable, "local.durability"), state_contract(
+            "admitted_report",
+            "inspection.application",
+            StateRole.Authoritative,
+            "inspection.service",
+        ), state_contract(
+            "subject_assessment",
+            "inspection.application",
+            StateRole.ReconciliationRequired,
+            "assessment.authority",
+        )],
+        [attest, synchronize],
+        [native, browser],
+    )
+    report_a = InspectionReport(
+        report_id="R11-A",
+        subject_id="Subject-X",
+        inspector="Inspector-A",
+        event_time="08:30",
+        knowledge_time="09:00",
+        decision_time="09:02",
+    )
+    report_b = InspectionReport(
+        report_id="R11-B",
+        subject_id="Subject-X",
+        inspector="Inspector-B",
+        event_time="09:00",
+        knowledge_time="09:20",
+        decision_time="09:22",
+    )
+    reconciliation = reconcile_inspection_reports(report_a, report_b)
+    trace = [_trace(
+        1,
+        "AttestReport",
+        "decision",
+        ExecutionPlacement.LocalProcess,
+        OutcomeKind.Accepted,
+        "Inspector A attests exact report R11-A.",
+        "08:30",
+        "08:30",
+        "08:30",
+    ), _trace(
+        2,
+        "SynchronizeReport",
+        "decision",
+        ExecutionPlacement.Server,
+        OutcomeKind.Accepted,
+        "Central service admits R11-A while B remains offline.",
+        "08:30",
+        "09:00",
+        "09:02",
+    ), _trace(
+        3,
+        "AttestReport",
+        "decision",
+        ExecutionPlacement.LocalProcess,
+        OutcomeKind.Accepted,
+        "Inspector B attests exact report R11-B without knowledge of R11-A.",
+        "09:00",
+        "09:00",
+        "09:00",
+    ), _trace(
+        4,
+        "SynchronizeReport",
+        "decision",
+        ExecutionPlacement.Server,
+        OutcomeKind.Accepted,
+        "Central service admits R11-B without invalidating R11-A.",
+        "09:00",
+        "09:20",
+        "09:22",
+    ), _trace(
+        5,
+        "ReconcileAssessment",
+        "decision",
+        ExecutionPlacement.Server,
+        OutcomeKind.Reconciled,
+        reconciliation.decision_fact,
+        "09:00",
+        "09:20",
+        "09:25",
+    )]
+    return ScenarioRun(
+        name="offline-inspection-reconciliation",
+        compiled=compiled,
+        plans=[plan_interaction(compiled, attest, native), plan_interaction(compiled, synchronize, browser)],
+        trace=trace,
+        facts=reconciliation.report_ids,
+        decisions=["inspection.service:admitted:R11-A", "inspection.service:admitted:R11-B", reconciliation.decision_fact],
+        receipts=["local-attestation:R11-A", "local-attestation:R11-B", "central-admission:R11-A", "central-admission:R11-B"],
+        outcome=reconciliation.outcome,
+        visible_state=reconciliation.assessment,
+    )
+
+
+pub def run_coconut_exchange() -> ScenarioRun:
+    """Replay scoped disclosure followed by an externally linearized lot reservation."""
+    disclose = interaction_contract(
+        "DiscloseHarvestFacts",
+        "harvest.disclose",
+        "coconut.application",
+        "user.consent",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.CommutativeCombination,
+        ["purpose", "recipient", "selected_fields", "consent"],
+        ObservationPosture.GovernedEvidence,
+    )
+    reserve = interaction_contract(
+        "ReserveCoconutLot",
+        "exchange.reserve",
+        "coconut.exchange",
+        "exchange.service",
+        AssuranceLevel.Governed,
+        ConcurrencySemantic.ExclusiveLinearization,
+        ["actor", "lot_revision", "disclosure_package", "decision_fact"],
+        ObservationPosture.GovernedEvidence,
+    )
+    native = target_contract(
+        "native-with-external-authority",
+        ProjectionTarget.Native,
+        ExecutionPlacement.LocalProcess,
+        true,
+        [interaction_placement("DiscloseHarvestFacts", ExecutionPlacement.LocalProcess), interaction_placement(
+            "ReserveCoconutLot",
+            ExecutionPlacement.ExternalAuthority,
+        )],
+    )
+    compiled = experience_contract(
+        "CoconutExchange",
+        "Disclose only permitted harvest facts and reserve one scarce coconut lot.",
+        [state_contract("private_harvest", "coconut.application", StateRole.LocalDurable, "local.durability"), state_contract(
+            "disclosure_package",
+            "coconut.application",
+            StateRole.Provisional,
+            "user.consent",
+        ), state_contract("lot_reservation", "coconut.exchange", StateRole.Authoritative, "exchange.service")],
+        [disclose, reserve],
+        [native],
+    )
+    package = build_disclosure_package(
+        "reserve-coconut-lot",
+        "regional-exchange",
+        ["lot_id", "quantity", "region", "exact_location", "private_notes"],
+        ["lot_id", "quantity", "region"],
+    )
+    first = request_exclusive_claim(
+        ExclusiveResourceState(resource_id="coconut-lot-C44", holder="", revision=3),
+        "Grower-A",
+        3,
+        "ReserveCoconutLot",
+        "exchange.service",
+        ExecutionPlacement.LocalProcess,
+        ExecutionPlacement.ExternalAuthority,
+        2,
+    )
+    second = request_exclusive_claim(
+        first.state,
+        "Trader-B",
+        3,
+        "ReserveCoconutLot",
+        "exchange.service",
+        ExecutionPlacement.LocalProcess,
+        ExecutionPlacement.ExternalAuthority,
+        5,
+    )
+    mut trace: list[TraceEvent] = [_trace(
+        1,
+        "DiscloseHarvestFacts",
+        "projection",
+        ExecutionPlacement.LocalProcess,
+        OutcomeKind.Accepted,
+        f"Disclose {_join(package.fields, ",")} and omit {_join(package.omitted_fields, ",")}.",
+        "",
+        "",
+        "",
+    )]
+    for event in first.trace:
+        trace.append(event)
+    for event in second.trace:
+        trace.append(event)
+    return ScenarioRun(
+        name="governed-coconut-exchange",
+        compiled=compiled,
+        plans=[plan_interaction(compiled, disclose, native), plan_interaction(compiled, reserve, native)],
+        trace=trace,
+        facts=[f"disclosure:fields={_join(package.fields, ",")}", f"disclosure:omitted={_join(
+            package.omitted_fields,
+            ",",
+        )}", first.decision_fact, second.decision_fact],
+        decisions=["user.consent:accepted:purpose=reserve-coconut-lot", first.decision_fact, second.decision_fact],
+        receipts=[f"reservation-receipt:{first.state.resource_id}:holder={first.state.holder}:revision={first.state.revision}"],
+        outcome=second.outcome,
+        visible_state=f"reserved_by={second.state.holder};trader_b=conflict",
+    )
+
+
+pub def contract_lab_inspection() -> str:
+    """Inspect all four executable scenarios as one contract-laboratory report."""
+    runs = [run_authenticated_workspace(true), run_incident_assignment_conflict(), run_offline_inspection_reconciliation(), run_coconut_exchange()]
+    mut reports: list[str] = ["Pallay Experience Contract Laboratory"]
+    for run in runs:
+        reports.append("")
+        reports.append(inspect_scenario(run))
+    return _join(reports, "\n")
+
+
+pub def inspect_compiled_experience(compiled: CompiledExperience) -> str:
+    """Return a human-readable view of a canonical contract and its diagnostics."""
+    mut lines: list[str] = [f"ExperienceContract: {compiled.contract.name}"]
+    lines.append(f"  purpose: {compiled.contract.purpose}")
+    lines.append("  states:")
+    for state in compiled.contract.states:
+        lines.append(
+            f"    {state.name} owner={state.owner} role={_state_role_name(state.role)} authority={state.authority}",
+        )
+    lines.append("  interactions:")
+    for interaction in compiled.contract.interactions:
+        lines.append(
+            f"    {interaction.name} capability={interaction.capability} owner={interaction.owner} authority={interaction.authority}",
+        )
+        lines.append(
+            f"      assurance={_assurance_name(interaction.assurance)} concurrency={_concurrency_name(
+                interaction.concurrency,
+            )} observation={_observation_name(interaction.observation)}",
+        )
+        lines.append(f"      evidence={_join(interaction.required_evidence, ",")}")
+    lines.append("  targets:")
+    for target in compiled.contract.targets:
+        lines.append(
+            f"    {target.name} target={_target_name(target.target)} experience={_placement_name(
+                target.experience_placement,
+            )} offline={target.supports_offline}",
+        )
+        for placement in target.interaction_placements:
+            lines.append(f"      {placement.interaction} authority={_placement_name(placement.authority_placement)}")
+    lines.append("  diagnostics:")
+    if len(compiled.diagnostics) == 0:
+        lines.append("    none")
+    else:
+        for diagnostic in compiled.diagnostics:
+            lines.append(f"    [{diagnostic.severity}] {diagnostic.code} {diagnostic.message}")
+    return _join(lines, "\n")
+
+
+pub def inspect_projection_plan(plan: ProjectionPlan) -> str:
+    """Return the frontend/backend placement of every interaction lifecycle step."""
+    mut lines: list[str] = [f"ProjectionPlan: {plan.experience}.{plan.interaction} -> {plan.target}"]
+    for step in plan.steps:
+        lines.append(f"  {step.stage} [{_placement_name(step.placement)}] {step.responsibility}: {step.claim}")
+    return _join(lines, "\n")
+
+
+pub def inspect_scenario(run: ScenarioRun) -> str:
+    """Return one readable scenario report with contract, plans, trace, and results."""
+    mut lines: list[str] = [f"Scenario: {run.name}"]
+    lines.append(inspect_compiled_experience(run.compiled))
+    lines.append("Plans")
+    for plan in run.plans:
+        lines.append(inspect_projection_plan(plan))
+    lines.append("Trace")
+    for event in run.trace:
+        lines.append(
+            f"  {event.sequence}. {event.interaction}.{event.stage} [{_placement_name(event.placement)}] {_outcome_name(
+                event.outcome,
+            )}: {event.detail}",
+        )
+    lines.append(f"Visible state: {run.visible_state}")
+    lines.append(f"Outcome: {_outcome_name(run.outcome)}")
+    lines.append(f"Facts: {_join(run.facts, " | ")}")
+    lines.append(f"Decisions: {_join(run.decisions, " | ")}")
+    lines.append(f"Receipts: {_join(run.receipts, " | ")}")
+    return _join(lines, "\n")
+
+
+def _trace(
+    sequence: int,
+    interaction: str,
+    stage: str,
+    placement: ExecutionPlacement,
+    outcome: OutcomeKind,
+    detail: str,
+    event_time: str,
+    knowledge_time: str,
+    decision_time: str,
+) -> TraceEvent:
+    """Construct one deterministic trace event."""
+    return TraceEvent(
+        sequence=sequence,
+        interaction=interaction,
+        stage=stage,
+        placement=placement,
+        outcome=outcome,
+        detail=detail,
+        event_time=event_time,
+        knowledge_time=knowledge_time,
+        decision_time=decision_time,
+    )
+
+
+def _contract_diagnostic(code: str, severity: str, artifact: str, message: str, help: str) -> ContractDiagnostic:
+    """Construct one stable contract diagnostic."""
+    return ContractDiagnostic(code=code, severity=severity, artifact=artifact, message=message, help=help)
+
+
+def _state_requires_authority(role: StateRole) -> bool:
+    """Return whether presenting a state role requires an authority binding."""
+    return role == StateRole.Authoritative or role == StateRole.Revoked
+
+
+def _interaction_placement_count(target: TargetContract, interaction: str) -> int:
+    """Count explicit authority placements for one interaction on one target."""
+    mut count = 0
+    for placement in target.interaction_placements:
+        if placement.interaction == interaction:
+            count = count + 1
+    return count
+
+
+def _has_interaction(interactions: list[InteractionContract], name: str) -> bool:
+    """Return whether a canonical contract declares one interaction identity."""
+    for interaction in interactions:
+        if interaction.name == name:
+            return true
+    return false
+
+
+def _authority_placement_for(target: TargetContract, interaction: str) -> ExecutionPlacement:
+    """Resolve a validated interaction authority placement for target planning."""
+    for placement in target.interaction_placements:
+        if placement.interaction == interaction:
+            return placement.authority_placement
+    return target.experience_placement
+
+
+def _contains(values: list[str], needle: str) -> bool:
+    """Return whether one string collection contains an exact value."""
+    for value in values:
+        if value == needle:
+            return true
+    return false
+
+
+def _join(values: list[str], separator: str) -> str:
+    """Join values in deterministic source order."""
+    mut output = ""
+    for index in range(0, len(values)):
+        if index > 0:
+            output = output + separator
+        output = output + values[index]
+    return output
+
+
+def _placement_name(value: ExecutionPlacement) -> str:
+    """Return the inspection label for an execution placement."""
+    match value:
+        ExecutionPlacement.Client => return "client"
+        ExecutionPlacement.LocalProcess => return "local-process"
+        ExecutionPlacement.Server => return "server"
+        ExecutionPlacement.ExternalAuthority => return "external-authority"
+
+
+def _state_role_name(value: StateRole) -> str:
+    """Return the inspection label for a semantic state role."""
+    match value:
+        StateRole.Ephemeral => return "ephemeral"
+        StateRole.LocalDurable => return "local-durable"
+        StateRole.Requested => return "requested"
+        StateRole.Provisional => return "provisional"
+        StateRole.Authoritative => return "authoritative"
+        StateRole.Conflict => return "conflict"
+        StateRole.ReconciliationRequired => return "reconciliation-required"
+        StateRole.Unknown => return "unknown"
+        StateRole.Revoked => return "revoked"
+
+
+def _concurrency_name(value: ConcurrencySemantic) -> str:
+    """Return the inspection label for a concurrency semantic."""
+    match value:
+        ConcurrencySemantic.AccumulatingEvidence => return "accumulating-evidence"
+        ConcurrencySemantic.ExclusiveLinearization => return "exclusive-linearization"
+        ConcurrencySemantic.CommutativeCombination => return "commutative-combination"
+
+
+def _assurance_name(value: AssuranceLevel) -> str:
+    """Return the inspection label for an assurance level."""
+    match value:
+        AssuranceLevel.Traceable => return "traceable"
+        AssuranceLevel.Governed => return "governed"
+
+
+def _observation_name(value: ObservationPosture) -> str:
+    """Return the inspection label for an observation posture."""
+    match value:
+        ObservationPosture.NoRetention => return "no-retention"
+        ObservationPosture.LocalOnly => return "local-only"
+        ObservationPosture.BoundedTrace => return "bounded-trace"
+        ObservationPosture.GovernedEvidence => return "governed-evidence"
+
+
+def _target_name(value: ProjectionTarget) -> str:
+    """Return the inspection label for a projection target."""
+    match value:
+        ProjectionTarget.Browser => return "browser"
+        ProjectionTarget.Native => return "native"
+        ProjectionTarget.Documentation => return "documentation"
+        ProjectionTarget.Assistant => return "assistant"
+
+
+def _outcome_name(value: OutcomeKind) -> str:
+    """Return the inspection label for an interaction outcome."""
+    match value:
+        OutcomeKind.Pending => return "pending"
+        OutcomeKind.Accepted => return "accepted"
+        OutcomeKind.Rejected => return "rejected"
+        OutcomeKind.Conflict => return "conflict"
+        OutcomeKind.Unknown => return "unknown"
+        OutcomeKind.Reconciled => return "reconciled"

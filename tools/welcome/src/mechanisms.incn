@@ -1,0 +1,104 @@
+"""Declared browser mechanisms. Values and interaction policy remain Incan data."""
+
+from std.json import JsonValue
+from examples import catalog
+
+
+def text(value: str) -> JsonValue:
+    return JsonValue.string(value)
+
+
+pub def browser_policy() -> str:
+    examples = catalog()
+    mut copies: list[JsonValue] = []
+    mut activations: list[JsonValue] = []
+    mut connectors: list[JsonValue] = []
+    mut attributes: list[JsonValue] = []
+    mut scopes: list[JsonValue] = []
+    for index in range(len(examples)):
+        example = examples[index]
+        scopes.append(text("view-" + example.key))
+        copies.append(
+            JsonValue.object(
+                {"button": text("copy-" + example.key), "source": text("source-" + example.key), "label": text(
+                    "copy-label-" + example.key,
+                ), "icon": text("copy-icon-" + example.key), "message": text("Example copied to clipboard.")},
+            ),
+        )
+        for step in range(len(example.notes)):
+            note = example.notes[step]
+            activations.append(
+                JsonValue.object(
+                    {"node": text("note-" + example.key + "-" + str(step)), "transition": text("inspect_note"), "payload": text(
+                        str(step),
+                    )},
+                ),
+            )
+            connectors.append(
+                JsonValue.object(
+                    {"scope": text("view-" + example.key), "source": text(note.anchor), "target": text(
+                        "note-" + example.key + "-" + str(step),
+                    ), "highlightField": text("note"), "highlightValue": JsonValue.int(step)},
+                ),
+            )
+            attributes.append(
+                JsonValue.object(
+                    {"node": text("note-" + example.key + "-" + str(step)), "name": text("aria-current"), "field": text(
+                        "note",
+                    ), "equals": JsonValue.int(step), "yes": text("step"), "no": text("")},
+                ),
+            )
+    for index in [0, 6, 7, 8]:
+        attributes.append(
+            JsonValue.object(
+                {"node": text("tab-" + str(index)), "name": text("aria-pressed"), "field": text("example"), "equals": JsonValue.int(
+                    index,
+                ), "yes": text("true"), "no": text("false")},
+            ),
+        )
+    attributes.append(
+        JsonValue.object(
+            {"node": text("tour-toggle"), "name": text("aria-label"), "field": text("paused"), "equals": JsonValue.bool(
+                true,
+            ), "yes": text("Play example rotation"), "no": text("Pause example rotation")},
+        ),
+    )
+    copies.append(
+        JsonValue.object(
+            {"button": text("copy-terminal"), "source": text("terminal-example"), "label": text("copy-label-terminal"), "icon": text(
+                "copy-icon-terminal",
+            ), "message": text("Project commands copied to clipboard.")},
+        ),
+    )
+    policy = JsonValue.object(
+        {"schema": text("incan.browser-mechanisms.v1"), "attributes": JsonValue.array(attributes), "activations": JsonValue.array(
+            activations,
+        ), "copies": JsonValue.array(copies), "clipboard": JsonValue.object(
+            {"status": text("copy-status"), "resetMs": JsonValue.int(2400), "ready": text("Copy"), "success": text(
+                "Copied",
+            ), "fallback": text("Selected"), "fallbackMessage": text(
+                "Clipboard unavailable. The code is selected; use your keyboard to copy it.",
+            )},
+        ), "connectors": JsonValue.array(connectors), "connectorStyle": JsonValue.object(
+            {"minWidth": JsonValue.int(741), "color": text("#b69a60"), "activeColor": text("#fff0b7"), "size": JsonValue
+                .float(1.2)
+                .unwrap()},
+        ), "clock": JsonValue.object(
+            {"scope": text(".example-section"), "intervalMs": JsonValue.int(12000), "pausedField": text("paused"), "tick": text(
+                "advance",
+            ), "pause": text("pause"), "threshold": JsonValue.float(0.5).unwrap()},
+        ), "disclosure": JsonValue.object(
+            {"scope": text(".masthead"), "navigation": text("site-nav"), "control": text("menu-button"), "openField": text(
+                "menu_open",
+            ), "close": text("close_menu")},
+        ), "keys": JsonValue.array(
+            [JsonValue.object(
+                {"scope": text(".example-navigation"), "key": text("ArrowLeft"), "transition": text("previous")},
+            ), JsonValue.object(
+                {"scope": text(".example-navigation"), "key": text("ArrowRight"), "transition": text("next")},
+            )],
+        ), "motion": JsonValue.object(
+            {"field": text("example"), "scopes": JsonValue.array(scopes), "durationMs": JsonValue.int(280)},
+        )},
+    )
+    return policy.to_json().unwrap()

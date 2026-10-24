@@ -1,0 +1,379 @@
+"""Typed executable Surface and Binding contracts; no target code in authoring APIs."""
+
+from core.experience_contract import ExecutionPlacement, ProjectionTarget
+from core.semantic_model_v2 import (
+    ExperienceContractV2,
+    ExperienceStateLifetime,
+    ExperienceStateAvailability,
+    EffectKind,
+    experience_state_v2,
+    projection_effect,
+    interaction_v2,
+    experience_flow,
+    target_v2,
+)
+
+
+@derive(Clone, Copy, Eq)
+pub enum ValueKind:
+    """Portable scalar types shared by the reference reducer and browser lowering."""
+
+    Empty
+    Text
+    Number
+    Flag
+
+
+@derive(Clone, Eq)
+pub model Value:
+    """A checked portable scalar. Numbers are safe integers on every target."""
+
+    pub kind: ValueKind = ValueKind.Empty
+    pub text_value: str = ""
+    pub number_value: int = 0
+    pub flag_value: bool = false
+
+    @staticmethod
+    def text(value: str) -> Self:
+        return Value(kind=ValueKind.Text, text_value=value)
+
+    @staticmethod
+    def number(value: int) -> Self:
+        return Value(kind=ValueKind.Number, number_value=value)
+
+    @staticmethod
+    def flag(value: bool) -> Self:
+        return Value(kind=ValueKind.Flag, flag_value=value)
+
+
+pub enum ExpressionKind:
+    """Closed expression vocabulary, never host-language source strings."""
+
+    Literal
+    State
+    Payload
+    Equal
+    Choose
+    Not
+    Add
+    Concat
+    Lookup
+
+
+pub model Expression:
+    """Recursive typed expression evaluated before one atomic transition commits."""
+
+    pub kind: ExpressionKind
+    pub value: Value = Value()
+    pub name: str = ""
+    pub arguments: list[Expression] = []
+    pub cases: Dict[str, Value] = {}
+
+
+pub model StateField:
+    """Initial value and scalar type for one experience-owned state field."""
+
+    pub name: str
+    pub kind: ValueKind
+    pub initial: Value
+
+
+pub model Mutation:
+    """One assignment evaluated against pre-transition state, not earlier assignments."""
+
+    pub state: str
+    pub value: Expression
+
+
+@derive(Clone)
+pub model Transition:
+    """Executable specialization of a semantic projection flow with a typed payload."""
+
+    pub name: str
+    pub payload_kind: ValueKind = ValueKind.Empty
+    pub mutations: list[Mutation] = []
+
+
+pub enum NodeKind:
+    """Semantic composition primitives supported by the initial web lowering."""
+
+    Group
+    Heading
+    Text
+    Paragraph
+    Button
+    Select
+    Option
+    Input
+    Table
+    Head
+    Body
+    Row
+    HeaderCell
+    Cell
+    Code
+    Details
+    Summary
+    Link
+    Graph
+    GraphGroup
+    Path
+    Rectangle
+    GraphText
+    Title
+
+
+pub model SurfaceNode:
+    """Recursive surface with stable identity, semantic role and declared appearance."""
+
+    pub id: str
+    pub kind: NodeKind
+    pub content: str = ""
+    pub appearance: str = ""
+    pub label: str = ""
+    pub attributes: Dict[str, str] = {}
+    pub children: list[SurfaceNode] = []
+
+
+pub enum PresentationKind:
+    """Typed DOM projections; no arbitrary property names or innerHTML binding."""
+
+    Content
+    Visible
+    Appearance
+    Disabled
+    Value
+    Expanded
+
+
+pub model Presentation:
+    """Connect a surface property to a typed expression of experience state."""
+
+    pub node: str
+    pub kind: PresentationKind
+    pub value: Expression
+
+
+pub enum EventKind:
+    """Portable semantic activation and value-change gestures."""
+
+    Click
+    Change
+    Input
+
+
+pub model EventBinding:
+    """Connect a surface gesture to a declared transition and payload expression."""
+
+    pub node: str
+    pub event: EventKind
+    pub transition: str
+    pub value: Expression
+
+
+pub model Experience:
+    """Woven authored model. Semantics remain canonical in ExperienceContractV2."""
+
+    pub name: str
+    pub title: str
+    pub root: SurfaceNode
+    pub semantics: ExperienceContractV2
+    pub fields: list[StateField] = []
+    pub transitions: list[Transition] = []
+    pub presentations: list[Presentation] = []
+    pub events: list[EventBinding] = []
+    pub stylesheet: str = ""
+
+
+pub model Reduction:
+    """Atomic transition result; rejection returns the unmodified input state."""
+
+    pub state: Dict[str, Value]
+    pub applied: bool
+    pub error: str = ""
+
+
+pub def literal(value: Value) -> Expression:
+    """Construct a literal portable value."""
+    return Expression(kind=ExpressionKind.Literal, value=value)
+
+
+pub def state(name: str) -> Expression:
+    """Read one declared experience-state field."""
+    return Expression(kind=ExpressionKind.State, name=name)
+
+
+pub def payload() -> Expression:
+    """Read the checked current event payload; forbidden in presentation expressions."""
+    return Expression(kind=ExpressionKind.Payload)
+
+
+pub def equal(left: Expression, right: Expression) -> Expression:
+    """Compare values of the same scalar type."""
+    return Expression(kind=ExpressionKind.Equal, arguments=[left, right])
+
+
+pub def choose(condition: Expression, yes: Expression, no: Expression) -> Expression:
+    """Choose lazily between expressions of the same scalar type."""
+    return Expression(kind=ExpressionKind.Choose, arguments=[condition, yes, no])
+
+
+pub def negate(value: Expression) -> Expression:
+    """Negate a boolean expression."""
+    return Expression(kind=ExpressionKind.Not, arguments=[value])
+
+
+pub def add(left: Expression, right: Expression) -> Expression:
+    """Add safe portable integers; overflow rejects the whole transition."""
+    return Expression(kind=ExpressionKind.Add, arguments=[left, right])
+
+
+pub def concat(left: Expression, right: Expression) -> Expression:
+    """Join two text expressions."""
+    return Expression(kind=ExpressionKind.Concat, arguments=[left, right])
+
+
+pub def lookup(key: Expression, cases: Dict[str, Value], fallback: Value) -> Expression:
+    """Project readonly authored facts through a text key; all results share one type."""
+    return Expression(kind=ExpressionKind.Lookup, arguments=[key], cases=cases, value=fallback)
+
+
+pub def text_node(id: str, content: str) -> SurfaceNode:
+    """Compose inline text, escaped by the target."""
+    return SurfaceNode(id=id, kind=NodeKind.Text, content=content)
+
+
+pub def group(id: str, children: list[SurfaceNode], appearance: str = "") -> SurfaceNode:
+    """Compose a named group of child surfaces."""
+    return SurfaceNode(id=id, kind=NodeKind.Group, children=children, appearance=appearance)
+
+
+pub def button(id: str, content: str) -> SurfaceNode:
+    """Compose a keyboard-accessible semantic activation control."""
+    return SurfaceNode(id=id, kind=NodeKind.Button, content=content)
+
+
+pub def local_contract(name: str, fields: list[StateField], transitions: list[Transition]) -> ExperienceContractV2:
+    """Build session-only local projection semantics. Never synthesizes domain authority."""
+    mut states = []
+    mut effects = []
+    mut interactions = []
+    mut flows = []
+    for field in fields:
+        states.append(
+            experience_state_v2(
+                field.name,
+                kind_name(field.kind),
+                ExperienceStateLifetime.Session,
+                ExperienceStateAvailability.Instance,
+                "reset_on_reload",
+            ),
+        )
+    for transition in transitions:
+        mut members: list[str] = []
+        for mutation in transition.mutations:
+            identity = transition.name + "." + mutation.state
+            effects.append(projection_effect(identity, mutation.state, "typed_atomic_assignment"))
+            interactions.append(
+                interaction_v2(
+                    identity,
+                    "Update experience-owned projection state",
+                    name,
+                    EffectKind.Projection,
+                    identity,
+                ),
+            )
+            members.append(identity)
+        flows.append(experience_flow(transition.name, "surface gesture", members))
+    return ExperienceContractV2(
+        name=name,
+        purpose="Incan-authored local projection experience",
+        states=states,
+        artifacts=[],
+        capabilities=[],
+        ports=[],
+        projection_effects=effects,
+        observation_effects=[],
+        candidate_bindings=[],
+        candidate_effects=[],
+        decision_effects=[],
+        interactions=interactions,
+        flows=flows,
+        targets=[target_v2("browser", ProjectionTarget.Browser, ExecutionPlacement.Client, [], []), target_v2(
+            "static",
+            ProjectionTarget.Documentation,
+            ExecutionPlacement.LocalProcess,
+            [],
+            [],
+        )],
+    )
+
+
+pub def kind_name(kind: ValueKind) -> str:
+    """Stable wire type identifier used by validation and generated plans."""
+    match kind:
+        ValueKind.Empty => return "empty"
+        ValueKind.Text => return "text"
+        ValueKind.Number => return "number"
+        ValueKind.Flag => return "flag"
+
+
+pub def presentation_name(kind: PresentationKind) -> str:
+    """Stable presentation property identifier."""
+    match kind:
+        PresentationKind.Content => return "content"
+        PresentationKind.Visible => return "visible"
+        PresentationKind.Appearance => return "appearance"
+        PresentationKind.Disabled => return "disabled"
+        PresentationKind.Value => return "value"
+        PresentationKind.Expanded => return "expanded"
+
+
+pub def event_name(kind: EventKind) -> str:
+    """Stable portable gesture identifier."""
+    match kind:
+        EventKind.Click => return "click"
+        EventKind.Change => return "change"
+        EventKind.Input => return "input"
+
+
+pub def experience(
+    name: str,
+    title: str,
+    root: SurfaceNode,
+    fields: list[StateField],
+    transitions: list[Transition],
+    presentations: list[Presentation],
+    events: list[EventBinding],
+    stylesheet: str = "",
+) -> Experience:
+    """
+    Compose a session-local experience and derive its canonical projection contract.
+
+    Applications with external observations/authority must supply explicit semantic contracts
+    and a target adapter; this convenience constructor never creates those claims.
+    """
+    semantics = local_contract(name, fields, transitions)
+    return Experience(
+        name=name,
+        title=title,
+        root=root,
+        semantics=semantics,
+        fields=fields,
+        transitions=transitions,
+        presentations=presentations,
+        events=events,
+        stylesheet=stylesheet,
+    )
+
+
+pub model TraceCommand:
+    """One deterministic developer probe, not a persisted domain operation."""
+
+    pub transition: str
+    pub value: Value
+
+
+pub def activate(node: str, transition: str) -> EventBinding:
+    """Bind keyboard-accessible activation to a no-payload transition."""
+    return EventBinding(node=node, event=EventKind.Click, transition=transition, value=literal(Value()))

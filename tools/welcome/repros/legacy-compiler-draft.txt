@@ -1,0 +1,28 @@
+Suggested title: bug - legacy 0.5.1 string literal reassignment emits a borrowed str
+Labels: bug
+Issue type: Bug
+Status: local draft only; current development compiler has not been checked.
+
+## Area
+Compiler (frontend/backend/codegen)
+
+## Summary
+Incan 0.5.1 accepts a local str reassignment but emits &str into an owned String slot. Expected: valid native code. Actual: rustc E0308. Related closed model-field report: https://github.com/encero-systems/incan/issues/1986. The exact local-variable case differs; verify it against the current development compiler before creating another issue.
+
+## Reproduction steps
+Create repro.incn:
+
+    def main() -> None:
+        mut label = "before"
+        label = "after"
+        println(label)
+
+Run: incan build repro.incn
+
+## Output / logs
+expected String, found &str on the reassignment.
+
+## Environment
+macOS arm64; installed Incan 0.5.1. Workaround: label = str("after").
+
+Other verified workarounds are documented in triage.json, including the exact duplicate arithmetic conversion report #1726 and the related field-move report #616. No public issue was created from this old-release-only observation.

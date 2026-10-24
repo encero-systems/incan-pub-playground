@@ -1,0 +1,104 @@
+import assert from 'node:assert/strict';
+import {readFile, access} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {JSDOM} from 'jsdom';
+
+const target = new URL('../../incan-io-directions/obsidian-incan/docs/', import.meta.url);
+const input = new URL('./', import.meta.url);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const receipt = JSON.parse(await readFile(new URL('import-receipt.json', target), 'utf8'));
+const sourceManifest = JSON.parse(await readFile(new URL('docs-source/manifest.json', input), 'utf8'));
+assert.equal(receipt.pages.length, sourceManifest.pages.length);
+for (const [name, digest] of Object.entries(receipt.inputs)) {
+  assert.equal('sha256:' + sha(await readFile(new URL(name, input))), digest, name);
+}
+for (const [name, digest] of Object.entries(receipt.outputs)) {
+  assert.equal('sha256:' + sha(await readFile(new URL(name, target))), digest, name);
+}
+
+
+async function expand(source, ancestors=[]){
+ const output=[];
+ for(const line of source.split('\n')){
+  const match=/^(\s*)--8<-- \"([^\"]+)\"\s*$/.exec(line);
+  if(!match){output.push(line);continue;}
+  const [,indent,path]=match;
+  assert.ok(path.startsWith('_snippets/')&&!path.split('/').includes('..')&&!ancestors.includes(path));
+  const bytes=await readFile(new URL('docs-source/'+path,input));
+  const expected=sourceManifest.includes.find(p=>p.path===path);assert.ok(expected,path);assert.equal(sha(bytes),expected.sha256,path);
+  assert.deepEqual(await readFile(new URL('sources/'+path,target)),bytes,path);
+  const text=await expand(bytes.toString('utf8'),[...ancestors,path]);
+  output.push(...text.replace(/\n+$/,'').split('\n').map(line=>indent+line));
+ }
+ return output.join('\n');
+}
+
+const documents = new Map();
+for (const page of receipt.pages) {
+  const original = await readFile(new URL('docs-source/' + page.source, input));
+  const copied = await readFile(new URL('sources/' + page.source, target));
+  assert.deepEqual(copied, original, 'Original Markdown bytes retained');
+  assert.equal(sha(original), sourceManifest.pages.find(p => p.path === page.source).sha256);
+  const document = new JSDOM(await readFile(new URL(page.key + '.html', target), 'utf8')).window.document;
+  documents.set(page.key + '.html', document);
+  assert.equal(document.querySelectorAll('h1').length, 1);
+  assert.equal(document.querySelectorAll('main pre').length, page.code_blocks);
+  assert.equal(document.querySelectorAll('main table').length, page.tables);
+  assert.equal(document.querySelectorAll('main .doc-callout').length, page.callouts);
+  assert.equal(document.querySelectorAll('.doc-language-panel').length, page.language_panels);
+  assert.equal(document.querySelectorAll('script').length,page.diagrams ? 2 : 0,'Only diagram pages load the vendored renderer');
+  assert.equal(document.querySelectorAll('[data-diagram=mermaid]').length,page.diagrams);
+  assert.equal(document.querySelectorAll('li[id^=user-content-fn-]').length,page.footnotes);
+  assert.equal(document.querySelector('[aria-current=page]').getAttribute('href'), page.key + '.html');
+  const ids = [...document.querySelectorAll('[id]')].map(n => n.id);
+  assert.equal(new Set(ids).size, ids.length, 'Unique heading and shell IDs');
+  const source = await readFile(new URL('expanded/'+page.key+'.md',target),'utf8');
+  assert.equal(source,await expand(original.toString('utf8')),'Independent snippet expansion agrees with Incan');
+  const fences = [...source.matchAll(/^([ \t]*)```[^\n]*\n([\s\S]*?)^\1```[ \t]*$/gm)];
+  const expected = fences.map(m => m[2].split('\n').map(line => line.startsWith(m[1]) ? line.slice(m[1].length) : line).join('\n'));
+  const actual = [...document.querySelectorAll('main pre code')].map(n => n.textContent);
+  assert.deepEqual(actual, expected, 'Every fenced example retains its text and indentation');
+  assert.ok(!document.querySelector('main').textContent.includes('??? info'));
+  assert.ok(!document.querySelector('main').textContent.includes('===*Incan*'));
+}
+documents.set('index.html', new JSDOM(await readFile(new URL('index.html', target), 'utf8')).window.document);
+for (const [name, document] of documents) {
+  for (const node of document.querySelectorAll('a[href],img[src],link[href]')) {
+    const value = node.getAttribute('href') ?? node.getAttribute('src');
+    if (!value || /^[a-z]+:|^\/\//i.test(value)) continue;
+    const url = new URL(value, new URL(name, target));
+    const file = new URL(url); file.hash = ''; file.search = '';
+    if (!file.pathname.endsWith('/')) await access(file);
+    if (url.hash && file.pathname.startsWith(target.pathname)) {
+      const other = documents.get(file.pathname.slice(target.pathname.length));
+      if (other) assert.ok(other.getElementById(decodeURIComponent(url.hash.slice(1))), value);
+    }
+  }
+}
+assert.equal(receipt.pages.find(p => p.key === 'enums').language_panels, 2);
+assert.equal(receipt.pages.find(p => p.key === 'enums').callouts, 1);
+assert.ok(receipt.pages.find(p => p.key === 'collections').tables >= 3);
+assert.equal(receipt.pages.find(p=>p.key==='getting-started').language_panels,4);
+assert.ok(receipt.pages.find(p=>p.key==='web-framework').snippet_inputs.length>=4);
+assert.ok(receipt.pages.find(p=>p.key==='compile-runtime').footnotes>=9);
+for(const key of ['getting-started','typed-api']){
+ const doc=documents.get(key+'.html');
+ assert.ok(doc.querySelector('.inc-tutorial-meta dl'));
+ assert.ok(doc.querySelector('.inc-step-rail li'));
+ assert.equal(doc.querySelectorAll('.inc-learning-panel').length,2);
+ assert.ok(![...doc.querySelectorAll('.inc-learning-panel p')].some(n=>n.textContent.includes('](')),'Markdown inside HTML panels was parsed');
+}
+const architecture=documents.get('architecture.html');
+assert.ok(architecture.querySelector('.arch-start'));
+assert.ok(architecture.querySelector('main').textContent.includes('no Rust source'));
+assert.ok(architecture.querySelector('main').textContent.includes('second frontend'));
+assert.equal(receipt.pages.find(p=>p.key==='architecture').diagrams,2);
+console.log('Passed: '+receipt.pages.length+' pages, independent snippet expansion, exact source/code bytes, local links/assets/anchors, footnotes, tutorial HTML/Markdown panels, diagrams and 0.6 architecture guards.');
+
+// The content experiment must form usable learning-to-lookup routes.
+for (const [from, to] of [['explore','dates'],['explore','traits'],['explore','oven'],['dates','date-api'],['date-api','dates'],['traits','traits-reference'],['traits-reference','traits']]) {
+ assert.ok([...documents.get(from+'.html').querySelectorAll('main a')].some(a=>a.getAttribute('href').split('#')[0]===to+'.html'), from+' -> '+to);
+}
+assert.match(documents.get('date-api.html').querySelector('main').textContent,/upcoming API generator has not produced it/);
+assert.match(documents.get('oven.html').querySelector('main').textContent,/0.5 command baseline/);
+console.log('Passed: topic learning/lookup routes and API/version provenance.');

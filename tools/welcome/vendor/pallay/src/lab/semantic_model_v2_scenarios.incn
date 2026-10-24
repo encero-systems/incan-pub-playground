@@ -1,0 +1,660 @@
+"""Executable Minutary, IncQL dashboard, and grant continuity migrations for semantic model v2."""
+
+from core.experience_contract import ExecutionPlacement, ProjectionTarget
+from core.semantic_model_v2 import (
+    ArtifactObservation,
+    ArtifactRevision,
+    CompiledExperienceV2,
+    DeliveryAttempt,
+    DecisionCoordination,
+    EffectKind,
+    ExperienceContractV2,
+    ExperienceStateAvailability,
+    ExperienceStateLifetime,
+    ObservationUpdate,
+    OperationEnvelope,
+    OperationOutcome,
+    OperationOutcomeKind,
+    SemanticPlan,
+    SemanticRun,
+    artifact_binding,
+    candidate_binding,
+    capability_binding,
+    capability_requirement,
+    compile_experience_v2,
+    delivery_attempt,
+    decision_effect,
+    experience_flow,
+    experience_state_v2,
+    inspect_experience_v2,
+    inspect_semantic_plan,
+    interaction_v2,
+    observation_effect,
+    operation_envelope,
+    operation_outcome,
+    plan_interaction_v2,
+    port_binding,
+    port_requirement,
+    projection_effect,
+    target_v2,
+)
+
+
+pub model GrantContinuityRun:
+    """Inspectable lost-response and reconciliation replay for one cross-device draft operation."""
+
+    pub compiled: CompiledExperienceV2
+    pub plans: list[SemanticPlan]
+    pub operation: OperationEnvelope
+    pub attempts: list[DeliveryAttempt]
+    pub initial_outcome: OperationOutcome
+    pub reconciled_outcome: OperationOutcome
+    pub observations: list[ArtifactObservation]
+    pub experience_state: list[str]
+    pub visible_state: str
+
+
+pub def minutary_semantic_contract_v2() -> CompiledExperienceV2:
+    """Compile a local-first meeting capture experience against the v2 contract."""
+    edit_draft = interaction_v2(
+        "EditMeetingDraft",
+        "Keep unfinished meeting details recoverable before they become an application record.",
+        "minutary.experience",
+        EffectKind.Projection,
+        "edit-meeting-draft",
+    )
+    capture_audio = interaction_v2(
+        "CaptureAudio",
+        "Capture meeting audio only when the host grants microphone access.",
+        "minutary.experience",
+        EffectKind.Observation,
+        "capture-audio",
+    )
+    save_meeting = interaction_v2(
+        "SaveMeeting",
+        "Ask Minutary to promote the recoverable draft into a meeting record.",
+        "minutary.experience",
+        EffectKind.Decision,
+        "save-meeting",
+    )
+    observe_saved_meeting = interaction_v2(
+        "ObserveSavedMeeting",
+        "Observe the meeting record revision returned after a successful save decision.",
+        "minutary.experience",
+        EffectKind.Observation,
+        "observe-saved-meeting",
+    )
+    native = target_v2(
+        "native-local-minutary",
+        ProjectionTarget.Native,
+        ExecutionPlacement.LocalProcess,
+        [capability_binding("microphone", "Omerus native microphone capability", ExecutionPlacement.LocalProcess)],
+        [port_binding("audio-capture", "Omerus host audio adapter", ExecutionPlacement.LocalProcess), port_binding(
+            "minutary-persistence",
+            "Minutary local persistence adapter",
+            ExecutionPlacement.LocalProcess,
+        )],
+    )
+    return compile_experience_v2(
+        ExperienceContractV2(
+            name="MinutaryMeetingCaptureV2",
+            purpose="Capture a meeting locally while preserving the boundary between recoverable experience state and saved Minutary artifacts.",
+            states=[experience_state_v2(
+                "capture_status",
+                "CaptureStatus",
+                ExperienceStateLifetime.Session,
+                ExperienceStateAvailability.Instance,
+                "reset_when_session_ends",
+            ), experience_state_v2(
+                "meeting_draft",
+                "MeetingDraft",
+                ExperienceStateLifetime.Durable,
+                ExperienceStateAvailability.Device,
+                "recover_local_draft",
+            )],
+            artifacts=[artifact_binding("audio_recording", "AudioRecording", "user.capture", "audio-capture", true, true), artifact_binding(
+                "meeting_record",
+                "MeetingRecord",
+                "minutary.application",
+                "minutary-persistence",
+                true,
+                true,
+            ), artifact_binding(
+                "save_decision",
+                "SaveMeetingDecision",
+                "minutary.application",
+                "minutary-persistence",
+                true,
+                true,
+            )],
+            capabilities=[capability_requirement("microphone", "host.microphone.capture", true, "attach_existing_audio")],
+            ports=[port_requirement(
+                "audio-capture",
+                "capture() -> AudioRecording",
+                "user.capture",
+                true,
+                "attach_existing_audio",
+            ), port_requirement(
+                "minutary-persistence",
+                "save(MeetingDraft, AudioRecording) -> SaveMeetingDecision",
+                "minutary.application",
+                true,
+                "retain_experience_draft",
+            )],
+            projection_effects=[projection_effect(
+                "edit-meeting-draft",
+                "meeting_draft",
+                "replace recoverable draft fields",
+            )],
+            observation_effects=[observation_effect(
+                "capture-audio",
+                "audio_recording",
+                "audio-capture",
+                ObservationUpdate.Snapshot,
+            ), observation_effect(
+                "observe-saved-meeting",
+                "meeting_record",
+                "minutary-persistence",
+                ObservationUpdate.Superseding,
+            )],
+            candidate_bindings=[],
+            candidate_effects=[],
+            decision_effects=[decision_effect(
+                "save-meeting",
+                "minutary-persistence",
+                "save_decision",
+                DecisionCoordination.Uncontended,
+            )],
+            interactions=[edit_draft, capture_audio, save_meeting, observe_saved_meeting],
+            flows=[experience_flow(
+                "RecordMeeting",
+                "User records and saves a meeting.",
+                ["EditMeetingDraft", "CaptureAudio", "SaveMeeting", "ObserveSavedMeeting"],
+            )],
+            targets=[native],
+        ),
+    )
+
+
+pub def minutary_semantic_plans_v2(compiled: CompiledExperienceV2) -> list[SemanticPlan]:
+    """Plan every Minutary v2 interaction for its native target."""
+    target = compiled.contract.targets[0]
+    mut plans: list[SemanticPlan] = []
+    for interaction in compiled.contract.interactions:
+        plans.append(plan_interaction_v2(compiled, interaction, target))
+    return plans
+
+
+pub def run_minutary_semantic_v2(microphone_available: bool) -> SemanticRun:
+    """Replay microphone denial or successful capture and promotion without tracing audio content."""
+    compiled = minutary_semantic_contract_v2()
+    plans = minutary_semantic_plans_v2(compiled)
+    if not microphone_available:
+        return SemanticRun(
+            name="minutary-meeting-capture-v2",
+            compiled=compiled,
+            plans=plans,
+            observations=[],
+            experience_state=["meeting_draft:restart:retained", "capture_status:microphone-denied"],
+            outcome="capability-denied",
+            visible_state="microphone_unavailable;fallback=attach_existing_audio;draft=recoverable",
+        )
+
+    audio = ArtifactRevision(
+        binding="audio_recording",
+        artifact_id="audio-local-17",
+        revision=1,
+        semantic_owner="user.capture",
+        content_summary="encrypted local audio reference; payload omitted",
+        provenance="host-capture:device-local",
+        valid_time="2026-08-16T10:00:00Z",
+    )
+    save_decision_artifact = ArtifactRevision(
+        binding="save_decision",
+        artifact_id="save-meeting-17",
+        revision=1,
+        semantic_owner="minutary.application",
+        content_summary="accepted; meeting=meeting-17; audio=audio-local-17@1",
+        provenance="minutary.local_store:commit-841",
+        valid_time="2026-08-16T10:01:00Z",
+    )
+    meeting = ArtifactRevision(
+        binding="meeting_record",
+        artifact_id="meeting-17",
+        revision=1,
+        semantic_owner="minutary.application",
+        content_summary="saved meeting metadata and encrypted audio reference",
+        provenance="minutary.local_store:commit-841",
+        valid_time="2026-08-16T10:01:00Z",
+    )
+    return SemanticRun(
+        name="minutary-meeting-capture-v2",
+        compiled=compiled,
+        plans=plans,
+        observations=[_observation(audio, "CaptureAudio", "2026-08-16T10:00:00Z", "captured-local"), _observation(
+            save_decision_artifact,
+            "SaveMeeting",
+            "2026-08-16T10:01:00Z",
+            "committed",
+        ), _observation(meeting, "ObserveSavedMeeting", "2026-08-16T10:01:01Z", "current")],
+        experience_state=["capture_status:complete", "meeting_draft:cleared-after-observed-save"],
+        outcome="saved",
+        visible_state="meeting=meeting-17@1;saved=true;audio_payload_traced=false",
+    )
+
+
+pub def incql_dashboard_semantic_contract_v2() -> CompiledExperienceV2:
+    """Compile the browser dashboard against artifact observation and decision semantics."""
+    filter_dashboard = interaction_v2(
+        "FilterDashboard",
+        "Change the local dashboard projection without creating an application transition.",
+        "dashboard.experience",
+        EffectKind.Projection,
+        "filter-dashboard",
+    )
+    refresh = interaction_v2(
+        "RefreshOpenIncidents",
+        "Observe the latest open-incident result revision from IncQL.",
+        "dashboard.experience",
+        EffectKind.Observation,
+        "refresh-open-incidents",
+    )
+    acknowledge = interaction_v2(
+        "AcknowledgeAnomaly",
+        "Ask operations authority to acknowledge an anomaly against an exact query revision.",
+        "dashboard.experience",
+        EffectKind.Decision,
+        "acknowledge-anomaly",
+    )
+    browser = target_v2(
+        "browser-live-dashboard",
+        ProjectionTarget.Browser,
+        ExecutionPlacement.Client,
+        [capability_binding("live-updates", "Omerus browser event delivery", ExecutionPlacement.Client)],
+        [port_binding("incql-query", "IncQL query adapter", ExecutionPlacement.Server), port_binding(
+            "operations-command",
+            "Operations command adapter",
+            ExecutionPlacement.Server,
+        )],
+    )
+    return compile_experience_v2(
+        ExperienceContractV2(
+            name="IncQLLiveDashboardV2",
+            purpose="Present versioned IncQL results and keep local projection separate from operational authority.",
+            states=[experience_state_v2(
+                "dashboard_filter",
+                "DashboardFilter",
+                ExperienceStateLifetime.Session,
+                ExperienceStateAvailability.Instance,
+                "restore_session_filter",
+            )],
+            artifacts=[artifact_binding(
+                "open_incidents_result",
+                "IncQLResult[OpenIncidentCount]",
+                "incql.runtime",
+                "incql-query",
+                true,
+                true,
+            ), artifact_binding(
+                "acknowledgement_decision",
+                "AcknowledgeAnomalyDecision",
+                "operations.application",
+                "operations-command",
+                true,
+                true,
+            )],
+            capabilities=[capability_requirement("live-updates", "browser.server_events", false, "manual_refresh")],
+            ports=[port_requirement(
+                "incql-query",
+                "observe(OpenIncidentsQuery) -> IncQLResult",
+                "incql.runtime",
+                true,
+                "show_last_observation_as_stale",
+            ), port_requirement(
+                "operations-command",
+                "acknowledge(AnomalyId, QueryRevision) -> AcknowledgeAnomalyDecision",
+                "operations.application",
+                true,
+                "retain_unsubmitted_intent",
+            )],
+            projection_effects=[projection_effect(
+                "filter-dashboard",
+                "dashboard_filter",
+                "replace local filter selection",
+            )],
+            observation_effects=[observation_effect(
+                "refresh-open-incidents",
+                "open_incidents_result",
+                "incql-query",
+                ObservationUpdate.Superseding,
+            )],
+            candidate_bindings=[],
+            candidate_effects=[],
+            decision_effects=[decision_effect(
+                "acknowledge-anomaly",
+                "operations-command",
+                "acknowledgement_decision",
+                DecisionCoordination.ExclusiveLinearization,
+            )],
+            interactions=[filter_dashboard, refresh, acknowledge],
+            flows=[experience_flow(
+                "ReviewOperations",
+                "Operator filters, refreshes, and acknowledges an anomaly.",
+                ["FilterDashboard", "RefreshOpenIncidents", "AcknowledgeAnomaly"],
+            )],
+            targets=[browser],
+        ),
+    )
+
+
+pub def incql_dashboard_semantic_plans_v2(compiled: CompiledExperienceV2) -> list[SemanticPlan]:
+    """Plan every dashboard v2 interaction for its browser target."""
+    target = compiled.contract.targets[0]
+    mut plans: list[SemanticPlan] = []
+    for interaction in compiled.contract.interactions:
+        plans.append(plan_interaction_v2(compiled, interaction, target))
+    return plans
+
+
+pub def run_incql_dashboard_semantic_v2() -> SemanticRun:
+    """Replay a late IncQL revision and an acknowledgement bound to the newest revision."""
+    compiled = incql_dashboard_semantic_contract_v2()
+    plans = incql_dashboard_semantic_plans_v2(compiled)
+    result_41 = ArtifactRevision(
+        binding="open_incidents_result",
+        artifact_id="query-open-incidents",
+        revision=41,
+        semantic_owner="incql.runtime",
+        content_summary="open_incidents=12",
+        provenance="incql:query-run-41",
+        valid_time="2026-08-16T09:58:00Z",
+    )
+    result_42 = ArtifactRevision(
+        binding="open_incidents_result",
+        artifact_id="query-open-incidents",
+        revision=42,
+        semantic_owner="incql.runtime",
+        content_summary="open_incidents=13;late-ticket=123",
+        provenance="incql:query-run-42",
+        valid_time="2026-08-16T09:59:30Z",
+    )
+    acknowledgement = ArtifactRevision(
+        binding="acknowledgement_decision",
+        artifact_id="ack-anomaly-7",
+        revision=1,
+        semantic_owner="operations.application",
+        content_summary="accepted;anomaly=7;query_revision=42;actor=operator-3",
+        provenance="operations:command-991",
+        valid_time="2026-08-16T10:02:30Z",
+    )
+    return SemanticRun(
+        name="incql-live-dashboard-v2",
+        compiled=compiled,
+        plans=plans,
+        observations=[_observation(result_41, "RefreshOpenIncidents", "2026-08-16T10:00:00Z", "current-at-observation"), _observation(
+            result_42,
+            "RefreshOpenIncidents",
+            "2026-08-16T10:02:00Z",
+            "revised-by-late-data",
+        ), _observation(acknowledgement, "AcknowledgeAnomaly", "2026-08-16T10:02:31Z", "committed")],
+        experience_state=["dashboard_filter:severity=high"],
+        outcome="acknowledged",
+        visible_state="open_incidents=13;source_revision=42;freshness=revised-at-10:02;acknowledged_revision=42",
+    )
+
+
+pub def grant_continuity_contract_v2() -> CompiledExperienceV2:
+    """Compile principal-private draft continuity and later shared-draft operations."""
+    edit_private = interaction_v2(
+        "EditPrivateGrantDraft",
+        "Edit a principal-private grant draft without creating an application artifact.",
+        "grant.experience",
+        EffectKind.Projection,
+        "edit-private-grant-draft",
+    )
+    publish_shared = interaction_v2(
+        "PublishSharedGrantDraft",
+        "Ask the grant application to give the private draft an independently addressable identity.",
+        "grant.experience",
+        EffectKind.Decision,
+        "publish-shared-grant-draft",
+    )
+    observe_shared = interaction_v2(
+        "ObserveSharedGrantDraft",
+        "Observe the accepted shared draft revision without transferring its ownership to Pallay.",
+        "grant.experience",
+        EffectKind.Observation,
+        "observe-shared-grant-draft",
+    )
+    apply_offline = interaction_v2(
+        "ApplyOfflineGrantChange",
+        "Apply one stable offline operation against the exact shared draft base revision.",
+        "grant.experience",
+        EffectKind.Decision,
+        "apply-offline-grant-change",
+    )
+    native = target_v2(
+        "native-principal-continuity",
+        ProjectionTarget.Native,
+        ExecutionPlacement.LocalProcess,
+        [capability_binding(
+            "principal-continuity",
+            "Omerus principal-private continuity adapter",
+            ExecutionPlacement.LocalProcess,
+        )],
+        [port_binding("grant-draft-command", "Grant application command adapter", ExecutionPlacement.Server), port_binding(
+            "grant-draft-query",
+            "Grant application query adapter",
+            ExecutionPlacement.Server,
+        )],
+    )
+    return compile_experience_v2(
+        ExperienceContractV2(
+            name="CrossDeviceGrantDraftV2",
+            purpose="Keep private principal continuity separate from independently addressable shared grant artifacts.",
+            states=[experience_state_v2(
+                "grant_draft",
+                "GrantDraft",
+                ExperienceStateLifetime.Durable,
+                ExperienceStateAvailability.Principal,
+                "continue_on_origin_device_when_principal_continuity_is_unavailable",
+            ), experience_state_v2(
+                "operation_status",
+                "OperationStatus",
+                ExperienceStateLifetime.Session,
+                ExperienceStateAvailability.Instance,
+                "reconcile_unknown_with_same_operation_identity",
+            )],
+            artifacts=[artifact_binding(
+                "shared_grant_draft",
+                "SharedGrantDraft",
+                "grant.application",
+                "grant-draft-query",
+                true,
+                true,
+            ), artifact_binding(
+                "draft_update_decision",
+                "DraftUpdateDecision",
+                "grant.application",
+                "grant-draft-command",
+                true,
+                true,
+            )],
+            capabilities=[capability_requirement(
+                "principal-continuity",
+                "experience.state.principal_continuity",
+                true,
+                "continue_on_origin_device",
+            )],
+            ports=[port_requirement(
+                "grant-draft-command",
+                "apply(OperationEnvelope, GrantDraftChange) -> DraftUpdateDecision",
+                "grant.application",
+                true,
+                "retain_unknown_and_reconcile",
+            ), port_requirement(
+                "grant-draft-query",
+                "observe(GrantDraftId) -> SharedGrantDraft",
+                "grant.application",
+                true,
+                "show_last_observation_as_stale",
+            ), port_requirement(
+                "grant-submission",
+                "submit(SharedGrantDraftRevision) -> GrantSubmissionDecision",
+                "grant.submission.authority",
+                false,
+                "retain_shared_draft",
+            )],
+            projection_effects=[projection_effect(
+                "edit-private-grant-draft",
+                "grant_draft",
+                "replace principal-private draft fields",
+            )],
+            observation_effects=[observation_effect(
+                "observe-shared-grant-draft",
+                "shared_grant_draft",
+                "grant-draft-query",
+                ObservationUpdate.Superseding,
+            )],
+            candidate_bindings=[candidate_binding("grant-submission-candidate", "shared_grant_draft", "grant-submission")],
+            candidate_effects=[],
+            decision_effects=[decision_effect(
+                "publish-shared-grant-draft",
+                "grant-draft-command",
+                "draft_update_decision",
+                DecisionCoordination.Uncontended,
+            ), decision_effect(
+                "apply-offline-grant-change",
+                "grant-draft-command",
+                "draft_update_decision",
+                DecisionCoordination.ExclusiveLinearization,
+            )],
+            interactions=[edit_private, publish_shared, observe_shared, apply_offline],
+            flows=[experience_flow(
+                "ContinuePrivateDraft",
+                "Principal resumes private work on another device.",
+                ["EditPrivateGrantDraft"],
+            ), experience_flow(
+                "ShareGrantDraft",
+                "Principal gives the draft application identity and then observes it.",
+                ["PublishSharedGrantDraft", "ObserveSharedGrantDraft"],
+            ), experience_flow(
+                "ReconnectOfflineGrantChange",
+                "Principal reconnects one offline operation and observes the accepted revision.",
+                ["ApplyOfflineGrantChange", "ObserveSharedGrantDraft"],
+            )],
+            targets=[native],
+        ),
+    )
+
+
+pub def grant_continuity_plans_v2(compiled: CompiledExperienceV2) -> list[SemanticPlan]:
+    """Plan every grant continuity interaction for the native target."""
+    target = compiled.contract.targets[0]
+    mut plans: list[SemanticPlan] = []
+    for interaction in compiled.contract.interactions:
+        plans.append(plan_interaction_v2(compiled, interaction, target))
+    return plans
+
+
+pub def run_grant_continuity_v2() -> GrantContinuityRun:
+    """Replay commit-with-lost-response followed by idempotent reconciliation."""
+    compiled = grant_continuity_contract_v2()
+    operation = operation_envelope("op-7f83", "grant-draft-123", 17, "gesture-save-offline-4", "offline-edit-batch-9")
+    decision = ArtifactRevision(
+        binding="draft_update_decision",
+        artifact_id="decision-op-7f83",
+        revision=1,
+        semantic_owner="grant.application",
+        content_summary="applied;artifact=grant-draft-123;base=17;result_revision=18",
+        provenance="grant.application:operation=op-7f83",
+        valid_time="2026-08-16T10:00:00Z",
+    )
+    shared_revision = ArtifactRevision(
+        binding="shared_grant_draft",
+        artifact_id="grant-draft-123",
+        revision=18,
+        semantic_owner="grant.application",
+        content_summary="accepted shared grant draft revision",
+        provenance="grant.application:decision=decision-op-7f83",
+        valid_time="2026-08-16T10:00:00Z",
+    )
+    return GrantContinuityRun(
+        compiled=compiled,
+        plans=grant_continuity_plans_v2(compiled),
+        operation=operation,
+        attempts=[delivery_attempt("attempt-1", "op-7f83", "2026-08-16T10:00:00Z"), delivery_attempt(
+            "attempt-2",
+            "op-7f83",
+            "2026-08-16T10:05:00Z",
+        )],
+        initial_outcome=operation_outcome(
+            OperationOutcomeKind.Unknown,
+            "op-7f83",
+            "",
+            0,
+            "retry_same_operation_with_new_attempt",
+        ),
+        reconciled_outcome=operation_outcome(
+            OperationOutcomeKind.Applied,
+            "op-7f83",
+            "decision-op-7f83",
+            1,
+            "reobserve_original_decision",
+        ),
+        observations=[_observation(
+            decision,
+            "ApplyOfflineGrantChange",
+            "2026-08-16T10:05:01Z",
+            "reconciled-original-decision",
+        ), _observation(
+            shared_revision,
+            "ObserveSharedGrantDraft",
+            "2026-08-16T10:05:02Z",
+            "current-after-reconciliation",
+        )],
+        experience_state=["grant_draft:durable:principal", "operation_status:unknown-then-reconciled"],
+        visible_state="shared_grant_draft=grant-draft-123@18;operation=op-7f83;decision_count=1;reconciled=true",
+    )
+
+
+pub def semantic_model_v2_inspection() -> str:
+    """Return all migrated contracts, their plans, and deterministic run summaries."""
+    minutary = minutary_semantic_contract_v2()
+    dashboard = incql_dashboard_semantic_contract_v2()
+    grant = grant_continuity_contract_v2()
+    mut lines: list[str] = ["=== Semantic model v2: migrated surfaces ===", inspect_experience_v2(minutary)]
+    for plan in minutary_semantic_plans_v2(minutary):
+        lines.append(inspect_semantic_plan(plan))
+    minutary_run = run_minutary_semantic_v2(true)
+    lines.append(f"SemanticRun: {minutary_run.name} outcome={minutary_run.outcome} visible={minutary_run.visible_state}")
+    lines.append(inspect_experience_v2(dashboard))
+    for plan in incql_dashboard_semantic_plans_v2(dashboard):
+        lines.append(inspect_semantic_plan(plan))
+    dashboard_run = run_incql_dashboard_semantic_v2()
+    lines.append(
+        f"SemanticRun: {dashboard_run.name} outcome={dashboard_run.outcome} visible={dashboard_run.visible_state}",
+    )
+    lines.append(inspect_experience_v2(grant))
+    for plan in grant_continuity_plans_v2(grant):
+        lines.append(inspect_semantic_plan(plan))
+    grant_run = run_grant_continuity_v2()
+    lines.append(
+        f"GrantContinuityRun: operation={grant_run.operation.operation_id} initial=unknown reconciled={grant_run.reconciled_outcome.decision_artifact_id} visible={grant_run.visible_state}",
+    )
+    return _join(lines, "\n\n")
+
+
+def _observation(artifact: ArtifactRevision, interaction: str, observed_at: str, freshness: str) -> ArtifactObservation:
+    """Construct one deterministic artifact observation for a scenario replay."""
+    return ArtifactObservation(artifact=artifact, interaction=interaction, observed_at=observed_at, freshness=freshness)
+
+
+def _join(values: list[str], separator: str) -> str:
+    """Join strings in stable source order for inspection output."""
+    mut output = ""
+    for index in range(0, len(values)):
+        if index > 0:
+            output = output + separator
+        output = output + values[index]
+    return output

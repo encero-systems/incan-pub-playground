@@ -1,0 +1,241 @@
+"""Declared server surfaces and browser component bindings for Incan-authored products.
+
+The target implements transport and input mechanics. Routes, state defaults, gestures,
+selection updates and presentation parameters are authored here, never in consumer JavaScript.
+"""
+from std.json import JsonValue
+from document.tree import DocumentNode, validate_tree, render_tree
+from targets.web import escape
+from targets.document_runtime import document_runtime, graph_runtime
+
+
+pub model ViewField:
+    """A local projection field with an authored default and optional URL-fragment initialization."""
+    pub name: str
+    pub initial: str = ""
+    pub hash_key: str = ""
+
+
+pub model ViewEdit:
+    """An atomic field update from a literal, element attribute, input value or prior state."""
+    pub field: str
+    pub source: str = "literal"
+    pub value: str = ""
+    pub toggle: bool = false
+    pub toggle_scope: str = ""
+
+
+pub model ViewGesture:
+    """A delegated input binding. Every edit reads the same pre-gesture state."""
+    pub selector: str
+    pub event: str = "click"
+    pub edits: list[ViewEdit] = []
+    pub refresh: bool = true
+    pub emit: str = ""
+    pub debounce_ms: int = 0
+    pub key: str = ""
+
+
+pub model RemoteView:
+    """Read-only server projection; domain decoding and rendering stay in its Incan endpoint."""
+    pub id: str
+    pub selector: str
+    pub endpoint: str
+    pub target: str = ""
+    pub fields: list[ViewField] = []
+    pub parameters: list[str] = []
+    pub gestures: list[ViewGesture] = []
+    pub listen: str = ""
+    pub storage: str = ""
+    pub notice: str = ""
+    pub interval_ms: int = 0
+
+
+pub model SplitPane:
+    """Two resizable/collapsible regions; percentages are projection state, not domain facts."""
+    pub view: str
+    pub selector: str
+    pub separator: str
+    pub collapse_attribute: str
+    pub first: str
+    pub second: str
+    pub initial: int = 50
+    pub prefix: str = ""
+    pub first_min: int = 100
+    pub second_min: int = 150
+    pub collapsed_first: int = 42
+    pub first_content: str = ""
+    pub second_content: str = ""
+    pub storage: str = ""
+
+
+pub model GraphView:
+    """Measured hierarchical graph mechanism over an Incan-authored plan and selection bindings."""
+    pub data_id: str
+    pub status: str
+    pub selection_event: str
+    pub inspect_event: str
+    pub toggle_selection: bool = true
+    pub clear_canvas: bool = true
+    pub node_width: int = 180
+    pub node_height: int = 54
+    pub group_padding: int = 18
+    pub group_header: int = 28
+    pub group_min_width: int = 248
+    pub command_run_argument: str = "run"
+    pub command_delay_ms: int = 1200
+    pub startup_timeout_ms: int = 15000
+    pub settle_delay_ms: int = 1500
+    pub running_states: list[str] = []
+    pub unavailable_states: list[str] = []
+
+
+pub model CommandInput:
+    """One adapter argument from a literal, form value, clicked attribute or projection field."""
+    pub name: str
+    pub source: str = "literal"
+    pub value: str = ""
+
+
+pub model ViewCommand:
+    """Explicit mutating adapter port. Read-only fragment refreshes cannot invoke commands."""
+    pub selector: str
+    pub endpoint: str
+    pub inputs: list[CommandInput] = []
+    pub output: str = ""
+    pub completed_event: str = ""
+    pub reload: bool = false
+
+
+pub model DetailDock:
+    """A permanently present inspector with an independently adjustable width."""
+    pub selector: str
+    pub handle: str
+    pub toggle: str
+    pub initial: int = 352
+    pub storage: str = ""
+
+
+pub model DocumentPage:
+    """Structured page and declared component mechanisms; no consumer script parameter."""
+    pub title: str
+    pub body: DocumentNode
+    pub stylesheet: str = ""
+    pub data: Dict[str, str] = {}
+    pub views: list[RemoteView] = []
+    pub panes: list[SplitPane] = []
+    pub graphs: list[GraphView] = []
+    pub commands: list[ViewCommand] = []
+    pub docks: list[DetailDock] = []
+
+
+def edit_json(edit: ViewEdit) -> JsonValue:
+    return JsonValue.object({"field": JsonValue.str(edit.field), "source": JsonValue.str(edit.source), "value": JsonValue.str(edit.value), "toggle": JsonValue.bool(edit.toggle), "toggleScope": JsonValue.str(edit.toggle_scope)})
+
+
+pub def document_plan(page: DocumentPage) -> str:
+    """Serialize only declared state and bindings. The runtime accepts no executable expressions."""
+    mut views: list[JsonValue] = []
+    for view in page.views:
+        fields = [JsonValue.object({"name": JsonValue.str(field.name), "initial": JsonValue.str(field.initial), "hash": JsonValue.str(field.hash_key)}) for field in view.fields]
+        mut gestures: list[JsonValue] = []
+        for gesture in view.gestures:
+            gestures.append(JsonValue.object({"selector": JsonValue.str(gesture.selector), "event": JsonValue.str(gesture.event), "edits": JsonValue.array([edit_json(edit) for edit in gesture.edits]), "refresh": JsonValue.bool(gesture.refresh), "emit": JsonValue.str(gesture.emit), "debounce": JsonValue.int(gesture.debounce_ms), "key": JsonValue.str(gesture.key)}))
+        views.append(JsonValue.object({"id": JsonValue.str(view.id), "selector": JsonValue.str(view.selector), "target": JsonValue.str(view.target), "endpoint": JsonValue.str(view.endpoint), "fields": JsonValue.array(fields), "parameters": JsonValue.array([JsonValue.str(key) for key in view.parameters]), "gestures": JsonValue.array(gestures), "listen": JsonValue.str(view.listen), "storage": JsonValue.str(view.storage), "notice": JsonValue.str(view.notice), "interval": JsonValue.int(view.interval_ms)}))
+    mut panes: list[JsonValue] = []
+    for pane in page.panes:
+        panes.append(JsonValue.object({"view": JsonValue.str(pane.view), "selector": JsonValue.str(pane.selector), "separator": JsonValue.str(pane.separator), "attribute": JsonValue.str(pane.collapse_attribute), "first": JsonValue.str(pane.first), "second": JsonValue.str(pane.second), "initial": JsonValue.int(pane.initial), "prefix": JsonValue.str(pane.prefix), "firstMin": JsonValue.int(pane.first_min), "secondMin": JsonValue.int(pane.second_min), "collapsedFirst": JsonValue.int(pane.collapsed_first), "firstContent": JsonValue.str(pane.first_content), "secondContent": JsonValue.str(pane.second_content), "storage": JsonValue.str(pane.storage)}))
+    graphs = [JsonValue.object({"dataId": JsonValue.str(graph.data_id), "status": JsonValue.str(graph.status), "selectionEvent": JsonValue.str(graph.selection_event), "inspectEvent": JsonValue.str(graph.inspect_event), "toggleSelection": JsonValue.bool(graph.toggle_selection), "clearCanvas": JsonValue.bool(graph.clear_canvas), "nodeWidth": JsonValue.int(graph.node_width), "nodeHeight": JsonValue.int(graph.node_height), "groupPadding": JsonValue.int(graph.group_padding), "groupHeader": JsonValue.int(graph.group_header), "groupMinWidth": JsonValue.int(graph.group_min_width), "commandRunArgument": JsonValue.str(graph.command_run_argument), "commandDelay": JsonValue.int(graph.command_delay_ms), "startupTimeout": JsonValue.int(graph.startup_timeout_ms), "settleDelay": JsonValue.int(graph.settle_delay_ms), "runningStates": JsonValue.array([JsonValue.str(value) for value in graph.running_states]), "unavailableStates": JsonValue.array([JsonValue.str(value) for value in graph.unavailable_states])}) for graph in page.graphs]
+    commands = [JsonValue.object({"selector": JsonValue.str(command.selector), "endpoint": JsonValue.str(command.endpoint), "inputs": JsonValue.array([JsonValue.object({"name": JsonValue.str(input.name), "source": JsonValue.str(input.source), "value": JsonValue.str(input.value)}) for input in command.inputs]), "output": JsonValue.str(command.output), "completedEvent": JsonValue.str(command.completed_event), "reload": JsonValue.bool(command.reload)}) for command in page.commands]
+    docks = [JsonValue.object({"selector": JsonValue.str(dock.selector), "handle": JsonValue.str(dock.handle), "toggle": JsonValue.str(dock.toggle), "initial": JsonValue.int(dock.initial), "storage": JsonValue.str(dock.storage)}) for dock in page.docks]
+    document = JsonValue.object({"schema": JsonValue.str("pallay.document-plan.v1"), "views": JsonValue.array(views), "panes": JsonValue.array(panes), "graphs": JsonValue.array(graphs), "commands": JsonValue.array(commands), "docks": JsonValue.array(docks)})
+    match document.to_json():
+        Ok(encoded) => return encoded
+        Err(error) =>
+            assert false, error.message()
+            return ""
+
+
+def local_endpoint(value: str) -> bool:
+    return value.startswith("/api/") and not value.contains("?") and not value.contains("#") and not value.contains("\\") and not value.contains("\n")
+
+
+pub def validate_document(page: DocumentPage) -> list[str]:
+    """Reject incomplete bindings and executable author markup before publishing a page."""
+    mut errors = validate_tree(page.body, page.title)
+    mut ids: list[str] = []
+    for view in page.views:
+        if view.id == "" or view.id in ids:
+            errors.append("Remote view identity must be unique: " + view.id)
+        ids.append(view.id)
+        if not local_endpoint(view.endpoint) or view.selector == "":
+            errors.append("Remote view requires a local endpoint and root: " + view.id)
+        mut fields: list[str] = []
+        for field in view.fields:
+            if field.name in fields or field.name in ["__proto__", "constructor", "prototype"]:
+                errors.append("Invalid or duplicate view field: " + field.name)
+            fields.append(field.name)
+        for key in view.parameters:
+            if key not in fields:
+                errors.append("Undeclared request field: " + key)
+        for gesture in view.gestures:
+            if gesture.event not in ["click", "input", "change", "keydown"] or gesture.selector == "" or gesture.debounce_ms < 0 or (gesture.event == "keydown" and gesture.key == ""):
+                errors.append("Invalid input binding: " + view.id)
+            for edit in gesture.edits:
+                if edit.field not in fields or edit.source not in ["literal", "attribute", "value", "state"]:
+                    errors.append("Invalid field update: " + edit.field)
+                if edit.source == "state" and edit.value not in fields:
+                    errors.append("Undeclared state source: " + edit.value)
+                if edit.toggle_scope != "" and edit.toggle_scope not in fields:
+                    errors.append("Undeclared toggle scope: " + edit.toggle_scope)
+    for pane in page.panes:
+        if pane.view not in ids or pane.initial < 20 or pane.initial > 80 or pane.first == pane.second:
+            errors.append("Invalid split pane binding: " + pane.view)
+    if len(page.graphs) > 1:
+        errors.append("This browser profile supports one interactive graph per document")
+    for graph in page.graphs:
+        if graph.data_id not in page.data or not local_endpoint(graph.status) or graph.selection_event == "" or graph.inspect_event == "":
+            errors.append("Graph requires data, a status port and selection bindings")
+        if graph.node_width < 80 or graph.node_height < 24 or graph.group_padding < 8 or graph.group_header < 20 or graph.group_min_width < graph.node_width:
+            errors.append("Graph layout cannot preserve readable nodes and group headings")
+        if graph.command_delay_ms < 0 or graph.startup_timeout_ms < graph.command_delay_ms or graph.settle_delay_ms < 0:
+            errors.append("Invalid graph observation timing")
+    for command in page.commands:
+        if not local_endpoint(command.endpoint) or command.selector == "":
+            errors.append("Command requires local endpoint and activation binding")
+        for input in command.inputs:
+            if input.source not in ["literal", "form", "json-form", "attribute", "view"]:
+                errors.append("Unsupported command input: " + input.name)
+            if input.source == "view":
+                path = input.value.split(".")
+                if len(path) != 2 or path[0] not in ids:
+                    errors.append("Command references undeclared view: " + input.value)
+                else:
+                    for view in page.views:
+                        if view.id == path[0] and path[1] not in [field.name for field in view.fields]:
+                            errors.append("Command references undeclared field: " + input.value)
+    for dock in page.docks:
+        if dock.selector == "" or dock.handle == "" or dock.toggle == "" or dock.initial < 290:
+            errors.append("Invalid detail dock binding")
+    if page.stylesheet.lower().contains("</style"):
+        errors.append("Stylesheet cannot terminate its resource element")
+    for key in page.data.keys():
+        match JsonValue.parse(page.data[key]):
+            Err(_) => errors.append("Invalid JSON resource: " + key)
+            Ok(_) => pass
+    return errors
+
+
+pub def lower_document(page: DocumentPage) -> Result[str, str]:
+    """Lower a validated Incan document and component plan to a self-contained browser page."""
+    errors = validate_document(page)
+    if len(errors) > 0:
+        return Err("\n".join(errors))
+    mut resources = ""
+    for key in sorted([str(key) for key in page.data.keys()]):
+        resources += '<script type="application/json" id="' + escape(key) + '">' + page.data[key].replace("<", "\\u003c") + '</script>'
+    resources += '<script type="application/json" id="pallay-document-plan">' + document_plan(page).replace("<", "\\u003c") + '</script>'
+    mut runtime = document_runtime()
+    if len(page.graphs) > 0:
+        runtime += graph_runtime()
+    return Ok('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="generator" content="Pallay · Incan"><title>' + escape(page.title) + '</title><style>' + page.stylesheet + '</style></head><body>' + render_tree(page.body) + resources + '<script>' + runtime + '</script></body></html>')

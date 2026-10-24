@@ -1,0 +1,192 @@
+"""Structured document composition for migration of existing Incan-authored templates.
+
+Templates are parsed to nodes before lowering. Executable author markup is forbidden;
+interactive mechanisms must come from declared, registered Pallay components.
+"""
+from targets.web import escape
+
+
+pub model DocumentNode:
+    """One semantic HTML/SVG node with text, attributes and structured children."""
+    pub tag: str
+    pub text: str = ""
+    pub attributes: Dict[str, str] = {}
+    pub children: list[DocumentNode] = []
+
+
+model ParsedAttributes:
+    attributes: Dict[str, str]
+    end: int
+    closed: bool
+
+
+pub def element(tag: str, attributes: Dict[str, str], children: list[DocumentNode]) -> DocumentNode:
+    """Construct a reusable component directly in Incan; validation runs at document lowering."""
+    return DocumentNode(tag=tag, attributes=attributes, children=children)
+
+
+pub def content(value: str) -> DocumentNode:
+    """Construct text whose HTML representation is always escaped."""
+    return DocumentNode(tag="", text=value)
+
+
+def decode(value: str) -> str:
+    return value.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&#39;", "'").replace("&#x27;", "'").replace("&nbsp;", "\u00a0").replace("&amp;", "&")
+
+
+def whitespace(value: str) -> bool:
+    return value == " " or value == "\n" or value == "\r" or value == "\t"
+
+
+def void_tag(tag: str) -> bool:
+    return tag in ["input", "img", "br", "hr", "meta", "link", "col", "wbr", "source"]
+
+
+def allowed_tag(tag: str) -> bool:
+    return tag in ["blockquote", "del", "sup", "sub", "picture", "source", "div", "section", "article", "header", "footer", "main", "aside", "nav", "h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "strong", "b", "em", "i", "small", "code", "pre", "button", "input", "select", "option", "optgroup", "textarea", "label", "form", "fieldset", "legend", "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption", "colgroup", "col", "ul", "ol", "li", "dl", "dt", "dd", "a", "img", "br", "hr", "time", "details", "summary", "dialog", "progress", "output", "svg", "g", "defs", "marker", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "title", "desc", "clipPath", "linearGradient", "stop", "wbr"]
+
+
+model TemplateParser:
+    source: list[str]
+    origin: str
+    index: int = 0
+
+    def segment(self, start: int, end: int) -> str:
+        return "".join(self.source[start:end])
+
+    def attributes(mut self) -> Result[ParsedAttributes, str]:
+        mut attributes: Dict[str, str] = {}
+        while self.index < len(self.source):
+            while self.index < len(self.source) and whitespace(self.source[self.index]):
+                self.index += 1
+            if self.index >= len(self.source):
+                return Err(self.origin + ": unterminated element")
+            if self.segment(self.index, self.index+2) == "/>":
+                self.index += 2
+                return Ok(ParsedAttributes(attributes=attributes, end=self.index, closed=true))
+            if self.source[self.index] == ">":
+                self.index += 1
+                return Ok(ParsedAttributes(attributes=attributes, end=self.index, closed=false))
+            beginning = self.index
+            while self.index < len(self.source) and not whitespace(self.source[self.index]) and self.source[self.index] != "=" and self.source[self.index] != ">" and self.source[self.index] != "/":
+                self.index += 1
+            name = self.segment(beginning, self.index)
+            if name == "" or name in attributes:
+                return Err(self.origin + ": duplicate or invalid attribute at " + str(self.index))
+            while self.index < len(self.source) and whitespace(self.source[self.index]):
+                self.index += 1
+            mut value = ""
+            if self.index < len(self.source) and self.source[self.index] == "=":
+                self.index += 1
+                while self.index < len(self.source) and whitespace(self.source[self.index]):
+                    self.index += 1
+                if self.index >= len(self.source) or (self.source[self.index] != "\"" and self.source[self.index] != "'"):
+                    return Err(self.origin + ": attribute values must be quoted: " + name)
+                quote = self.source[self.index]
+                self.index += 1
+                at = self.index
+                while self.index < len(self.source) and self.source[self.index] != quote:
+                    self.index += 1
+                if self.index >= len(self.source):
+                    return Err(self.origin + ": unterminated attribute: " + name)
+                value = decode(self.segment(at, self.index))
+                self.index += 1
+            attributes[name] = value
+        return Err(self.origin + ": unterminated attributes")
+
+    def node(mut self) -> Result[DocumentNode, str]:
+        start = self.index
+        if self.source[self.index] != "<":
+            while self.index < len(self.source) and self.source[self.index] != "<":
+                self.index += 1
+            return Ok(content(decode(self.segment(start, self.index))))
+        self.index += 1
+        at = self.index
+        while self.index < len(self.source) and not whitespace(self.source[self.index]) and self.source[self.index] != ">" and self.source[self.index] != "/":
+            self.index += 1
+        tag = self.segment(at, self.index)
+        if not allowed_tag(tag):
+            return Err(self.origin + ": unsupported or executable element: " + tag)
+        parsed = self.attributes()?
+        mut node = DocumentNode(tag=tag, attributes=parsed.attributes)
+        if parsed.closed or void_tag(tag):
+            return Ok(node)
+        while self.index < len(self.source):
+            if self.segment(self.index, self.index+2) == "</":
+                mut end = self.index + 2
+                while end < len(self.source) and self.source[end] != ">":
+                    end += 1
+                if end >= len(self.source) or self.segment(self.index+2, end).strip() != tag:
+                    return Err(self.origin + ": mismatched closing element for " + tag + " at " + str(self.index))
+                if len(node.children) == 1 and node.children[0].tag == "":
+                    node.text = node.children[0].text
+                    node.children = []
+                self.index = end + 1
+                return Ok(node)
+            child = self.node()?
+            node.children.append(child)
+        return Err(self.origin + ": missing closing element: " + tag)
+
+
+pub def validate_tree(node: DocumentNode, origin: str) -> list[str]:
+    """Reject executable attributes and untrusted URL/CSS mechanisms before output."""
+    mut errors: list[str] = []
+    if node.tag != "" and not allowed_tag(node.tag):
+        errors.append(origin + ": unsupported element: " + node.tag)
+    for key in node.attributes.keys():
+        name = key.lower()
+        value = node.attributes[key].strip()
+        lowered = value.lower()
+        if name.startswith("on") or name == "srcdoc" or name == "is":
+            errors.append(origin + ": executable attribute: " + key)
+        if name == "href" or name == "src" or name == "action" or name == "xlink:href":
+            if lowered.startswith("javascript:") or lowered.startswith("vbscript:") or lowered.startswith("file:") or lowered.startswith("//") or lowered.contains("\n") or lowered.contains("\r") or lowered.contains("\t"):
+                errors.append(origin + ": forbidden URL: " + key)
+            if lowered.startswith("data:") and not (node.tag == "img" and lowered.startswith("data:image/")):
+                errors.append(origin + ": forbidden inline resource")
+        if name == "style" and (lowered.contains("url(") or lowered.contains("expression") or lowered.contains("@import") or lowered.contains("javascript")):
+            errors.append(origin + ": executable or external inline style")
+        for character in key:
+            if character in ["<", ">", "\"", "'", "=", " ", "\n", "\t"]:
+                errors.append(origin + ": invalid attribute name")
+    for child in node.children:
+        for error in validate_tree(child, origin):
+            errors.append(error)
+    return errors
+
+
+pub def parse_template(source: str, origin: str) -> Result[DocumentNode, str]:
+    """Compile an existing Incan-authored template into structured nodes, never an opaque HTML slot.
+
+    Scripts/styles belong to declared resources/components and cannot enter this parser.
+    Dynamic application values must enter through escaped text/attributes or typed nodes.
+    """
+    mut root = DocumentNode(tag="")
+    mut characters: list[str] = []
+    for character in source:
+        characters.append(character)
+    mut parser = TemplateParser(source=characters, origin=origin)
+    while parser.index < len(parser.source):
+        root.children.append(parser.node()?)
+    errors = validate_tree(root, origin)
+    if len(errors) > 0:
+        return Err("\n".join(errors))
+    return Ok(root)
+
+
+pub def render_tree(node: DocumentNode) -> str:
+    """Serialize the validated structure with canonical escaping and no executable markup."""
+    mut body = escape(node.text)
+    for child in node.children:
+        body += render_tree(child)
+    if node.tag == "":
+        return body
+    mut attrs = ""
+    for key in sorted([str(key) for key in node.attributes.keys()]):
+        if key in ["hidden", "disabled", "checked", "selected", "multiple", "required", "open", "autofocus", "readonly"]:
+            attrs += " " + key
+        else:
+            attrs += " " + key + '="' + escape(node.attributes[key]) + '"'
+    if void_tag(node.tag):
+        return "<" + node.tag + attrs + ">"
+    return "<" + node.tag + attrs + ">" + body + "</" + node.tag + ">"

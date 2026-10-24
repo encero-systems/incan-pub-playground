@@ -1,0 +1,340 @@
+"""HTML/CSS/module lowering from validated Incan models, without authored app JavaScript."""
+
+from std.json import JsonValue
+from core.surface import GeneratedFile
+from core.experience_contract import ProjectionTarget, ExecutionPlacement
+from weave.contracts import (
+    Value,
+    ValueKind,
+    Expression,
+    ExpressionKind,
+    SurfaceNode,
+    NodeKind,
+    Experience,
+    TraceCommand,
+    PresentationKind,
+    EventKind,
+    kind_name,
+    presentation_name,
+    event_name,
+)
+from weave.compiler import validate, evaluate, initial_state, reduce
+from targets.browser_runtime import browser_runtime
+
+
+pub model WebOutput:
+    """Target output is absent on validation failure; diagnostics explain semantic loss."""
+
+    pub valid: bool
+    pub diagnostics: list[str]
+    pub files: list[GeneratedFile]
+
+
+pub def quote(value: str) -> str:
+    """Serialize a string through the stdlib, including controls and script delimiters."""
+    match JsonValue.string(value).to_json():
+        Ok(encoded) =>
+            return encoded
+                .replace("<", "\\u003c")
+                .replace(">", "\\u003e")
+                .replace("&", "\\u0026")
+                .replace("\\u2028", "\\u2028")
+                .replace("\\u2029", "\\u2029")
+        Err(error) =>
+            assert false, error.message()
+            return ""
+
+
+pub def escape(value: str) -> str:
+    """Escape text and quoted HTML attributes; raw HTML is not an authoring primitive."""
+    return value
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
+        .replace("'", "&#39;")
+
+
+def value_json(value: Value) -> str:
+    match value.kind:
+        ValueKind.Empty => return "null"
+        ValueKind.Text => return quote(value.text_value)
+        ValueKind.Number => return str(value.number_value)
+        ValueKind.Flag =>
+            if value.flag_value:
+                return "true"
+            return "false"
+
+
+def expression_json(expr: Expression) -> str:
+    mut arguments: list[str] = []
+    for argument in expr.arguments:
+        arguments.append(expression_json(argument))
+    mut entries: list[str] = []
+    for key in sorted([str(key) for key in expr.cases.keys()]):
+        value = expr.cases[key]
+        entries.append(quote(key) + ":" + value_json(value))
+    return "{\"op\":" + quote(expression_name(expr.kind)) + ",\"name\":" + quote(expr.name) + ",\"value\":" + value_json(
+        expr.value,
+    ) + ",\"args\":[" + ",".join(arguments) + "],\"cases\":{" + ",".join(entries) + "}}"
+
+
+def expression_name(kind: ExpressionKind) -> str:
+    match kind:
+        ExpressionKind.Literal => return "literal"
+        ExpressionKind.State => return "state"
+        ExpressionKind.Payload => return "payload"
+        ExpressionKind.Equal => return "equal"
+        ExpressionKind.Choose => return "choose"
+        ExpressionKind.Not => return "not"
+        ExpressionKind.Add => return "add"
+        ExpressionKind.Concat => return "concat"
+        ExpressionKind.Lookup => return "lookup"
+
+
+pub def plan_json(app: Experience) -> str:
+    """Emit a target plan with semantic trace identities and typed executable bindings."""
+    mut fields: list[str] = []
+    for field in app.fields:
+        fields.append(
+            "{\"name\":" + quote(field.name) + ",\"kind\":" + quote(kind_name(field.kind)) + ",\"initial\":" + value_json(
+                field.initial,
+            ) + "}",
+        )
+    mut transitions: list[str] = []
+    for transition in app.transitions:
+        mut mutations: list[str] = []
+        for mutation in transition.mutations:
+            mutations.append(
+                "{\"state\":" + quote(mutation.state) + ",\"value\":" + expression_json(mutation.value) + "}",
+            )
+        transitions.append(
+            "{\"name\":" + quote(transition.name) + ",\"payloadKind\":" + quote(kind_name(transition.payload_kind)) + ",\"mutations\":[" + ",".join(
+                mutations,
+            ) + "]}",
+        )
+    mut presentations: list[str] = []
+    for binding in app.presentations:
+        presentations.append(
+            "{\"node\":" + quote(binding.node) + ",\"kind\":" + quote(presentation_name(binding.kind)) + ",\"value\":" + expression_json(
+                binding.value,
+            ) + "}",
+        )
+    mut events: list[str] = []
+    for binding in app.events:
+        events.append(
+            "{\"node\":" + quote(binding.node) + ",\"event\":" + quote(event_name(binding.event)) + ",\"transition\":" + quote(
+                binding.transition,
+            ) + ",\"value\":" + expression_json(binding.value) + "}",
+        )
+    return "{\"schema\":\"pallay.browser-plan.v1\",\"name\":" + quote(app.name) + ",\"semanticContract\":" + quote(
+        app.semantics.name,
+    ) + ",\"state\":[" + ",".join(fields) + "],\"transitions\":[" + ",".join(transitions) + "],\"presentations\":[" + ",".join(
+        presentations,
+    ) + "],\"events\":[" + ",".join(events) + "]}"
+
+
+def tag(kind: NodeKind) -> str:
+    match kind:
+        NodeKind.Group => return "div"
+        NodeKind.Heading => return "h2"
+        NodeKind.Text => return "span"
+        NodeKind.Paragraph => return "p"
+        NodeKind.Button => return "button"
+        NodeKind.Select => return "select"
+        NodeKind.Option => return "option"
+        NodeKind.Input => return "input"
+        NodeKind.Table => return "table"
+        NodeKind.Head => return "thead"
+        NodeKind.Body => return "tbody"
+        NodeKind.Row => return "tr"
+        NodeKind.HeaderCell => return "th"
+        NodeKind.Cell => return "td"
+        NodeKind.Code => return "pre"
+        NodeKind.Details => return "details"
+        NodeKind.Summary => return "summary"
+        NodeKind.Link => return "a"
+        NodeKind.Graph => return "svg"
+        NodeKind.GraphGroup => return "g"
+        NodeKind.Path => return "path"
+        NodeKind.Rectangle => return "rect"
+        NodeKind.GraphText => return "text"
+        NodeKind.Title => return "title"
+
+
+def allowed_attribute(name: str) -> bool:
+    # Deliberately closed: no event handlers, style strings, srcdoc or script URLs.
+    return name in ["value", "type", "placeholder", "title", "role", "scope", "colspan", "rowspan", "viewBox", "x", "y", "x1", "y1", "x2", "y2", "width", "height", "d", "rx", "ry", "fill", "stroke", "stroke-width", "transform", "href"]
+
+
+def render_node(node: SurfaceNode, app: Experience) -> str:
+    name = tag(node.kind)
+    mut content = node.content
+    mut appearance = node.appearance
+    mut hidden = false
+    mut disabled = false
+    mut value_attribute = ""
+    mut expanded_attribute = ""
+    values = initial_state(app)
+    for binding in app.presentations:
+        if binding.node == node.id:
+            match evaluate(binding.value, values, Value()):
+                Err(error) =>
+                    assert false, error
+                Ok(value) =>
+                    match binding.kind:
+                        PresentationKind.Content =>
+                            content = value.text_value
+                        PresentationKind.Visible =>
+                            hidden = not value.flag_value
+                        PresentationKind.Appearance =>
+                            appearance = value.text_value
+                        PresentationKind.Disabled =>
+                            disabled = value.flag_value
+                        PresentationKind.Value =>
+                            value_attribute = value.text_value
+                        PresentationKind.Expanded =>
+                            expanded_attribute = " aria-expanded=\"" + value_json(value) + "\""
+    mut attrs = " id=\"" + escape(node.id) + "\" data-pallay-node=\"" + escape(node.id) + "\""
+    if appearance != "":
+        attrs += " class=\"" + escape(appearance) + "\""
+    if node.label != "":
+        attrs += " aria-label=\"" + escape(node.label) + "\""
+    if hidden:
+        attrs += " hidden"
+    if disabled:
+        attrs += " disabled"
+    attrs += expanded_attribute
+    if node.kind == NodeKind.Button:
+        attrs += " type=\"button\""
+    for key in sorted([str(key) for key in node.attributes.keys()]):
+        value = node.attributes[key]
+        attrs += " " + key + "=\"" + escape(value) + "\""
+    if node.kind == NodeKind.Input and value_attribute != "":
+        attrs += " value=\"" + escape(value_attribute) + "\""
+    if node.kind == NodeKind.Input:
+        return "<" + name + attrs + ">"
+    mut body = escape(content)
+    for child in node.children:
+        mut child_html = render_node(child, app)
+        if node.kind == NodeKind.Select:
+            if "value" in child.attributes:
+                if child.attributes["value"] == value_attribute:
+                    child_html = child_html.replace("<option ", "<option selected ")
+        body += child_html
+    return "<" + name + attrs + ">" + body + "</" + name + ">"
+
+
+def attribute_diagnostics(node: SurfaceNode, inside_control: bool = false) -> list[str]:
+    mut errors: list[str] = []
+    control = node.kind == NodeKind.Button or node.kind == NodeKind.Select or node.kind == NodeKind.Input or node.kind == NodeKind.Link
+    if inside_control and control:
+        errors.append("PLY-H005: Nested interactive controls cannot preserve browser semantics")
+    if node.kind == NodeKind.Input and (node.content != "" or len(node.children) > 0):
+        errors.append("PLY-H006: Input cannot contain child content")
+    for key in sorted([str(key) for key in node.attributes.keys()]):
+        value = node.attributes[key]
+        if not allowed_attribute(key):
+            errors.append("PLY-H001: Unsupported attribute: " + key)
+        if key == "href" and not (value.starts_with("#") or value.starts_with("https://")):
+            errors.append("PLY-H002: Links require an https URL or local fragment")
+        if key == "type" and value != "text" and value != "button":
+            errors.append("PLY-H003: Unsupported control type")
+        if key == "fill" and value.contains("url("):
+            errors.append("PLY-H004: External SVG paints are unsupported")
+    for child in node.children:
+        if node.kind == NodeKind.Table and child.kind != NodeKind.Head and child.kind != NodeKind.Body:
+            errors.append("PLY-H007: Invalid table composition: table requires head/body groups")
+        if (node.kind == NodeKind.Head or node.kind == NodeKind.Body) and child.kind != NodeKind.Row:
+            errors.append("PLY-H007: Invalid table composition: head/body requires rows")
+        if node.kind == NodeKind.Row and child.kind != NodeKind.HeaderCell and child.kind != NodeKind.Cell:
+            errors.append("PLY-H007: Invalid table composition: row requires cells")
+        if node.kind == NodeKind.Select and child.kind != NodeKind.Option:
+            errors.append("PLY-H008: Select requires option children")
+        if child.kind == NodeKind.Option and node.kind != NodeKind.Select:
+            errors.append("PLY-H008: Option requires a select parent")
+        if (child.kind == NodeKind.Head or child.kind == NodeKind.Body) and node.kind != NodeKind.Table:
+            errors.append("PLY-H007: Invalid table composition: head/body requires table parent")
+        if child.kind == NodeKind.Row and node.kind != NodeKind.Head and node.kind != NodeKind.Body:
+            errors.append("PLY-H007: Invalid table composition: row requires head/body parent")
+        if (child.kind == NodeKind.Cell or child.kind == NodeKind.HeaderCell) and node.kind != NodeKind.Row:
+            errors.append("PLY-H007: Invalid table composition: cell requires row parent")
+        for error in attribute_diagnostics(child, inside_control or control):
+            errors.append(error)
+    return errors
+
+
+pub def lower_web(app: Experience, interactive: bool) -> WebOutput:
+    """Validate target preservation, then emit HTML, plan, optional runtime and stylesheet."""
+    mut errors: list[str] = []
+    if not interactive and (len(app.events) > 0 or len(app.transitions) > 0):
+        errors.append(
+            "PLY-T001: static target cannot preserve interactive intent; choose browser or author a static variant",
+        )
+    mut target_found = false
+    for target in app.semantics.targets:
+        if (interactive and target.target == ProjectionTarget.Browser) or (
+            not interactive
+            and target.target == ProjectionTarget.Documentation
+        ):
+            target_found = true
+            if interactive and target.experience_placement != ExecutionPlacement.Client:
+                errors.append("PLY-T004: Browser projection requires client placement")
+    if not target_found:
+        errors.append("PLY-T002: No declared compatible target")
+    for error in validate(app):
+        errors.append(error)
+    for error in attribute_diagnostics(app.root):
+        errors.append(error)
+    if len(errors) > 0:
+        return WebOutput(valid=false, diagnostics=errors, files=[])
+    for binding in app.presentations:
+        match evaluate(binding.value, initial_state(app), Value()):
+            Err(error) => errors.append("PLY-T003: Initial presentation cannot be evaluated: " + error)
+            Ok(_) => pass
+    if len(errors) > 0:
+        return WebOutput(valid=false, diagnostics=errors, files=[])
+    mut script = ""
+    if interactive:
+        script = str("<script type=\"module\" src=\"./app.mjs\"></script>")
+    html = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>" + escape(
+        app.title,
+    ) + "</title><link rel=\"stylesheet\" href=\"./style.css\"></head><body data-pallay-experience=\"" + escape(app.name) + "\">" + render_node(
+        app.root,
+        app,
+    ) + script + "</body></html>"
+    plan = plan_json(app)
+    mut files = [GeneratedFile(path="index.html", content=html), GeneratedFile(path="plan.json", content=plan), GeneratedFile(
+        path="style.css",
+        content="[hidden]{display:none!important}button,select,input{font:inherit}button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #3378a2;outline-offset:3px}" + app.stylesheet,
+    )]
+    if interactive:
+        files.append(GeneratedFile(path="runtime.mjs", content=browser_runtime()))
+        files.append(
+            GeneratedFile(
+                path="app.mjs",
+                content="import {mount} from \"./runtime.mjs\";\nexport const plan=" + plan + ";\nmount(plan,document);\n",
+            ),
+        )
+    return WebOutput(valid=true, diagnostics=[], files=files)
+
+
+pub def reference_trace(app: Experience, commands: list[TraceCommand]) -> str:
+    """Emit expected transition results from the Incan reducer for cross-target conformance."""
+    mut current = initial_state(app)
+    mut steps: list[str] = []
+    for command in commands:
+        result = reduce(app, current, command.transition, command.value)
+        mut values: list[str] = []
+        for key in sorted([str(key) for key in result.state.keys()]):
+            values.append(quote(key) + ":" + value_json(result.state[key]))
+        mut applied = "false"
+        if result.applied:
+            applied = str("true")
+        steps.append(
+            "{\"transition\":" + quote(command.transition) + ",\"payload\":" + value_json(command.value) + ",\"applied\":" + applied + ",\"state\":{" + ",".join(
+                values,
+            ) + "}}",
+        )
+        current = result.state
+    return "{\"schema\":\"pallay.reference-trace.v1\",\"steps\":[" + ",".join(steps) + "]}"
