@@ -100,3 +100,9 @@ Use the new navigation without coaching. Record the chosen route and whether the
 - Distinguish a shipped feature from an accepted RFC and a future roadmap item.
 
 No reader-study outcome is claimed by build or link checks.
+
+## Module lookup and visible document types
+
+Standard library now opens an alphabetical index of the 26 modules with dedicated module reference pages in this snapshot. Each module has a local overview with separate How-to, Tutorial, Explanation and Reference sections. The index also links directly to each complete reference; `std.datetime` uses the full imported reference, not the authored Date-only sample. Unimported reference links are marked as current-docsite links. This index is a documentation inventory, not a claim to enumerate every source submodule.
+
+Every content-map entry now has `doc_type` alongside its existing editorial role. Content pages use Tutorial, How-to, Reference or Explanation. Navigation hubs use Overview and shared authoring inputs use Supporting material. Design records retain their record role and lifecycle; a type label does not imply shipped behavior. The imported/reference page bodies remain unchanged. Authored preview pages have explicit type assignments in the renderer.

@@ -1,0 +1,306 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="generator" content="Incan · Pallay · markdown-rs 1.0.0"><meta name="theme-color" content="#080c0a"><title>std.datetime reference · Incan documentation</title><link rel="icon" href="../assets/incan-logo.png"><link rel="stylesheet" href="../assets/fonts/fonts.css"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"></head><body><div class="docs-page"><a class="docs-skip" href="#main">Skip to content</a><header class="site-header">
+    <div class="masthead wrap">
+      <a aria-label="Incan home" class="brand" href="../#welcome">
+        <img alt="Incan" class="brand-lockup" height="244" src="../assets/brand-source.png" width="759">
+      </a>
+      <a class="menu-toggle" href="#docs-navigation">Browse docs ↓</a>
+      <nav aria-label="Main navigation" id="site-nav">
+        <a href="nav-learn.html">Learn</a>
+        <a href="index.html">Docs</a>
+        <a href="nav-oven.html">Oven</a>
+        <a href="https://encero-systems.github.io/incan-pub-playground/">Incan.pub</a>
+        <a href="../#project">Project</a>
+      </nav>
+      <form action="https://incan.io/dev/" class="header-search" role="search">
+        <label class="sr-only" for="docs-query">Search Incan documentation</label>
+        <input autocomplete="off" id="docs-query" name="q" placeholder="Search docs…" type="search">
+        <button type="submit">Search</button>
+      </form>
+      <a class="release-status" href="https://incan.io/dev/roadmap/">Preview · 0.6</a>
+    </div>
+  </header><div class="docs-layout wrap"><aside class="docs-sidebar" id="docs-navigation"><a class="docs-overview" href="index.html">Documentation</a><details class="docs-browse" open><summary>Browse by topic</summary><nav aria-label="Documentation sections"><ul><li><a href="nav-learn.html">Learn</a></li><li><a href="nav-language.html">Language</a></li><li><a href="nav-library.html">Standard library</a><ul class="docs-topic-links"><li><a href="module-datetime.html">std.datetime</a></li><li><a href="module-datetime.html#how-to">How-to guides</a></li><li><a href="datetime-api.html">Reference</a></li><li><a href="configuration.html">Guide: read configuration</a></li><li><a aria-current="page" href="datetime-api.html">std.datetime reference</a></li></ul></li><li><a href="nav-oven.html">Oven &amp; tools</a></li><li><a href="nav-interop.html">Interoperability</a></li><li><a href="nav-contribute.html">Contribute</a></li><li><a href="nav-project.html">Project</a></li></ul></nav></details><a href="explore.html">Choose a learning route →</a><a class="docs-all" href="content-map.html">Content migration map</a></aside><main class="doc-article" id="main" tabindex="-1"><div class="doc-breadcrumb"><a href="index.html">Docs</a><a href="nav-library.html"> / Standard library</a><a href="module-datetime.html"> / std.datetime</a> / Reference</div><details class="docs-mobile-toc"><summary>On this page</summary><nav aria-label="On this page, compact"><a class="toc-h2" href="#importing">Importing</a><a class="toc-h2" href="#runtime-timing-values">Runtime timing values</a><a class="toc-h2" href="#civil-values">Civil values</a><a class="toc-h2" href="#format-directives">Format directives</a><a class="toc-h3" href="#date-directives">Date directives</a><a class="toc-h3" href="#time-directives">Time directives</a><a class="toc-h3" href="#offset-and-literal-directives">Offset and literal directives</a><a class="toc-h3" href="#compound-aliases">Compound aliases</a><a class="toc-h2" href="#fixed-offsets">Fixed offsets</a><a class="toc-h2" href="#intervals">Intervals</a><a class="toc-h2" href="#see-also">See also</a></nav></details><p class="doc-type-line"><span class="doc-type" data-doc-type="Reference">Reference</span></p><nav aria-label="std.datetime documentation" class="module-tabs"><a href="module-datetime.html">std.datetime · Overview</a><a href="module-datetime.html#how-to">How-to guides</a><a href="datetime-api.html">Reference</a></nav><h1 id="stddatetime-reference">std.datetime reference</h1>
+<p><code>std.datetime</code> provides temporal value types for runtime timing, civil dates and times, fixed UTC offsets, and interval arithmetic.</p>
+<p>For a guided walkthrough, see <a href="https://incan.io/dev/language/tutorials/dates_and_times/">Dates and times</a>. For recipes, see <a href="https://incan.io/dev/language/how-to/dates_and_times/">Dates and times</a>. For the mental model behind the runtime/civil split, see <a href="https://incan.io/dev/language/explanation/datetime_model/">Date and time model</a>.</p>
+<p>The runtime timing layer provides elapsed-time values, monotonic clock readings, and host system-clock timestamps. The civil calendar layer is source-defined Incan, including normalization, comparison, arithmetic, fixed-offset ISO parsing/formatting, and Python-shaped <code>strftime</code> / <code>strptime</code> helpers with nanosecond <code>%f</code> precision.</p>
+<h2 id="importing">Importing</h2>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.datetime <span class="doc-token-keyword">import</span> Date, DateTime, DateTimeOffset, Duration, FixedOffset, Instant, SystemTime
+</code></pre>
+<p>The implementation is split into <code>std.datetime.runtime</code>, <code>std.datetime.civil</code>, and <code>std.datetime.error</code>; <code>std.datetime</code> re-exports the public prelude.</p>
+<h2 id="runtime-timing-values">Runtime timing values</h2>
+<p><code>Duration</code> is the elapsed-time value type. It wraps Rust <code>std::time::Duration</code>, is nonnegative, and has unit factories such as seconds, milliseconds, microseconds, and nanoseconds.</p>
+<p><code>Instant</code> represents a monotonic clock reading for elapsed-time measurement. <code>SystemTime</code> represents a host system-clock timestamp. Construction from Unix time can fail when the platform cannot represent the requested timestamp, so Unix factories return <code>Result</code>.</p>
+<h2 id="civil-values">Civil values</h2>
+<p><code>Date</code>, <code>Time</code>, and <code>DateTime</code> represent calendar dates, wall-clock times, and naive datetimes. <code>Date.utc_today()</code> and <code>DateTime.utc_now()</code> read the host clock through <code>SystemTime</code> and convert the Unix timestamp to UTC civil fields in Incan.</p>
+<p><code>Date</code>, <code>Time</code>, and <code>DateTime</code> support <code>isoformat()</code>, <code>fromisoformat(...)</code>, <code>strftime(...)</code>, and <code>strptime(...)</code>. The format surface is Incan-defined and Python-shaped; <code>%f</code> formats and parses nanoseconds as 9 fractional digits rather than Python&#39;s microsecond ceiling.</p>
+<p><code>Date</code> also supports <code>weekday()</code>, <code>iso_week()</code>, <code>day_of_year()</code>, <code>quarter()</code>, and ISO calendar construction with <code>fromisocalendar(...)</code>.</p>
+<h2 id="format-directives">Format directives</h2>
+<p><code>strftime(...)</code> and <code>strptime(...)</code> format strings are ordinary text plus percent directives. In <code>%Y-%m-%dT%H:%M:%S.%f%z</code>, <code>%Y</code>, <code>%m</code>, <code>%d</code>, <code>%H</code>, <code>%M</code>, <code>%S</code>, <code>%f</code>, and <code>%z</code> are directives; <code>-</code>, <code>T</code>, <code>:</code>, and <code>.</code> are literal characters that must appear exactly when parsing.</p>
+<p>Date, time, and offset support depends on the receiver: <code>Date</code> accepts date directives only; <code>Time</code> accepts time directives only; <code>DateTime</code> accepts date and time directives; <code>DateTimeOffset</code> accepts date, time, and fixed-offset directives. Named timezone directive <code>%Z</code> is rejected by <code>std.datetime</code>.</p>
+<h3 id="date-directives">Date directives</h3>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Directive</th>
+<th>Meaning</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%Y</code></td>
+<td>Year with century</td>
+<td>Four digits, such as <code>2026</code></td>
+</tr>
+<tr>
+<td><code>%y</code></td>
+<td>Year without century</td>
+<td><code>70</code>-<code>99</code> parse as 1970-1999; <code>00</code>-<code>69</code> parse as 2000-2069</td>
+</tr>
+<tr>
+<td><code>%m</code></td>
+<td>Month number</td>
+<td><code>01</code>-<code>12</code></td>
+</tr>
+<tr>
+<td><code>%d</code></td>
+<td>Day of month</td>
+<td><code>01</code>-<code>31</code></td>
+</tr>
+<tr>
+<td><code>%e</code></td>
+<td>Day of month with space padding</td>
+<td>Formats <code> 1</code> by default; parsing accepts an optional leading space</td>
+</tr>
+<tr>
+<td><code>%j</code></td>
+<td>Day of year</td>
+<td><code>001</code>-<code>366</code></td>
+</tr>
+<tr>
+<td><code>%a</code></td>
+<td>Abbreviated weekday name</td>
+<td><code>Mon</code>, <code>Tue</code>, ...</td>
+</tr>
+<tr>
+<td><code>%A</code></td>
+<td>Full weekday name</td>
+<td><code>Monday</code>, <code>Tuesday</code>, ...</td>
+</tr>
+<tr>
+<td><code>%b</code></td>
+<td>Abbreviated month name</td>
+<td><code>Jan</code>, <code>Feb</code>, ...</td>
+</tr>
+<tr>
+<td><code>%h</code></td>
+<td>Abbreviated month name</td>
+<td>Alias for <code>%b</code></td>
+</tr>
+<tr>
+<td><code>%B</code></td>
+<td>Full month name</td>
+<td><code>January</code>, <code>February</code>, ...</td>
+</tr>
+<tr>
+<td><code>%w</code></td>
+<td>Weekday number</td>
+<td>Sunday is <code>0</code>, Monday is <code>1</code>, Saturday is <code>6</code></td>
+</tr>
+<tr>
+<td><code>%u</code></td>
+<td>ISO weekday number</td>
+<td>Monday is <code>1</code>, Sunday is <code>7</code></td>
+</tr>
+<tr>
+<td><code>%U</code></td>
+<td>Week number, Sunday first</td>
+<td><code>00</code>-<code>53</code>; parsing requires a weekday directive</td>
+</tr>
+<tr>
+<td><code>%W</code></td>
+<td>Week number, Monday first</td>
+<td><code>00</code>-<code>53</code>; parsing requires a weekday directive</td>
+</tr>
+<tr>
+<td><code>%V</code></td>
+<td>ISO week number</td>
+<td><code>01</code>-<code>53</code>; parsing requires ISO week-year context</td>
+</tr>
+<tr>
+<td><code>%G</code></td>
+<td>ISO week-numbering year</td>
+<td>Four digits</td>
+</tr>
+<tr>
+<td><code>%g</code></td>
+<td>ISO week-numbering year without century</td>
+<td>Two digits</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="time-directives">Time directives</h3>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Directive</th>
+<th>Meaning</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%H</code></td>
+<td>Hour, 24-hour clock</td>
+<td><code>00</code>-<code>23</code></td>
+</tr>
+<tr>
+<td><code>%I</code></td>
+<td>Hour, 12-hour clock</td>
+<td><code>01</code>-<code>12</code>; use with <code>%p</code> or <code>%P</code></td>
+</tr>
+<tr>
+<td><code>%M</code></td>
+<td>Minute</td>
+<td><code>00</code>-<code>59</code></td>
+</tr>
+<tr>
+<td><code>%S</code></td>
+<td>Second</td>
+<td><code>00</code>-<code>59</code></td>
+</tr>
+<tr>
+<td><code>%f</code></td>
+<td>Fractional second</td>
+<td>Formats exactly 9 nanosecond digits; parsing accepts 1-9 digits and pads to nanoseconds</td>
+</tr>
+<tr>
+<td><code>%p</code></td>
+<td>Uppercase meridiem</td>
+<td><code>AM</code> or <code>PM</code></td>
+</tr>
+<tr>
+<td><code>%P</code></td>
+<td>Lowercase meridiem</td>
+<td><code>am</code> or <code>pm</code>; parsing accepts either case</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="offset-and-literal-directives">Offset and literal directives</h3>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Directive</th>
+<th>Meaning</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%z</code></td>
+<td>Fixed UTC offset</td>
+<td><code>DateTimeOffset</code> only; formats <code>+HHMM</code> or <code>-HHMM</code>; parsing accepts <code>Z</code>, <code>+HHMM</code>, <code>-HHMM</code>, <code>+HH:MM</code>, and <code>-HH:MM</code></td>
+</tr>
+<tr>
+<td><code>%:z</code></td>
+<td>Fixed UTC offset with colon</td>
+<td><code>DateTimeOffset</code> only; formats <code>+HH:MM</code> or <code>-HH:MM</code>; parsing accepts the same fixed-offset inputs as <code>%z</code></td>
+</tr>
+<tr>
+<td><code>%Z</code></td>
+<td>Named timezone</td>
+<td>Not supported by <code>std.datetime</code></td>
+</tr>
+<tr>
+<td><code>%%</code></td>
+<td>Literal percent sign</td>
+<td>Formats and parses <code>%</code></td>
+</tr>
+<tr>
+<td><code>%n</code></td>
+<td>Newline</td>
+<td>Formats and parses <code>\n</code></td>
+</tr>
+<tr>
+<td><code>%t</code></td>
+<td>Tab</td>
+<td>Formats and parses <code>\t</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="compound-aliases">Compound aliases</h3>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Alias</th>
+<th>Expands to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%F</code></td>
+<td><code>%Y-%m-%d</code></td>
+</tr>
+<tr>
+<td><code>%D</code></td>
+<td><code>%m/%d/%y</code></td>
+</tr>
+<tr>
+<td><code>%x</code></td>
+<td><code>%m/%d/%y</code></td>
+</tr>
+<tr>
+<td><code>%R</code></td>
+<td><code>%H:%M</code></td>
+</tr>
+<tr>
+<td><code>%T</code></td>
+<td><code>%H:%M:%S</code></td>
+</tr>
+<tr>
+<td><code>%X</code></td>
+<td><code>%H:%M:%S</code></td>
+</tr>
+<tr>
+<td><code>%r</code></td>
+<td><code>%I:%M:%S %p</code></td>
+</tr>
+<tr>
+<td><code>%c</code></td>
+<td><code>%a %b %_d %H:%M:%S %Y</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Numeric formatting directives accept padding modifiers: <code>%-d</code> disables padding, <code>%_d</code> uses spaces, and <code>%0d</code> uses zeroes. Modifiers are not supported on compound aliases such as <code>%F</code>, <code>%T</code>, or <code>%c</code>; <code>%:z</code> uses <code>:</code> for the offset separator rather than numeric padding.</p>
+<h2 id="fixed-offsets">Fixed offsets</h2>
+<p><code>FixedOffset</code> stores a concrete UTC offset in whole minutes. <code>DateTimeOffset</code> pairs a naive <code>DateTime</code> with that offset and supports ISO text, <code>%z</code>, and <code>%:z</code>.</p>
+<p>Named timezone lookup is not part of <code>std.datetime</code>. A named zone such as <code>Europe/Amsterdam</code> is not one permanent offset; it resolves to an offset for a specific instant or local civil time because daylight-saving and historical rules change. Timezone-aware <code>today</code> / <code>now</code> helpers and named-zone rule data belong in separately versioned packages such as <code>pub.timezones</code>.</p>
+<h2 id="intervals">Intervals</h2>
+<p><code>TimeDelta</code> is a day/time interval. <code>YearMonthInterval</code> is a year/month interval. <code>DateTimeInterval</code> is a compound interval that normalizes within compatible buckets but does not collapse months into days or years into fixed-length durations.</p>
+<p>When a <code>DateTimeInterval</code> is applied to a civil value, the year/month portion is applied first, then the day/time/fractional portion.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li>
+<p><a href="https://incan.io/dev/language/tutorials/dates_and_times/">Dates and times tutorial</a></p>
+</li>
+<li>
+<p><a href="https://incan.io/dev/language/how-to/dates_and_times/">Dates and times how-to</a></p>
+</li>
+<li>
+<p><a href="https://incan.io/dev/language/explanation/datetime_model/">Date and time model</a></p>
+</li>
+<li>
+<p><a href="https://incan.io/dev/RFCs/closed/implemented/058_std_datetime/">RFC 058: std.datetime</a></p>
+</li>
+</ul>
+<div class="doc-source">Incan documentation · <a href="sources/language/reference/stdlib/datetime.md">Page source ↓</a></div><nav aria-label="More documentation" class="doc-next"><a href="index.html">← Documentation overview</a><a href="https://incan.io/dev/">Continue on the docsite ↗</a></nav></main><aside class="docs-toc"><nav aria-label="On this page"><p class="docs-eyebrow">On this page</p><a class="toc-h2" href="#importing">Importing</a><a class="toc-h2" href="#runtime-timing-values">Runtime timing values</a><a class="toc-h2" href="#civil-values">Civil values</a><a class="toc-h2" href="#format-directives">Format directives</a><a class="toc-h3" href="#date-directives">Date directives</a><a class="toc-h3" href="#time-directives">Time directives</a><a class="toc-h3" href="#offset-and-literal-directives">Offset and literal directives</a><a class="toc-h3" href="#compound-aliases">Compound aliases</a><a class="toc-h2" href="#fixed-offsets">Fixed offsets</a><a class="toc-h2" href="#intervals">Intervals</a><a class="toc-h2" href="#see-also">See also</a><a class="docs-top" href="#main">Back to top ↑</a></nav></aside></div><footer class="footer wrap ruled">
+    <div class="footer-identity">
+      <a aria-label="Built with Incan — back to home" class="brand footer-brand" href="../#welcome"><img alt="Built with Incan" class="built-with-stamp" height="724" src="../assets/built-with-incan-mono.png" width="2172"></a>
+      <a class="encero-credit" href="https://encero.systems">
+        <span aria-hidden="true" class="encero-credit-divider">|</span>
+        <em>by</em>
+        <span class="encero-credit-name">ENCERO</span>
+      </a>
+    </div>
+    <nav aria-label="Footer navigation"><a href="../media.html">Media kit</a><a href="https://incan.io/dev/release_notes/">Releases</a><a href="https://incan.io/dev/roadmap/">Roadmap</a><a href="https://incan.io/dev/contributing/">Contribute</a><a href="https://github.com/encero-systems/incan">GitHub <span aria-hidden="true" class="icon github"></span></a></nav>
+    <small class="copyright">© 2026 Encero Systems</small>
+  </footer></div></body></html>

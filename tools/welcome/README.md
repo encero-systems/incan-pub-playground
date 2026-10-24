@@ -89,3 +89,9 @@ After building, run `node tools/welcome/check-content-map.mjs`. Supply the origi
 ### Files and configuration pilot
 
 `docs/configuration.html` combines selected-field configuration loading into one task guide across file I/O, TOML and JSON. `docs/configuration-pilot.html` records the consolidation boundaries and reader trial. Three complete reference snapshots remain separate contract homes. Example programs and pinned source evidence are in `configuration-pilot/`; the examples are source-checked but await execution with the matching 0.6 compiler. The renderer and navigation remain authored in Incan.
+
+### Module navigation and documentation types
+
+`docs/nav-library.html` lists 26 documented modules alphabetically, in column-first order. Each module has its own overview with separate How-to, Tutorial, Explanation and Reference sections, plus a direct reference shortcut. `std.datetime` uses the complete imported module reference at `datetime-api.html`; the earlier Date-only API sample remains separate. Links to unimported bodies retain the Current docsite label.
+
+Every inventory entry has an explicit `doc_type`. Rendered documentation pages and directory entries show Tutorial, How-to, Reference or Explanation badges; navigation hubs use Overview and authoring inputs use Supporting material. These labels describe the current page purpose, independently of topic, migration status and release readiness. The checkers verify type coverage, module membership and reference routes.
