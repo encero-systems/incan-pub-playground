@@ -136,3 +136,19 @@ assert.equal(documents.get('datetime-api.html').querySelector('.doc-type-line [d
 assert.equal(documents.get('module-datetime.html').querySelector('.module-primary a').getAttribute('href'),'datetime-api.html');
 assert.ok(documents.get('datetime-api.html').querySelector('.doc-breadcrumb a[href="module-datetime.html"]'));
 console.log('Passed: document-type badges, alphabetical module homes, direct datetime reference and module breadcrumb.');
+
+// Consolidation keeps the authoring and execution jobs separate and reachable.
+for(const [from,to] of [['write-tests','run-tests'],['run-tests','write-tests'],['nav-oven','run-tests'],['nav-oven','editor-setup'],['module-testing','write-tests'],['editor-setup','testing-editor-pilot']]){
+ assert.ok([...documents.get(from+'.html').querySelectorAll('a[href]')].some(a=>a.getAttribute('href').split('#')[0]===to+'.html'),from+' -> '+to);
+}
+for(const key of ['write-tests','run-tests','editor-setup'])assert.equal(documents.get(key+'.html').querySelector('.doc-type-line [data-doc-type]').dataset.docType,'How-to');
+const authoredTests=[...documents.get('write-tests.html').querySelectorAll('pre code')].map(n=>n.textContent);
+for(const name of ['names.incn','test_normalization.incn','test_fixture.incn'])assert.ok(authoredTests.includes(await readFile(new URL('testing-editor-pilot/'+name,input),'utf8')),name);
+assert.equal(documents.get('run-tests.html').querySelectorAll('code.language-incan').length,0,'Runner guide does not repeat authoring examples');
+assert.match(documents.get('run-tests.html').querySelector('main').textContent,/rejects.*--timeout/);
+const setupEvidence=JSON.parse(await readFile(new URL('testing-editor-pilot/evidence.json',input),'utf8'));
+for(const file of setupEvidence.inputs){
+ const bytes=await readFile(new URL('testing-editor-pilot/evidence/'+file.path,input));
+ assert.equal(bytes.length,file.bytes);assert.equal(sha(bytes),file.sha256,file.path);
+}
+console.log('Passed: testing/editor routes, guide roles, displayed example bytes, source evidence and timeout boundary.');

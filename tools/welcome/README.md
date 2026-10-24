@@ -95,3 +95,7 @@ After building, run `node tools/welcome/check-content-map.mjs`. Supply the origi
 `docs/nav-library.html` lists 26 documented modules alphabetically, in column-first order. Each module has its own overview with separate How-to, Tutorial, Explanation and Reference sections, plus a direct reference shortcut. `std.datetime` uses the complete imported module reference at `datetime-api.html`; the earlier Date-only API sample remains separate. Links to unimported bodies retain the Current docsite label.
 
 Every inventory entry has an explicit `doc_type`. Rendered documentation pages and directory entries show Tutorial, How-to, Reference or Explanation badges; navigation hubs use Overview and authoring inputs use Supporting material. These labels describe the current page purpose, independently of topic, migration status and release readiness. The checkers verify type coverage, module membership and reference routes.
+
+### Testing and editor consolidation
+
+`write-tests.html` owns test authoring; `run-tests.html` owns collection, execution and CI; `editor-setup.html` combines extension and language-server setup. The tooling hub shows one editor entry while retaining both source identities. `testing-editor-pilot.html` records moved/retained material, the timeout discrepancy, reader tasks and release checks. Exact source inputs and displayed examples are retained under `testing-editor-pilot/`. These are content previews, not evidence of successful 0.6 example execution or clean-profile editor installation.

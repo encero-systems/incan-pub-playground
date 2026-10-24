@@ -56,7 +56,7 @@ for (const p of map.pages) {
  assert.ok(p.proposed_url.startsWith('/docs/'),p.source);
  if(p.action==='replace-hub')continue;
  const containers=p.section==='library'?[...moduleDocs.values()]:[hubs.get(p.section)];
- const item=containers.flatMap(doc=>[...doc.querySelectorAll('li[data-source]')]).find(n=>n.dataset.source===p.source);
+ const item=containers.flatMap(doc=>[...doc.querySelectorAll('li[data-source]')]).find(n=>n.dataset.source===p.source||(n.dataset.sourceAliases||'').split(' ').includes(p.source));
  assert.ok(item,'Unreachable reader page: '+p.source);
  assert.equal(item.querySelector('a').getAttribute('href'),p.preview||p.current_url);
  assert.equal(item.querySelector('[data-doc-type]').dataset.docType,p.doc_type);
@@ -77,3 +77,8 @@ if(process.argv[2]){
  for(const p of map.pages)assert.equal(sha(await readFile(join(source,p.source))),p.sha256,p.source);
 }
 console.log(`Passed: ${map.pages.length} classified source files; ${map.counts.reader_pages} reader pages; seven topic hubs; complete dispositions, source digests, destination collisions and reachable page links.`);
+
+const oven=hubs.get('oven');
+assert.equal(oven.querySelectorAll('main a[href="editor-setup.html"]').length,1,'One editor setup entry owns both former setup routes');
+for(const name of ['write-tests','run-tests','editor-setup'])assert.ok(map.pages.some(p=>p.preview===name+'.html'));
+console.log('Passed: consolidated setup navigation retains both source identities without duplicate entries.');
