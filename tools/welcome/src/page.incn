@@ -1,0 +1,119 @@
+"""Reusable page composition and examples from authored Incan data."""
+
+from pub::pallay import DocumentNode, parse_template, SurfaceNode, NodeKind, group
+from components import el, txt, icon
+from examples import CodeExample, catalog
+from layout import (
+    site_header,
+    hero,
+    run_section,
+    projects_section,
+    performance_section,
+    tools_section,
+    community_section,
+    site_footer,
+    example_navigation,
+    rust_context,
+)
+
+
+pub def example_view(example: CodeExample, selected: bool) -> DocumentNode:
+    mut attributes = {"class": "example-body", "id": "view-" + example.key}
+    if not selected:
+        attributes["hidden"] = ""
+    parsed = parse_template(example.markup, "example/" + example.key).unwrap()
+    mut notes: list[DocumentNode] = [el("div", {"class": "tour-controls"}, [txt("A closer look")])]
+    for index in range(len(example.notes)):
+        note = example.notes[index]
+        notes.append(
+            el(
+                "div",
+                {"id": "note-group-" + example.key + "-" + str(index)},
+                [el("a", {"id": "note-" + example.key + "-" + str(index), "href": "#" + note.line}, [txt(note.title)]), el(
+                    "p",
+                    {},
+                    [txt(note.description)],
+                )],
+            ),
+        )
+    mut source_label = "Incan source code"
+    if example.language == "shell":
+        source_label = str("Architect commands")
+    return el(
+        "div",
+        attributes,
+        [el(
+            "div",
+            {"class": "code-panel annotated"},
+            [el(
+                "div",
+                {"class": "panel-heading"},
+                [el(
+                    "span",
+                    {"class": "file-label"},
+                    [icon("file"), el("span", {"class": "example-filename"}, [txt(example.filename)])],
+                ), el(
+                    "button",
+                    {"class": "copy-button", "id": "copy-" + example.key, "type": "button", "aria-label": "Copy example"},
+                    [icon("copy", "copy-icon-" + example.key), el(
+                        "span",
+                        {"class": "copy-label", "id": "copy-label-" + example.key},
+                        [txt("Copy")],
+                    )],
+                )],
+            ), el(
+                "pre",
+                {"class": "source-code", "style": "--example-lines: 13", "tabindex": "0", "aria-label": source_label},
+                [el("code", {"id": "source-" + example.key}, parsed.children)],
+            )],
+        ), el("aside", {"class": "annotations", "aria-label": "What the example shows"}, notes)],
+    )
+
+
+pub def document() -> DocumentNode:
+    examples = catalog()
+    mut views: list[DocumentNode] = [example_navigation(), el(
+        "p",
+        {"class": "sr-only", "id": "example-status", "role": "status"},
+        [],
+    )]
+    for index in range(len(examples)):
+        views.append(example_view(examples[index], index == 3))
+    views.append(el("p", {"class": "example-caption", "id": "example-caption"}, [txt(examples[3].caption)]))
+    views.append(rust_context())
+    return el(
+        "",
+        {},
+        [el("a", {"class": "skip-link", "href": "#main"}, [txt("Skip to content")]), site_header(), hero(), el(
+            "main",
+            {"class": "wrap", "id": "main"},
+            [el("section", {"class": "example-section", "aria-label": "Annotated language and tooling examples"}, views), run_section(), projects_section(), performance_section(), tools_section(), el(
+                "section",
+                {"id": "adopted-by", "hidden": "", "aria-label": "Adopted by"},
+                [el("ul", {}, [])],
+            ), community_section()],
+        ), site_footer(), el("p", {"class": "sr-only", "id": "copy-status", "role": "status", "aria-live": "polite"}, [])],
+    )
+
+
+pub def binding_nodes(node: DocumentNode) -> list[SurfaceNode]:
+    """
+    Export the actual document identities to Weave for typed binding validation.
+
+    The structured document owns layout; the Weave surface owns its executable
+    projections. Both are generated from the same component tree, not parallel IDs.
+    """
+    mut nodes: list[SurfaceNode] = []
+    if "id" in node.attributes:
+        mut kind = NodeKind.Text
+        if node.tag == "button":
+            kind = NodeKind.Button
+        if node.tag == "select":
+            kind = NodeKind.Select
+        if node.tag == "input":
+            kind = NodeKind.Input
+        nodes.append(SurfaceNode(id=node.attributes["id"], kind=kind, label=node.attributes["id"]))
+    for child in node.children:
+        for descendant in binding_nodes(child):
+            nodes.append(descendant)
+    return nodes

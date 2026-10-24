@@ -1,0 +1,64 @@
+"""Server-side initial projection of the typed Weave bindings used in-browser."""
+from document.tree import DocumentNode
+from weave.contracts import Experience, Value, ValueKind, PresentationKind
+from weave.compiler import initial_state, evaluate
+
+
+def selected_option(node: DocumentNode, selected: str) -> DocumentNode:
+    mut attributes: Dict[str, str] = {}
+    for key in node.attributes.keys():
+        if key != "selected":
+            attributes[str(key)] = str(node.attributes[key])
+    if node.tag == "option" and "value" in attributes and attributes["value"] == selected:
+        attributes["selected"] = ""
+    return DocumentNode(tag=node.tag, text=node.text, attributes=attributes, children=node.children)
+
+
+def project(node: DocumentNode, app: Experience, values: Dict[str, Value]) -> DocumentNode:
+    mut attributes: Dict[str, str] = {}
+    mut children: list[DocumentNode] = []
+    for key in node.attributes.keys():
+        attributes[str(key)] = str(node.attributes[key])
+    for child in node.children:
+        children.append(project(child, app, values))
+    mut body = str(node.text)
+    mut selected = ""
+    mut value_bound = false
+    for binding in app.presentations:
+        if "id" in attributes and attributes["id"] == binding.node:
+            value = evaluate(binding.value, values, Value(kind=ValueKind.Empty)).unwrap()
+            match binding.kind:
+                PresentationKind.Content =>
+                    body = str(value.text_value)
+                    children = []
+                PresentationKind.Appearance => attributes["class"] = str(value.text_value)
+                PresentationKind.Visible =>
+                    if not value.flag_value:
+                        attributes["hidden"] = ""
+                    else:
+                        mut visible_attributes: Dict[str, str] = {}
+                        for key in attributes.keys():
+                            if key != "hidden":
+                                visible_attributes[str(key)] = str(attributes[key])
+                        attributes = visible_attributes
+                PresentationKind.Expanded =>
+                    if value.flag_value:
+                        attributes["aria-expanded"] = str("true")
+                    else:
+                        attributes["aria-expanded"] = str("false")
+                PresentationKind.Value =>
+                    value_bound = true
+                    selected = str(value.text_value)
+                PresentationKind.Disabled =>
+                    if value.flag_value:
+                        attributes["disabled"] = ""
+    if node.tag == "select" and value_bound:
+        mut options: list[DocumentNode] = []
+        for child in children:
+            options.append(selected_option(child, selected))
+        children = options
+    return DocumentNode(tag=node.tag, text=body, attributes=attributes, children=children)
+
+
+pub def initial_document(node: DocumentNode, app: Experience) -> DocumentNode:
+    return project(node, app, initial_state(app))

@@ -1,0 +1,340 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="generator" content="Incan · Pallay · markdown-rs 1.0.0"><meta name="theme-color" content="#080c0a"><title>Web framework · Incan documentation</title><link rel="icon" href="../assets/incan-logo.png"><link rel="stylesheet" href="../assets/fonts/fonts.css"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"></head><body><div class="docs-page"><a class="docs-skip" href="#main">Skip to content</a><header class="site-header">
+    <div class="masthead wrap">
+      <a aria-label="Incan home" class="brand" href="../#welcome">
+        <img alt="Incan" class="brand-lockup" height="244" src="../assets/brand-source.png" width="759">
+      </a>
+      <a class="menu-toggle" href="#docs-navigation">Browse docs ↓</a>
+      <nav aria-label="Main navigation" id="site-nav">
+        <a href="https://incan.io/dev/start_here/">Learn</a>
+        <a href="index.html">Docs</a>
+        <a href="https://incan.io/dev/tooling/explanation/oven_alpha/">Oven</a>
+        <a href="https://encero-systems.github.io/incan-pub-playground/">Incan.pub</a>
+        <a href="../#project">Project</a>
+      </nav>
+      <form action="https://incan.io/dev/" class="header-search" role="search">
+        <label class="sr-only" for="docs-query">Search Incan documentation</label>
+        <input autocomplete="off" id="docs-query" name="q" placeholder="Search docs…" type="search">
+        <button type="submit">Search</button>
+      </form>
+      <a class="release-status" href="https://incan.io/dev/roadmap/">Preview · 0.6</a>
+    </div>
+  </header><div class="docs-layout wrap"><aside class="docs-sidebar" id="docs-navigation"><a class="docs-overview" href="explore.html">Documentation</a><nav aria-label="Topic documentation"><ul><li><small>Start here</small><a href="explore.html">Find your next step</a></li><li><small>Library guide</small><a href="dates.html">Dates and times</a></li><li><small>API documentation</small><a href="date-api.html">Date API preview</a></li><li><small>Language guide</small><a href="traits.html">Traits and capabilities</a></li><li><small>Language reference</small><a href="traits-reference.html">Trait rules</a></li><li><small>Build with Incan</small><a href="oven.html">Build and run a project</a></li></ul></nav><details class="docs-previous" open><summary>Earlier page imports</summary><nav aria-label="Imported documentation"><ul><li><small>Start here</small><a href="fit.html">What Incan is for</a></li><li><small>Language guides</small><a href="enums.html">Modeling with enums</a></li><li><small>Standard library</small><a href="collections.html">Collections</a></li><li><small>Tutorials</small><a href="getting-started.html">Getting started</a></li><li><small>Tutorials</small><a href="typed-api.html">Build a typed API</a></li><li><small>Language guides</small><a aria-current="page" href="web-framework.html">Web framework</a></li><li><small>Language guides</small><a href="rust-interop.html">Rust interoperability</a></li><li><small>Language concepts</small><a href="compile-runtime.html">Compile time and runtime</a></li><li><small>Contributing</small><a href="architecture.html">Architecture · 0.6</a></li></ul></nav></details><a class="docs-all" href="https://incan.io/dev/">Full docsite ↗</a><p class="docs-snapshot">Content experiment · three topics</p></aside><main class="doc-article" id="main" tabindex="-1"><div class="doc-breadcrumb"><a href="index.html">Docs</a> / Language guides</div><details class="docs-mobile-toc"><summary>On this page</summary><nav aria-label="On this page, compact"><a class="toc-h2" href="#quick-start">Quick Start</a><a class="toc-h2" href="#routes">Routes</a><a class="toc-h3" href="#path-parameters">Path Parameters</a><a class="toc-h3" href="#http-methods">HTTP Methods</a><a class="toc-h2" href="#responses">Responses</a><a class="toc-h3" href="#json-responses">JSON Responses</a><a class="toc-h3" href="#html-responses">HTML Responses</a><a class="toc-h3" href="#status-codes">Status Codes</a><a class="toc-h2" href="#request-data">Request Data</a><a class="toc-h3" href="#extracting-path-parameters">Extracting Path Parameters</a><a class="toc-h3" href="#query-parameters-and-json-bodies">Query parameters and JSON bodies</a><a class="toc-h2" href="#application-design">Application design</a><a class="toc-h3" href="#declaring-the-server-entry-point">Declaring the server entry point</a><a class="toc-h2" href="#how-it-works">How It Works</a><a class="toc-h2" href="#complete-example">Complete Example</a><a class="toc-h2" href="#runtime-shape">Runtime shape</a><a class="toc-h2" href="#see-also">See Also</a></nav></details><h1 id="web-framework-guide">Web framework guide</h1>
+<p>This page is the task-oriented guide to Incan&#39;s web framework. For a linear first experience, start with <a href="typed-api.html">Build a typed API</a>.</p>
+<p>Incan&#39;s web surface currently lowers to <a href="https://docs.rs/axum/latest/axum/">Axum</a>, giving Flask/FastAPI-shaped route declarations a native async server design.</p>
+<details class="doc-callout" open><summary>0.5 runtime boundary</summary><p>The included <code>verified_*.incn</code> snippets pass source verification, and the documented route shapes are covered by the repository&#39;s generated-Rust route tests. Short fragments with ellipses illustrate local concepts rather than complete checked programs. Complete projects build and run through the checked web closure in the 0.5 full-standard-library Loaf.</p>
+</details><h2 id="quick-start">Quick Start</h2>
+<details class="doc-callout" open><summary>Contributor source-build fallback</summary><p>If you are working from a compiler checkout instead of a toolchain install, you can run the repository-built binary directly:</p>
+<ul>
+<li>from the repository root:</li>
+</ul>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">./target/release/incan ...
+</code></pre>
+<ul>
+<li>or via an absolute path (from anywhere):</li>
+</ul>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">/absolute/path/to/incan run path/to/file.incn
+</code></pre>
+</details><pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> App, route, Response, Json
+<span class="doc-token-keyword">from</span> std.serde <span class="doc-token-keyword">import</span> json
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+
+@derive(json)
+<span class="doc-token-keyword">model</span> Greeting:
+    message: <span class="doc-token-type">str</span>
+
+
+@route(<span class="doc-token-string">&quot;/&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> index() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.html(<span class="doc-token-string">&quot;&lt;h1&gt;Hello from Incan!&lt;/h1&gt;&quot;</span>)
+
+
+@route(<span class="doc-token-string">&quot;/api/greet/{name}&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> greet(name: <span class="doc-token-type">str</span>) -&gt; Json[Greeting]:
+    <span class="doc-token-keyword">return</span> Json(Greeting(message=f<span class="doc-token-string">&quot;Hello, {name}!&quot;</span>))
+
+
+<span class="doc-token-keyword">def</span> main() -&gt; <span class="doc-token-type">None</span>:
+    App.run(port=8080)
+</code></pre>
+<p>Build and run the complete repository example:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">incan build examples/web/hello_web.incn
+incan run examples/web/hello_web.incn
+</code></pre>
+<p>This verifies the route declarations and handler types, emits a native server, and starts it on <code>127.0.0.1:8080</code>. The normal commands reuse the checked full-standard-library Loaf; they do not fall back to Cargo.</p>
+<h2 id="routes">Routes</h2>
+<p>Define routes using the <code>@route</code> decorator:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> route, Response, GET, POST
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+@route(<span class="doc-token-string">&quot;/path&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> handler() -&gt; Response:
+    ...
+
+@route(<span class="doc-token-string">&quot;/api/resource&quot;</span>, methods=[GET])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> get_resource() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.ok()
+
+@route(<span class="doc-token-string">&quot;/api/resource&quot;</span>, methods=[POST])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> create_resource() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.status(202, <span class="doc-token-string">&quot;accepted&quot;</span>)
+</code></pre>
+<h3 id="path-parameters">Path Parameters</h3>
+<p>Use <code>{name}</code> syntax for path parameters:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> route, Json
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+@route(<span class="doc-token-string">&quot;/users/{id}&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> get_user(id: <span class="doc-token-type">int</span>) -&gt; Json[User]:
+    user = find_user(id)?
+    <span class="doc-token-keyword">return</span> Json(user)
+
+@route(<span class="doc-token-string">&quot;/posts/{year}/{month}&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> get_posts(year: <span class="doc-token-type">int</span>, month: <span class="doc-token-type">int</span>) -&gt; Json[<span class="doc-token-type">list</span>[Post]]:
+    <span class="doc-token-keyword">return</span> Json(fetch_posts(year, month))
+</code></pre>
+<p>Use a scalar parameter when the handler body needs the captured value. A route may instead declare an unused typed <code>Path[T]</code> extractor with the wildcard pattern when only Axum&#39;s extraction and rejection behavior is required:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> route, Json, Path
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+@route(<span class="doc-token-string">&quot;/health/{probe}&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> health_probe(_: Path[<span class="doc-token-type">str</span>]) -&gt; Json[Health]:
+    <span class="doc-token-keyword">return</span> Json(Health(ok=True))
+</code></pre>
+<h3 id="http-methods">HTTP Methods</h3>
+<p>Specify allowed methods with the <code>methods</code> parameter. Handlers can be registered for multiple HTTP methods by passing multiple entries. Import the method constants from the web prelude (e.g. <code>GET</code>, <code>POST</code>). Supported methods are <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>, and <code>PATCH</code>.</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> route, Json, Response, GET, POST, PUT, DELETE
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+@route(<span class="doc-token-string">&quot;/items/ping&quot;</span>, methods=[GET, POST])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> ping_items() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.ok()
+
+@route(<span class="doc-token-string">&quot;/items&quot;</span>, methods=[GET])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> list_items() -&gt; Json[<span class="doc-token-type">list</span>[Item]]:
+    <span class="doc-token-keyword">return</span> Json([])
+
+@route(<span class="doc-token-string">&quot;/items/reindex&quot;</span>, methods=[POST])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> reindex_items() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.status(202, <span class="doc-token-string">&quot;reindex queued&quot;</span>)
+
+@route(<span class="doc-token-string">&quot;/items/{id}&quot;</span>, methods=[PUT])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> update_item(id: <span class="doc-token-type">int</span>) -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.ok()
+
+@route(<span class="doc-token-string">&quot;/items/{id}&quot;</span>, methods=[DELETE])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> delete_item(id: <span class="doc-token-type">int</span>) -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.ok()
+</code></pre>
+<h2 id="responses">Responses</h2>
+<h3 id="json-responses">JSON Responses</h3>
+<p>Use <code>Json[T]</code> for JSON responses. The inner type must have <code>@derive(json)</code>:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> route, Json
+<span class="doc-token-keyword">from</span> std.serde <span class="doc-token-keyword">import</span> json
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+@derive(json)
+<span class="doc-token-keyword">model</span> User:
+    id: <span class="doc-token-type">int</span>
+    name: <span class="doc-token-type">str</span>
+    email: <span class="doc-token-type">str</span>
+
+@route(<span class="doc-token-string">&quot;/api/user/{id}&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> get_user(id: <span class="doc-token-type">int</span>) -&gt; Json[User]:
+    user = User(id=id, name=<span class="doc-token-string">&quot;Alice&quot;</span>, email=<span class="doc-token-string">&quot;alice@example.com&quot;</span>)
+    <span class="doc-token-keyword">return</span> Json(user)
+</code></pre>
+<h3 id="html-responses">HTML Responses</h3>
+<p>Return HTML with <code>Response.html()</code>:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> route, Response
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+@route(<span class="doc-token-string">&quot;/&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> index() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.html(<span class="doc-token-string">&quot;&lt;h1&gt;Welcome!&lt;/h1&gt;&quot;</span>)
+</code></pre>
+<h3 id="status-codes">Status Codes</h3>
+<p>Use <code>Response.ok()</code> for an empty 200 response, or <code>Response.status(code, body)</code> when the status and body are explicit:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> route, Response
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+@route(<span class="doc-token-string">&quot;/health&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> health() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.ok()  <span class="doc-token-comment"># 200</span>
+
+@route(<span class="doc-token-string">&quot;/created&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> created() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.status(201, <span class="doc-token-string">&quot;created&quot;</span>)
+
+@route(<span class="doc-token-string">&quot;/empty&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> empty() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.status(204, <span class="doc-token-string">&quot;&quot;</span>)
+
+@route(<span class="doc-token-string">&quot;/error&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> error() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.status(400, <span class="doc-token-string">&quot;Invalid input&quot;</span>)
+
+@route(<span class="doc-token-string">&quot;/missing&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> missing() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.status(404, <span class="doc-token-string">&quot;Resource not found&quot;</span>)
+
+@route(<span class="doc-token-string">&quot;/server-error&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> server_error() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.status(500, <span class="doc-token-string">&quot;Something went wrong&quot;</span>)
+</code></pre>
+<h2 id="request-data">Request Data</h2>
+<h3 id="extracting-path-parameters">Extracting Path Parameters</h3>
+<p>Path parameters are automatically extracted into function arguments:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> route, Json
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+@route(<span class="doc-token-string">&quot;/users/{user_id}/posts/{post_id}&quot;</span>)
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> get_post(user_id: <span class="doc-token-type">int</span>, post_id: <span class="doc-token-type">int</span>) -&gt; Json[Post]:
+    ...
+</code></pre>
+<h3 id="query-parameters-and-json-bodies">Query parameters and JSON bodies</h3>
+<p>Use <code>Query[T]</code> for typed query-string parameters and <code>Json[T]</code> for typed JSON request bodies. Both inner models derive JSON support:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-string">&quot;&quot;</span><span class="doc-token-string">&quot;Typed query-string and JSON-body request extractors.&quot;</span><span class="doc-token-string">&quot;&quot;</span>
+
+<span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> App, route, Json, Query, GET, POST
+<span class="doc-token-keyword">from</span> std.serde <span class="doc-token-keyword">import</span> json
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+
+@derive(json)
+<span class="doc-token-keyword">model</span> SearchParams:
+    q: <span class="doc-token-type">str</span>
+
+
+@derive(json)
+<span class="doc-token-keyword">model</span> CreateUser:
+    name: <span class="doc-token-type">str</span>
+    email: <span class="doc-token-type">str</span>
+
+
+@derive(json)
+<span class="doc-token-keyword">model</span> User:
+    id: <span class="doc-token-type">int</span>
+    name: <span class="doc-token-type">str</span>
+    email: <span class="doc-token-type">str</span>
+
+
+@route(<span class="doc-token-string">&quot;/search&quot;</span>, methods=[GET])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> search(params: Query[SearchParams]) -&gt; Json[<span class="doc-token-type">list</span>[User]]:
+    <span class="doc-token-keyword">return</span> Json([User(id=1, name=params.q, email=<span class="doc-token-string">&quot;search@example.com&quot;</span>)])
+
+
+@route(<span class="doc-token-string">&quot;/users&quot;</span>, methods=[POST])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> create_user(body: Json[CreateUser]) -&gt; Json[User]:
+    <span class="doc-token-keyword">return</span> Json(User(id=1, name=body.name, email=body.email))
+
+
+<span class="doc-token-keyword">def</span> main() -&gt; <span class="doc-token-type">None</span>:
+    App.run(host=<span class="doc-token-string">&quot;127.0.0.1&quot;</span>, port=8080)
+</code></pre>
+<h2 id="application-design">Application design</h2>
+<h3 id="declaring-the-server-entry-point">Declaring the server entry point</h3>
+<p>Call the static <code>App.run()</code> entry point:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> App
+
+<span class="doc-token-keyword">def</span> main() -&gt; <span class="doc-token-type">None</span>:
+    App.run(host=<span class="doc-token-string">&quot;0.0.0.0&quot;</span>, port=3000)
+</code></pre>
+<p>Parameters:</p>
+<ul>
+<li><code>host</code>: Bind address (default: <code>&quot;127.0.0.1&quot;</code>)</li>
+<li><code>port</code>: Port number (default: <code>8080</code>)</li>
+</ul>
+<h2 id="how-it-works">How It Works</h2>
+<p>When the application is compiled against the 0.5 full-standard-library Loaf:</p>
+<ol>
+<li><strong>Routes are collected</strong> from <code>@route</code> decorators</li>
+<li><strong>Handlers become async Rust functions</strong> with Axum extractors</li>
+<li><strong>Models with <code>@derive(json)</code></strong> get serde derives</li>
+<li><strong><code>App.run()</code></strong> becomes Axum router setup + tokio server</li>
+</ol>
+<p>The generated Rust code uses:</p>
+<ul>
+<li><code>axum::Router</code> for routing</li>
+<li><code>axum::Json</code> for JSON request/response</li>
+<li><code>axum::extract::Path</code> for path parameters</li>
+<li><code>axum::extract::Query</code> for query parameters</li>
+<li><code>tokio</code> for async runtime</li>
+</ul>
+<h2 id="complete-example">Complete Example</h2>
+<pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-string">&quot;&quot;</span><span class="doc-token-string">&quot;A small read-only catalog API.&quot;</span><span class="doc-token-string">&quot;&quot;</span>
+
+<span class="doc-token-keyword">from</span> std.web <span class="doc-token-keyword">import</span> App, route, Response, Json, GET
+<span class="doc-token-keyword">from</span> std.serde <span class="doc-token-keyword">import</span> json
+<span class="doc-token-keyword">import</span> std.<span class="doc-token-keyword">async</span>
+
+
+@derive(Clone, json)
+<span class="doc-token-keyword">model</span> Item:
+    id: <span class="doc-token-type">int</span>
+    name: <span class="doc-token-type">str</span>
+    price: <span class="doc-token-type">float</span>
+
+
+@route(<span class="doc-token-string">&quot;/api/items&quot;</span>, methods=[GET])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> list_items() -&gt; Json[<span class="doc-token-type">list</span>[Item]]:
+    <span class="doc-token-keyword">return</span> Json([Item(id=1, name=<span class="doc-token-string">&quot;Keyboard&quot;</span>, price=79.0), Item(id=2, name=<span class="doc-token-string">&quot;Mouse&quot;</span>, price=39.0)])
+
+
+@route(<span class="doc-token-string">&quot;/api/items/{id}&quot;</span>, methods=[GET])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> get_item(id: <span class="doc-token-type">int</span>) -&gt; Json[Item]:
+    <span class="doc-token-keyword">return</span> Json(Item(id=id, name=f<span class="doc-token-string">&quot;Item {id}&quot;</span>, price=9.99))
+
+
+@route(<span class="doc-token-string">&quot;/health&quot;</span>, methods=[GET])
+<span class="doc-token-keyword">async</span> <span class="doc-token-keyword">def</span> health() -&gt; Response:
+    <span class="doc-token-keyword">return</span> Response.ok()
+
+
+<span class="doc-token-keyword">def</span> main() -&gt; <span class="doc-token-type">None</span>:
+    println(<span class="doc-token-string">&quot;Starting API server at http://localhost:8080&quot;</span>)
+    App.run(host=<span class="doc-token-string">&quot;127.0.0.1&quot;</span>, port=8080)
+</code></pre>
+<p>The example is deliberately read-only. Once you add persistence, keep database failures explicit and give each handler one coherent response type across all branches.</p>
+<h2 id="runtime-shape">Runtime shape</h2>
+<p>The generated Rust/Axum-backed design targets:</p>
+<ul>
+<li><strong>Native server path</strong> — no Python interpreter process in the request path</li>
+<li><strong>Tokio-backed async</strong> — an efficient async runtime without Python event-loop compatibility claims</li>
+<li><strong>Deterministic ownership</strong> — generated Rust does not depend on a tracing garbage collector</li>
+<li><strong>Workload-dependent performance</strong> — latency and memory use still depend on handlers, dependencies, traffic, and deployment settings, so benchmark the service you intend to run</li>
+</ul>
+<p>These are architectural properties, not benchmark results. The 0.5 release envelope can build and run this guide through its checked web closure, but latency and resource behavior still depend on the service and deployment you actually ship. Benchmark that concrete workload rather than inferring performance from the generated architecture.</p>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li>
+<p><a href="https://incan.io/dev/language/explanation/error_handling/">Error Handling</a> - Working with <code>Result</code> types</p>
+</li>
+<li>
+<p><a href="https://incan.io/dev/language/reference/derives_and_traits/">Derives &amp; Traits</a> - Drop trait for custom cleanup</p>
+</li>
+<li>
+<p><a href="https://incan.io/dev/language/how-to/file_io/">File I/O</a> - Reading, writing, and path handling</p>
+</li>
+<li>
+<p><a href="https://incan.io/dev/language/how-to/async_programming/">Async Programming</a> - Async/await with Tokio</p>
+</li>
+<li>
+<p><a href="https://incan.io/dev/language/explanation/imports_and_modules/">Imports &amp; Modules</a> - Module system, imports, and built-in functions</p>
+</li>
+<li>
+<p><a href="rust-interop.html">Rust Interop</a> - Using Rust crates directly from Incan</p>
+</li>
+</ul>
+<div class="doc-source">Incan documentation · <a href="sources/language/tutorials/web_framework.md">Page source ↓</a></div><nav aria-label="More documentation" class="doc-next"><a href="index.html">← Documentation overview</a><a href="https://incan.io/dev/">Continue on the docsite ↗</a></nav></main><aside class="docs-toc"><nav aria-label="On this page"><p class="docs-eyebrow">On this page</p><a class="toc-h2" href="#quick-start">Quick Start</a><a class="toc-h2" href="#routes">Routes</a><a class="toc-h3" href="#path-parameters">Path Parameters</a><a class="toc-h3" href="#http-methods">HTTP Methods</a><a class="toc-h2" href="#responses">Responses</a><a class="toc-h3" href="#json-responses">JSON Responses</a><a class="toc-h3" href="#html-responses">HTML Responses</a><a class="toc-h3" href="#status-codes">Status Codes</a><a class="toc-h2" href="#request-data">Request Data</a><a class="toc-h3" href="#extracting-path-parameters">Extracting Path Parameters</a><a class="toc-h3" href="#query-parameters-and-json-bodies">Query parameters and JSON bodies</a><a class="toc-h2" href="#application-design">Application design</a><a class="toc-h3" href="#declaring-the-server-entry-point">Declaring the server entry point</a><a class="toc-h2" href="#how-it-works">How It Works</a><a class="toc-h2" href="#complete-example">Complete Example</a><a class="toc-h2" href="#runtime-shape">Runtime shape</a><a class="toc-h2" href="#see-also">See Also</a><a class="docs-top" href="#main">Back to top ↑</a></nav></aside></div><footer class="footer wrap ruled">
+    <div class="footer-identity">
+      <a aria-label="Built with Incan — back to home" class="brand footer-brand" href="../#welcome"><img alt="Built with Incan" class="built-with-stamp" height="724" src="../assets/built-with-incan-mono.png" width="2172"></a>
+      <a class="encero-credit" href="https://encero.systems">
+        <span aria-hidden="true" class="encero-credit-divider">|</span>
+        <em>by</em>
+        <span class="encero-credit-name">ENCERO</span>
+      </a>
+    </div>
+    <nav aria-label="Footer navigation"><a href="../media.html">Media kit</a><a href="https://incan.io/dev/release_notes/">Releases</a><a href="https://incan.io/dev/roadmap/">Roadmap</a><a href="https://incan.io/dev/contributing/">Contribute</a><a href="https://github.com/encero-systems/incan">GitHub <span aria-hidden="true" class="icon github"></span></a></nav>
+    <small class="copyright">© 2026 Encero Systems</small>
+  </footer></div></body></html>

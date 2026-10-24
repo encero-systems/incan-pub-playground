@@ -1,0 +1,56 @@
+"""Inspect the executable authoring path; retain the earlier laboratory on request."""
+
+from std.environ import get_or
+from weave.contracts import (
+    Value,
+    ValueKind,
+    StateField,
+    Transition,
+    Mutation,
+    Presentation,
+    PresentationKind,
+    experience,
+    group,
+    button,
+    text_node,
+    state,
+    negate,
+    activate,
+)
+from targets.web import lower_web
+from core.surface import hello_world_inspection
+from lab.semantic_model_v2_scenarios import semantic_model_v2_inspection
+from lab.surface_scenarios import second_flight_inspection
+
+
+def main() -> None:
+    """Run a woven authoring/validation/lowering path and show how to try consumers."""
+    app = experience(
+        "PallayDisclosure",
+        "Pallay executable Weave",
+        group(
+            "root",
+            [button("toggle", "Details"), text_node("body", "Surface, Consequence and Binding are authored in Incan.")],
+        ),
+        [StateField(name="open", kind=ValueKind.Flag, initial=Value.flag(false))],
+        [Transition(name="toggle", mutations=[Mutation(state="open", value=negate(state("open")))])],
+        [Presentation(node="body", kind=PresentationKind.Visible, value=state("open")), Presentation(
+            node="toggle",
+            kind=PresentationKind.Expanded,
+            value=state("open"),
+        )],
+        [activate("toggle", "toggle")],
+    )
+    output = lower_web(app, true)
+    assert output.valid, "The public authoring path must lower successfully"
+    println("Pallay executable Weave: " + app.name)
+    println("Semantic contract: " + app.semantics.name)
+    for file in output.files:
+        println("  " + file.path)
+    println("Build the independent consumer packages: tools/build-examples")
+    println("Preview them: node tools/serve.mjs")
+    println("Full v0.1 release status: docs/implementation/status.md")
+    if get_or("PALLAY_LAB", "") == "1":
+        println(hello_world_inspection())
+        println(second_flight_inspection())
+        println(semantic_model_v2_inspection())

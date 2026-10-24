@@ -4,7 +4,13 @@ The Incan.pub preview now builds from a pinned registry feed, with the complete 
 
 - [Hosted catalog](https://encero-systems.github.io/incan-pub-playground/catalog/)
 - [Hosted homepage](https://encero-systems.github.io/incan-pub-playground/)
-- [Incan.io mockup](https://encero-systems.github.io/incan-pub-playground/incan-io-directions/real/) — remains separate and parked.
+- [Incan.io 0.6 website preview, built with Incan](https://encero-systems.github.io/incan-pub-playground/incan-io-directions/obsidian-incan/)
+- [Documentation content experiment](https://encero-systems.github.io/incan-pub-playground/incan-io-directions/obsidian-incan/docs/explore.html)
+- [Media kit](https://encero-systems.github.io/incan-pub-playground/incan-io-directions/obsidian-incan/media.html)
+- [HTML design reference](https://encero-systems.github.io/incan-pub-playground/incan-io-directions/obsidian/)
+- [Earlier Incan.io mockup](https://encero-systems.github.io/incan-pub-playground/incan-io-directions/real/)
+
+The new website is a release preview, not a claim that Incan 0.6 has shipped. See [the Incan builder and validation guide](tools/welcome/README.md) for implementation ownership and documentation provenance.
 
 The historical design/experiment notes below are retained as context.
 

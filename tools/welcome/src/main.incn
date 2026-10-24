@@ -1,0 +1,88 @@
+"""Build the real welcome page from Incan components, content and interaction rules."""
+
+from std.fs import Path
+from std.environ import get_or
+from std.json import JsonValue
+from pub::pallay import lower_web, render_tree, parse_template, reference_trace, TraceCommand, Value, digest_text
+from page import document
+from pub::pallay import initial_document
+from interaction import application
+from mechanisms import browser_policy
+from browser_target import host_runtime
+from theme import stylesheet
+from docs_main import build_docs
+from media import media_document, media_stylesheet, media_description
+
+
+def write(directory: str, name: str, value: str) -> None:
+    match Path(directory).joinpath(name).write_text(value, encoding="utf-8", errors="strict", newline=None):
+        Ok(_) => pass
+        Err(error) =>
+            println(error.message())
+            assert false, "Could not write generated output"
+
+
+pub def build(directory: str) -> None:
+    body = document()
+    app = application(body)
+    output = lower_web(app, true)
+    if not output.valid:
+        println("\n".join(output.diagnostics))
+        assert false, "Invalid authored experience"
+    markup = render_tree(initial_document(body, app))
+    match parse_template(markup, "welcome-document"):
+        Ok(_) => pass
+        Err(error) =>
+            println(error)
+            assert false, "Invalid structured document"
+    Path(directory).mkdir(parents=true, exist_ok=true).unwrap()
+    mut plan = ""
+    mut runtime = ""
+    for file in output.files:
+        if file.path == "plan.json":
+            plan = str(file.content)
+        if file.path == "runtime.mjs":
+            runtime = str(file.content)
+    policy = browser_policy()
+    bootstrap = "import {connect} from './browser-target.mjs';\nconst plan=" + plan + ";\nconst policy=" + policy + ";\nconnect(plan,policy,document);\n"
+    head = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"generator\" content=\"Incan 0.5.1 · Pallay\"><meta name=\"theme-color\" content=\"#080c0a\"><meta name=\"description\" content=\"Incan, a modern programming language. Static typing, readable source, native compilation and Rust compatibility.\"><title>Incan · Welcome to the language</title><link rel=\"icon\" type=\"image/png\" href=\"assets/incan-logo.png\"><link rel=\"preload\" as=\"image\" href=\"assets/hero-scene.webp\"><link rel=\"stylesheet\" href=\"assets/fonts/fonts.css\"><link rel=\"stylesheet\" href=\"style.css\"><script src=\"assets/vendor/leader-line.min.js\" defer></script><script src=\"app.mjs\" type=\"module\"></script></head><body>"
+    html = head + markup + "</body></html>"
+    probes = [TraceCommand(transition="next", value=Value()), TraceCommand(transition="previous", value=Value()), TraceCommand(
+        transition="select",
+        value=Value.text("8"),
+    ), TraceCommand(transition="next", value=Value()), TraceCommand(transition="previous", value=Value()), TraceCommand(
+        transition="select_6",
+        value=Value(),
+    ), TraceCommand(transition="toggle_menu", value=Value()), TraceCommand(transition="close_menu", value=Value()), TraceCommand(
+        transition="select",
+        value=Value.number(1),
+    )]
+    files = {"media.html": media_document(), "media.css": media_stylesheet(), "media-description.txt": media_description(), "index.html": html, "style.css": stylesheet(), "plan.json": plan, "mechanisms.json": policy, "pallay-runtime.mjs": runtime, "browser-target.mjs": host_runtime(), "app.mjs": bootstrap, "reference.json": reference_trace(
+        app,
+        probes,
+    )}
+    mut hashes: Dict[str, JsonValue] = {}
+    for name in sorted([str(key) for key in files.keys()]):
+        write(directory, name, files[name])
+        hashes[name] = JsonValue.string(digest_text(files[name]))
+    mut sources: Dict[str, JsonValue] = {}
+    for name in ["main", "page", "layout", "components", "examples", "interaction", "mechanisms", "browser_target", "theme", "markdown_docs", "docs_layout", "docs_main", "docs_diagrams", "docs_architecture", "media"]:
+        path = "src/" + name + ".incn"
+        sources[path] = JsonValue.string(digest_text(Path(path).read_text(encoding="utf-8", errors="strict").unwrap()))
+    for path in ["incan.toml", "loaf.toml", "incan.lock", "static/manifest.json", "vendor/pallay-provenance.json", "vendor/overrides.json", "vendor/pallay/src/lib.incn", "vendor/pallay/src/document/tree.incn", "vendor/pallay/src/document/projection.incn", "build"]:
+        sources[path] = JsonValue.string(digest_text(Path(path).read_text(encoding="utf-8", errors="strict").unwrap()))
+    receipt = JsonValue.object(
+        {"schema": JsonValue.string("incan.welcome-build.v1"), "compiler": JsonValue.string(
+            get_or("INCAN_WELCOME_COMPILER", "incan 0.5.1"),
+        ), "sources": JsonValue.object(sources), "outputs": JsonValue.object(hashes), "ownership": JsonValue.string(
+            "Incan-authored components, content, appearance, state and interaction policy. Pallay-generated reducer and browser host mechanisms; original artwork preserved.",
+        )},
+    )
+    write(directory, "build-receipt.json", receipt.to_pretty_json().unwrap() + "\n")
+    println("Built Incan welcome page: " + directory)
+
+
+def main() -> None:
+    directory = get_or("INCAN_WELCOME_OUTPUT", "../../incan-io-directions/obsidian-incan")
+    build(directory)
+    build_docs(directory)

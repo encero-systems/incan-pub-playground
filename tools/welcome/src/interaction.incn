@@ -1,0 +1,174 @@
+"""All page-specific state, transitions and browser bindings are Incan-owned."""
+
+from pub::pallay import (
+    Experience,
+    SurfaceNode,
+    DocumentNode,
+    StateField,
+    Value,
+    ValueKind,
+    Transition,
+    Mutation,
+    Presentation,
+    PresentationKind,
+    EventBinding,
+    EventKind,
+    Expression,
+    literal,
+    state,
+    payload,
+    equal,
+    choose,
+    negate,
+    add,
+    lookup,
+    experience,
+    group,
+    activate,
+)
+from examples import catalog
+from page import binding_nodes
+
+
+def number(value: int) -> Expression:
+    return literal(Value.number(value))
+
+
+def text(value: str) -> Expression:
+    return literal(Value.text(value))
+
+
+def flag(value: bool) -> Expression:
+    return literal(Value.flag(value))
+
+
+pub def application(document: DocumentNode) -> Experience:
+    examples = catalog()
+    fields = [StateField(name="example", kind=ValueKind.Number, initial=Value.number(3)), StateField(
+        name="paused",
+        kind=ValueKind.Flag,
+        initial=Value.flag(false),
+    ), StateField(name="menu_open", kind=ValueKind.Flag, initial=Value.flag(false)), StateField(
+        name="note",
+        kind=ValueKind.Number,
+        initial=Value.number(0),
+    ), StateField(name="announcement", kind=ValueKind.Text, initial=Value.text(""))]
+    next_value = choose(equal(state("example"), number(len(examples) - 1)), number(0), add(state("example"), number(1)))
+    previous_value = choose(
+        equal(state("example"), number(0)),
+        number(len(examples) - 1),
+        add(state("example"), number(-1)),
+    )
+    mut selected: Dict[str, Value] = {}
+    mut captions: Dict[str, Value] = {}
+    for index in range(len(examples)):
+        selected[str(index)] = Value.number(index)
+        captions[str(index)] = Value.text(examples[index].caption)
+    mut transitions = [Transition(
+        name="advance",
+        mutations=[Mutation(state="example", value=next_value), Mutation(state="note", value=number(0))],
+    ), Transition(
+        name="next",
+        mutations=[Mutation(state="example", value=next_value), Mutation(state="paused", value=flag(true)), Mutation(
+            state="note",
+            value=number(0),
+        ), Mutation(state="announcement", value=text("Next example. Rotation paused."))],
+    ), Transition(
+        name="previous",
+        mutations=[Mutation(state="example", value=previous_value), Mutation(state="paused", value=flag(true)), Mutation(
+            state="note",
+            value=number(0),
+        ), Mutation(state="announcement", value=text("Previous example. Rotation paused."))],
+    ), Transition(
+        name="select",
+        payload_kind=ValueKind.Text,
+        mutations=[Mutation(state="example", value=lookup(payload(), selected, Value.number(3))), Mutation(
+            state="paused",
+            value=flag(true),
+        ), Mutation(state="note", value=number(0)), Mutation(
+            state="announcement",
+            value=text("Example selected. Rotation paused."),
+        )],
+    ), Transition(name="toggle_rotation", mutations=[Mutation(state="paused", value=negate(state("paused")))]), Transition(
+        name="pause",
+        mutations=[Mutation(state="paused", value=flag(true))],
+    ), Transition(name="toggle_menu", mutations=[Mutation(state="menu_open", value=negate(state("menu_open")))]), Transition(
+        name="close_menu",
+        mutations=[Mutation(state="menu_open", value=flag(false))],
+    ), Transition(
+        name="inspect_note",
+        payload_kind=ValueKind.Text,
+        mutations=[Mutation(
+            state="note",
+            value=lookup(payload(), {"0": Value.number(0), "1": Value.number(1), "2": Value.number(2)}, Value.number(0)),
+        ), Mutation(state="paused", value=flag(true))],
+    )]
+    mut presentations = [Presentation(
+        node="site-nav",
+        kind=PresentationKind.Appearance,
+        value=choose(state("menu_open"), text("is-open"), text("")),
+    ), Presentation(node="menu-button", kind=PresentationKind.Expanded, value=state("menu_open")), Presentation(
+        node="tour-toggle",
+        kind=PresentationKind.Content,
+        value=choose(state("paused"), text("Play"), text("Pause")),
+    ), Presentation(node="example-status", kind=PresentationKind.Content, value=state("announcement"))]
+    mut events = [activate("menu-button", "toggle_menu"), activate("example-next", "next"), activate(
+        "example-previous",
+        "previous",
+    ), activate("tour-toggle", "toggle_rotation"), EventBinding(
+        node="example-select",
+        event=EventKind.Change,
+        transition="select",
+        value=payload(),
+    )]
+    mut selected_text = text("3")
+    mut count_text = text("04 / 09")
+    mut caption_text = text(examples[3].caption)
+    for index in range(len(examples)):
+        example = examples[index]
+        is_selected = equal(state("example"), number(index))
+        selected_text = choose(is_selected, text(str(index)), selected_text)
+        ordinal = index + 1
+        count_text = choose(is_selected, text("0" + str(ordinal) + " / 09"), count_text)
+        caption_text = choose(is_selected, text(example.caption), caption_text)
+        presentations.append(Presentation(node="view-" + example.key, kind=PresentationKind.Visible, value=is_selected))
+        for step in range(len(example.notes)):
+            note = example.notes[step]
+            presentations.append(
+                Presentation(
+                    node="note-group-" + example.key + "-" + str(step),
+                    kind=PresentationKind.Appearance,
+                    value=choose(equal(state("note"), number(step)), text("tour-active"), text("")),
+                ),
+            )
+            presentations.append(
+                Presentation(
+                    node=note.line,
+                    kind=PresentationKind.Appearance,
+                    value=choose(equal(state("note"), number(step)), text("line tour-active"), text("line")),
+                ),
+            )
+    presentations.append(Presentation(node="example-select", kind=PresentationKind.Value, value=selected_text))
+    presentations.append(Presentation(node="example-count", kind=PresentationKind.Content, value=count_text))
+    presentations.append(Presentation(node="example-caption", kind=PresentationKind.Content, value=caption_text))
+    for index in [0, 6, 7, 8]:
+        key = str(index)
+        transitions.append(
+            Transition(
+                name="select_" + key,
+                mutations=[Mutation(state="example", value=number(index)), Mutation(state="paused", value=flag(true)), Mutation(
+                    state="note",
+                    value=number(0),
+                ), Mutation(state="announcement", value=text(examples[index].label + ". Rotation paused."))],
+            ),
+        )
+        events.append(activate("tab-" + key, "select_" + key))
+    return experience(
+        "IncanWelcome",
+        "Incan · Welcome to the language",
+        group("document-contract", binding_nodes(document)),
+        fields,
+        transitions,
+        presentations,
+        events,
+    )

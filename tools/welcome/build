@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+welcome_root=$(cd "$(dirname "$0")" && pwd)
+welcome_compiler=${INCAN_WELCOME_INCAN:-incan}
+export INCAN_HOME=${INCAN_WELCOME_CACHE:-"$welcome_root/target/incan-home"}
+unset INCAN_STDLIB
+export INCAN_WELCOME_COMPILER="$($welcome_compiler --version) sha256:$(shasum -a 256 "$(command -v "$welcome_compiler")" | awk '{print $1}')"
+(
+ cd "$welcome_root/vendor/pallay"
+ "$welcome_compiler" lock
+ "$welcome_compiler" oven bake --project .
+ "$welcome_compiler" build --lib
+)
+cd "$welcome_root"
+"$welcome_compiler" lock
+"$welcome_compiler" oven bake --project .
+"$welcome_compiler" run src/main.incn
+welcome_output=${INCAN_WELCOME_OUTPUT:-"$welcome_root/../../incan-io-directions/obsidian-incan"}
+mkdir -p "$welcome_output/assets" "$welcome_output/fonts"
+cp -R "$welcome_root/static/assets/." "$welcome_output/assets/"
+cp -R "$welcome_root/static/fonts/." "$welcome_output/fonts/"

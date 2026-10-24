@@ -1,0 +1,484 @@
+"""Markdown content adapter: standard parsing via markdown-rs, docsite policy in Incan."""
+
+from rust::markdown import to_html_with_options, Options
+from std.fs import Path
+from pub::pallay import DocumentNode, parse_template
+from components import el, txt
+
+
+pub model DocPage:
+    pub key: str
+    pub title: str
+    pub group: str
+    pub source: str
+    pub description: str
+
+
+pub def pages() -> list[DocPage]:
+    return [DocPage(
+        key="explore",
+        title="Find your next step",
+        group="Start here",
+        source="experiment/explore.md",
+        description="Three topics, organized around the work you want to do.",
+    ), DocPage(
+        key="dates",
+        title="Dates and times",
+        group="Library guide",
+        source="experiment/dates.md",
+        description="Choose a type, parse input, and calculate a trial period.",
+    ), DocPage(
+        key="date-api",
+        title="Date API preview",
+        group="API documentation",
+        source="experiment/date-api.md",
+        description="A sample of the reference that source documentation should supply.",
+    ), DocPage(
+        key="traits",
+        title="Traits and capabilities",
+        group="Language guide",
+        source="experiment/traits.md",
+        description="Define behavior once and accept different implementations.",
+    ), DocPage(
+        key="traits-reference",
+        title="Trait rules",
+        group="Language reference",
+        source="experiment/traits-reference.md",
+        description="The language contract that API generation cannot replace.",
+    ), DocPage(
+        key="oven",
+        title="Build and run a project",
+        group="Build with Incan",
+        source="experiment/oven.md",
+        description="A first project loop with checkpoints and recovery paths.",
+    ), DocPage(
+        key="fit",
+        title="What Incan is for",
+        group="Start here",
+        source="start_here/what_incan_is_for.md",
+        description="Where the language fits, its direction and its boundaries.",
+    ), DocPage(
+        key="enums",
+        title="Modeling with enums",
+        group="Language guides",
+        source="language/how-to/modeling_with_enums.md",
+        description="State machines, commands, errors and expression trees.",
+    ), DocPage(
+        key="collections",
+        title="Collections",
+        group="Standard library",
+        source="language/reference/stdlib/collections.md",
+        description="Collection types, their contracts and the OrdinalMap API.",
+    ), DocPage(
+        key="getting-started",
+        title="Getting started",
+        group="Tutorials",
+        source="tooling/tutorials/getting_started.md",
+        description="The complete first-project loop, installer choices and checked steps.",
+    ), DocPage(
+        key="typed-api",
+        title="Build a typed API",
+        group="Tutorials",
+        source="language/tutorials/build_your_first_api.md",
+        description="A native service, typed responses and a request-flow diagram.",
+    ), DocPage(
+        key="web-framework",
+        title="Web framework",
+        group="Language guides",
+        source="language/tutorials/web_framework.md",
+        description="Routes, extractors and complete included source examples.",
+    ), DocPage(
+        key="rust-interop",
+        title="Rust interoperability",
+        group="Language guides",
+        source="language/how-to/rust_interop.md",
+        description="Crate boundaries, generics, callbacks and the Rust type mapping.",
+    ), DocPage(
+        key="compile-runtime",
+        title="Compile time and runtime",
+        group="Language concepts",
+        source="language/explanation/compile_time_and_runtime.md",
+        description="A long-form explanation with comparisons and linked footnotes.",
+    ), DocPage(
+        key="architecture",
+        title="Architecture · 0.6",
+        group="Contributing",
+        source="contributing/explanation/architecture_0_6.md",
+        description="Follow a build, find a compiler stage and understand the crate boundaries.",
+    )]
+
+
+def without_comments(markup: str) -> str:
+    parts = markup.split("<!--")
+    mut output = parts[0]
+    for segment in parts[1:]:
+        rest = segment.split("-->")
+        assert len(rest) > 1, "Unterminated HTML comment"
+        output += "-->".join(rest[1:])
+    return output
+
+
+pub def parse_fragment(source: str) -> Result[DocumentNode, str]:
+    """Standard Markdown uses safe HTML defaults; explicit regions use Pallay validation."""
+    mut in_fence = false
+    for line in source.split("\n"):
+        if line.strip().startswith("```") or line.strip().startswith("~~~"):
+            in_fence = not in_fence
+        elif not in_fence and line.strip().startswith("<") and not line.strip().startswith("<!--"):
+            return Err("HTML must enter through a validated semantic region: " + line)
+    options = Options.gfm()
+    match to_html_with_options(source, options):
+        Ok(markup) => return parse_template(without_comments(markup), "Markdown parser output")
+        Err(error) => return Err(str(error))
+
+
+def standard(source: str, definitions: str = "") -> list[DocumentNode]:
+    match parse_fragment(source + "\n\n" + definitions):
+        Ok(root) => return root.children
+        Err(error) =>
+            assert false, error
+            return []
+
+
+pub model ExpandedMarkdown:
+    pub text: str
+    pub inputs: list[str] = []
+
+
+pub def expand_snippets(source: str, ancestors: list[str] = []) -> Result[ExpandedMarkdown, str]:
+    """Resolve only copied doc-root snippets, retaining indentation inside fenced code."""
+    if len(ancestors) >= 12:
+        return Err("Snippet include nesting is too deep")
+    mut output: list[str] = []
+    mut inputs: list[str] = []
+    for line in source.split("\n"):
+        if line.strip().startswith("--8<--"):
+            parts = line.strip().split("\"")
+            if len(parts) != 3 or parts[2].strip() != "":
+                return Err("Unsupported snippet directive: " + line)
+            path = parts[1]
+            if not path.startswith("_snippets/") or path.contains(":") or path.contains("\\") or ".." in path.split("/"):
+                return Err("Snippet must remain inside the imported _snippets directory: " + path)
+            if path in ancestors:
+                return Err("Snippet include cycle: " + path)
+            value = Path("docs-source/" + path).read_text(encoding="utf-8", errors="strict")
+            match value:
+                Err(error) => return Err("Missing imported snippet " + path + ": " + error.message())
+                Ok(text) =>
+                    expanded = expand_snippets(text, ancestors + [path])?
+                    mut indent = ""
+                    for character in line:
+                        if character == " " or character == "\t":
+                            indent += character
+                        else:
+                            break
+                    mut snippet_text = expanded.text
+                    while snippet_text.endswith("\n"):
+                        snippet_text = str(snippet_text[0:-1])
+                    for child in snippet_text.split("\n"):
+                        output.append(indent + child)
+                    if path not in inputs:
+                        inputs.append(path)
+                    for child in expanded.inputs:
+                        if child not in inputs:
+                            inputs.append(child)
+        else:
+            output.append(line)
+    return Ok(ExpandedMarkdown(text="\n".join(output), inputs=inputs))
+
+
+def reference_definitions(source: str) -> str:
+    mut definitions: list[str] = []
+    mut fence = ""
+    for line in source.split("\n"):
+        if line.strip().startswith("```") or line.strip().startswith("~~~"):
+            if fence == "":
+                fence = str(line.strip()[0:3])
+            elif line.strip().startswith(fence):
+                fence = str("")
+        elif fence == "" and line.startswith("[") and not line.startswith("[^") and line.contains("]: "):
+            definitions.append(line)
+    return "\n".join(definitions)
+
+
+pub def blocks(source: str, depth: int = 0, references: str = "") -> list[DocumentNode]:
+    """
+    Adapt indented Material callouts and language panels without changing source bytes.
+
+    Tabs become labelled, simultaneously visible panels; collapsible callouts use
+    native details. Includes are expanded first; unsupported macros stop explicitly.
+    Fenced code is passed through unchanged, including directive-looking examples.
+    """
+    assert depth < 12, "Markdown extension nesting is too deep"
+    lines = source.split("\n")
+    mut definitions = references
+    if depth == 0:
+        definitions = reference_definitions(source)
+    mut nodes: list[DocumentNode] = []
+    mut pending: list[str] = []
+    mut fence = ""
+    mut index = 0
+    while index < len(lines):
+        line = lines[index]
+        stripped = line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            marker = stripped[0:3]
+            if fence == "":
+                fence = str(marker)
+            elif marker == fence:
+                fence = str("")
+            pending.append(line)
+            index += 1
+            continue
+        if fence != "":
+            pending.append(line)
+            index += 1
+            continue
+        assert not stripped.startswith("--8<--"), "Snippet include needs an explicitly imported source: " + stripped
+        assert not stripped.startswith("{{"), "Unsupported docsite macro: " + stripped
+        directive = line.startswith("??? ") or line.startswith("???+ ") or line.startswith("!!! ") or line.startswith(
+            "===",
+        )
+        if directive:
+            nodes.extend(standard("\n".join(pending), definitions))
+            pending = []
+            mut body: list[str] = []
+            index += 1
+            while index < len(lines):
+                child = lines[index]
+                if child.strip() == "":
+                    body.append("")
+                    index += 1
+                elif child.startswith("    "):
+                    body.append(child[4:])
+                    index += 1
+                else:
+                    break
+            inner = blocks("\n".join(body), depth + 1, definitions)
+            if line.startswith("==="):
+                label = line[3:].strip().replace("\"", "").replace("*", "")
+                nodes.append(
+                    el(
+                        "section",
+                        {"class": "doc-language-panel", "aria-label": label},
+                        [el("p", {"class": "doc-panel-label"}, [txt(label)])] + inner,
+                    ),
+                )
+            else:
+                parts = line.split("\"")
+                mut title = str("Note")
+                if len(parts) > 1:
+                    title = str(parts[1])
+                mut attrs = {"class": "doc-callout"}
+                if line.startswith("!!!") or line.startswith("???+"):
+                    attrs["open"] = ""
+                nodes.append(el("details", attrs, [el("summary", {}, [txt(title)])] + inner))
+        elif line.startswith("<aside ") or line.startswith("<ol ") or line.startswith("<p "):
+            nodes.extend(standard("\n".join(pending), definitions))
+            pending = []
+            tag = line[1:].split(" ")[0]
+            closing = "</" + tag + ">"
+            mut raw: list[str] = [line]
+            index += 1
+            if not line.strip().endswith(closing):
+                while index < len(lines) and lines[index].strip() != closing:
+                    raw.append(lines[index])
+                    index += 1
+                assert index < len(lines), "Unterminated semantic HTML region"
+                raw.append(lines[index])
+                index += 1
+            region = parse_template("\n".join(raw), "Semantic tutorial HTML").unwrap()
+            nodes.extend(region.children)
+        elif line.startswith("<section ") and line.contains("markdown=\"1\""):
+            nodes.extend(standard("\n".join(pending), definitions))
+            pending = []
+            mut body: list[str] = []
+            index += 1
+            while index < len(lines) and lines[index].strip() != "</section>":
+                body.append(lines[index])
+                index += 1
+            assert index < len(lines), "Unterminated Markdown-enabled section"
+            region = parse_template(line + "</section>", "Markdown-enabled section").unwrap()
+            mut section = region.children[0]
+            section.children = blocks("\n".join(body), depth + 1, definitions)
+            nodes.append(section)
+            index += 1
+        else:
+            pending.append(line)
+            index += 1
+    nodes.extend(standard("\n".join(pending), definitions))
+    return nodes
+
+
+pub def plain(node: DocumentNode) -> str:
+    mut result = node.text
+    for child in node.children:
+        result += plain(child)
+    return result
+
+
+pub def slug(value: str) -> str:
+    mut output = ""
+    for character in value.lower():
+        if character in "abcdefghijklmnopqrstuvwxyz0123456789_-":
+            output += character
+        elif character == " " or character == "/":
+            output += "-"
+    return output.strip("-")
+
+
+pub def resolve_link(source: str, href: str) -> str:
+    """Keep imported targets local and route other documentation to the actual site."""
+    if href.startswith("#") or href.contains(":") or href.startswith("//"):
+        return href
+    parts = href.split("#")
+    target = parts[0]
+    mut path: list[str] = source.split("/")[0:-1]
+    if target.startswith("/"):
+        path = []
+    for part in target.split("/"):
+        if part == "..":
+            assert len(path) > 0, "Documentation link escapes its content root"
+            path = path[0:-1]
+        elif part != "" and part != ".":
+            path.append(part)
+    normalized = "/".join(path)
+    mut anchor = ""
+    if len(parts) > 1:
+        anchor = "#" + parts[1]
+    for page in pages():
+        if normalized == page.source:
+            return page.key + ".html" + anchor
+    if normalized.endswith(".md"):
+        return "https://incan.io/dev/" + normalized[0:-3] + "/" + anchor
+    return "https://incan.io/dev/" + normalized + anchor
+
+
+def word_char(value: str) -> bool:
+    return value in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+
+
+def highlight(source: str) -> list[DocumentNode]:
+    """Small lexical colour layer; text is retained exactly, never interpreted as markup."""
+    mut output: list[DocumentNode] = []
+    mut characters: list[str] = []
+    for character in source:
+        characters.append(character)
+    mut index = 0
+    while index < len(characters):
+        start = index
+        character = characters[index]
+        mut kind = ""
+        if character == "#":
+            while index < len(characters) and characters[index] != "\n":
+                index += 1
+            kind = str("comment")
+        elif character == "\"" or character == "'":
+            index += 1
+            while index < len(characters):
+                current = characters[index]
+                index += 1
+                if current == "\\" and index < len(characters):
+                    index += 1
+                elif current == character:
+                    break
+            kind = str("string")
+        elif word_char(character):
+            while index < len(characters) and word_char(characters[index]):
+                index += 1
+            word = "".join(characters[start:index])
+            if word in ["def", "pub", "model", "class", "enum", "trait", "with", "match", "case", "return", "if", "elif", "else", "for", "in", "from", "import", "mut", "let", "fn", "type", "switch", "break", "pass", "raise", "async", "await"]:
+                kind = str("keyword")
+            elif word in ["str", "int", "float", "bool", "None", "true", "false", "Self", "Result", "Option", "list", "dict", "set"]:
+                kind = str("type")
+        else:
+            index += 1
+        value = "".join(characters[start:index])
+        if kind == "":
+            output.append(txt(value))
+        else:
+            output.append(el("span", {"class": "doc-token-" + kind}, [txt(value)]))
+    return output
+
+
+pub model DocProjection:
+    pub source: str
+    pub headings: list[DocumentNode] = []
+    pub counts: Dict[str, int] = {}
+    pub code_blocks: int = 0
+    pub tables: int = 0
+    pub callouts: int = 0
+    pub panels: int = 0
+    pub links: int = 0
+    pub diagrams: int = 0
+    pub footnotes: int = 0
+    pub tutorial_panels: int = 0
+
+    def decorate(mut self, original: DocumentNode) -> DocumentNode:
+        mut node = original
+        if node.tag in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+            base = slug(plain(node))
+            mut count = 0
+            if base in self.counts:
+                count = self.counts[base]
+            self.counts[base] = count + 1
+            mut identity = base
+            if "id" in node.attributes:
+                identity = str(node.attributes["id"])
+            if count > 0:
+                identity += "-" + str(count)
+            node.attributes["id"] = identity
+            if node.tag == "h2" or node.tag == "h3":
+                self.headings.append(el("a", {"href": "#" + identity, "class": "toc-" + node.tag}, [txt(plain(node))]))
+        if node.tag == "a" and "href" in node.attributes:
+            node.attributes["href"] = resolve_link(self.source, node.attributes["href"])
+            self.links += 1
+        if node.tag == "li" and "id" in node.attributes and node.attributes["id"].startswith("user-content-fn-"):
+            self.footnotes += 1
+        if node.tag == "section" and "class" in node.attributes and node.attributes["class"].contains(
+            "inc-learning-panel",
+        ):
+            self.tutorial_panels += 1
+        if node.tag == "table":
+            self.tables += 1
+        if node.tag == "details":
+            self.callouts += 1
+        if node.tag == "section" and "class" in node.attributes and node.attributes["class"] == "doc-language-panel":
+            self.panels += 1
+        if node.tag == "pre":
+            self.code_blocks += 1
+            node.attributes["tabindex"] = "0"
+            node.attributes["aria-label"] = "Code example"
+            if len(node.children) == 1 and node.children[0].tag == "code":
+                mut code = node.children[0]
+                value = plain(code)
+                code.text = str("")
+                code.children = highlight(value)
+                node.children = [code]
+                if "class" in code.attributes and code.attributes["class"] == "language-mermaid":
+                    self.diagrams += 1
+                    return el(
+                        "div",
+                        {"class": "doc-diagram"},
+                        [el(
+                            "div",
+                            {"class": "doc-diagram-canvas", "data-diagram": "mermaid", "aria-label": "Documentation diagram"},
+                            [txt(value)],
+                        ), el(
+                            "details",
+                            {"class": "doc-diagram-source"},
+                            [el("summary", {}, [txt("Diagram source")]), node],
+                        )],
+                    )
+                return node
+        mut children: list[DocumentNode] = []
+        for child in node.children:
+            children.append(self.decorate(child))
+        node.children = children
+        if node.tag == "table":
+            return el(
+                "div",
+                {"class": "doc-table-wrap", "tabindex": "0", "aria-label": "Scrollable reference table"},
+                [node],
+            )
+        return node

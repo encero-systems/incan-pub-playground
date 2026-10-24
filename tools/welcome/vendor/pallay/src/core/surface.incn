@@ -1,0 +1,769 @@
+"""Core surface artifact spike for the HelloWorld vertical slice."""
+
+
+pub enum RenderNodeKind:
+    """Semantic node kinds understood by the current presentation spike."""
+
+    Heading
+    Text
+
+
+pub enum ConstraintKind:
+    """Typed interaction-constraint families."""
+
+    RequiredInput
+
+
+pub model RenderNodeArtifact:
+    """One semantic presentation node before target lowering."""
+
+    pub kind: RenderNodeKind
+    pub text: str
+
+
+pub model RegionArtifact:
+    """Named presentation region containing semantic nodes."""
+
+    pub name: str
+    pub nodes: list[RenderNodeArtifact]
+
+
+pub model LayoutArtifact:
+    """Layout contract declaring the regions a page may populate."""
+
+    pub name: str
+    pub regions: list[str]
+
+
+pub model ActionArtifact:
+    """Governed action exposed by a surface and its evidence contract."""
+
+    pub name: str
+    pub capability: str
+    pub required_evidence: str
+
+
+pub model ConstraintArtifact:
+    """Typed input constraint attached to one semantic interaction."""
+
+    pub kind: ConstraintKind
+    pub applies_to: str
+    pub field: str
+    pub label: str
+    pub min_length: int
+    pub evidence_key: str
+
+
+pub model InteractionArtifact:
+    """User-visible interaction bound to a governed action."""
+
+    pub name: str
+    pub action: str
+    pub constraints: list[ConstraintArtifact]
+
+
+pub model PageArtifact:
+    """Route-addressable page and its target-neutral presentation facts."""
+
+    pub name: str
+    pub route: str
+    pub title: str
+    pub layout: str
+    pub regions: list[RegionArtifact]
+    pub interactions: list[InteractionArtifact]
+
+
+pub model ProjectionArtifact:
+    """Named request to lower a surface into a concrete target profile."""
+
+    pub name: str
+    pub target: str
+
+
+pub model SurfaceDiagnostic:
+    """Stable author-facing diagnostic attached to a surface artifact."""
+
+    pub code: str
+    pub severity: str
+    pub artifact: str
+    pub message: str
+    pub help: str
+
+
+pub model SurfaceArtifact:
+    """Canonical validated surface facts consumed by target lowerers."""
+
+    pub name: str
+    pub title: str
+    pub base: str
+    pub actions: list[ActionArtifact]
+    pub layouts: list[LayoutArtifact]
+    pub pages: list[PageArtifact]
+    pub projections: list[ProjectionArtifact]
+    pub diagnostics: list[SurfaceDiagnostic]
+
+
+pub model GeneratedFile:
+    """In-memory output file produced by the current static target spike."""
+
+    pub path: str
+    pub content: str
+
+
+pub def heading(text: str) -> RenderNodeArtifact:
+    """Create one semantic heading node."""
+    return RenderNodeArtifact(kind=RenderNodeKind.Heading, text=text)
+
+
+pub def text(text_value: str) -> RenderNodeArtifact:
+    """Create one semantic text node."""
+    return RenderNodeArtifact(kind=RenderNodeKind.Text, text=text_value)
+
+
+pub def region(name: str, nodes: list[RenderNodeArtifact]) -> RegionArtifact:
+    """Create one named surface region."""
+    return RegionArtifact(name=name, nodes=nodes)
+
+
+pub def layout(name: str, regions: list[str]) -> LayoutArtifact:
+    """Create one layout declaration with its valid regions."""
+    return LayoutArtifact(name=name, regions=regions)
+
+
+pub def action(name: str, capability: str, required_evidence: str) -> ActionArtifact:
+    """Create one governed action declaration."""
+    return ActionArtifact(name=name, capability=capability, required_evidence=required_evidence)
+
+
+pub def required_input(
+    interaction_name: str,
+    field: str,
+    label: str,
+    min_length: int,
+    evidence_key: str,
+) -> ConstraintArtifact:
+    """Create one typed required-input constraint for an interaction."""
+    return ConstraintArtifact(
+        kind=ConstraintKind.RequiredInput,
+        applies_to=f"interaction:{interaction_name}",
+        field=field,
+        label=label,
+        min_length=min_length,
+        evidence_key=evidence_key,
+    )
+
+
+pub def interaction(name: str, action_name: str, constraints: list[ConstraintArtifact]) -> InteractionArtifact:
+    """Create one user-visible interaction that invokes a governed action."""
+    return InteractionArtifact(name=name, action=action_name, constraints=constraints)
+
+
+pub def page(name: str, route: str, title: str, layout_name: str, regions: list[RegionArtifact]) -> PageArtifact:
+    """Create one route-addressable page declaration."""
+    return PageArtifact(name=name, route=route, title=title, layout=layout_name, regions=regions, interactions=[])
+
+
+pub def page_with_interactions(
+    name: str,
+    route: str,
+    title: str,
+    layout_name: str,
+    regions: list[RegionArtifact],
+    interactions: list[InteractionArtifact],
+) -> PageArtifact:
+    """Create one page declaration with governed interactions."""
+    return PageArtifact(
+        name=name,
+        route=route,
+        title=title,
+        layout=layout_name,
+        regions=regions,
+        interactions=interactions,
+    )
+
+
+pub def projection(name: str, target: str) -> ProjectionArtifact:
+    """Create one projection declaration."""
+    return ProjectionArtifact(name=name, target=target)
+
+
+pub def surface(
+    name: str,
+    title: str,
+    base: str,
+    layouts: list[LayoutArtifact],
+    pages: list[PageArtifact],
+    projections: list[ProjectionArtifact],
+) -> SurfaceArtifact:
+    """Create and validate one surface artifact."""
+    return validate_surface(
+        SurfaceArtifact(
+            name=name,
+            title=title,
+            base=base,
+            actions=[],
+            layouts=layouts,
+            pages=pages,
+            projections=projections,
+            diagnostics=[],
+        ),
+    )
+
+
+pub def surface_with_governance(
+    name: str,
+    title: str,
+    base: str,
+    actions: list[ActionArtifact],
+    layouts: list[LayoutArtifact],
+    pages: list[PageArtifact],
+    projections: list[ProjectionArtifact],
+) -> SurfaceArtifact:
+    """Create and validate one surface artifact with governed actions."""
+    return validate_surface(
+        SurfaceArtifact(
+            name=name,
+            title=title,
+            base=base,
+            actions=actions,
+            layouts=layouts,
+            pages=pages,
+            projections=projections,
+            diagnostics=[],
+        ),
+    )
+
+
+pub def hello_world_surface() -> SurfaceArtifact:
+    """Build the canonical HelloWorld surface artifact for the first spike."""
+    body = region("body", [heading("Hello, Pallay"), text("This is a governed surface.")])
+    return surface(
+        "HelloWorld",
+        "Hello World",
+        "/",
+        [layout("SimplePage", ["body"])],
+        [page("Home", "/", "Hello, Pallay", "SimplePage", [body])],
+        [projection("web", "static-web")],
+    )
+
+
+pub def invalid_region_surface() -> SurfaceArtifact:
+    """Build a surface whose page writes to a region its layout does not declare."""
+    sidebar = region("sidebar", [heading("Wrong region"), text("This region is not declared by SimplePage.")])
+    return surface(
+        "InvalidRegion",
+        "Invalid Region",
+        "/",
+        [layout("SimplePage", ["body"])],
+        [page("Home", "/", "Hello, Pallay", "SimplePage", [sidebar])],
+        [projection("web", "static-web")],
+    )
+
+
+pub def action_valid_surface() -> SurfaceArtifact:
+    """Build a surface whose escalation interaction collects required evidence."""
+    body = region("body", [heading("Case Review"), text("High risk case requires escalation review.")])
+    escalation = action("EscalateCase", "case.escalate", "escalation.explanation")
+    escalate = interaction(
+        "Escalate",
+        "EscalateCase",
+        [required_input("Escalate", "explanation", "Explanation", 20, "escalation.explanation")],
+    )
+    return surface_with_governance(
+        "CaseReview",
+        "Case Review",
+        "/",
+        [escalation],
+        [layout("SimplePage", ["body"])],
+        [page_with_interactions("Review", "/cases/123", "Case Review", "SimplePage", [body], [escalate])],
+        [projection("web", "static-web")],
+    )
+
+
+pub def action_missing_required_input_surface() -> SurfaceArtifact:
+    """Build a surface whose action contract is not satisfied by the interaction."""
+    body = region("body", [heading("Case Review")])
+    escalation = action("EscalateCase", "case.escalate", "escalation.explanation")
+    escalate = interaction("Escalate", "EscalateCase", [])
+    return surface_with_governance(
+        "MissingRequiredInput",
+        "Missing Required Input",
+        "/",
+        [escalation],
+        [layout("SimplePage", ["body"])],
+        [page_with_interactions("Review", "/cases/123", "Case Review", "SimplePage", [body], [escalate])],
+        [projection("web", "static-web")],
+    )
+
+
+pub def action_missing_target_surface() -> SurfaceArtifact:
+    """Build a surface whose interaction references an undeclared action."""
+    body = region("body", [heading("Case Review")])
+    escalate = interaction(
+        "Escalate",
+        "MissingAction",
+        [required_input("Escalate", "explanation", "Explanation", 20, "escalation.explanation")],
+    )
+    return surface_with_governance(
+        "MissingActionTarget",
+        "Missing Action Target",
+        "/",
+        [],
+        [layout("SimplePage", ["body"])],
+        [page_with_interactions("Review", "/cases/123", "Case Review", "SimplePage", [body], [escalate])],
+        [projection("web", "static-web")],
+    )
+
+
+pub def validate_surface(surface: SurfaceArtifact) -> SurfaceArtifact:
+    """Validate surface structure and return a new artifact carrying diagnostics."""
+    mut diagnostics: list[SurfaceDiagnostic] = []
+    if len(surface.pages) == 0:
+        diagnostics.append(
+            _diagnostic(
+                "PLY-E004",
+                "error",
+                f"surface:{surface.name}.pages",
+                f"Surface {surface.name} does not declare any pages.",
+                "Declare at least one page before requesting a page-based projection.",
+            ),
+        )
+    for page in surface.pages:
+        if not _layout_exists(surface.layouts, page.layout):
+            diagnostics.append(
+                _diagnostic(
+                    "PLY-E001",
+                    "error",
+                    f"page:{page.name}",
+                    f"Page {page.name} references unknown layout {page.layout}.",
+                    "Declare the layout or change the page layout reference.",
+                ),
+            )
+        else:
+            layout_regions = _layout_regions(surface.layouts, page.layout)
+            for region in page.regions:
+                if not _contains_str(layout_regions, region.name):
+                    diagnostics.append(
+                        _diagnostic(
+                            "PLY-E002",
+                            "error",
+                            f"page:{page.name}.region:{region.name}",
+                            f"Page {page.name} writes to region {region.name}, but layout {page.layout} does not declare it.",
+                            "Declare the region on the layout or move the content into a valid region.",
+                        ),
+                    )
+    for left_index in range(0, len(surface.pages)):
+        left = surface.pages[left_index]
+        for right_index in range(left_index + 1, len(surface.pages)):
+            right = surface.pages[right_index]
+            if _canonical_route(left.route) == _canonical_route(right.route):
+                diagnostics.append(
+                    _diagnostic(
+                        "PLY-E003",
+                        "error",
+                        f"page:{right.name}.route",
+                        f"Route {right.route} is used by both {left.name} and {right.name}.",
+                        "Change one route so every projected page has one canonical address.",
+                    ),
+                )
+    for page in surface.pages:
+        if not _route_is_safe(page.route):
+            diagnostics.append(
+                _diagnostic(
+                    "PLY-E005",
+                    "error",
+                    f"page:{page.name}.route",
+                    f"Route {page.route} cannot be lowered to a safe static output path.",
+                    "Use an absolute route without '.' or '..' path segments.",
+                ),
+            )
+    for page in surface.pages:
+        for interaction in page.interactions:
+            if not _action_exists(surface.actions, interaction.action):
+                diagnostics.append(
+                    _diagnostic(
+                        "PLY-E101",
+                        "error",
+                        f"page:{page.name}.interaction:{interaction.name}.action",
+                        f"Interaction {interaction.name} references unknown action {interaction.action}.",
+                        "Declare the action on the surface or change the interaction action reference.",
+                    ),
+                )
+            else:
+                evidence_key = _action_required_evidence(surface.actions, interaction.action)
+                if evidence_key != "" and not _interaction_collects_evidence(interaction, evidence_key):
+                    diagnostics.append(
+                        _diagnostic(
+                            "PLY-E102",
+                            "error",
+                            f"page:{page.name}.interaction:{interaction.name}.constraints",
+                            f"Interaction {interaction.name} invokes action {interaction.action} but does not collect required evidence {evidence_key}.",
+                            "Add a typed required-input constraint with the required evidence key.",
+                        ),
+                    )
+            expected_target = f"interaction:{interaction.name}"
+            for constraint in interaction.constraints:
+                if constraint.applies_to != expected_target:
+                    diagnostics.append(
+                        _diagnostic(
+                            "PLY-E103",
+                            "error",
+                            f"page:{page.name}.interaction:{interaction.name}.constraint:{constraint.field}",
+                            f"Constraint for field {constraint.field} targets {constraint.applies_to}, but it is nested under {expected_target}.",
+                            "Move the constraint under the targeted interaction or update its target.",
+                        ),
+                    )
+                match constraint.kind:
+                    ConstraintKind.RequiredInput =>
+                        if constraint.field == "":
+                            diagnostics.append(
+                                _diagnostic(
+                                    "PLY-E104",
+                                    "error",
+                                    f"page:{page.name}.interaction:{interaction.name}.constraint",
+                                    f"Required-input constraint on {interaction.name} does not declare a field.",
+                                    "Declare the required input field explicitly.",
+                                ),
+                            )
+                        if constraint.evidence_key == "":
+                            diagnostics.append(
+                                _diagnostic(
+                                    "PLY-E105",
+                                    "error",
+                                    f"page:{page.name}.interaction:{interaction.name}.constraint:{constraint.field}",
+                                    f"Required-input constraint {constraint.field} does not declare an evidence key.",
+                                    "Attach an evidence key so the interaction can be audited.",
+                                ),
+                            )
+                        if constraint.min_length <= 0:
+                            diagnostics.append(
+                                _diagnostic(
+                                    "PLY-E106",
+                                    "error",
+                                    f"page:{page.name}.interaction:{interaction.name}.constraint:{constraint.field}",
+                                    f"Required-input constraint {constraint.field} declares non-positive min_length {constraint.min_length}.",
+                                    "Declare a positive minimum length for the required evidence input.",
+                                ),
+                            )
+    return SurfaceArtifact(
+        name=surface.name,
+        title=surface.title,
+        base=surface.base,
+        actions=surface.actions,
+        layouts=surface.layouts,
+        pages=surface.pages,
+        projections=surface.projections,
+        diagnostics=diagnostics,
+    )
+
+
+pub def inspect_surface(surface: SurfaceArtifact) -> str:
+    """Return one human-readable artifact inspection report."""
+    mut lines: list[str] = []
+    lines.append(f"SurfaceArtifact: {surface.name}")
+    lines.append("")
+    lines.append("Title")
+    lines.append(f"  {surface.title}")
+    lines.append("")
+    lines.append("Base")
+    lines.append(f"  {surface.base}")
+    lines.append("")
+    lines.append("Actions")
+    if len(surface.actions) == 0:
+        lines.append("  none")
+    else:
+        for action in surface.actions:
+            lines.append(f"  {action.name}")
+            lines.append(f"    capability: {action.capability}")
+            lines.append(f"    required evidence: {action.required_evidence}")
+    lines.append("")
+    lines.append("Layouts")
+    for layout in surface.layouts:
+        lines.append(f"  {layout.name}")
+        lines.append(f"    regions: {_join_with(layout.regions, ", ")}")
+    lines.append("")
+    lines.append("Pages")
+    for page in surface.pages:
+        lines.append(f"  {page.name}")
+        lines.append(f"    route: {page.route}")
+        lines.append(f"    title: {page.title}")
+        lines.append(f"    layout: {page.layout}")
+        lines.append(f"    regions: {_region_names(page.regions)}")
+        if len(page.interactions) > 0:
+            lines.append(f"    interactions: {_interaction_names(page.interactions)}")
+            for interaction in page.interactions:
+                lines.append(f"      {interaction.name} -> {interaction.action}")
+                for constraint in interaction.constraints:
+                    match constraint.kind:
+                        ConstraintKind.RequiredInput =>
+                            lines.append(f"        required input {constraint.field}")
+                            lines.append(f"          label: {constraint.label}")
+                            lines.append(f"          min length: {constraint.min_length}")
+                            lines.append(f"          evidence: {constraint.evidence_key}")
+    lines.append("")
+    lines.append("Projection")
+    for projection in surface.projections:
+        lines.append(f"  {projection.name} -> {projection.target}")
+    lines.append("")
+    lines.append("Diagnostics")
+    if len(surface.diagnostics) == 0:
+        lines.append("  none")
+    else:
+        for diagnostic in surface.diagnostics:
+            lines.append(f"  [{diagnostic.severity}] {diagnostic.code} {diagnostic.message}")
+            lines.append(f"    artifact: {diagnostic.artifact}")
+            lines.append(f"    help: {diagnostic.help}")
+    return _join_lines(lines)
+
+
+pub def render_static_web(surface: SurfaceArtifact) -> str:
+    """Render the first page of one surface into a static web HTML document."""
+    if not can_project_static_web(surface):
+        return ""
+    return _render_static_web_page(surface, surface.pages[0])
+
+
+def _render_static_web_page(surface: SurfaceArtifact, page: PageArtifact) -> str:
+    """Render one validated page from a static-web projection plan."""
+    mut lines: list[str] = []
+    lines.append("<!doctype html>")
+    lines.append("<html lang=\"en\">")
+    lines.append("<head>")
+    lines.append("  <meta charset=\"utf-8\">")
+    lines.append(f"  <title>{_escape_html(page.title)}</title>")
+    lines.append("</head>")
+    lines.append("<body>")
+    lines.append(
+        f"<main data-pallay-surface=\"{_escape_html(surface.name)}\" data-pallay-page=\"{_escape_html(page.name)}\">",
+    )
+    for region in page.regions:
+        lines.append(f"  <section data-pallay-region=\"{_escape_html(region.name)}\">")
+        for node in region.nodes:
+            lines.append(_render_node(node))
+        lines.append("  </section>")
+    for interaction in page.interactions:
+        lines.append(_render_interaction(interaction))
+    lines.append("</main>")
+    lines.append("</body>")
+    lines.append("</html>")
+    return _join_lines(lines)
+
+
+pub def can_project_static_web(surface: SurfaceArtifact) -> bool:
+    """Return whether the static web projection may emit render output."""
+    return not _has_error(surface.diagnostics) and _has_projection(surface.projections, "static-web")
+
+
+pub def emit_static_web_files(surface: SurfaceArtifact) -> list[GeneratedFile]:
+    """Return generated files for the static web projection without writing to disk."""
+    if not can_project_static_web(surface):
+        return [GeneratedFile(path="pallay-artifacts/surface.txt", content=inspect_surface(surface)), GeneratedFile(
+            path="pallay-artifacts/routes.txt",
+            content=_routes_report(surface),
+        )]
+    mut files: list[GeneratedFile] = []
+    for page in surface.pages:
+        files.append(GeneratedFile(path=_static_output_path(page.route), content=_render_static_web_page(surface, page)))
+    files.append(GeneratedFile(path="pallay-artifacts/surface.txt", content=inspect_surface(surface)))
+    files.append(GeneratedFile(path="pallay-artifacts/routes.txt", content=_routes_report(surface)))
+    return files
+
+
+pub def hello_world_inspection() -> str:
+    """Return the inspection report for the HelloWorld surface."""
+    return inspect_surface(hello_world_surface())
+
+
+pub def hello_world_html() -> str:
+    """Return the static web HTML for the HelloWorld surface."""
+    return render_static_web(hello_world_surface())
+
+
+def _render_node(node: RenderNodeArtifact) -> str:
+    """Render one semantic node into the temporary static HTML target."""
+    match node.kind:
+        RenderNodeKind.Heading => return f"    <h1>{_escape_html(node.text)}</h1>"
+        RenderNodeKind.Text => return f"    <p>{_escape_html(node.text)}</p>"
+
+
+def _render_interaction(interaction: InteractionArtifact) -> str:
+    """Render one interaction while preserving its action and evidence facts."""
+    mut lines: list[str] = []
+    mut disabled_reason = ""
+    lines.append(
+        f"  <form data-pallay-interaction=\"{_escape_html(interaction.name)}\" data-pallay-action=\"{_escape_html(
+            interaction.action,
+        )}\">",
+    )
+    for constraint in interaction.constraints:
+        match constraint.kind:
+            ConstraintKind.RequiredInput =>
+                lines.append(
+                    f"    <label for=\"{_escape_html(interaction.name)}-{_escape_html(constraint.field)}\">{_escape_html(
+                        constraint.label,
+                    )}</label>",
+                )
+                lines.append(
+                    f"    <textarea id=\"{_escape_html(interaction.name)}-{_escape_html(constraint.field)}\" name=\"{_escape_html(
+                        constraint.field,
+                    )}\" data-pallay-evidence=\"{_escape_html(constraint.evidence_key)}\" minlength=\"{constraint.min_length}\" required></textarea>",
+                )
+                disabled_reason = f"requires evidence: {constraint.evidence_key}"
+    if disabled_reason == "":
+        lines.append(f"    <button type=\"button\">{_escape_html(interaction.name)}</button>")
+    else:
+        lines.append(
+            f"    <button type=\"button\" disabled data-pallay-disabled-reason=\"{_escape_html(disabled_reason)}\">{_escape_html(
+                interaction.name,
+            )}</button>",
+        )
+    lines.append("  </form>")
+    return _join_lines(lines)
+
+
+def _diagnostic(code: str, severity: str, artifact: str, message: str, help: str) -> SurfaceDiagnostic:
+    """Construct one stable author-facing surface diagnostic."""
+    return SurfaceDiagnostic(code=code, severity=severity, artifact=artifact, message=message, help=help)
+
+
+def _layout_exists(layouts: list[LayoutArtifact], name: str) -> bool:
+    """Return whether a layout declaration has the requested name."""
+    for layout in layouts:
+        if layout.name == name:
+            return true
+    return false
+
+
+def _layout_regions(layouts: list[LayoutArtifact], name: str) -> list[str]:
+    """Return the declared regions for one layout, or an empty list when absent."""
+    for layout in layouts:
+        if layout.name == name:
+            return layout.regions
+    return []
+
+
+def _action_exists(actions: list[ActionArtifact], name: str) -> bool:
+    """Return whether an action declaration has the requested name."""
+    for action in actions:
+        if action.name == name:
+            return true
+    return false
+
+
+def _action_required_evidence(actions: list[ActionArtifact], name: str) -> str:
+    """Return an action's required evidence key, or an empty string when absent."""
+    for action in actions:
+        if action.name == name:
+            return action.required_evidence
+    return ""
+
+
+def _interaction_collects_evidence(interaction: InteractionArtifact, evidence_key: str) -> bool:
+    """Return whether an interaction collects the requested evidence key."""
+    for constraint in interaction.constraints:
+        match constraint.kind:
+            ConstraintKind.RequiredInput =>
+                if constraint.evidence_key == evidence_key:
+                    return true
+    return false
+
+
+def _contains_str(values: list[str], needle: str) -> bool:
+    """Return whether a string collection contains one exact value."""
+    for value in values:
+        if value == needle:
+            return true
+    return false
+
+
+def _has_error(diagnostics: list[SurfaceDiagnostic]) -> bool:
+    """Return whether diagnostics contain a projection-blocking error."""
+    for diagnostic in diagnostics:
+        if diagnostic.severity == "error":
+            return true
+    return false
+
+
+def _has_projection(projections: list[ProjectionArtifact], target: str) -> bool:
+    """Return whether the surface explicitly requests one target profile."""
+    for projection in projections:
+        if projection.target == target:
+            return true
+    return false
+
+
+def _static_output_path(route: str) -> str:
+    """Map one canonical route to a deterministic static-site output path."""
+    mut segments: list[str] = []
+    for segment in route.split("/"):
+        if segment != "":
+            segments.append(segment)
+    if len(segments) == 0:
+        return "index.html"
+    return _join_with(segments, "/") + "/index.html"
+
+
+def _canonical_route(route: str) -> str:
+    """Normalize harmless slash differences for collision detection."""
+    mut segments: list[str] = []
+    for segment in route.split("/"):
+        if segment != "":
+            segments.append(segment)
+    if len(segments) == 0:
+        return "/"
+    return "/" + _join_with(segments, "/")
+
+
+def _route_is_safe(route: str) -> bool:
+    """Return whether a route maps beneath the static output root without traversal."""
+    parts = route.split("/")
+    if route == "" or len(parts) == 0 or parts[0] != "":
+        return false
+    for segment in parts:
+        if segment == "." or segment == "..":
+            return false
+    return true
+
+
+def _region_names(regions: list[RegionArtifact]) -> str:
+    """Join region names for human-readable artifact inspection."""
+    mut names: list[str] = []
+    for region in regions:
+        names.append(region.name)
+    return _join_with(names, ", ")
+
+
+def _interaction_names(interactions: list[InteractionArtifact]) -> str:
+    """Join interaction names for human-readable artifact inspection."""
+    mut names: list[str] = []
+    for interaction in interactions:
+        names.append(interaction.name)
+    return _join_with(names, ", ")
+
+
+def _routes_report(surface: SurfaceArtifact) -> str:
+    """Return route facts as text until Incan #1056 unblocks structured JSON in package tests."""
+    mut lines: list[str] = [f"Routes: {surface.name}"]
+    for page in surface.pages:
+        lines.append(f"  {page.name} -> {page.route}")
+    return _join_lines(lines)
+
+
+def _join_lines(lines: list[str]) -> str:
+    """Join text lines using the target-independent newline convention."""
+    return _join_with(lines, "\n")
+
+
+def _join_with(values: list[str], separator: str) -> str:
+    """Join strings without changing their semantic order."""
+    mut output = ""
+    for index in range(0, len(values)):
+        if index > 0:
+            output = output + separator
+        output = output + values[index]
+    return output
+
+
+def _escape_html(value: str) -> str:
+    """Escape text for both HTML text and quoted attribute contexts."""
+    return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")

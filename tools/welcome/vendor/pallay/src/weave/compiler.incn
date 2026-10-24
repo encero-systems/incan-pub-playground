@@ -1,0 +1,345 @@
+"""Validate woven bindings and execute atomic projection transitions in Incan."""
+
+from weave.contracts import (
+    Value,
+    ValueKind,
+    Expression,
+    ExpressionKind,
+    StateField,
+    Experience,
+    Reduction,
+    SurfaceNode,
+    NodeKind,
+    PresentationKind,
+    EventKind,
+    kind_name,
+    presentation_name,
+    event_name,
+)
+from core.experience_contract import ProjectionTarget, ExecutionPlacement
+from core.semantic_model_v2 import (
+    validate_experience_v2,
+    EffectKind,
+    ExperienceStateLifetime,
+    ExperienceStateAvailability,
+)
+
+const MAX_NUMBER: int = 9_007_199_254_740_991
+
+
+pub def initial_state(app: Experience) -> Dict[str, Value]:
+    """Materialize initial session state; validate the experience before using it."""
+    mut values: Dict[str, Value] = {}
+    for field in app.fields:
+        values[field.name] = field.initial
+    return values
+
+
+pub def nodes(root: SurfaceNode) -> list[SurfaceNode]:
+    """Return the stable preorder surface sequence for target planning and inspection."""
+    mut result = [root]
+    for child in root.children:
+        for descendant in nodes(child):
+            result.append(descendant)
+    return result
+
+
+def field_kind(fields: list[StateField], name: str) -> Result[ValueKind, str]:
+    for field in fields:
+        if field.name == name:
+            return Ok(field.kind)
+    return Err("Unknown state field: " + name)
+
+
+pub def expression_type(
+    expr: Expression,
+    fields: list[StateField],
+    event: ValueKind,
+    allow_payload: bool,
+) -> Result[ValueKind, str]:
+    """Check every branch, arity and reference before expressions can be emitted."""
+    kind = expr.kind
+    mut expected = 0
+    if kind == ExpressionKind.Equal or kind == ExpressionKind.Add or kind == ExpressionKind.Concat:
+        expected = 2
+    elif kind == ExpressionKind.Choose:
+        expected = 3
+    elif kind == ExpressionKind.Not or kind == ExpressionKind.Lookup:
+        expected = 1
+    if len(expr.arguments) != expected:
+        return Err("Wrong expression arity")
+    if kind == ExpressionKind.Literal:
+        if not portable(expr.value):
+            return Err("Number is outside the portable safe integer range")
+        return Ok(expr.value.kind)
+    if kind == ExpressionKind.State:
+        return field_kind(fields, expr.name)
+    if kind == ExpressionKind.Payload:
+        if not allow_payload:
+            return Err("Payload is unavailable in a presentation")
+        return Ok(event)
+    first = expression_type(expr.arguments[0], fields, event, allow_payload)?
+    if kind == ExpressionKind.Not:
+        if first != ValueKind.Flag:
+            return Err("Not expects a flag")
+        return Ok(ValueKind.Flag)
+    if kind == ExpressionKind.Lookup:
+        if first != ValueKind.Text:
+            return Err("Lookup expects a text key")
+        if not portable(expr.value):
+            return Err("Invalid lookup fallback")
+        for value in expr.cases.values():
+            if value.kind != expr.value.kind or not portable(value):
+                return Err("Lookup cases must share the fallback type")
+        return Ok(expr.value.kind)
+    second = expression_type(expr.arguments[1], fields, event, allow_payload)?
+    if kind == ExpressionKind.Choose:
+        third = expression_type(expr.arguments[2], fields, event, allow_payload)?
+        if first != ValueKind.Flag or second != third:
+            return Err("Choose expects a flag and matching branch types")
+        return Ok(second)
+    if kind == ExpressionKind.Equal:
+        if first != second:
+            return Err("Equality requires matching types")
+        return Ok(ValueKind.Flag)
+    if kind == ExpressionKind.Add:
+        if first != ValueKind.Number or second != ValueKind.Number:
+            return Err("Add expects numbers")
+        return Ok(ValueKind.Number)
+    if first != ValueKind.Text or second != ValueKind.Text:
+        return Err("Concat expects text")
+    return Ok(ValueKind.Text)
+
+
+pub def portable(value: Value) -> bool:
+    """Numbers must remain exact when lowered to ECMAScript."""
+    return value.kind != ValueKind.Number or (value.number_value >= -MAX_NUMBER and value.number_value <= MAX_NUMBER)
+
+
+pub def value_equal(left: Value, right: Value) -> bool:
+    """Compare the active scalar, independent of unused record storage fields."""
+    if left.kind != right.kind:
+        return false
+    match left.kind:
+        ValueKind.Empty => return true
+        ValueKind.Text => return left.text_value == right.text_value
+        ValueKind.Number => return left.number_value == right.number_value
+        ValueKind.Flag => return left.flag_value == right.flag_value
+
+
+pub def evaluate(expr: Expression, values: Dict[str, Value], event: Value) -> Result[Value, str]:
+    """Evaluate a previously type-checked expression, reporting missing state and overflow."""
+    match expr.kind:
+        ExpressionKind.Literal => return Ok(expr.value)
+        ExpressionKind.State =>
+            if expr.name in values:
+                return Ok(values[expr.name])
+            return Err("Missing state: " + expr.name)
+        ExpressionKind.Payload => return Ok(event)
+        _ => pass
+    first = evaluate(expr.arguments[0], values, event)?
+    if expr.kind == ExpressionKind.Not:
+        return Ok(Value.flag(not first.flag_value))
+    if expr.kind == ExpressionKind.Choose:
+        if first.flag_value:
+            return evaluate(expr.arguments[1], values, event)
+        return evaluate(expr.arguments[2], values, event)
+    if expr.kind == ExpressionKind.Lookup:
+        if first.text_value in expr.cases:
+            return Ok(expr.cases[first.text_value])
+        return Ok(expr.value)
+    second = evaluate(expr.arguments[1], values, event)?
+    if expr.kind == ExpressionKind.Equal:
+        return Ok(Value.flag(value_equal(first, second)))
+    if expr.kind == ExpressionKind.Concat:
+        return Ok(Value.text(first.text_value + second.text_value))
+    result = Value.number(first.number_value + second.number_value)
+    if not portable(result):
+        return Err("Portable integer overflow")
+    return Ok(result)
+
+
+pub def validate(app: Experience) -> list[str]:
+    """Validate composition, typing and ownership; never silently omit unknown bindings."""
+    mut errors: list[str] = []
+    for diagnostic in validate_experience_v2(app.semantics):
+        errors.append(diagnostic.code + ": " + diagnostic.message)
+    if app.name == "" or app.title == "":
+        errors.append("PLY-W001: Experience identity and title are required")
+    mut declared_states: list[str] = []
+    for declared in app.semantics.states:
+        if declared.name in declared_states:
+            errors.append("PLY-W009: Duplicate semantic state: " + declared.name)
+        declared_states.append(declared.name)
+    mut declared_flows: list[str] = []
+    for flow in app.semantics.flows:
+        if flow.name in declared_flows:
+            errors.append("PLY-W029: Duplicate semantic flow: " + flow.name)
+        declared_flows.append(flow.name)
+        mut members: list[str] = []
+        for member in flow.interactions:
+            if member in members:
+                errors.append("PLY-W029: Repeated semantic flow member: " + member)
+            members.append(member)
+    mut declared_interactions: list[str] = []
+    for interaction in app.semantics.interactions:
+        if interaction.name in declared_interactions:
+            errors.append("PLY-W029: Duplicate semantic interaction: " + interaction.name)
+        declared_interactions.append(interaction.name)
+    mut names: list[str] = []
+    for field in app.fields:
+        if field.name == "" or field.name in names:
+            errors.append("PLY-W002: Duplicate or empty state: " + field.name)
+        names.append(field.name)
+        if field.kind != field.initial.kind or not portable(field.initial):
+            errors.append("PLY-W003: Initial state type or value is invalid: " + field.name)
+        mut bound = false
+        for declared in app.semantics.states:
+            if declared.name == field.name:
+                bound = true
+                if declared.value_type != kind_name(field.kind):
+                    errors.append("PLY-W004: State type disagrees with semantic contract: " + field.name)
+                if declared.availability != ExperienceStateAvailability.Instance or declared.lifetime == ExperienceStateLifetime.Durable:
+                    errors.append("PLY-W005: Initial browser target cannot preserve durable or cross-instance state")
+        if not bound:
+            errors.append("PLY-W006: Missing semantic state: " + field.name)
+    for declared in app.semantics.states:
+        if declared.name not in names:
+            errors.append("PLY-W007: Semantic state has no executable binding: " + declared.name)
+    # Only projection effects have an executable implementation in this target version.
+    if len(app.semantics.ports) > 0 or len(app.semantics.capabilities) > 0 or len(app.semantics.observation_effects) > 0 or len(
+        app.semantics.candidate_effects,
+    ) > 0 or len(app.semantics.decision_effects) > 0:
+        errors.append(
+            "PLY-W008: This executable profile supports local projection only; a port/capability adapter is required",
+        )
+    all_nodes = nodes(app.root)
+    mut node_ids: list[str] = []
+    for node in all_nodes:
+        if node.id == "" or node.id in node_ids:
+            errors.append("PLY-W010: Duplicate or empty surface identity: " + node.id)
+        node_ids.append(node.id)
+        if (node.kind == NodeKind.Select or node.kind == NodeKind.Input) and node.label == "":
+            errors.append("PLY-W011: Value controls require an accessible label: " + node.id)
+        if node.kind == NodeKind.Button and node.content == "" and node.label == "":
+            errors.append("PLY-W012: Activation controls require an accessible name: " + node.id)
+    mut transition_ids: list[str] = []
+    for transition in app.transitions:
+        if transition.name == "" or transition.name in transition_ids:
+            errors.append("PLY-W020: Duplicate or empty transition: " + transition.name)
+        transition_ids.append(transition.name)
+        mut mutated: list[str] = []
+        mut permitted: list[str] = []
+        mut found_flow = false
+        for flow in app.semantics.flows:
+            if flow.name == transition.name:
+                found_flow = true
+                for identity in flow.interactions:
+                    for interaction in app.semantics.interactions:
+                        if interaction.name == identity:
+                            if interaction.effect_kind != EffectKind.Projection:
+                                errors.append("PLY-W021: Local transition cannot implement a domain effect")
+                            else:
+                                for effect in app.semantics.projection_effects:
+                                    if effect.name == interaction.effect:
+                                        permitted.append(effect.state)
+        if not found_flow:
+            errors.append("PLY-W022: Transition has no semantic flow: " + transition.name)
+        for mutation in transition.mutations:
+            if mutation.state in mutated:
+                errors.append("PLY-W023: Repeated assignment in atomic transition")
+            mutated.append(mutation.state)
+            if mutation.state not in permitted:
+                errors.append("PLY-W024: Assignment lacks projection authority: " + mutation.state)
+            match field_kind(app.fields, mutation.state):
+                Err(error) => errors.append(error)
+                Ok(kind) =>
+                    match expression_type(mutation.value, app.fields, transition.payload_kind, true):
+                        Err(error) => errors.append("PLY-W025: " + error)
+                        Ok(actual) =>
+                            if kind != actual:
+                                errors.append("PLY-W026: Assignment type mismatch: " + mutation.state)
+        for allowed in permitted:
+            if allowed not in mutated:
+                errors.append("PLY-W027: Semantic projection has no executable assignment: " + allowed)
+    for flow in app.semantics.flows:
+        if flow.name not in transition_ids:
+            errors.append("PLY-W028: Semantic flow has no executable transition: " + flow.name)
+    mut properties: list[str] = []
+    for binding in app.presentations:
+        if binding.node not in node_ids:
+            errors.append("PLY-W030: Unknown presentation node: " + binding.node)
+        identity = binding.node + ":" + presentation_name(binding.kind)
+        if identity in properties:
+            errors.append("PLY-W031: Duplicate property binding: " + binding.node)
+        properties.append(identity)
+        mut expected = ValueKind.Text
+        if binding.kind == PresentationKind.Visible or binding.kind == PresentationKind.Disabled or binding.kind == PresentationKind.Expanded:
+            expected = ValueKind.Flag
+        match expression_type(binding.value, app.fields, ValueKind.Empty, false):
+            Err(error) => errors.append("PLY-W032: " + error)
+            Ok(actual) =>
+                if actual != expected:
+                    errors.append("PLY-W033: Presentation type mismatch: " + binding.node)
+        for node in all_nodes:
+            if node.id == binding.node:
+                if binding.kind == PresentationKind.Content and len(node.children) > 0:
+                    errors.append("PLY-W034: Content binding would erase composed children")
+                if binding.kind == PresentationKind.Value and node.kind != NodeKind.Select and node.kind != NodeKind.Input:
+                    errors.append("PLY-W035: Value binding requires a value control")
+                if binding.kind == PresentationKind.Disabled and node.kind != NodeKind.Button and node.kind != NodeKind.Select and node.kind != NodeKind.Input:
+                    errors.append("PLY-W036: Disabled binding requires a control")
+    mut gestures: list[str] = []
+    for binding in app.events:
+        identity = binding.node + ":" + event_name(binding.event)
+        if identity in gestures:
+            errors.append("PLY-W040: Duplicate event binding")
+        gestures.append(identity)
+        if binding.node not in node_ids or binding.transition not in transition_ids:
+            errors.append("PLY-W041: Unknown event node or transition")
+        for node in all_nodes:
+            if node.id == binding.node:
+                if binding.event == EventKind.Click and node.kind != NodeKind.Button:
+                    errors.append("PLY-W042: Activation must use a semantic button")
+                if binding.event != EventKind.Click and node.kind != NodeKind.Select and node.kind != NodeKind.Input:
+                    errors.append("PLY-W043: Value events require a value control")
+        mut event_type = ValueKind.Empty
+        if binding.event != EventKind.Click:
+            event_type = ValueKind.Text
+        for transition in app.transitions:
+            if transition.name == binding.transition:
+                match expression_type(binding.value, app.fields, event_type, true):
+                    Err(error) => errors.append("PLY-W044: " + error)
+                    Ok(actual) =>
+                        if actual != transition.payload_kind:
+                            errors.append("PLY-W045: Event payload type mismatch")
+    return errors
+
+
+pub def reduce(app: Experience, values: Dict[str, Value], transition_name: str, event: Value) -> Reduction:
+    """Apply a validated projection atomically; payload/state errors preserve all input state."""
+    diagnostics = validate(app)
+    if len(diagnostics) > 0:
+        return Reduction(state=values, applied=false, error=diagnostics[0])
+    if len(values) != len(app.fields):
+        return Reduction(state=values, applied=false, error="State shape mismatch")
+    for field in app.fields:
+        if field.name not in values:
+            return Reduction(state=values, applied=false, error="Missing state: " + field.name)
+        value = values[field.name]
+        if value.kind != field.kind or not portable(value):
+            return Reduction(state=values, applied=false, error="State type mismatch: " + field.name)
+    for transition in app.transitions:
+        if transition.name == transition_name:
+            if event.kind != transition.payload_kind or not portable(event):
+                return Reduction(state=values, applied=false, error="Invalid transition payload")
+            mut next_values: Dict[str, Value] = {}
+            for field in app.fields:
+                next_values[field.name] = values[field.name]
+            for mutation in transition.mutations:
+                match evaluate(mutation.value, values, event):
+                    Err(error) => return Reduction(state=values, applied=false, error=error)
+                    Ok(value) =>
+                        next_values[mutation.state] = value
+            return Reduction(state=next_values, applied=true)
+    return Reduction(state=values, applied=false, error="Unknown transition: " + transition_name)

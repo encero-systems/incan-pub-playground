@@ -1,0 +1,1077 @@
+"""Ordinary-Incan v2 semantic model for artifacts, effects, flows, ports, and targets."""
+
+from core.experience_contract import ExecutionPlacement, ProjectionTarget
+
+
+pub enum ExperienceStateLifetime:
+    """How long experience-owned state must remain meaningful."""
+
+    Frame
+    Session
+    Durable
+
+
+pub enum ExperienceStateAvailability:
+    """Where the same principal must be able to resume experience-owned state."""
+
+    Instance
+    Device
+    Principal
+
+
+pub enum EffectKind:
+    """One primary semantic effect performed by an interaction boundary."""
+
+    Projection
+    Observation
+    Candidate
+    Decision
+
+
+pub enum ObservationUpdate:
+    """How successive artifact observations relate for one binding."""
+
+    Snapshot
+    Accumulating
+    Superseding
+    Streaming
+
+
+pub enum DecisionCoordination:
+    """Application-owned coordination required by one decision effect."""
+
+    Uncontended
+    ExclusiveLinearization
+    CommutativeCombination
+
+
+pub enum OperationOutcomeKind:
+    """What the experience may honestly conclude about one semantic operation."""
+
+    Applied
+    Rejected
+    Conflict
+    Unknown
+
+
+pub model ExperienceStateContractV2:
+    """State whose semantic truth belongs to the authored experience."""
+
+    pub name: str
+    pub value_type: str
+    pub lifetime: ExperienceStateLifetime
+    pub availability: ExperienceStateAvailability
+    pub recovery_policy: str
+
+
+pub model ArtifactBindingContract:
+    """Authored binding to a typed artifact whose semantic owner remains external to Pallay."""
+
+    pub name: str
+    pub artifact_type: str
+    pub semantic_owner: str
+    pub source_port: str
+    pub provenance_required: bool
+    pub temporal_required: bool
+
+
+pub model CapabilityRequirement:
+    """Host or runtime capability required by an experience target."""
+
+    pub name: str
+    pub capability: str
+    pub required: bool
+    pub fallback: str
+
+
+pub model PortRequirement:
+    """Typed semantic boundary required from an adjacent owner."""
+
+    pub name: str
+    pub operation: str
+    pub semantic_owner: str
+    pub required: bool
+    pub fallback: str
+
+
+pub model ProjectionEffectContract:
+    """Effect that changes only experience-owned state."""
+
+    pub name: str
+    pub state: str
+    pub mutation: str
+
+
+pub model ObservationEffectContract:
+    """Effect that obtains artifact revisions through a source port."""
+
+    pub name: str
+    pub artifact: str
+    pub port: str
+    pub update: ObservationUpdate
+
+
+pub model CandidateEffectContract:
+    """Effect that produces a candidate artifact without crossing its admission boundary."""
+
+    pub name: str
+    pub candidate_binding: str
+    pub producer_port: str
+
+
+pub model CandidateBindingContract:
+    """Relational candidacy of one artifact for one named admission boundary."""
+
+    pub name: str
+    pub artifact: str
+    pub admission_port: str
+
+
+pub model DecisionEffectContract:
+    """Effect that requests authority and returns a decision artifact revision."""
+
+    pub name: str
+    pub authority_port: str
+    pub result_artifact: str
+    pub coordination: DecisionCoordination
+
+
+pub model InteractionContractV2:
+    """One semantic boundary crossing with exactly one primary effect reference."""
+
+    pub name: str
+    pub intent: str
+    pub owner: str
+    pub effect_kind: EffectKind
+    pub effect: str
+
+
+pub model ExperienceFlowContract:
+    """Experience-level sequence of interactions initiated by one gesture or journey."""
+
+    pub name: str
+    pub gesture: str
+    pub interactions: list[str]
+
+
+pub model CapabilityBinding:
+    """Target mechanism and placement satisfying one capability requirement."""
+
+    pub requirement: str
+    pub mechanism: str
+    pub placement: ExecutionPlacement
+
+
+pub model PortBinding:
+    """Target adapter and placement satisfying one semantic port requirement."""
+
+    pub requirement: str
+    pub adapter: str
+    pub placement: ExecutionPlacement
+
+
+pub model TargetContractV2:
+    """Target placement plus explicit capability and port satisfaction."""
+
+    pub name: str
+    pub target: ProjectionTarget
+    pub experience_placement: ExecutionPlacement
+    pub capabilities: list[CapabilityBinding]
+    pub ports: list[PortBinding]
+
+
+pub model ExperienceContractV2:
+    """Canonical v2 experience contract before target-specific planning."""
+
+    pub name: str
+    pub purpose: str
+    pub states: list[ExperienceStateContractV2]
+    pub artifacts: list[ArtifactBindingContract]
+    pub capabilities: list[CapabilityRequirement]
+    pub ports: list[PortRequirement]
+    pub projection_effects: list[ProjectionEffectContract]
+    pub observation_effects: list[ObservationEffectContract]
+    pub candidate_bindings: list[CandidateBindingContract]
+    pub candidate_effects: list[CandidateEffectContract]
+    pub decision_effects: list[DecisionEffectContract]
+    pub interactions: list[InteractionContractV2]
+    pub flows: list[ExperienceFlowContract]
+    pub targets: list[TargetContractV2]
+
+
+pub model SemanticDiagnostic:
+    """Stable diagnostic emitted while validating one v2 semantic contract."""
+
+    pub code: str
+    pub artifact: str
+    pub message: str
+    pub help: str
+
+
+pub model CompiledExperienceV2:
+    """Validated v2 contract consumed by semantic target planning."""
+
+    pub contract: ExperienceContractV2
+    pub diagnostics: list[SemanticDiagnostic]
+
+
+pub model SemanticExecutionStep:
+    """One effect-specific step in a target semantic plan."""
+
+    pub stage: str
+    pub placement: ExecutionPlacement
+    pub responsibility: str
+    pub claim: str
+
+
+pub model SemanticPlan:
+    """Effect-specific target plan for one v2 interaction."""
+
+    pub experience: str
+    pub interaction: str
+    pub effect_kind: EffectKind
+    pub effect: str
+    pub target: str
+    pub steps: list[SemanticExecutionStep]
+
+
+pub model ArtifactRevision:
+    """Immutable runtime materialization of one bound artifact revision."""
+
+    pub binding: str
+    pub artifact_id: str
+    pub revision: int
+    pub semantic_owner: str
+    pub content_summary: str
+    pub provenance: str
+    pub valid_time: str
+
+
+pub model ArtifactObservation:
+    """One experience observation of an artifact revision."""
+
+    pub artifact: ArtifactRevision
+    pub interaction: str
+    pub observed_at: str
+    pub freshness: str
+
+
+pub model OperationEnvelope:
+    """Stable semantic identity and revision basis for one authority-seeking operation."""
+
+    pub operation_id: str
+    pub artifact_id: str
+    pub base_revision: int
+    pub correlation_id: str
+    pub causation_id: str
+
+
+pub model DeliveryAttempt:
+    """One delivery attempt for an operation whose identity remains stable across retries."""
+
+    pub attempt_id: str
+    pub operation_id: str
+    pub attempted_at: str
+
+
+pub model OperationOutcome:
+    """Experience knowledge about one operation without manufacturing application state."""
+
+    pub kind: OperationOutcomeKind
+    pub operation_id: str
+    pub decision_artifact_id: str
+    pub decision_revision: int
+    pub recovery: str
+
+
+pub model SemanticRun:
+    """Inspectable deterministic replay against a compiled v2 contract."""
+
+    pub name: str
+    pub compiled: CompiledExperienceV2
+    pub plans: list[SemanticPlan]
+    pub observations: list[ArtifactObservation]
+    pub experience_state: list[str]
+    pub outcome: str
+    pub visible_state: str
+
+
+pub def experience_state_v2(
+    name: str,
+    value_type: str,
+    lifetime: ExperienceStateLifetime,
+    availability: ExperienceStateAvailability,
+    recovery_policy: str,
+) -> ExperienceStateContractV2:
+    """Declare experience-owned state with independent lifetime and availability."""
+    return ExperienceStateContractV2(
+        name=name,
+        value_type=value_type,
+        lifetime=lifetime,
+        availability=availability,
+        recovery_policy=recovery_policy,
+    )
+
+
+pub def artifact_binding(
+    name: str,
+    artifact_type: str,
+    semantic_owner: str,
+    source_port: str,
+    provenance_required: bool,
+    temporal_required: bool,
+) -> ArtifactBindingContract:
+    """Declare an externally or application-owned artifact available to an experience."""
+    return ArtifactBindingContract(
+        name=name,
+        artifact_type=artifact_type,
+        semantic_owner=semantic_owner,
+        source_port=source_port,
+        provenance_required=provenance_required,
+        temporal_required=temporal_required,
+    )
+
+
+pub def capability_requirement(name: str, capability: str, required: bool, fallback: str) -> CapabilityRequirement:
+    """Declare a target capability and its explicit fallback."""
+    return CapabilityRequirement(name=name, capability=capability, required=required, fallback=fallback)
+
+
+pub def port_requirement(
+    name: str,
+    operation: str,
+    semantic_owner: str,
+    required: bool,
+    fallback: str,
+) -> PortRequirement:
+    """Declare a typed adjacent-system boundary without selecting its adapter."""
+    return PortRequirement(
+        name=name,
+        operation=operation,
+        semantic_owner=semantic_owner,
+        required=required,
+        fallback=fallback,
+    )
+
+
+pub def projection_effect(name: str, state: str, mutation: str) -> ProjectionEffectContract:
+    """Declare one experience-local projection effect."""
+    return ProjectionEffectContract(name=name, state=state, mutation=mutation)
+
+
+pub def observation_effect(name: str, artifact: str, port: str, update: ObservationUpdate) -> ObservationEffectContract:
+    """Declare one artifact-observation effect."""
+    return ObservationEffectContract(name=name, artifact=artifact, port=port, update=update)
+
+
+pub def candidate_effect(name: str, candidate_binding: str, producer_port: str) -> CandidateEffectContract:
+    """Declare production through a separately authored candidacy relationship."""
+    return CandidateEffectContract(name=name, candidate_binding=candidate_binding, producer_port=producer_port)
+
+
+pub def candidate_binding(name: str, artifact: str, admission_port: str) -> CandidateBindingContract:
+    """Declare that one artifact is a candidate for one admission boundary."""
+    return CandidateBindingContract(name=name, artifact=artifact, admission_port=admission_port)
+
+
+pub def decision_effect(
+    name: str,
+    authority_port: str,
+    result_artifact: str,
+    coordination: DecisionCoordination,
+) -> DecisionEffectContract:
+    """Declare one authority-seeking decision effect."""
+    return DecisionEffectContract(
+        name=name,
+        authority_port=authority_port,
+        result_artifact=result_artifact,
+        coordination=coordination,
+    )
+
+
+pub def interaction_v2(
+    name: str,
+    intent: str,
+    owner: str,
+    effect_kind: EffectKind,
+    effect: str,
+) -> InteractionContractV2:
+    """Declare one semantic interaction and its single effect reference."""
+    return InteractionContractV2(name=name, intent=intent, owner=owner, effect_kind=effect_kind, effect=effect)
+
+
+pub def experience_flow(name: str, gesture: str, interactions: list[str]) -> ExperienceFlowContract:
+    """Declare an experience flow without acquiring application workflow semantics."""
+    return ExperienceFlowContract(name=name, gesture=gesture, interactions=interactions)
+
+
+pub def capability_binding(requirement: str, mechanism: str, placement: ExecutionPlacement) -> CapabilityBinding:
+    """Bind one target capability requirement to a concrete mechanism."""
+    return CapabilityBinding(requirement=requirement, mechanism=mechanism, placement=placement)
+
+
+pub def port_binding(requirement: str, adapter: str, placement: ExecutionPlacement) -> PortBinding:
+    """Bind one target port requirement to a concrete adapter and placement."""
+    return PortBinding(requirement=requirement, adapter=adapter, placement=placement)
+
+
+pub def target_v2(
+    name: str,
+    target: ProjectionTarget,
+    experience_placement: ExecutionPlacement,
+    capabilities: list[CapabilityBinding],
+    ports: list[PortBinding],
+) -> TargetContractV2:
+    """Declare one v2 target and its requirement bindings."""
+    return TargetContractV2(
+        name=name,
+        target=target,
+        experience_placement=experience_placement,
+        capabilities=capabilities,
+        ports=ports,
+    )
+
+
+pub def operation_envelope(
+    operation_id: str,
+    artifact_id: str,
+    base_revision: int,
+    correlation_id: str,
+    causation_id: str,
+) -> OperationEnvelope:
+    """Declare stable operation identity independently from delivery attempts."""
+    return OperationEnvelope(
+        operation_id=operation_id,
+        artifact_id=artifact_id,
+        base_revision=base_revision,
+        correlation_id=correlation_id,
+        causation_id=causation_id,
+    )
+
+
+pub def delivery_attempt(attempt_id: str, operation_id: str, attempted_at: str) -> DeliveryAttempt:
+    """Record one delivery attempt for a stable semantic operation."""
+    return DeliveryAttempt(attempt_id=attempt_id, operation_id=operation_id, attempted_at=attempted_at)
+
+
+pub def operation_outcome(
+    kind: OperationOutcomeKind,
+    operation_id: str,
+    decision_artifact_id: str,
+    decision_revision: int,
+    recovery: str,
+) -> OperationOutcome:
+    """Record what the experience may currently claim about one operation."""
+    return OperationOutcome(
+        kind=kind,
+        operation_id=operation_id,
+        decision_artifact_id=decision_artifact_id,
+        decision_revision=decision_revision,
+        recovery=recovery,
+    )
+
+
+pub def compile_experience_v2(contract: ExperienceContractV2) -> CompiledExperienceV2:
+    """Validate one ordinary-Incan v2 semantic contract."""
+    return CompiledExperienceV2(contract=contract, diagnostics=validate_experience_v2(contract))
+
+
+pub def validate_experience_v2(contract: ExperienceContractV2) -> list[SemanticDiagnostic]:
+    """Validate ownership, effect, flow, capability, port, and target invariants."""
+    mut diagnostics: list[SemanticDiagnostic] = []
+    if contract.name == "":
+        diagnostics.append(
+            _diagnostic("SM2-001", "experience", "Experience identity is missing.", "Name the canonical experience."),
+        )
+    for state in contract.states:
+        if state.name == "" or state.value_type == "":
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-002",
+                    f"state:{state.name}",
+                    "Experience state is missing identity or value type.",
+                    "Declare a stable state identity and value type.",
+                ),
+            )
+    for port in contract.ports:
+        if port.name == "" or port.operation == "" or port.semantic_owner == "":
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-003",
+                    f"port:{port.name}",
+                    "Port requirement is missing identity, operation, or semantic owner.",
+                    "Declare the typed operation and adjacent owner before target binding.",
+                ),
+            )
+    for artifact in contract.artifacts:
+        if artifact.name == "" or artifact.artifact_type == "" or artifact.semantic_owner == "":
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-004",
+                    f"artifact:{artifact.name}",
+                    "Artifact binding is missing identity, type, or semantic owner.",
+                    "Declare the bound artifact without transferring ownership to Pallay.",
+                ),
+            )
+        if not _has_port(contract.ports, artifact.source_port):
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-005",
+                    f"artifact:{artifact.name}.source_port",
+                    f"Artifact {artifact.name} references unknown source port {artifact.source_port}.",
+                    "Bind the artifact to a declared semantic port.",
+                ),
+            )
+    for interaction in contract.interactions:
+        if interaction.name == "" or interaction.intent == "" or interaction.owner == "":
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-006",
+                    f"interaction:{interaction.name}",
+                    "Interaction is missing identity, intent, or owner.",
+                    "Declare one semantic boundary crossing before selecting its effect.",
+                ),
+            )
+        if _effect_count(contract, interaction.effect_kind, interaction.effect) != 1:
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-007",
+                    f"interaction:{interaction.name}.effect",
+                    f"Interaction {interaction.name} does not resolve exactly one {_effect_kind_name(
+                        interaction.effect_kind,
+                    )} effect named {interaction.effect}.",
+                    "Declare exactly one effect of the referenced kind.",
+                ),
+            )
+    for flow in contract.flows:
+        for interaction_name in flow.interactions:
+            if not _has_interaction(contract.interactions, interaction_name):
+                diagnostics.append(
+                    _diagnostic(
+                        "SM2-008",
+                        f"flow:{flow.name}.interaction:{interaction_name}",
+                        f"Flow {flow.name} references unknown interaction {interaction_name}.",
+                        "Reference only interactions declared by this experience.",
+                    ),
+                )
+    for effect in contract.projection_effects:
+        if not _has_state(contract.states, effect.state):
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-009",
+                    f"projection-effect:{effect.name}.state",
+                    f"Projection effect {effect.name} references unknown experience state {effect.state}.",
+                    "Projection effects may mutate only experience-owned state.",
+                ),
+            )
+    for effect in contract.observation_effects:
+        if not _has_artifact(contract.artifacts, effect.artifact) or not _has_port(contract.ports, effect.port):
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-010",
+                    f"observation-effect:{effect.name}",
+                    f"Observation effect {effect.name} does not resolve its artifact and source port.",
+                    "Reference one declared artifact binding and one declared source port.",
+                ),
+            )
+    for binding in contract.candidate_bindings:
+        if binding.name == "" or not _has_artifact(contract.artifacts, binding.artifact) or not _has_port(
+            contract.ports,
+            binding.admission_port,
+        ):
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-020",
+                    f"candidate-binding:{binding.name}",
+                    f"Candidate binding {binding.name} does not resolve its artifact and admission boundary.",
+                    "Name one artifact and the admission port for which it is a candidate.",
+                ),
+            )
+    for effect in contract.candidate_effects:
+        if not _has_candidate_binding(contract.candidate_bindings, effect.candidate_binding) or not _has_port(
+            contract.ports,
+            effect.producer_port,
+        ):
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-011",
+                    f"candidate-effect:{effect.name}",
+                    f"Candidate effect {effect.name} does not resolve its candidate binding and producer port.",
+                    "Reference one relational candidate binding and one distinct producer port.",
+                ),
+            )
+    for effect in contract.decision_effects:
+        if not _has_artifact(contract.artifacts, effect.result_artifact) or not _has_port(
+            contract.ports,
+            effect.authority_port,
+        ):
+            diagnostics.append(
+                _diagnostic(
+                    "SM2-012",
+                    f"decision-effect:{effect.name}",
+                    f"Decision effect {effect.name} does not resolve its authority port and result artifact.",
+                    "Bind decisions to one declared authority port and returned artifact.",
+                ),
+            )
+    if len(contract.targets) == 0:
+        diagnostics.append(
+            _diagnostic(
+                "SM2-013",
+                f"experience:{contract.name}.targets",
+                "Experience does not declare a target.",
+                "Declare at least one target before lowering.",
+            ),
+        )
+    for target in contract.targets:
+        for capability in contract.capabilities:
+            count = _capability_binding_count(target, capability.name)
+            if capability.required and count != 1:
+                diagnostics.append(
+                    _diagnostic(
+                        "SM2-014",
+                        f"target:{target.name}.capability:{capability.name}",
+                        f"Required capability {capability.name} has {count} target bindings.",
+                        "Bind every required capability exactly once.",
+                    ),
+                )
+            if count > 1:
+                diagnostics.append(
+                    _diagnostic(
+                        "SM2-015",
+                        f"target:{target.name}.capability:{capability.name}",
+                        f"Capability {capability.name} is bound more than once.",
+                        "Keep one mechanism binding per capability and target.",
+                    ),
+                )
+        for binding in target.capabilities:
+            if not _has_capability(contract.capabilities, binding.requirement):
+                diagnostics.append(
+                    _diagnostic(
+                        "SM2-016",
+                        f"target:{target.name}.capability:{binding.requirement}",
+                        f"Target binds unknown capability {binding.requirement}.",
+                        "Bind only declared capability requirements.",
+                    ),
+                )
+        for port in contract.ports:
+            count = _port_binding_count(target, port.name)
+            if port.required and count != 1:
+                diagnostics.append(
+                    _diagnostic(
+                        "SM2-017",
+                        f"target:{target.name}.port:{port.name}",
+                        f"Required port {port.name} has {count} target bindings.",
+                        "Bind every required semantic port exactly once.",
+                    ),
+                )
+            if count > 1:
+                diagnostics.append(
+                    _diagnostic(
+                        "SM2-018",
+                        f"target:{target.name}.port:{port.name}",
+                        f"Port {port.name} is bound more than once.",
+                        "Keep one adapter binding per port and target.",
+                    ),
+                )
+        for binding in target.ports:
+            if not _has_port(contract.ports, binding.requirement):
+                diagnostics.append(
+                    _diagnostic(
+                        "SM2-019",
+                        f"target:{target.name}.port:{binding.requirement}",
+                        f"Target binds unknown port {binding.requirement}.",
+                        "Bind only declared semantic ports.",
+                    ),
+                )
+    return diagnostics
+
+
+pub def plan_interaction_v2(
+    compiled: CompiledExperienceV2,
+    interaction: InteractionContractV2,
+    target: TargetContractV2,
+) -> SemanticPlan:
+    """Derive effect-specific stages without manufacturing irrelevant authority or concurrency."""
+    match interaction.effect_kind:
+        EffectKind.Projection => return _plan_projection(compiled, interaction, target)
+        EffectKind.Observation => return _plan_observation(compiled, interaction, target)
+        EffectKind.Candidate => return _plan_candidate(compiled, interaction, target)
+        EffectKind.Decision => return _plan_decision(compiled, interaction, target)
+
+
+pub def inspect_experience_v2(compiled: CompiledExperienceV2) -> str:
+    """Return a readable v2 contract and validation report."""
+    mut lines: list[str] = [f"ExperienceContractV2: {compiled.contract.name}", f"  purpose: {compiled.contract.purpose}"]
+    lines.append("  experience state:")
+    for state in compiled.contract.states:
+        lines.append(
+            f"    {state.name} type={state.value_type} lifetime={_lifetime_name(state.lifetime)} availability={_availability_name(
+                state.availability,
+            )} recovery={state.recovery_policy}",
+        )
+    lines.append("  artifact bindings:")
+    for artifact in compiled.contract.artifacts:
+        lines.append(
+            f"    {artifact.name} type={artifact.artifact_type} owner={artifact.semantic_owner} source={artifact.source_port}",
+        )
+    lines.append("  candidate bindings:")
+    for binding in compiled.contract.candidate_bindings:
+        lines.append(f"    {binding.name} artifact={binding.artifact} admission={binding.admission_port}")
+    lines.append("  interactions:")
+    for interaction in compiled.contract.interactions:
+        lines.append(
+            f"    {interaction.name} effect={_effect_kind_name(interaction.effect_kind)}:{interaction.effect} owner={interaction.owner}",
+        )
+    lines.append("  targets:")
+    for target in compiled.contract.targets:
+        lines.append(f"    {target.name} experience={_placement_name(target.experience_placement)}")
+        for binding in target.capabilities:
+            lines.append(
+                f"      capability {binding.requirement} -> {binding.mechanism} [{_placement_name(binding.placement)}]",
+            )
+        for binding in target.ports:
+            lines.append(f"      port {binding.requirement} -> {binding.adapter} [{_placement_name(binding.placement)}]")
+    lines.append("  diagnostics:")
+    if len(compiled.diagnostics) == 0:
+        lines.append("    none")
+    else:
+        for diagnostic in compiled.diagnostics:
+            lines.append(f"    {diagnostic.code} {diagnostic.message}")
+    return _join(lines, "\n")
+
+
+pub def inspect_semantic_plan(plan: SemanticPlan) -> str:
+    """Return one readable effect-specific target plan."""
+    mut lines: list[str] = [f"SemanticPlan: {plan.experience}.{plan.interaction} -> {plan.target} effect={_effect_kind_name(
+        plan.effect_kind,
+    )}:{plan.effect}"]
+    for step in plan.steps:
+        lines.append(f"  {step.stage} [{_placement_name(step.placement)}] {step.responsibility}: {step.claim}")
+    return _join(lines, "\n")
+
+
+def _plan_projection(
+    compiled: CompiledExperienceV2,
+    interaction: InteractionContractV2,
+    target: TargetContractV2,
+) -> SemanticPlan:
+    """Plan an experience-local state mutation with no authority or port stage."""
+    effect = _projection_effect_for(compiled.contract.projection_effects, interaction.effect)
+    return SemanticPlan(
+        experience=compiled.contract.name,
+        interaction=interaction.name,
+        effect_kind=interaction.effect_kind,
+        effect=interaction.effect,
+        target=target.name,
+        steps=[_step("intent", target.experience_placement, "Pallay projection", interaction.intent), _step(
+            "projection-state",
+            target.experience_placement,
+            interaction.owner,
+            f"Apply {effect.mutation} to experience-owned state {effect.state}.",
+        )],
+    )
+
+
+def _plan_observation(
+    compiled: CompiledExperienceV2,
+    interaction: InteractionContractV2,
+    target: TargetContractV2,
+) -> SemanticPlan:
+    """Plan artifact acquisition through a source port followed by projection."""
+    effect = _observation_effect_for(compiled.contract.observation_effects, interaction.effect)
+    port = _port_for(compiled.contract.ports, effect.port)
+    port_binding_value = _port_binding_for(target, effect.port)
+    return SemanticPlan(
+        experience=compiled.contract.name,
+        interaction=interaction.name,
+        effect_kind=interaction.effect_kind,
+        effect=interaction.effect,
+        target=target.name,
+        steps=[_step("intent", target.experience_placement, "Pallay projection", interaction.intent), _step(
+            "observe",
+            port_binding_value.placement,
+            port.semantic_owner,
+            f"Obtain artifact binding {effect.artifact} through {port_binding_value.adapter}.",
+        ), _step(
+            "projection",
+            target.experience_placement,
+            "Pallay projection",
+            "Present the observed artifact revision with its provenance and freshness.",
+        )],
+    )
+
+
+def _plan_candidate(
+    compiled: CompiledExperienceV2,
+    interaction: InteractionContractV2,
+    target: TargetContractV2,
+) -> SemanticPlan:
+    """Plan candidate production while keeping admission as a separate boundary."""
+    effect = _candidate_effect_for(compiled.contract.candidate_effects, interaction.effect)
+    candidate = _candidate_binding_for(compiled.contract.candidate_bindings, effect.candidate_binding)
+    producer = _port_for(compiled.contract.ports, effect.producer_port)
+    producer_binding = _port_binding_for(target, effect.producer_port)
+    return SemanticPlan(
+        experience=compiled.contract.name,
+        interaction=interaction.name,
+        effect_kind=interaction.effect_kind,
+        effect=interaction.effect,
+        target=target.name,
+        steps=[_step("intent", target.experience_placement, "Pallay projection", interaction.intent), _step(
+            "candidate",
+            producer_binding.placement,
+            producer.semantic_owner,
+            f"Produce artifact {candidate.artifact} through candidate binding {candidate.name} without claiming admission through {candidate.admission_port}.",
+        ), _step(
+            "projection",
+            target.experience_placement,
+            "Pallay projection",
+            "Present candidate status and provenance without authority upgrade.",
+        )],
+    )
+
+
+def _plan_decision(
+    compiled: CompiledExperienceV2,
+    interaction: InteractionContractV2,
+    target: TargetContractV2,
+) -> SemanticPlan:
+    """Plan an authority request and observation of its decision artifact."""
+    effect = _decision_effect_for(compiled.contract.decision_effects, interaction.effect)
+    authority = _port_for(compiled.contract.ports, effect.authority_port)
+    authority_binding = _port_binding_for(target, effect.authority_port)
+    return SemanticPlan(
+        experience=compiled.contract.name,
+        interaction=interaction.name,
+        effect_kind=interaction.effect_kind,
+        effect=interaction.effect,
+        target=target.name,
+        steps=[_step("intent", target.experience_placement, "Pallay projection", interaction.intent), _step(
+            "decision-request",
+            authority_binding.placement,
+            authority.semantic_owner,
+            f"Request one {_coordination_name(effect.coordination)} decision through {authority_binding.adapter}.",
+        ), _step(
+            "decision-observation",
+            authority_binding.placement,
+            authority.semantic_owner,
+            f"Return decision artifact binding {effect.result_artifact}.",
+        ), _step(
+            "projection",
+            target.experience_placement,
+            "Pallay projection",
+            "Present the observed decision without becoming its authority.",
+        )],
+    )
+
+
+def _effect_count(contract: ExperienceContractV2, kind: EffectKind, name: str) -> int:
+    """Count effects matching one declared kind and identity."""
+    mut count = 0
+    match kind:
+        EffectKind.Projection =>
+            for effect in contract.projection_effects:
+                if effect.name == name:
+                    count = count + 1
+        EffectKind.Observation =>
+            for effect in contract.observation_effects:
+                if effect.name == name:
+                    count = count + 1
+        EffectKind.Candidate =>
+            for effect in contract.candidate_effects:
+                if effect.name == name:
+                    count = count + 1
+        EffectKind.Decision =>
+            for effect in contract.decision_effects:
+                if effect.name == name:
+                    count = count + 1
+    return count
+
+
+def _has_state(states: list[ExperienceStateContractV2], name: str) -> bool:
+    """Return whether one experience-owned state identity exists."""
+    for state in states:
+        if state.name == name:
+            return true
+    return false
+
+
+def _has_artifact(artifacts: list[ArtifactBindingContract], name: str) -> bool:
+    """Return whether one artifact binding identity exists."""
+    for artifact in artifacts:
+        if artifact.name == name:
+            return true
+    return false
+
+
+def _has_candidate_binding(bindings: list[CandidateBindingContract], name: str) -> bool:
+    """Return whether one relational candidate binding exists."""
+    for binding in bindings:
+        if binding.name == name:
+            return true
+    return false
+
+
+def _has_capability(capabilities: list[CapabilityRequirement], name: str) -> bool:
+    """Return whether one capability requirement exists."""
+    for capability in capabilities:
+        if capability.name == name:
+            return true
+    return false
+
+
+def _has_port(ports: list[PortRequirement], name: str) -> bool:
+    """Return whether one semantic port requirement exists."""
+    for port in ports:
+        if port.name == name:
+            return true
+    return false
+
+
+def _has_interaction(interactions: list[InteractionContractV2], name: str) -> bool:
+    """Return whether one interaction identity exists."""
+    for interaction in interactions:
+        if interaction.name == name:
+            return true
+    return false
+
+
+def _capability_binding_count(target: TargetContractV2, requirement: str) -> int:
+    """Count bindings for one capability requirement on one target."""
+    mut count = 0
+    for binding in target.capabilities:
+        if binding.requirement == requirement:
+            count = count + 1
+    return count
+
+
+def _port_binding_count(target: TargetContractV2, requirement: str) -> int:
+    """Count bindings for one port requirement on one target."""
+    mut count = 0
+    for binding in target.ports:
+        if binding.requirement == requirement:
+            count = count + 1
+    return count
+
+
+def _projection_effect_for(effects: list[ProjectionEffectContract], name: str) -> ProjectionEffectContract:
+    """Resolve one previously validated projection effect."""
+    for effect in effects:
+        if effect.name == name:
+            return effect
+    return ProjectionEffectContract(name=name, state="missing", mutation="invalid")
+
+
+def _observation_effect_for(effects: list[ObservationEffectContract], name: str) -> ObservationEffectContract:
+    """Resolve one previously validated observation effect."""
+    for effect in effects:
+        if effect.name == name:
+            return effect
+    return ObservationEffectContract(name=name, artifact="missing", port="missing", update=ObservationUpdate.Snapshot)
+
+
+def _candidate_effect_for(effects: list[CandidateEffectContract], name: str) -> CandidateEffectContract:
+    """Resolve one previously validated candidate effect."""
+    for effect in effects:
+        if effect.name == name:
+            return effect
+    return CandidateEffectContract(name=name, candidate_binding="missing", producer_port="missing")
+
+
+def _candidate_binding_for(bindings: list[CandidateBindingContract], name: str) -> CandidateBindingContract:
+    """Resolve one previously validated relational candidate binding."""
+    for binding in bindings:
+        if binding.name == name:
+            return binding
+    return CandidateBindingContract(name=name, artifact="missing", admission_port="missing")
+
+
+def _decision_effect_for(effects: list[DecisionEffectContract], name: str) -> DecisionEffectContract:
+    """Resolve one previously validated decision effect."""
+    for effect in effects:
+        if effect.name == name:
+            return effect
+    return DecisionEffectContract(
+        name=name,
+        authority_port="missing",
+        result_artifact="missing",
+        coordination=DecisionCoordination.Uncontended,
+    )
+
+
+def _port_for(ports: list[PortRequirement], name: str) -> PortRequirement:
+    """Resolve one previously validated semantic port."""
+    for port in ports:
+        if port.name == name:
+            return port
+    return PortRequirement(name=name, operation="missing", semantic_owner="missing", required=true, fallback="block")
+
+
+def _port_binding_for(target: TargetContractV2, requirement: str) -> PortBinding:
+    """Resolve one previously validated target port binding."""
+    for binding in target.ports:
+        if binding.requirement == requirement:
+            return binding
+    return PortBinding(requirement=requirement, adapter="missing", placement=target.experience_placement)
+
+
+def _step(stage: str, placement: ExecutionPlacement, responsibility: str, claim: str) -> SemanticExecutionStep:
+    """Construct one effect-specific semantic execution step."""
+    return SemanticExecutionStep(stage=stage, placement=placement, responsibility=responsibility, claim=claim)
+
+
+def _diagnostic(code: str, artifact: str, message: str, help: str) -> SemanticDiagnostic:
+    """Construct one stable v2 diagnostic."""
+    return SemanticDiagnostic(code=code, artifact=artifact, message=message, help=help)
+
+
+def _effect_kind_name(kind: EffectKind) -> str:
+    """Return the stable inspection name for an effect kind."""
+    match kind:
+        EffectKind.Projection => return "projection"
+        EffectKind.Observation => return "observation"
+        EffectKind.Candidate => return "candidate"
+        EffectKind.Decision => return "decision"
+
+
+def _coordination_name(coordination: DecisionCoordination) -> str:
+    """Return the stable inspection name for decision coordination."""
+    match coordination:
+        DecisionCoordination.Uncontended => return "uncontended"
+        DecisionCoordination.ExclusiveLinearization => return "exclusive-linearization"
+        DecisionCoordination.CommutativeCombination => return "commutative-combination"
+
+
+def _lifetime_name(lifetime: ExperienceStateLifetime) -> str:
+    """Return the stable inspection name for experience state lifetime."""
+    match lifetime:
+        ExperienceStateLifetime.Frame => return "frame"
+        ExperienceStateLifetime.Session => return "session"
+        ExperienceStateLifetime.Durable => return "durable"
+
+
+def _availability_name(availability: ExperienceStateAvailability) -> str:
+    """Return the stable inspection name for experience-state availability."""
+    match availability:
+        ExperienceStateAvailability.Instance => return "instance"
+        ExperienceStateAvailability.Device => return "device"
+        ExperienceStateAvailability.Principal => return "principal"
+
+
+def _placement_name(placement: ExecutionPlacement) -> str:
+    """Return the stable inspection name for an execution placement."""
+    match placement:
+        ExecutionPlacement.Client => return "client"
+        ExecutionPlacement.LocalProcess => return "local-process"
+        ExecutionPlacement.Server => return "server"
+        ExecutionPlacement.ExternalAuthority => return "external-authority"
+
+
+def _join(values: list[str], separator: str) -> str:
+    """Join strings in stable source order."""
+    mut output = ""
+    for index in range(0, len(values)):
+        if index > 0:
+            output = output + separator
+        output = output + values[index]
+    return output

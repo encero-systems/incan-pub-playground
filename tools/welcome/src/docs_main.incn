@@ -1,0 +1,148 @@
+"""Import real docsite Markdown into the Incan-authored website at build time."""
+
+from std.fs import Path
+from std.json import JsonValue
+from pub::pallay import DocumentNode, render_tree, parse_template, digest_text
+from markdown_docs import pages, blocks, DocProjection, plain, resolve_link, parse_fragment, expand_snippets
+from docs_layout import shell, overview, docs_stylesheet
+from docs_diagrams import diagram_runtime
+from docs_architecture import architecture_document
+
+
+def read(path: str) -> str:
+    match Path(path).read_text(encoding="utf-8", errors="strict"):
+        Ok(value) => return value
+        Err(error) =>
+            assert false, error.message()
+            return ""
+
+
+def write(path: str, value: str) -> None:
+    match Path(path).write_text(value, encoding="utf-8", errors="strict", newline=None):
+        Ok(_) => pass
+        Err(error) =>
+            assert false, error.message()
+
+
+def html(title: str, root: DocumentNode, diagrams: int = 0) -> str:
+    match parse_template(render_tree(root), "Documentation document"):
+        Ok(_) => pass
+        Err(error) =>
+            assert false, error
+    mut scripts = ""
+    if diagrams > 0:
+        scripts = str(
+            "<script src=\"../assets/vendor/mermaid.min.js\" defer></script><script src=\"docs-diagrams.js\" defer></script>",
+        )
+    return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"generator\" content=\"Incan · Pallay · markdown-rs 1.0.0\"><meta name=\"theme-color\" content=\"#080c0a\"><title>" + title + " · Incan documentation</title><link rel=\"icon\" href=\"../assets/incan-logo.png\"><link rel=\"stylesheet\" href=\"../assets/fonts/fonts.css\"><link rel=\"stylesheet\" href=\"../style.css\"><link rel=\"stylesheet\" href=\"docs.css\">" + scripts + "</head><body>" + render_tree(
+        root,
+    ) + "</body></html>"
+
+
+def self_check() -> None:
+    source = "# Heading\n\n| A | B |\n| - | - |\n| one | two |\n\n??? info \"A callout\"\n    **Important**\n\n=== *Incan*\n\n    ```incan\n    println(\"<safe>\")\n    ```\n"
+    mut projection = DocProjection(source="language/how-to/modeling_with_enums.md")
+    tree = projection.decorate(DocumentNode(tag="", children=blocks(source)))
+    assert projection.tables == 1, "GFM table was not parsed"
+    assert projection.callouts == 1, "Material callout was not parsed"
+    assert projection.panels == 1, "Material language panel was not parsed"
+    assert projection.code_blocks == 1, "Fenced source was not parsed"
+    assert plain(tree).contains("println(\"<safe>\")\n"), "Code text changed during highlighting"
+    assert resolve_link("language/how-to/modeling_with_enums.md", "../reference/stdlib/collections.md#types") == "collections.html#types", "Local imported link rewrite failed"
+    assert resolve_link("language/how-to/modeling_with_enums.md", "../explanation/enums.md") == "https://incan.io/dev/language/explanation/enums/", "External docsite fallback failed"
+    for bad in ["<script>alert(1)</script>", "<p onclick=\"alert(1)\">bad</p>", "<a href=\"javascript:alert(1)\">bad</a>"]:
+        match parse_fragment(bad):
+            Err(_) => pass
+            Ok(_) =>
+                assert false, "Unsafe HTML was accepted"
+    match expand_snippets("--8<-- \"../escape.md\""):
+        Err(_) => pass
+        Ok(_) =>
+            assert false, "Snippet traversal was accepted"
+    panel = blocks(
+        "<section class=\"inc-learning-panel\" markdown=\"1\">\n\n**Retained** [link](https://incan.io/)\n\n</section>",
+    )
+    assert render_tree(DocumentNode(tag="", children=panel)).contains("<strong>Retained</strong>"), "HTML panel lost its Markdown"
+    mut duplicate = DocProjection(source="")
+    headings = duplicate.decorate(DocumentNode(tag="", children=blocks("## Same\n\n## Same")))
+    assert render_tree(headings).contains("id=\"same-1\""), "Duplicate heading anchor collision"
+
+
+pub def build_docs(directory: str) -> None:
+    self_check()
+    destination = directory + "/docs"
+    match Path(destination).mkdir(parents=true, exist_ok=true):
+        Ok(_) => pass
+        Err(error) =>
+            assert false, error.message()
+    write(destination + "/docs.css", docs_stylesheet())
+    write(destination + "/docs-diagrams.js", diagram_runtime())
+    write(destination + "/index.html", html("Documentation", overview()))
+    mut results: list[JsonValue] = []
+    mut inputs: Dict[str, JsonValue] = {}
+    mut outputs: Dict[str, JsonValue] = {}
+    for page in pages():
+        source_path = "docs-source/" + page.source
+        source = read(source_path)
+        expanded = expand_snippets(source).unwrap()
+        for snippet in expanded.inputs:
+            snippet_path = "docs-source/" + snippet
+            inputs[snippet_path] = JsonValue.string(digest_text(read(snippet_path)))
+            copied = destination + "/sources/" + snippet
+            Path("/".join(copied.split("/")[0:-1])).mkdir(parents=true, exist_ok=true).unwrap()
+            write(copied, read(snippet_path))
+        mut projection = DocProjection(source=page.source)
+        mut root = projection.decorate(DocumentNode(tag="", children=blocks(expanded.text)))
+        if page.key == "architecture":
+            root = architecture_document(root)
+        output = html(page.title, shell(page, root.children, projection.headings), projection.diagrams)
+        Path(destination + "/expanded").mkdir(parents=true, exist_ok=true).unwrap()
+        write(destination + "/expanded/" + page.key + ".md", expanded.text)
+        outputs["expanded/" + page.key + ".md"] = JsonValue.string(digest_text(expanded.text))
+        write(destination + "/" + page.key + ".html", output)
+        inputs[source_path] = JsonValue.string(digest_text(source))
+        outputs[page.key + ".html"] = JsonValue.string(digest_text(output))
+        source_output = destination + "/sources/" + page.source
+        parent = "/".join(source_output.split("/")[0:-1])
+        match Path(parent).mkdir(parents=true, exist_ok=true):
+            Ok(_) => pass
+            Err(error) =>
+                assert false, error.message()
+        write(source_output, source)
+        results.append(
+            JsonValue.object(
+                {"key": JsonValue.string(page.key), "source": JsonValue.string(page.source), "headings": JsonValue.int(
+                    len(projection.counts),
+                ), "code_blocks": JsonValue.int(projection.code_blocks), "tables": JsonValue.int(projection.tables), "callouts": JsonValue.int(
+                    projection.callouts,
+                ), "language_panels": JsonValue.int(projection.panels), "links": JsonValue.int(projection.links), "diagrams": JsonValue.int(
+                    projection.diagrams,
+                ), "footnotes": JsonValue.int(projection.footnotes), "tutorial_panels": JsonValue.int(
+                    projection.tutorial_panels,
+                ), "snippet_inputs": JsonValue.array([JsonValue.string(path) for path in expanded.inputs])},
+            ),
+        )
+    for name in ["markdown_docs", "docs_layout", "docs_main", "docs_diagrams", "docs_architecture"]:
+        path = "src/" + name + ".incn"
+        inputs[path] = JsonValue.string(digest_text(read(path)))
+    for path in ["docs-source/manifest.json", "docs-source/LICENSE", "incan.lock", "loaf.toml", "incan.toml"]:
+        inputs[path] = JsonValue.string(digest_text(read(path)))
+    for name in ["index.html", "docs.css", "docs-diagrams.js"]:
+        outputs[name] = JsonValue.string(digest_text(read(destination + "/" + name)))
+    write(destination + "/sources/manifest.json", read("docs-source/manifest.json"))
+    write(destination + "/sources/LICENSE", read("docs-source/LICENSE"))
+    receipt = JsonValue.object(
+        {"schema": JsonValue.string("incan.docs-import.v1"), "parser": JsonValue.string(
+            "markdown-rs 1.0.0, GFM, safe HTML defaults; explicit semantic regions validated by Pallay",
+        ), "ownership": JsonValue.string(
+            "Incan content adapter, extension handling, structured document projection, highlighting, routing, navigation and styling. Existing Rust parser called directly through Incan rust:: interop. No authored Rust or browser parser.",
+        ), "pages": JsonValue.array(results), "inputs": JsonValue.object(inputs), "outputs": JsonValue.object(outputs), "limitations": JsonValue.array(
+            [JsonValue.string("Language panels are labelled static sections, not interactive tabs."), JsonValue.string(
+                "Snippet includes must resolve to copied _snippets sources; unsupported macros fail explicitly.",
+            ), JsonValue.string("Only the selected pages are imported; other Markdown links go to the existing docsite."), JsonValue.string(
+                "Original imports retain their prose. Experiment pages and the 0.6 architecture are authored adaptations with source provenance; API preview is not generator output.",
+            )],
+        )},
+    )
+    write(destination + "/import-receipt.json", receipt.to_pretty_json().unwrap() + "\n")
+    println("Parsed and built documentation pages: " + destination)

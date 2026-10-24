@@ -1,0 +1,89 @@
+"""Incan-native output publication with declared-input and generated-output hashes."""
+
+from std.fs import Path
+from rust::std::string import String as RustString
+from std.hash import sha256
+from std.encoding.hex import hexlify
+from weave.contracts import Experience, TraceCommand
+from targets.web import lower_web, quote, reference_trace
+from core.surface import GeneratedFile
+
+
+pub model BuildInput:
+    """One explicitly declared source/asset input. Logical names never expose host paths."""
+
+    pub name: str
+    pub path: str
+
+
+pub model BuildIdentity:
+    """
+    Caller-supplied compiler identity plus declared builder/source input manifest.
+
+    This is a reproducible development receipt, not a signed release attestation.
+    The build wrapper records the actual compiler version and executable hash.
+    """
+
+    pub compiler: str
+    pub inputs: list[BuildInput]
+    pub builder: str = "pallay@0.1.0-dev.0/executable-weave-v1"
+
+
+pub def digest_text(text: str) -> str:
+    """Hash exact UTF-8 output bytes."""
+    return "sha256:" + hexlify(sha256.digest(RustString.from(text).into_bytes())).lower()
+
+
+pub def publish_web(
+    app: Experience,
+    directory: str,
+    interactive: bool,
+    identity: BuildIdentity,
+    probes: list[TraceCommand] = [],
+) -> Result[str, str]:
+    """
+    Write a validated development publication with an inspectable receipt.
+
+    Validation and input reading finish before writes. Output is an explicitly caller-owned
+    generated directory; no recursive deletion or mutation of authored source is performed.
+    """
+    mut output = lower_web(app, interactive)
+    if not output.valid:
+        return Err("\n".join(output.diagnostics))
+    if identity.compiler == "" or identity.builder == "" or len(identity.inputs) == 0:
+        return Err("Publication requires compiler, builder and declared inputs")
+    mut inputs: list[str] = []
+    mut names: list[str] = []
+    for input in identity.inputs:
+        if input.name == "" or input.name in names:
+            return Err("Duplicate or empty build input name")
+        names.append(input.name)
+        match Path(input.path).read_bytes():
+            Err(error) => return Err(error.message())
+            Ok(content) => inputs.append(
+                "{\"name\":" + quote(input.name) + ",\"digest\":" + quote(
+                    "sha256:" + hexlify(sha256.digest(content)).lower(),
+                ) + "}",
+            )
+    output.files.append(GeneratedFile(path="reference.json", content=reference_trace(app, probes)))
+    mut entries: list[str] = []
+    for file in output.files:
+        entries.append("{\"path\":" + quote(file.path) + ",\"digest\":" + quote(digest_text(file.content)) + "}")
+    payload = "{\"schema\":\"pallay.development-receipt.v1\",\"experience\":" + quote(app.name) + ",\"compiler\":" + quote(
+        identity.compiler,
+    ) + ",\"builder\":" + quote(identity.builder) + ",\"inputs\":[" + ",".join(inputs) + "],\"outputs\":[" + ",".join(
+        entries,
+    ) + "]}"
+    receipt = "{\"publication\":" + quote(digest_text(payload)) + ",\"receipt\":" + payload + "}"
+    root = Path(directory)
+    match root.mkdir(parents=true, exist_ok=true):
+        Err(error) => return Err(error.message())
+        Ok(_) => pass
+    for file in output.files:
+        match root.joinpath(file.path).write_text(file.content, encoding="utf-8", errors="strict", newline=None):
+            Err(error) => return Err(error.message())
+            Ok(_) => pass
+    match root.joinpath("receipt.json").write_text(receipt, encoding="utf-8", errors="strict", newline=None):
+        Err(error) => return Err(error.message())
+        Ok(_) => pass
+    return Ok(digest_text(payload))
