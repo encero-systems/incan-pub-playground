@@ -102,11 +102,11 @@ for (const [from, to] of [['explore','dates'],['explore','traits'],['explore','o
  assert.ok([...documents.get(from+'.html').querySelectorAll('main a')].some(a=>a.getAttribute('href').split('#')[0]===to+'.html'), from+' -> '+to);
 }
 assert.match(documents.get('date-api.html').querySelector('main').textContent,/upcoming API generator has not produced it/);
-assert.match(documents.get('oven.html').querySelector('main').textContent,/chapter follows dev.8/);
+assert.match(documents.get('oven.html').querySelector('main').textContent,/incan build src\/main.incn --profile release/);
 console.log('Passed: topic learning/lookup routes and API/version provenance.');
 
 // The configuration pilot must connect the complete task to unchanged contracts.
-for (const [from, to] of [['index','configuration'],['nav-library','configuration'],['configuration','fs-api'],['configuration','toml-api'],['configuration','json-api'],['configuration','configuration-pilot'],['configuration-pilot','configuration'],['fs-api','configuration'],['toml-api','configuration'],['json-api','configuration']]) {
+for (const [from, to] of [['nav-library','configuration'],['configuration','fs-api'],['configuration','toml-api'],['configuration','json-api'],['configuration','configuration-pilot'],['configuration-pilot','configuration'],['fs-api','configuration'],['toml-api','configuration'],['json-api','configuration']]) {
  assert.ok([...documents.get(from+'.html').querySelectorAll('a[href]')].some(a=>a.getAttribute('href').split('#')[0]===to+'.html'),from+' -> '+to);
 }
 const config = documents.get('configuration.html');
@@ -138,7 +138,7 @@ assert.ok(documents.get('datetime-api.html').querySelector('.doc-breadcrumb a[hr
 console.log('Passed: document-type badges, alphabetical module homes, direct datetime reference and module breadcrumb.');
 
 // Consolidation keeps the authoring and execution jobs separate and reachable.
-for(const [from,to] of [['write-tests','run-tests'],['run-tests','write-tests'],['nav-oven','run-tests'],['nav-oven','editor-setup'],['module-testing','write-tests'],['editor-setup','testing-editor-pilot']]){
+for(const [from,to] of [['write-tests','run-tests'],['run-tests','write-tests'],['nav-oven','run-tests'],['nav-oven','editor-setup'],['module-testing','write-tests'],['editor-setup','first-project']]){
  assert.ok([...documents.get(from+'.html').querySelectorAll('a[href]')].some(a=>a.getAttribute('href').split('#')[0]===to+'.html'),from+' -> '+to);
 }
 for(const key of ['run-tests','editor-setup'])assert.equal(documents.get(key+'.html').querySelector('.doc-type-line [data-doc-type]').dataset.docType,'How-to');
@@ -170,3 +170,14 @@ for(const file of coreEvidence.inputs)assert.equal(sha(await readFile(new URL('c
 for(const file of coreEvidence.example_files)assert.equal(sha(await readFile(new URL('core-topics/'+file.path,input))),file.sha256,file.path);
 assert.equal(sha(await readFile(new URL('../assets/first-project.zip',target))),coreEvidence.download_sha256);
 console.log('Passed: dev.8 chapter/reference/exercise routes, exact displayed project, evidence and downloadable archive.');
+
+// Release-facing chapters must keep editorial and development details out of the reader's path.
+for (const key of ['index','core-topics','install','first-project','editor-setup','projects','oven','dependencies','cli-reference','project-reference','explore']) {
+ const doc=documents.get(key+'.html');
+ assert.doesNotMatch(doc.querySelector('main').textContent, /dev\.\d|[a-f0-9]{40}|rehearsal|Validation details|Source and verification|Consolidation boundaries|Navigation preview/i, key);
+ assert.equal(doc.querySelectorAll('a[href="content-map.html"],a[href="content-map.json"],a[href="content-strategy.md"]').length,0,key);
+}
+for (const key of ['install','editor-setup','projects','oven','dependencies','first-project']) {
+ assert.ok(documents.get('index.html').querySelector('main a[href="'+key+'.html"]'), 'Direct chapter link: '+key);
+}
+console.log('Passed: direct chapter routes and reader-facing content boundaries.');

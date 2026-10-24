@@ -1,6 +1,6 @@
 # CLI reference
 
-`incan` is Oven, the Incan command line. This page specifies `0.6.0-dev.8`.
+`incan` is Oven, the Incan command line. Use this reference to look up commands and options.
 
 ## Usage
 
@@ -20,13 +20,13 @@ incan toolchain pack OUT
 incan toolchain install ARCHIVE
 ```
 
-There is no implicit command or implicit source path. `new`, `init`, `lock`, `env`, `explain`, `tools`, `cache`, `workspace`, `oven`, `--release`, `--locked`, `--offline`, `--frozen`, `--sdk-profile` and `--emit-rust` are not CLI interfaces in this release.
+Specify a command and its source path explicitly.
 
 ## Help and version
 
 `incan --help`, `incan -h` and `incan help` print the command synopses above and the CLI reference location, then exit `0`. `incan COMMAND --help` or `incan COMMAND -h` prints that command's usage, options and one example, then exits `0`. Nested commands include the subcommand: `incan owner stop --help`, `incan inspect codegraph --help`, `incan toolchain pack --help` and `incan toolchain install --help`. Help does not require a project or installed toolchain. Arguments after `--` and option values are not interpreted as help flags.
 
-`incan --version` prints `incan 0.6.0-dev.8` and exits `0`. `incan --version --help` prints its usage and example.
+`incan --version` prints the installed Incan version and exits `0`. `incan --version --help` prints its usage and example.
 
 ## Unit options
 
@@ -85,7 +85,7 @@ Serves the selected project's graph through newline-delimited JSON-RPC on stdin/
 
 `pack OUT` archives the installed toolchain closure. Supported extensions are `.tar`, `.tar.gz` and `.tar.zst`. Paths in the packed toolchain manifest are relative; the local Rust sysroot is excluded.
 
-`install ARCHIVE` stages and verifies the archive before publishing it under `INCAN_HOME/toolchains/0.6.0-dev.8/`. Absolute archive members, parent traversal and archive-supplied `sysroot` members are refused. Manifest paths must be portable, the toolchain name must match this Oven, and named artifacts must exist. Installation binds a local Rust sysroot and verifies the driver's compiler identity. A refused archive preserves the existing installation.
+`install ARCHIVE` stages and verifies the archive before publishing it under `INCAN_HOME/toolchains/<version>/`. Absolute archive members, parent traversal and archive-supplied `sysroot` members are refused. Manifest paths must be portable, the toolchain name must match this Oven, and named artifacts must exist. Installation binds a local Rust sysroot and verifies the driver's compiler identity. A refused archive preserves the existing installation.
 
 ## Environment variables
 

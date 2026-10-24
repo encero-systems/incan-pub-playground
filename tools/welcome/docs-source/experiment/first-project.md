@@ -2,7 +2,7 @@
 
 Build a greeting program, share its function with a test, then change its behavior.
 
-**You need:** an [installed dev.8 toolchain](install.md) and a terminal. [Download the complete project](../assets/first-project.zip), or create the files below.
+**You need:** [Incan installed](install.md) and a terminal. [Download the complete project](../assets/first-project.zip), or create the files below.
 
 ## Create the files
 
@@ -99,5 +99,3 @@ Find the executable under `target/incan/debug/bin/`. Running it produces the sam
 Make `greet("")` return `"Hello, stranger!"`. Add a test for the empty name and keep the two existing tests passing. This adds a new case without changing the behavior for named users.
 
 Read [Projects and configuration](projects.md) for the layout rules, or [Build and run with Oven](oven.md) for profiles and executable reuse.
-
-*Verified: program output, two passing tests, deliberate assertion failure and debug build on macOS arm64 with the dev.8 rehearsal bundle. [Exact version and checks](core-topics.md).*

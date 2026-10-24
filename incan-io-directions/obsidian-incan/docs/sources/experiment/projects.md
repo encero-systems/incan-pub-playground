@@ -1,6 +1,6 @@
 # Projects and configuration
 
-A project is source code plus `loaf.toml`. The manifest identifies the package, describes its dependencies and selects its source layout.
+An Incan project contains source files and a `loaf.toml` manifest. The manifest names the package and declares its dependencies.
 
 ## Project layout
 
@@ -14,11 +14,9 @@ greeter/
     └── test_greeting.incn
 ```
 
-`src/main.incn` is the application entry point. Shared functions live in other source modules; tests import their public interfaces. A library uses `src/lib.incn`.
+Use `src/main.incn` for the application entry point and other source modules for shared code. A library uses `src/lib.incn`. Tests belong in `tests/`.
 
-Source commands find the nearest manifest above the source file. Pass the source path explicitly, relative to your current directory.
-
-## Package identity
+## The manifest
 
 ```toml
 [project]
@@ -29,29 +27,46 @@ version = "0.1.0"
 main = "src/main.incn"
 ```
 
-`name` and `version` are required. Script entries name existing source files; they do not let you omit the path from `incan run`.
+`name` and `version` are required. Script entries name existing source files. Run a program by passing its path:
 
 ```bash
 incan run src/main.incn
 ```
 
-Edit the manifest's version when releasing your package. Dev.8 does not provide project scaffolding, version-bump or named-environment commands.
+Incan finds the nearest `loaf.toml` above the source file. Paths passed on the command line are relative to your current directory.
 
-## Source roots
+## Sharing code between files
 
-Oven uses `src/` when it exists, otherwise the project root. Configure a different directory explicitly:
+A public declaration can be imported by another module. In `src/greeting.incn`:
+
+```incan
+pub def greet(name: str) -> str:
+    return f"Hello, {name}!"
+```
+
+In `src/main.incn`:
+
+```incan
+from greeting import greet
+
+
+def main() -> None:
+    println(greet("Incan"))
+```
+
+Imports resolve from `src/` when that directory exists, otherwise from the project root. To use another directory:
 
 ```toml
 [build]
 source-root = "app"
 ```
 
-Imports resolve against that source root. Moving source files requires updating any script paths that name them.
+Update the script paths if you move your entry points.
 
-## Dependencies and build outputs
+## Source and build files
 
-Keep source, tests and authored manifests in version control. Files under `target/` are build outputs. Dependency declarations belong in the manifest; see [Manage dependencies](dependencies.md) for Incan libraries and Rust crates.
+Keep source, tests and `loaf.toml` in version control. Add `target/` to `.gitignore`; it contains build outputs.
 
-Dev.8 has no `incan lock` command. Do not carry the older lockfile workflow into a new project. The [manifest reference](project-reference.md) lists accepted fields, including package features and metadata; accepting `requires-incan` metadata does not currently enforce that requirement.
+Declare libraries and Rust crates in the manifest as described in [Manage dependencies](dependencies.md). The [manifest reference](project-reference.md) lists all configuration fields.
 
-**Try it:** [Your first project](first-project.md) builds this layout and shares a function between the application and its tests.
+**Try it:** [Your first project](first-project.md) uses this layout and tests a shared function.

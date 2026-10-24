@@ -1,61 +1,60 @@
 # Build and run with Oven
 
-Oven is the Incan-authored `incan` command line. It resolves the project's active dependencies and features, then asks the installed compiler to check or build the selected source.
+Oven is Incan's build tool. Use the `incan` command to check source, run programs, build executables and run tests.
 
 ## Check and run
 
-Run these commands from your project directory:
+From your project directory:
 
 ```bash
 incan check src/main.incn
 incan run src/main.incn
 ```
 
-`check` reports source errors without producing an executable. `run` builds when needed, then executes the program. Pass program arguments after `--`:
+`check` reports errors without producing an executable. `run` builds the program when needed and starts it.
+
+Pass arguments to your program after `--`:
 
 ```bash
 incan run src/main.incn -- input.csv
 ```
 
-The program inherits the terminal's input and output. Its exit status becomes the command's exit status.
+The program reads and writes through your terminal. Its exit status becomes the command's exit status.
 
 ## Build an executable
 
 ```bash
 incan build src/main.incn
+```
+
+The default build profile is `debug`. Find the executable under `target/incan/debug/bin/`.
+
+For a release build:
+
+```bash
 incan build src/main.incn --profile release
 ```
 
-The default profile is `debug`. Release builds require release-profile artifacts for the standard packages and other dependencies. Executables are written under `target/incan/<profile>/bin/`.
+Release executables go under `target/incan/release/bin/`. The installed toolchain and dependencies must include the selected profile.
 
-The compiler produces native code through the pinned Rust compiler. Incan source is not converted into a generated Rust project.
+## Rebuilding
 
-## Rebuilds and reuse
-
-Oven reuses unchanged executables. Changes to source or selected build inputs invalidate that reuse. To inspect a rebuild decision:
-
-```bash
-OVEN_TRACE=- incan run src/main.incn
-```
-
-To inspect the selected source, features and dependencies:
-
-```bash
-incan describe-unit src/main.incn
-```
+Oven reuses an executable when its source and build inputs have not changed. After editing your code, run the same command again; Oven rebuilds what is needed.
 
 ## Run tests
+
+Pass the test file you want to run:
 
 ```bash
 incan test tests/test_greeting.incn
 ```
 
-Pass a test source file explicitly. Tests execute on every invocation, even when their executable is reused. Dev.8's runner does not accept directory collection or the older selection/reporting flags.
+Tests execute each time, even when their executable is reused. A failed test returns a nonzero exit status.
 
-## Missing dependencies
+## Troubleshooting a build
 
-A dependency declaration does not download its artifacts. Oven prepares local Incan libraries before their consumers; external Rust units must be available in the installed registry closure. A missing dependency is reported explicitly. See [Manage dependencies](dependencies.md).
+If a dependency is missing, check its declaration in `loaf.toml` and whether it is available in your toolchain. [Manage dependencies](dependencies.md) explains local libraries, Rust crates and features.
 
-**Try it:** [Your first project](first-project.md) takes a small application through checking, running, tests and a debug build. Use the [CLI reference](cli-reference.md) for exact options.
+For command options, see the [CLI reference](cli-reference.md).
 
-*This chapter follows dev.8. The older `oven bake`, `lock` and `--release` interfaces do not apply. [Validation details](core-topics.md).*
+**Try it:** [Your first project](first-project.md) takes a small application through running, testing and building an executable.
