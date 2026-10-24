@@ -20,12 +20,14 @@
     </div>
   </header><div class="docs-layout wrap"><aside class="docs-sidebar" id="docs-navigation"><a class="docs-overview" href="index.html">Documentation</a><details class="docs-browse" open><summary>Browse by topic</summary><nav aria-label="Documentation sections"><ul><li><a href="nav-learn.html">Learn</a></li><li><a href="nav-language.html">Language</a></li><li><a href="nav-library.html">Standard library</a></li><li><a href="nav-oven.html">Oven &amp; tools</a><ul class="docs-topic-links"><li><a href="nav-oven.html#project-configuration">Project configuration</a></li><li><a href="nav-oven.html#dependencies-and-packages">Dependencies and packages</a></li><li><a href="nav-oven.html#build-and-release">Build and release</a></li><li><a href="nav-oven.html#testing">Testing</a></li><li><a href="nav-oven.html#diagnostics">Diagnostics</a></li><li><a href="nav-oven.html#editor-and-formatting">Editor and formatting</a></li><li><a href="nav-oven.html#cli-and-inspection">CLI and inspection</a></li><li><a href="nav-oven.html#performance">Performance</a></li><li><a href="nav-oven.html#historical-build-system">Historical build system</a></li><li><a aria-current="page" href="dependencies.html">Manage dependencies</a></li></ul></li><li><a href="nav-interop.html">Interoperability</a></li><li><a href="nav-contribute.html">Contribute</a></li><li><a href="nav-project.html">Project</a></li></ul></nav></details><a href="explore.html">Choose a learning route →</a></aside><main class="doc-article" id="main" tabindex="-1"><div class="doc-breadcrumb"><a href="index.html">Docs</a><a href="nav-oven.html"> / Oven &amp; tools</a></div><details class="docs-mobile-toc"><summary>On this page</summary><nav aria-label="On this page, compact"><a class="toc-h2" href="#add-a-local-incan-library">Add a local Incan library</a><a class="toc-h2" href="#use-a-rust-crate">Use a Rust crate</a><a class="toc-h2" href="#request-features">Request features</a><a class="toc-h2" href="#check-dependency-selection">Check dependency selection</a></nav></details><p class="doc-type-line"><span class="doc-type" data-doc-type="How-to">How-to</span></p><h1 id="manage-dependencies">Manage dependencies</h1>
 <p>Declare project dependencies in <code>loaf.toml</code>. Incan libraries use a <code>pub::</code> import; Rust crates use <code>rust::</code>.</p>
+<p>A dependency is code supplied by another package. The manifest says which package to use; an import brings its declarations into a source file. Adding a dependency does not automatically import its names.</p>
 <h2 id="add-a-local-incan-library">Add a local Incan library</h2>
 <p>The library needs its own manifest and a <code>src/lib.incn</code> exposing its public API. In the consumer&#39;s manifest:</p>
 <pre aria-label="Code example" tabindex="0"><code class="language-toml">[dependencies]
 pricing = { path = <span class="doc-token-string">&quot;../pricing&quot;</span> }
 </code></pre>
-<p>The path is relative to the manifest. Import through the declared alias:</p>
+<p>For example, <code>shop/loaf.toml</code> can refer to a sibling <code>pricing/</code> directory with <code>../pricing</code>. The path is relative to the manifest, not the terminal’s working directory.</p>
+<p>The key <code>pricing</code> is the name used in the import:</p>
 <pre aria-label="Code example" tabindex="0"><code class="language-incan"><span class="doc-token-keyword">from</span> <span class="doc-token-keyword">pub</span>::pricing <span class="doc-token-keyword">import</span> total
 </code></pre>
 <p>Here, <code>total</code> must be a public declaration supplied by that library. Build the consumer normally:</p>
@@ -50,11 +52,21 @@ regex = <span class="doc-token-string">&quot;1&quot;</span>
 <p>The crate version and features must be available in your installed toolchain. Adding a declaration does not download a crate; Oven reports an error if it cannot find a match.</p>
 <p>For a single source file, an inline <code>@ &quot;VERSION&quot;</code> requirement is another way to state dependency intent. Do not combine an inline version with a manifest declaration for the same crate.</p>
 <h2 id="request-features">Request features</h2>
-<p>Use table form when a Rust crate needs feature selection:</p>
+<p>Features select optional functionality supplied by a package. Use table form when a Rust crate needs them:</p>
 <pre aria-label="Code example" tabindex="0"><code class="language-toml">[rust-dependencies]
 serde = { version = <span class="doc-token-string">&quot;1&quot;</span>, features = [<span class="doc-token-string">&quot;derive&quot;</span>] }
 </code></pre>
-<p>An optional dependency uses <code>optional = true</code>; a package feature activates it with <code>dep:ALIAS</code>. Requests for a dependency&#39;s own features use <code>ALIAS/FEATURE</code>. See the <a href="project-reference.html#projectfeatures">manifest reference</a> for the complete rules.</p>
+<p>This requests the crate&#39;s <code>derive</code> feature. The crate&#39;s default features remain enabled unless you set <code>default-features = false</code>.</p>
+<p>To make a dependency optional, expose a feature in your own package. This separate example enables <code>regex</code> only when <code>search</code> is selected:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-toml">[rust-dependencies]
+regex = { version = <span class="doc-token-string">&quot;1&quot;</span>, optional = <span class="doc-token-type">true</span> }
+
+[project.features]
+search = [<span class="doc-token-string">&quot;dep:regex&quot;</span>]
+</code></pre>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">incan build src/main.incn --features search
+</code></pre>
+<p>Code that imports an optional dependency must only be active when that feature is enabled. See the <a href="project-reference.html#projectfeatures">manifest reference</a> for feature conditions, default features and forwarding a dependency&#39;s features.</p>
 <h2 id="check-dependency-selection">Check dependency selection</h2>
 <pre aria-label="Code example" tabindex="0"><code class="language-bash">incan describe-unit src/main.incn
 </code></pre>

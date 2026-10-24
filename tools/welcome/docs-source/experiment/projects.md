@@ -16,6 +16,8 @@ greeter/
 
 Use `src/main.incn` for the application entry point and other source modules for shared code. A library uses `src/lib.incn`. Tests belong in `tests/`.
 
+A module is a source file. Keeping `greet` in `greeting.incn` lets both the application and its tests use the same function. The `main` function in the entry file is where execution starts.
+
 ## The manifest
 
 ```toml
@@ -27,7 +29,7 @@ version = "0.1.0"
 main = "src/main.incn"
 ```
 
-`name` and `version` are required. Script entries name existing source files. Run a program by passing its path:
+`name` identifies the package; `version` is the version of your code, not the Incan compiler. Both are required. Script entries name existing source files. Run a program by passing its path:
 
 ```bash
 incan run src/main.incn
@@ -53,6 +55,10 @@ from greeting import greet
 def main() -> None:
     println(greet("Incan"))
 ```
+
+`from greeting import greet` looks for the `greeting` module and imports its public function. The `.incn` extension is omitted from the import.
+
+## Source roots
 
 Imports resolve from `src/` when that directory exists, otherwise from the project root. To use another directory:
 

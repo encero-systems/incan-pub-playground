@@ -11,7 +11,7 @@ incan check src/main.incn
 incan run src/main.incn
 ```
 
-`check` reports errors without producing an executable. `run` builds the program when needed and starts it.
+`check` reports errors without producing an executable. Use it for quick feedback while editing. `run` builds the program when needed and starts it; there is no need to run `build` first.
 
 Pass arguments to your program after `--`:
 
@@ -26,6 +26,8 @@ The program reads and writes through your terminal. Its exit status becomes the 
 ```bash
 incan build src/main.incn
 ```
+
+Unlike `run`, `build` creates the executable without starting it. Use it when you want to run the binary separately or prepare a build for someone else.
 
 The default build profile is `debug`. Find the executable under `target/incan/debug/bin/`.
 
@@ -54,6 +56,8 @@ Tests execute each time, even when their executable is reused. A failed test ret
 ## Troubleshooting a build
 
 If a dependency is missing, check its declaration in `loaf.toml` and whether it is available in your toolchain. [Manage dependencies](dependencies.md) explains local libraries, Rust crates and features.
+
+If you need to see which dependencies and features a build selected, run `incan describe-unit src/main.incn`. Check those against your manifest before changing application code.
 
 For command options, see the [CLI reference](cli-reference.md).
 

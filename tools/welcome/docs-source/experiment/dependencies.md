@@ -2,6 +2,8 @@
 
 Declare project dependencies in `loaf.toml`. Incan libraries use a `pub::` import; Rust crates use `rust::`.
 
+A dependency is code supplied by another package. The manifest says which package to use; an import brings its declarations into a source file. Adding a dependency does not automatically import its names.
+
 ## Add a local Incan library
 
 The library needs its own manifest and a `src/lib.incn` exposing its public API. In the consumer's manifest:
@@ -11,7 +13,9 @@ The library needs its own manifest and a `src/lib.incn` exposing its public API.
 pricing = { path = "../pricing" }
 ```
 
-The path is relative to the manifest. Import through the declared alias:
+For example, `shop/loaf.toml` can refer to a sibling `pricing/` directory with `../pricing`. The path is relative to the manifest, not the terminal’s working directory.
+
+The key `pricing` is the name used in the import:
 
 ```incan
 from pub::pricing import total
@@ -54,14 +58,30 @@ For a single source file, an inline `@ "VERSION"` requirement is another way to 
 
 ## Request features
 
-Use table form when a Rust crate needs feature selection:
+Features select optional functionality supplied by a package. Use table form when a Rust crate needs them:
 
 ```toml
 [rust-dependencies]
 serde = { version = "1", features = ["derive"] }
 ```
 
-An optional dependency uses `optional = true`; a package feature activates it with `dep:ALIAS`. Requests for a dependency's own features use `ALIAS/FEATURE`. See the [manifest reference](project-reference.md#projectfeatures) for the complete rules.
+This requests the crate's `derive` feature. The crate's default features remain enabled unless you set `default-features = false`.
+
+To make a dependency optional, expose a feature in your own package. This separate example enables `regex` only when `search` is selected:
+
+```toml
+[rust-dependencies]
+regex = { version = "1", optional = true }
+
+[project.features]
+search = ["dep:regex"]
+```
+
+```bash
+incan build src/main.incn --features search
+```
+
+Code that imports an optional dependency must only be active when that feature is enabled. See the [manifest reference](project-reference.md#projectfeatures) for feature conditions, default features and forwarding a dependency's features.
 
 ## Check dependency selection
 
