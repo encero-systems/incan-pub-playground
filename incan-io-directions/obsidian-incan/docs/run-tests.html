@@ -31,7 +31,7 @@
 <pre aria-label="Code example" tabindex="0"><code class="language-bash">incan test --<span class="doc-token-type">list</span> .
 </code></pre>
 <p>The final <code>.</code> selects the project-root directory. That scope can include conventional test files as well as inline test blocks inside production files. Selecting only <code>tests/</code> would leave out an inline test in <code>src/</code>, even if that test belongs to the same project.</p>
-<p>Read the list before interpreting a successful run. A missing test cannot fail, so a green result alone does not establish that your intended behavior was checked. Conventional files must match <code>test_*.incn</code> or <code>*_test.incn</code>; within a valid test context, functions use <code>test_*</code> names or <code>@test</code>. For inline tests, check that the declaration is inside the production file&#39;s <code>module tests:</code> block. <a href="write-tests.html#tests-and-the-code-they-examine">Tests and the code they examine</a> explains those contexts.</p>
+<p>Read the list before interpreting a successful run. A missing test cannot fail, so a green result alone does not establish that your intended behavior was checked. Conventional files must match <code>test_*.incn</code> or <code>*_test.incn</code>; within a valid test context, functions use <code>test_*</code> names or <code>@test</code>. For inline tests, check that the declaration is inside the production file&#39;s <code>module tests:</code> block. <a href="write-tests.html#test-placement">Test placement</a> explains those contexts.</p>
 <p>Once the list contains the expected cases, run that scope:</p>
 <pre aria-label="Code example" tabindex="0"><code class="language-bash">incan test .
 </code></pre>
@@ -75,7 +75,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>The last option supplies a value to collection-time <code>feature(...)</code> checks. It does not configure arbitrary application behavior. <a href="write-tests.html#what-a-test-result-tells-us">What a test result tells us</a> explains how these distinctions affect interpretation, and the <a href="https://incan.io/dev/tooling/reference/cli_reference/">CLI reference</a> provides the full option contract.</p>
+<p>The last option supplies a value to collection-time <code>feature(...)</code> checks. It does not configure arbitrary application behavior. <a href="write-tests.html#test-results">Test results</a> explains how these distinctions affect interpretation, and the <a href="https://incan.io/dev/tooling/reference/cli_reference/">CLI reference</a> provides the full option contract.</p>
 <h2 id="investigate-a-failure">Investigate a failure</h2>
 <p>First identify how far the run got. Collection finds the test cases; compilation and preparation make them runnable; execution evaluates their assertions. If preparation fails, changing an expected assertion value cannot fix it because the assertion has not run yet.</p>
 <p>For a selected failing test, request verbose output:</p>
@@ -83,7 +83,7 @@
 </code></pre>
 <p>Read the diagnostic alongside the test ID. For an assertion failure, compare the actual result with the expected behavior before deciding whether the implementation or the test is wrong. For a toolchain or missing-plan failure, follow the project&#39;s supported setup and bake instructions. Keep the diagnostic and compiler version when asking for help.</p>
 <p>Additional output is useful when it answers a specific question. <code>--nocapture</code> exposes output from passing tests, while <code>--durations 10</code> identifies the slowest cases. If a failure seems to depend on order, use <code>--shuffle --seed 12345</code> and retain the seed so the ordering experiment can be repeated.</p>
-<p>Parallel workers can shorten an independent suite: <code>incan test --jobs 4 .</code> requests four workers. Before increasing concurrency, check whether tests share external files or services. A session fixture is per worker batch, not one instance shared across all workers. Isolation and fixture lifetime matter more than the worker count; <a href="write-tests.html#scope-isolation-and-cleanup">scope and isolation</a> explains those choices.</p>
+<p>Parallel workers can shorten an independent suite: <code>incan test --jobs 4 .</code> requests four workers. Before increasing concurrency, check whether tests share external files or services. A session fixture is per worker batch, not one instance shared across all workers. Isolation and fixture lifetime matter more than the worker count; <a href="write-tests.html#fixture-scope-and-cleanup">fixture scope and cleanup</a> explains those choices.</p>
 <h2 id="make-ci-fail-usefully">Make CI fail usefully</h2>
 <p>CI should report both failures and the unexpected absence of tests. Without an explicit empty-collection check, a successful exit can simply mean that nothing was collected. Combine that check with machine-readable output and a JUnit report:</p>
 <pre aria-label="Code example" tabindex="0"><code class="language-bash">incan test --fail-on-empty --format json --junit reports/junit.xml .

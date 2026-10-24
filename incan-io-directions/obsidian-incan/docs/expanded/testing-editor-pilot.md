@@ -4,7 +4,7 @@ This revision tests an explanatory chapter with a single purpose: understanding 
 
 ## Read the revised chapter
 
-[How testing works in Incan](write-tests.md) begins with the relationship between a type and a behavioral expectation. It develops that idea through assertions, test visibility, parameter cases, fixture dependencies and isolation, then considers what a test result establishes. Familiarity with basic functions, imports and strings is sufficient background.
+[How testing works in Incan](write-tests.md) explains assertions, test placement, parameterization, fixtures and results. Headings name the features directly. Each section gives the mechanism, an example where useful, and relevant constraints; API detail stays in the reference. Familiarity with basic functions, imports and strings is sufficient background.
 
 The page is classified as **Explanation** in its breadcrumb, badge and module navigation. The existing URL is retained so earlier links remain usable. [Run tests](run-tests.md) and [Set up your editor](editor-setup.md) remain How-to guides; they have not received the same editorial rewrite.
 
@@ -51,7 +51,7 @@ Website compilation and link checks validate the rendered documents; they are no
 
 Read the explanation without running its examples. Consider whether each example makes the surrounding idea clearer, whether any paragraph unexpectedly starts instructing the reader to perform a task, and whether the chapter would remain coherent on a printed page.
 
-Ask readers to explain why a function can be correctly typed yet fail its test, how parameter cases differ from fixture dependencies, and why a passing run does not establish that every intended test ran. Record unclear assumptions and places where API detail interrupts the argument. Build and link checks cannot establish that the chapter succeeds at this.
+Ask readers to explain how parameter cases differ from fixture dependencies, how fixture scope affects isolation, and why a passing run does not establish that every intended test ran. Record unclear assumptions and places where API detail interrupts the argument. Build and link checks cannot establish that the chapter succeeds at this.
 
 The separate How-to guides can still be tried against concrete tasks: select a known case, make an empty collection fail CI, or diagnose an editor using an older language server than the terminal.
 
