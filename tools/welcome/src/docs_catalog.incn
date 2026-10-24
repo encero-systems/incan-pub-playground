@@ -142,13 +142,15 @@ pub def section_for(key: str, catalog: ContentCatalog) -> str:
         return "learn"
     if key.startswith("module-"):
         return "library"
+    if key == "core-topics":
+        return "learn"
     if key.startswith("nav-"):
         return key[4:]
     if key in ["dates", "date-api", "collections", "configuration", "configuration-pilot"]:
         return "library"
     if key in ["traits", "traits-reference", "enums", "compile-runtime"]:
         return "language"
-    if key in ["oven", "testing-editor-pilot", "core-topics", "cli-reference", "project-reference", "projects"]:
+    if key in ["oven", "testing-editor-pilot", "cli-reference", "project-reference", "projects"]:
         return "oven"
     for page in catalog.entries:
         if page.preview == key + ".html":
@@ -235,7 +237,7 @@ pub def navigation(active: str, catalog: ContentCatalog) -> DocumentNode:
             for page in catalog.entries:
                 if page.preview == active + ".html":
                     current_title = str(page.title)
-            titles = {"getting-started": "Getting started · earlier snapshot", "install": "Install Incan", "first-project": "Your first project", "projects": "Projects and configuration", "dependencies": "Manage dependencies", "project-reference": "Project configuration reference", "cli-reference": "CLI reference", "core-topics": "Five core topics for 0.6", "write-tests": "How testing works in Incan", "run-tests": "Run tests", "editor-setup": "Set up your editor", "testing-editor-pilot": "Testing and editor content pilot", "configuration": "Read and validate configuration", "configuration-pilot": "Configuration content pilot", "dates": "Dates and times", "date-api": "Date API preview", "traits": "Traits and capabilities", "traits-reference": "Trait rules", "oven": "Build and run with Oven"}
+            titles = {"getting-started": "Getting started · earlier snapshot", "install": "Install Incan", "first-project": "Your first project", "projects": "Projects and configuration", "dependencies": "Manage dependencies", "project-reference": "Project configuration reference", "cli-reference": "CLI reference", "core-topics": "Getting started", "write-tests": "How testing works in Incan", "run-tests": "Run tests", "editor-setup": "Set up your editor", "testing-editor-pilot": "Testing and editor content pilot", "configuration": "Read and validate configuration", "configuration-pilot": "Configuration content pilot", "dates": "Dates and times", "date-api": "Date API preview", "traits": "Traits and capabilities", "traits-reference": "Trait rules", "oven": "Build and run with Oven"}
             if active in titles:
                 current_title = str(titles[active])
             if section.key == "library" and active != "configuration":
@@ -265,18 +267,14 @@ pub def navigation(active: str, catalog: ContentCatalog) -> DocumentNode:
                 {"aria-label": "Documentation sections"},
                 [el("ul", {}, groups)],
             )],
-        ), el("a", explore_attrs, [txt("Choose a learning route →")]), el(
-            "a",
-            {"class": "docs-all", "href": "content-map.html"},
-            [txt("Content migration map")],
-        )],
+        ), el("a", explore_attrs, [txt("Choose a learning route →")])],
     )
 
 
 def entry_node(page: ContentPage, catalog: ContentCatalog) -> DocumentNode:
-    mut location = "Current docsite ↗"
+    mut location = "↗"
     if page.preview != "":
-        location = str("Read here →")
+        location = str("→")
     mut aliases: list[str] = []
     if page.preview != "":
         for other in catalog.entries:
@@ -304,12 +302,6 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
         "p",
         {"class": "doc-lead"},
         [txt(section.description)],
-    ), el(
-        "p",
-        {"class": "docs-route-note"},
-        [txt(
-            "Pages marked Current docsite open the existing documentation. Their original release context still applies.",
-        )],
     )]
     if section.key == "library":
         result.append(
@@ -399,11 +391,7 @@ pub def section_content(section: DocSection, catalog: ContentCatalog) -> list[Do
                 el(
                     "li",
                     {},
-                    [el("a", {"href": "oven.html"}, [txt("Build and run a project")]), el(
-                        "small",
-                        {},
-                        [txt("How-to · documented 0.5 baseline")],
-                    )],
+                    [el("a", {"href": "oven.html"}, [txt("Build and run with Oven")]), el("small", {}, [txt("How-to")])],
                 ),
             )
         mut shown_previews: list[str] = []
@@ -463,58 +451,31 @@ pub def landing(catalog: ContentCatalog) -> list[DocumentNode]:
                 )],
             ),
         )
-    return [el("p", {"class": "docs-eyebrow"}, [txt("Incan documentation")]), el(
-        "h1",
-        {},
-        [txt("What would you like to build?")],
-    ), el(
+    mut chapters: list[DocumentNode] = []
+    for item in [("install", "Install Incan", "Install the tools and check your first program."), ("editor-setup", "Set up your editor", "Diagnostics, code navigation and formatting."), ("projects", "Projects and configuration", "Organize source files and configure a project."), ("oven", "Build and run with Oven", "Check code, run programs, build executables and run tests."), ("dependencies", "Manage dependencies", "Use Incan libraries and Rust crates.")]:
+        chapters.append(
+            el("a", {"href": item.0 + ".html"}, [el("strong", {}, [txt(item.1)]), el("span", {}, [txt(item.2)])]),
+        )
+    return [el("h1", {}, [txt("Incan documentation")]), el(
         "p",
         {"class": "doc-lead"},
-        [txt(
-            "Start with a small program, explore a language feature, or find the contract you need. Follow the topic, at your own pace.",
-        )],
-    ), el(
+        [txt("Learn Incan, work on a project, or look up a language feature or library API.")],
+    ), el("h2", {}, [txt("Getting started")]), el("div", {"class": "docs-start"}, chapters), el(
         "div",
-        {"class": "docs-start"},
-        [el(
-            "a",
-            {"href": "configuration.html"},
-            [el("strong", {}, [txt("Read and validate configuration")]), el(
-                "span",
-                {},
-                [txt("New guide pilot · files, TOML and JSON in one workflow →")],
+        {"class": "inc-learning-panel"},
+        [el("h2", {}, [txt("Your first project")]), el(
+            "p",
+            {},
+            [txt("Build a greeting program, test it, then try the exercise. "), el(
+                "a",
+                {"href": "first-project.html"},
+                [txt("Follow the tutorial →")],
             )],
-        ), el(
-            "a",
-            {"href": "nav-learn.html#install-and-start"},
-            [el("strong", {}, [txt("Your first program")]), el(
-                "span",
-                {},
-                [txt("Install, run, and understand the result →")],
-            )],
-        ), el(
-            "a",
-            {"href": "nav-language.html"},
-            [el("strong", {}, [txt("Learn a language feature")]), el(
-                "span",
-                {},
-                [txt("Examples and exact rules, side by side →")],
-            )],
-        ), el(
-            "a",
-            {"href": "nav-library.html"},
-            [el("strong", {}, [txt("Find a library API")]), el(
-                "span",
-                {},
-                [txt("Choose a module and look up its contract →")],
-            )],
-        )],
-    ), el("div", {"class": "docs-cards docs-directory", "style": "--column-rows:" + str((len(cards) + 1) // 2)}, cards), el(
-        "p",
-        {"class": "docs-route-note"},
-        [txt(
-            "Navigation preview for the 0.6 website. Reworked pages open here; the remaining pages link to the current docsite. A topic assignment does not mean its content has been updated for 0.6.",
-        )],
+        ), el("a", {"href": "../assets/first-project.zip", "download": ""}, [txt("Download the example ↓")])],
+    ), el("h2", {}, [txt("Browse by topic")]), el(
+        "div",
+        {"class": "docs-cards docs-directory", "style": "--column-rows:" + str((len(cards) + 1) // 2)},
+        cards,
     )]
 
 
@@ -628,7 +589,7 @@ pub def type_badge(kind: str) -> DocumentNode:
 pub def page_type(key: str, catalog: ContentCatalog) -> str:
     if key.startswith("nav-") or key.startswith("module-") or key in ["index", "explore", "content-map"]:
         return "Overview"
-    authored = {"getting-started": "Tutorial", "install": "How-to", "first-project": "Tutorial", "projects": "Explanation", "dependencies": "How-to", "project-reference": "Reference", "cli-reference": "Reference", "core-topics": "Explanation", "write-tests": "Explanation", "run-tests": "How-to", "editor-setup": "How-to", "testing-editor-pilot": "Explanation", "configuration": "How-to", "configuration-pilot": "Explanation", "dates": "How-to", "date-api": "Reference", "traits": "How-to", "traits-reference": "Reference", "oven": "How-to", "architecture": "Explanation"}
+    authored = {"getting-started": "Tutorial", "install": "How-to", "first-project": "Tutorial", "projects": "Explanation", "dependencies": "How-to", "project-reference": "Reference", "cli-reference": "Reference", "core-topics": "Overview", "write-tests": "Explanation", "run-tests": "How-to", "editor-setup": "How-to", "testing-editor-pilot": "Explanation", "configuration": "How-to", "configuration-pilot": "Explanation", "dates": "How-to", "date-api": "Reference", "traits": "How-to", "traits-reference": "Reference", "oven": "How-to", "architecture": "Explanation"}
     if key in authored:
         return authored[key]
     for page in catalog.entries:
@@ -684,9 +645,9 @@ pub def library_index(catalog: ContentCatalog) -> list[DocumentNode]:
             if page.source == module.reference and page.section == "library" and page.topic not in seen_topics:
                 anchors.append(el("span", {"id": topic_id(page.topic)}, []))
                 seen_topics.append(page.topic)
-        mut location = "Current docsite ↗"
+        mut location = "↗"
         if not module_reference(module, catalog).startswith("https:"):
-            location = str("Read here →")
+            location = str("→")
         items.append(
             el(
                 "li",
@@ -706,12 +667,6 @@ pub def library_index(catalog: ContentCatalog) -> list[DocumentNode]:
         "p",
         {"class": "doc-lead"},
         [txt("Find a module by name. Open its overview for guides and explanations, or go straight to its reference.")],
-    ), el(
-        "p",
-        {"class": "docs-route-note"},
-        [txt(
-            "Alphabetical index of the modules documented in this snapshot. Reference links marked Current docsite open the existing documentation.",
-        )],
     ), el("ul", {"class": "module-index", "style": "--column-rows:" + str((len(items) + 1) // 2)}, items), el(
         "p",
         {},

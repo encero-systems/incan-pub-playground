@@ -9,7 +9,7 @@ const output = new URL('../../incan-io-directions/obsidian-incan/docs/', root);
 const map = JSON.parse(await readFile(new URL('content-map.json', root), 'utf8'));
 const sha = data=>createHash('sha256').update(data).digest('hex');
 assert.equal(map.schema,'incan.docs-content-map.v1');
-assert.deepEqual(await readFile(new URL('content-map.json',output)),await readFile(new URL('content-map.json',root)));
+// Editorial inventory stays in the repository, outside the published reading path.
 const sections = new Map(map.sections.map(s=>[s.key,s]));
 assert.equal(sections.size,7);
 assert.equal(new Set(map.pages.map(p=>p.source)).size,map.pages.length);
@@ -18,7 +18,7 @@ assert.equal(map.pages.filter(p=>p.role==='support').length,map.counts.support_f
 assert.equal(map.pages.filter(p=>p.role!=='support').length,map.counts.reader_pages);
 const actions = Object.fromEntries(Object.entries(map.counts.actions).map(([action])=>[action,map.pages.filter(p=>p.action===action).length]));
 assert.deepEqual(actions,map.counts.actions);
-const migration = new JSDOM(await readFile(new URL('content-map.html',output),'utf8')).window.document;
+const migration = new JSDOM(await readFile(new URL('core-topics/content-map.html',root),'utf8')).window.document;
 const migrated = [...migration.querySelectorAll('tr[data-source]')].map(n=>n.dataset.source).sort();
 assert.deepEqual(migrated,map.pages.map(p=>p.source).sort(),'Every input has a visible disposition');
 const hubs = new Map();
@@ -60,7 +60,7 @@ for (const p of map.pages) {
  assert.ok(item,'Unreachable reader page: '+p.source);
  assert.equal(item.querySelector('a').getAttribute('href'),p.preview||p.current_url);
  assert.equal(item.querySelector('[data-doc-type]').dataset.docType,p.doc_type);
- assert.match(item.textContent,p.preview?/Read here/:/Current docsite/);
+ assert.match(item.textContent,p.preview?/→/:/↗/);
 }
 // Canonical collisions must represent deliberate consolidation, not accidental filename reuse.
 const destinations=new Map();
