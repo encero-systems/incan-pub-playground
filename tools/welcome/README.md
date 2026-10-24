@@ -77,3 +77,11 @@ The creator portrait uses `static/assets/danny-meijer-obsidian.png`, an identity
 The displayed variant is `danny-meijer-cyan.png`: a second built-in Image Gen edit changing the dyed curls to cyan at Danny’s request. The exact follow-up prompt is `danny-meijer-cyan-prompt.txt`; the original and orange-haired edit are retained.
 
 Final approved portrait: `danny-meijer-cyan-meta.png`, with cyan curls and translucent grey Ray-Ban Meta-style frames with clear lenses, matched to Danny’s supplied reference. Generated with built-in Image Gen; exact prompt: `danny-meijer-cyan-meta-prompt.txt`. Earlier portrait variants remain preserved.
+
+## Complete documentation content map (2026-10-24)
+
+`content-map.json` inventories all 402 Markdown files from the recorded Incan docs snapshot and assigns reader-facing topics, editorial actions, source/API ownership and proposed migration URLs. `content-strategy.md` explains the consolidation decisions and the difference between this navigation redesign and the remaining body/redirect migration.
+
+`src/docs_catalog.incn` owns the new seven-section navigation, section hubs and the editorial migration map. The existing 15 rendered pages retain their provenance; remaining bodies are explicitly linked to the current docsite. Source-generated API documentation is still future work. The new `docs/index.html` is the primary entry; `docs/content-map.html` exposes every classification.
+
+After building, run `node tools/welcome/check-content-map.mjs`. Supply the original docs directory as its optional argument to independently compare every Markdown filename and source digest against the inventory. `check-docs.mjs` now also validates all generated section hubs and their local anchors.
