@@ -20,7 +20,7 @@ incan test --list .
 
 The final `.` selects the project-root directory. That scope can include conventional test files as well as inline test blocks inside production files. Selecting only `tests/` would leave out an inline test in `src/`, even if that test belongs to the same project.
 
-Read the list before interpreting a successful run. A missing test cannot fail, so a green result alone does not establish that your intended behavior was checked. Conventional files must match `test_*.incn` or `*_test.incn`; within a valid test context, functions use `test_*` names or `@test`. For inline tests, check that the declaration is inside the production file's `module tests:` block. [Tests and the code they examine](write-tests.md#tests-and-the-code-they-examine) explains those contexts.
+Read the list before interpreting a successful run. A missing test cannot fail, so a green result alone does not establish that your intended behavior was checked. Conventional files must match `test_*.incn` or `*_test.incn`; within a valid test context, functions use `test_*` names or `@test`. For inline tests, check that the declaration is inside the production file's `module tests:` block. [Test placement](write-tests.md#test-placement) explains those contexts.
 
 Once the list contains the expected cases, run that scope:
 
@@ -56,7 +56,7 @@ Marks let you select by purpose instead of spelling. For example, `incan test -m
 | Run xfail tests as ordinary tests | `incan test --run-xfail .` |
 | Enable a collection-time feature probe | `incan test --feature new_parser .` |
 
-The last option supplies a value to collection-time `feature(...)` checks. It does not configure arbitrary application behavior. [What a test result tells us](write-tests.md#what-a-test-result-tells-us) explains how these distinctions affect interpretation, and the [CLI reference](../tooling/reference/cli_reference.md) provides the full option contract.
+The last option supplies a value to collection-time `feature(...)` checks. It does not configure arbitrary application behavior. [Test results](write-tests.md#test-results) explains how these distinctions affect interpretation, and the [CLI reference](../tooling/reference/cli_reference.md) provides the full option contract.
 
 ## Investigate a failure
 
@@ -72,7 +72,7 @@ Read the diagnostic alongside the test ID. For an assertion failure, compare the
 
 Additional output is useful when it answers a specific question. `--nocapture` exposes output from passing tests, while `--durations 10` identifies the slowest cases. If a failure seems to depend on order, use `--shuffle --seed 12345` and retain the seed so the ordering experiment can be repeated.
 
-Parallel workers can shorten an independent suite: `incan test --jobs 4 .` requests four workers. Before increasing concurrency, check whether tests share external files or services. A session fixture is per worker batch, not one instance shared across all workers. Isolation and fixture lifetime matter more than the worker count; [scope and isolation](write-tests.md#scope-isolation-and-cleanup) explains those choices.
+Parallel workers can shorten an independent suite: `incan test --jobs 4 .` requests four workers. Before increasing concurrency, check whether tests share external files or services. A session fixture is per worker batch, not one instance shared across all workers. Isolation and fixture lifetime matter more than the worker count; [fixture scope and cleanup](write-tests.md#fixture-scope-and-cleanup) explains those choices.
 
 ## Make CI fail usefully
 
