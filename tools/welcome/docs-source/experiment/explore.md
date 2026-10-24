@@ -4,7 +4,7 @@ Start with what you want to do. You can follow a learning path, explore a topic,
 
 ## Write your first program
 
-[Install and start](nav-learn.html#install-and-start), then follow the [language book](nav-learn.html#language-book). Coming from Python, Rust or JavaScript? [Choose your starting point](nav-learn.html#find-your-starting-point).
+[Install Incan](install.md) and [try your first project](first-project.md), then follow the [language book](nav-learn.html#language-book). Coming from Python, Rust or JavaScript? [Choose your starting point](nav-learn.html#find-your-starting-point).
 
 ## Understand a language feature
 
@@ -20,7 +20,7 @@ For a complete sample, [work with dates and times](dates.md) and [look up Date](
 
 ## Build, test and deliver
 
-[Oven and tools](nav-oven.html) covers project configuration, dependencies, builds, tests and diagnostics. The reworked [project walkthrough](oven.md) retains the documented 0.5 command baseline until the 0.6 workflow is verified.
+[Oven and tools](nav-oven.html) covers project configuration, dependencies, builds, tests and diagnostics. The reworked [Oven chapter](oven.md) follows dev.8. [Browse all five core topics](core-topics.md).
 
 ## Use Rust or C
 

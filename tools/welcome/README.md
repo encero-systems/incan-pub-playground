@@ -99,3 +99,7 @@ Every inventory entry has an explicit `doc_type`. Rendered documentation pages a
 ### Testing and editor consolidation
 
 `write-tests.html` owns test authoring; `run-tests.html` owns collection, execution and CI; `editor-setup.html` combines extension and language-server setup. The tooling hub shows one editor entry while retaining both source identities. `testing-editor-pilot.html` records moved/retained material, the timeout discrepancy, reader tasks and release checks. Exact source inputs and displayed examples are retained under `testing-editor-pilot/`. These are content previews, not evidence of successful 0.6 example execution or clean-profile editor installation.
+
+## Dev.8 core chapters
+
+`docs/core-topics.html` links five revised topics and a separate downloadable first-project exercise. New CLI and manifest references use the dev.8 integration snapshot at `4d92c3db2`; `core-topics/evidence.json` records exact inputs and macOS execution on the separate `55b26c75f` rehearsal bundle. The old complete-site census is retained rather than relabelled as current. Tests cover navigation, code/source fidelity and the archive. The site builder itself still uses its established 0.5.1 toolchain; that is distinct from the dev.8 tutorial runtime.

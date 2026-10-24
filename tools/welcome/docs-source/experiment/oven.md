@@ -1,75 +1,61 @@
-# Build and run a project
+# Build and run with Oven
 
-Create a small Incan project and take it through preparation, execution, tests, and a native release build.
+Oven is the Incan-authored `incan` command line. It resolves the project's active dependencies and features, then asks the installed compiler to check or build the selected source.
 
-**Before you start:** install the toolchain using [Getting started](../tooling/tutorials/getting_started.md). This walkthrough uses the documented **0.5 command baseline**; it is not a claim that the developing 0.6 compiler is release-ready.
+## Check and run
 
-## 1. Create a project
-
-```bash
-incan new hello --yes
-cd hello
-```
-
-The scaffold gives you an entry point, a starter test, and a project manifest.
-
-| File | What to inspect here |
-| --- | --- |
-| `src/main.incn` | The program's starting point |
-| `tests/test_main.incn` | The starter test |
-| `loaf.toml` | Project metadata and the configured main script |
-
-**Checkpoint:** find those three files before continuing. Run the following commands from the project directory.
-
-## 2. Prepare the project
+Run these commands from your project directory:
 
 ```bash
-incan oven bake --project .
+incan check src/main.incn
+incan run src/main.incn
 ```
 
-Oven prepares the project's build inputs and plans. Treat a preparation failure as its own problem: resolve it before expecting the run or build step to succeed.
-
-**If it fails:** check the first diagnostic, your installed toolchain version, and whether the command is running next to the intended `loaf.toml`. Follow the [existing troubleshooting guide](../tooling/how-to/troubleshooting.md) for the reported failure.
-
-## 3. Run it
+`check` reports source errors without producing an executable. `run` builds when needed, then executes the program. Pass program arguments after `--`:
 
 ```bash
-incan run
+incan run src/main.incn -- input.csv
 ```
 
-**Checkpoint:** the starter program runs and prints its greeting. Edit the greeting in `src/main.incn`, run again, and confirm that the output changes.
+The program inherits the terminal's input and output. Its exit status becomes the command's exit status.
 
-If your edit has no effect, check that you edited the configured entry point in this project rather than another copy.
-
-## 4. Run the tests
+## Build an executable
 
 ```bash
-incan test
+incan build src/main.incn
+incan build src/main.incn --profile release
 ```
 
-**Checkpoint:** the starter test is discovered and completes successfully. Once you change the program's behavior, replace the placeholder test with an assertion about that behavior.
+The default profile is `debug`. Release builds require release-profile artifacts for the standard packages and other dependencies. Executables are written under `target/incan/<profile>/bin/`.
 
-[Extend this into a multi-module project with meaningful tests](../tooling/tutorials/your_first_project.md).
+The compiler produces native code through the pinned Rust compiler. Incan source is not converted into a generated Rust project.
 
-## 5. Build for release
+## Rebuilds and reuse
+
+Oven reuses unchanged executables. Changes to source or selected build inputs invalidate that reuse. To inspect a rebuild decision:
 
 ```bash
-incan build --release
+OVEN_TRACE=- incan run src/main.incn
 ```
 
-**Checkpoint:** the build finishes successfully. Use the output path reported by your toolchain to locate the native executable; this guide does not assume an artifact path shared by every version and target.
+To inspect the selected source, features and dependencies:
 
-## Keep the project reproducible
+```bash
+incan describe-unit src/main.incn
+```
 
-Keep source, tests, and the manifest in version control. Commit `oven.lock` once the project generates it. Build caches and generated outputs are not a replacement for the source project.
+## Run tests
 
-## Continue from here
+```bash
+incan test tests/test_greeting.incn
+```
 
-- [Add a dependency](../tooling/how-to/dependencies.md).
-- [Use Rust libraries alongside Incan](../language/how-to/rust_interop.md).
-- [Look up project configuration](../tooling/reference/project_configuration.md).
-- [Understand the developing 0.6 architecture](../contributing/explanation/architecture_0_6.md).
+Pass a test source file explicitly. Tests execute on every invocation, even when their executable is reused. Dev.8's runner does not accept directory collection or the older selection/reporting flags.
 
-## Content basis
+## Missing dependencies
 
-The command sequence comes from the canonical first-project snippet; file roles and lockfile guidance come from the first-project tutorial. This experiment reorganizes those instructions and adds checkpoints. It does not claim a newly verified installation or release build.
+A dependency declaration does not download its artifacts. Oven prepares local Incan libraries before their consumers; external Rust units must be available in the installed registry closure. A missing dependency is reported explicitly. See [Manage dependencies](dependencies.md).
+
+**Try it:** [Your first project](first-project.md) takes a small application through checking, running, tests and a debug build. Use the [CLI reference](cli-reference.md) for exact options.
+
+*This chapter follows dev.8. The older `oven bake`, `lock` and `--release` interfaces do not apply. [Validation details](core-topics.md).*
