@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFile, lstat, readdir, mkdtemp, writeFile, rm} from 'node:fs/promises';
+import {readFile, lstat, readdir, mkdtemp, writeFile, rm, symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {resolve, dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -51,16 +51,56 @@ async function markdownInputs(root, prefix = '') {
   return paths;
 }
 
-export async function inspectSources(map, root) {
-  const counts = validateMap(map), problems = [];
-  for (const page of map.pages) {
+export function declaredInputs(map, extra) {
+  validateMap(map);
+  if (extra.schema !== 'incan.docs-include-inputs.v1' || !Array.isArray(extra.inputs)) throw Error('Expected include-input manifest');
+  const inputs = [...map.pages], seen = new Set(inputs.map(row => row.source));
+  for (const row of extra.inputs) {
+    relativePath(row.source);
+    if (seen.has(row.source)) throw Error('Duplicate source: '+row.source);
+    if (!/^[a-f0-9]{64}$/.test(row.sha256)) throw Error('Missing source digest: '+row.source);
+    seen.add(row.source);inputs.push(row);
+  }
+  return inputs;
+}
+
+export function includeProblems(texts) {
+  // This inventories explicit snippet dependencies; shared Pallay alone parses Markdown.
+  const edges = new Map(), problems = [];
+  for (const [source,text] of texts) {
+    const targets = [];
+    for (const match of text.matchAll(/^\s*--8<--\s+["']([^"']+)["']\s*$/gm)) {
+      try {relativePath(match[1]);} catch {problems.push(source+': unsafe include '+match[1]);continue;}
+      targets.push(match[1]);
+      if (!texts.has(match[1])) problems.push(source+': undeclared or unavailable include '+match[1]);
+    }
+    edges.set(source,targets);
+  }
+  const done = new Set(), active = new Set();
+  function visit(source) {
+    if (active.has(source)) {problems.push(source+': cyclic include');return;}
+    if (done.has(source) || !edges.has(source)) return;
+    active.add(source);
+    for (const target of edges.get(source)) visit(target);
+    active.delete(source);done.add(source);
+  }
+  for (const source of edges.keys()) visit(source);
+  return problems;
+}
+
+export async function inspectSources(map, root, extra = {schema:'incan.docs-include-inputs.v1',inputs:[]}) {
+  const counts = validateMap(map), problems = [], texts = new Map();
+  const inputs = declaredInputs(map,extra);
+  for (const page of inputs) {
     try {
       let current = resolve(root);
       for (const part of page.source.split('/')) {
         current = join(current, part);
         if ((await lstat(current)).isSymbolicLink()) throw Error('symlink source');
       }
-      if (hash(await readFile(current)) !== page.sha256) problems.push(`${page.source}: changed bytes`);
+      const bytes = await readFile(current);
+      if (hash(bytes) !== page.sha256) problems.push(`${page.source}: changed bytes`);
+      texts.set(page.source,new TextDecoder('utf-8',{fatal:true}).decode(bytes));
     } catch (error) {
       problems.push(`${page.source}: ${error.code ?? error.message}`);
     }
@@ -69,14 +109,16 @@ export async function inspectSources(map, root) {
   try {
     for (const path of await markdownInputs(root)) if (!declared.has(path)) problems.push(`${path}: undeclared Markdown input`);
   } catch (error) { problems.push(`Corpus enumeration: ${error.code ?? error.message}`); }
-  return {...counts, problems};
+  problems.push(...includeProblems(texts));
+  return {...counts, inputs:inputs.length, includeInputs:extra.inputs.length, problems};
 }
 
 if (process.argv[2] === '--preflight') {
   const root = process.argv[3];
   if (!root) throw Error('Provide an explicit documentation source root');
   const map = JSON.parse(await readFile(join(welcome, 'content-map.json'), 'utf8'));
-  const report = await inspectSources(map, root);
+  const extra = JSON.parse(await readFile(join(here,'include-inputs.json'),'utf8'));
+  const report = await inspectSources(map, root, extra);
   console.log(JSON.stringify(report, null, 2));
   process.exitCode = report.problems.length ? 1 : 0;
 } else {
@@ -104,6 +146,34 @@ if (process.argv[2] === '--preflight') {
       await writeFile(join(root, 'new.md'), '# New input\n');
       assert.ok((await inspectSources(map, root)).problems.includes('new.md: undeclared Markdown input'));
     } finally { await rm(root, {recursive: true}); }
+  });
+  test('recursive explicit include closure detects missing, cyclic and escaping inputs', () => {
+    const texts = new Map([['index.md','--8<-- "guide.md"'],['guide.md','--8<-- "example.incn"']]);
+    assert.deepEqual(includeProblems(texts),['guide.md: undeclared or unavailable include example.incn']);
+    texts.set('example.incn','println("complete")');assert.deepEqual(includeProblems(texts),[]);
+    texts.set('example.incn','--8<-- "index.md"');assert.ok(includeProblems(texts).some(p=>p.includes('cyclic include')));
+    texts.set('example.incn','--8<-- "../escape"');assert.ok(includeProblems(texts).some(p=>p.includes('unsafe include')));
+  });
+  test('supplementary inputs require unique safe exact source identities', () => {
+    const map = {schema:'incan.docs-content-map.v1',pages:[{source:'index.md',current_url:'https://incan.io/dev/',sha256:'a'.repeat(64)}]};
+    const extra = {schema:'incan.docs-include-inputs.v1',inputs:[{source:'example.incn',sha256:'b'.repeat(64)}]};
+    assert.equal(declaredInputs(map,extra).length,2);
+    assert.throws(()=>declaredInputs(map,{...extra,inputs:[{source:'index.md',sha256:'b'.repeat(64)}]}),/Duplicate/);
+    assert.throws(()=>declaredInputs(map,{...extra,inputs:[{source:'example.incn',sha256:'bad'}]}),/digest/);
+  });
+  test('non-Markdown include bytes and symlinks are checked before shared parsing',async()=>{
+    const root = await mkdtemp(join(tmpdir(),'docs-includes-'));
+    try {
+      const page = '--8<-- "example.incn"\n', snippet = 'println("example")\n';
+      const map = {schema:'incan.docs-content-map.v1',pages:[{source:'index.md',current_url:'https://incan.io/dev/',sha256:hash(page)}]};
+      const extra = {schema:'incan.docs-include-inputs.v1',inputs:[{source:'example.incn',sha256:hash(snippet)}]};
+      await writeFile(join(root,'index.md'),page);await writeFile(join(root,'example.incn'),snippet);
+      assert.deepEqual((await inspectSources(map,root,extra)).problems,[]);
+      await writeFile(join(root,'example.incn'),'changed');
+      assert.ok((await inspectSources(map,root,extra)).problems.includes('example.incn: changed bytes'));
+      await rm(join(root,'example.incn'));await symlink(join(root,'index.md'),join(root,'example.incn'));
+      assert.ok((await inspectSources(map,root,extra)).problems.includes('example.incn: symlink source'));
+    } finally {await rm(root,{recursive:true});}
   });
   test('consumer uses pinned shared APIs and approved shell, not the local parser', async () => {
     const pin = JSON.parse(await readFile(join(here, 'pallay-pin.json'), 'utf8'));

@@ -25,8 +25,8 @@ from pub::pallay import (
     render_tree,
 )
 from components import el, txt
-from docs_catalog import ContentCatalog, load_catalog
-from docs_layout import shell
+from docs_catalog import ContentCatalog, load_catalog, section_content, section_headings, module_content
+from docs_layout import shell, overview
 from markdown_docs import DocPage
 
 
@@ -82,10 +82,16 @@ def read_source(root: str, relative: str) -> Result[str, str]:
     return Path(path).read_text("utf-8", "strict").map_err((error) => relative + ": " + error.message())
 
 
-def corpus(manifest: JsonValue, root: str) -> Result[Tuple[DocsConfig, Dict[str, str], list[BuildInput]], str]:
+def corpus(
+    manifest: JsonValue,
+    supplements: JsonValue,
+    root: str,
+) -> Result[Tuple[DocsConfig, Dict[str, str], list[BuildInput]], str]:
     """Bind every declared page/support input to exact bytes before shared parsing."""
     if text_field(manifest, "schema")? != "incan.docs-content-map.v1":
         return Err("Unsupported documentation manifest schema")
+    if text_field(supplements, "schema")? != "incan.docs-include-inputs.v1":
+        return Err("Unsupported include-input manifest schema")
     mut sources: list[DocsSource] = []
     mut snippets: Dict[str, str] = {}
     mut inputs: list[BuildInput] = []
@@ -107,6 +113,15 @@ def corpus(manifest: JsonValue, root: str) -> Result[Tuple[DocsConfig, Dict[str,
                     profile="incan-book",
                 ),
             )
+    for row in rows(supplements, "inputs")?:
+        path = text_field(row, "source")?
+        if path in snippets:
+            return Err("Duplicate documentation input: " + path)
+        text = read_source(root, path)?
+        if digest_text(text) != "sha256:" + text_field(row, "sha256")?:
+            return Err("Include bytes differ from declared snapshot: " + path)
+        snippets[path] = text
+        inputs.append(BuildInput(name="corpus/" + path, path=root + "/" + path))
     if len(sources) == 0:
         return Err("Manifest contains no reader pages")
     return Ok((DocsConfig(name="Incan", root=root, sources=sources, base="/corpus/", strict=true), snippets, inputs))
@@ -135,6 +150,8 @@ def absolute_shell(original: DocumentNode) -> DocumentNode:
                 node.attributes[key] = "/" + value[3:]
             elif value.startswith("sources/"):
                 node.attributes[key] = "/corpus/" + value
+            elif value.split("#")[0] == "index.html" or value.startswith("nav-") or value.startswith("module-"):
+                node.attributes[key] = "/corpus/navigation/" + value
             elif value != "" and not value.startswith("/") and not value.startswith("#") and not value.contains(":"):
                 node.attributes[key] = "/docs/" + value
     node.children = [absolute_shell(child) for child in node.children]
@@ -152,11 +169,31 @@ def branded_page(page: DocsPage, catalog: ContentCatalog) -> str:
         description=page.document.metadata.description,
     )
     headings = [el("a", {"href": "#" + heading.id, "class": "toc-h" + str(heading.level)}, [txt(heading.title)]) for heading in page.document.headings]
-    body = absolute_shell(shell(descriptor, page.document.root.children, headings, catalog))
-    title = render_tree(txt(page.document.metadata.title))
-    return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"theme-color\" content=\"#080c0a\"><title>" + title + " · Incan documentation</title><link rel=\"icon\" href=\"/assets/incan-logo.png\"><link rel=\"stylesheet\" href=\"/assets/fonts/fonts.css\"><link rel=\"stylesheet\" href=\"/style.css\"><link rel=\"stylesheet\" href=\"/docs/docs.css\"></head><body>" + render_tree(
-        body,
+    return branded_shell(page.document.metadata.title, shell(descriptor, page.document.root.children, headings, catalog))
+
+
+def branded_shell(title: str, root: DocumentNode) -> str:
+    """Use the same approved presentation for content and staging navigation pages."""
+    escaped_title = render_tree(txt(title))
+    return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"theme-color\" content=\"#080c0a\"><title>" + escaped_title + " · Incan documentation</title><link rel=\"icon\" href=\"/assets/incan-logo.png\"><link rel=\"stylesheet\" href=\"/assets/fonts/fonts.css\"><link rel=\"stylesheet\" href=\"/style.css\"><link rel=\"stylesheet\" href=\"/docs/docs.css\"></head><body>" + render_tree(
+        absolute_shell(root),
     ) + "</body></html>"
+
+
+def navigation_files(catalog: ContentCatalog) -> list[GeneratedFile]:
+    """Regenerate approved overview, topic and module indexes using staged corpus destinations."""
+    mut files = [GeneratedFile(path="navigation/index.html", content=branded_shell("Documentation", overview(catalog)))]
+    for section in catalog.sections:
+        key = "nav-" + section.key
+        page = DocPage(key=key, title=section.title, group=section.title, source="", description=section.description)
+        body = shell(page, section_content(section, catalog), section_headings(section, catalog), catalog)
+        files.append(GeneratedFile(path="navigation/" + key + ".html", content=branded_shell(section.title, body)))
+    for module in catalog.modules:
+        key = "module-" + module.key
+        page = DocPage(key=key, title=module.name, group="Standard library", source="", description=module.description)
+        body = shell(page, module_content(module, catalog), [], catalog)
+        files.append(GeneratedFile(path="navigation/" + key + ".html", content=branded_shell(module.name, body)))
+    return files
 
 
 def website_files(site: DocsSite, catalog: ContentCatalog, snippets: Dict[str, str]) -> list[GeneratedFile]:
@@ -171,6 +208,7 @@ def website_files(site: DocsSite, catalog: ContentCatalog, snippets: Dict[str, s
             files[index] = GeneratedFile(path=path, content=branded[path])
     for path in sorted([str(key) for key in snippets.keys()]):
         files.append(GeneratedFile(path="sources/" + path, content=snippets[path]))
+    files.extend(navigation_files(catalog))
     return files
 
 
@@ -185,7 +223,10 @@ def publish_staging() -> Result[str, str]:
         return Err("Staging corpus output must be a new directory: " + output)
     manifest_text = read_source(".", "content-map.json")?
     manifest = JsonValue.parse(manifest_text).map_err((error) => error.message())?
-    config, snippets, declared_inputs = corpus(manifest, root)?
+    supplements = JsonValue
+        .parse(read_source(".", "publication/include-inputs.json")?)
+        .map_err((error) => error.message())?
+    config, snippets, declared_inputs = corpus(manifest, supplements, root)?
     mut inputs = declared_inputs
     site = load_docs(config, snippets)?
     catalog = corpus_catalog(load_catalog())?
@@ -195,7 +236,7 @@ def publish_staging() -> Result[str, str]:
     for path in snippets.keys():
         if read_source(root, path)? != snippets[path]:
             return Err("Documentation input changed during assembly: " + path)
-    for path in ["content-map.json", "publication/pallay-pin.json", "src/docs_publication.incn", "src/docs_layout.incn", "src/docs_catalog.incn", "src/layout.incn", "src/components.incn", "src/markdown_docs.incn"]:
+    for path in ["content-map.json", "publication/pallay-pin.json", "publication/include-inputs.json", "src/docs_publication.incn", "src/docs_layout.incn", "src/docs_catalog.incn", "src/layout.incn", "src/components.incn", "src/markdown_docs.incn"]:
         inputs.append(BuildInput(name="website/" + path, path=path))
     identity = BuildIdentity(compiler=compiler, builder="incan-website/pallay-staging-v1", inputs=inputs)
     return publish_docs(site, output, identity, files)

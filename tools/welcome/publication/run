@@ -5,6 +5,8 @@ welcome="$(cd "$(dirname "$0")/.." && pwd)"
 repo="$(cd "$welcome/../.." && pwd)"
 mode="${1:---preflight}"
 : "${INCAN_DOCS_ROOT:?Set the exact documentation source root matching content-map.json}"
+INCAN_DOCS_ROOT="$(node "$welcome/publication/paths.mjs" directory "$INCAN_DOCS_ROOT")"
+export INCAN_DOCS_ROOT
 node "$welcome/publication/check.mjs" --preflight "$INCAN_DOCS_ROOT"
 if [ "$mode" = --preflight ]; then exit 0; fi
 if [ "$mode" != --build ]; then echo 'Usage: publication/run [--preflight|--build]' >&2; exit 2; fi
@@ -12,6 +14,10 @@ if [ "$mode" != --build ]; then echo 'Usage: publication/run [--preflight|--buil
 : "${INCAN_DOCS_INCAN:?Set the matched Incan compiler executable}"
 : "${INCAN_DOCS_CACHE:?Set a fresh directory under tmp/.ralph-cache/encero-v1-publishing/docs-integration}"
 : "${INCAN_HOME:?Set a matching task-owned compiler home; this wrapper does not copy or download SDKs}"
+INCAN_DOCS_PALLAY="$(node "$welcome/publication/paths.mjs" directory "$INCAN_DOCS_PALLAY")"
+export INCAN_DOCS_PALLAY
+INCAN_DOCS_INCAN="$(node "$welcome/publication/paths.mjs" executable "$INCAN_DOCS_INCAN")"
+export INCAN_DOCS_INCAN
 pin="$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).commit' "$welcome/publication/pallay-pin.json")"
 if [ "$(git -C "$INCAN_DOCS_PALLAY" rev-parse HEAD)" != "$pin" ] || [ -n "$(git -C "$INCAN_DOCS_PALLAY" status --porcelain --untracked-files=all)" ]; then
   echo 'Pallay must be the exact clean source snapshot recorded in pallay-pin.json.' >&2; exit 1
@@ -36,6 +42,7 @@ export CARGO_TARGET_DIR="$INCAN_DOCS_CACHE/cargo"
 cp "$welcome"/src/*.incn "$project/src/"
 cp "$welcome/content-map.json" "$project/content-map.json"
 cp "$welcome/publication/pallay-pin.json" "$project/publication/pallay-pin.json"
+cp "$welcome/publication/include-inputs.json" "$project/publication/include-inputs.json"
 cat > "$project/loaf.toml" <<MANIFEST
 [project]
 name = "incan_docs_staging"
@@ -58,4 +65,5 @@ cd "$project"
 mkdir "$stage"
 cp -R "$repo/incan-io-directions/obsidian-incan/." "$stage/"
 "$INCAN_DOCS_INCAN" run src/docs_publication.incn
+node "$welcome/publication/output.mjs" "$stage/corpus" "$project/content-map.json"
 printf 'Staging only: %s\n' "$stage"
