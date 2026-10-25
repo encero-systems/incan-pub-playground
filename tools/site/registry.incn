@@ -199,6 +199,7 @@ pub def validate(directory: str) -> Result[Dict[str, JsonValue], str]:
 
 
 pub def snapshot(source: str, destination: str) -> Result[None, str]:
+    """Validate catalog metadata and retain its inputs for content verification and rendering."""
     if len(run("git", ["-C", source, "status", "--porcelain"])?.strip()) > 0:
         return Err("snapshot requires a clean registry index checkout")
     pin = run("git", ["-C", source, "rev-parse", "HEAD"])?.strip()
@@ -509,6 +510,7 @@ def text_bool(value: JsonValue) -> str:
 
 
 pub def build(directory: str, output: str, templates: str) -> Result[None, str]:
+    """Render a validated registry snapshot using its separately verified formatted documents."""
     validated = validate(directory)?
     formatter = run("python3", ["-m", "pygments", "-V"])?
     if not formatter.startswith("Pygments version 2.19.2,"):
