@@ -28,3 +28,7 @@ Final screenshots: `incan-io-directions/obsidian-incan/qa/oven-desktop.png` (144
 Benchmark numbers remain explicitly illustrative. Commands were checked against the existing authored documentation; this task does not claim execution of those examples with the future release compiler.
 
 final result: passed
+
+## Hero headroom correction
+
+The user reported clipped ears on a wide display. Changed desktop image positioning from centered / 55% vertical to top anchored, retaining the existing phone crop. Added a stylesheet version to refresh cached CSS. Visually checked at 1920 × 1080 (whole head and both ears visible) and 390 × 844 (existing phone composition intact, no horizontal overflow). Rebuilt from Incan; homepage and Oven checks pass.
