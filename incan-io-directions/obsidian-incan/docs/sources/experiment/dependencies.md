@@ -92,3 +92,7 @@ incan describe-unit src/main.incn
 This command shows the selected dependencies and features. Use it when a build selects a different version or feature set than you expected.
 
 For all declaration options, see the [manifest reference](project-reference.md).
+
+## Try it
+
+[Build and consume a library](library-project.md) includes a downloadable library and consumer project.

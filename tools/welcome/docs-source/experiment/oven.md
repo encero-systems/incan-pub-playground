@@ -43,6 +43,8 @@ Release executables go under `target/incan/release/bin/`. The installed toolchai
 
 Oven reuses an executable when its source and build inputs have not changed. After editing your code, run the same command again; Oven rebuilds what is needed.
 
+For library outputs and compatibility, see [Loaves and build reuse](loaves.md).
+
 ## Run tests
 
 Pass the test file you want to run:
@@ -58,6 +60,8 @@ Tests execute each time, even when their executable is reused. A failed test ret
 If a dependency is missing, check its declaration in `loaf.toml` and whether it is available in your toolchain. [Manage dependencies](dependencies.md) explains local libraries, Rust crates and features.
 
 If you need to see which dependencies and features a build selected, run `incan describe-unit src/main.incn`. Check those against your manifest before changing application code.
+
+For reuse traces and diagnosis, see [Build inspection and troubleshooting](build-troubleshooting.md).
 
 For command options, see the [CLI reference](cli-reference.md).
 

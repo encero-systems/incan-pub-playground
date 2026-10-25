@@ -1,0 +1,104 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="generator" content="Incan · Pallay · markdown-rs 1.0.0"><meta name="theme-color" content="#080c0a"><title>Build inspection and troubleshooting · Incan documentation</title><link rel="icon" href="../assets/incan-logo.png"><link rel="stylesheet" href="../assets/fonts/fonts.css"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"></head><body><div class="docs-page"><a class="docs-skip" href="#main">Skip to content</a><header class="site-header">
+    <div class="masthead wrap">
+      <a aria-label="Incan home" class="brand" href="../#welcome">
+        <img alt="Incan" class="brand-lockup" height="244" src="../assets/brand-source.png" width="759">
+      </a>
+      <a class="menu-toggle" href="#docs-navigation">Browse docs ↓</a>
+      <nav aria-label="Main navigation" id="site-nav">
+        <a href="nav-learn.html">Learn</a>
+        <a href="index.html">Docs</a>
+        <a href="../oven.html">Oven</a>
+        <a href="https://encero-systems.github.io/incan-pub-playground/">Incan.pub</a>
+        <a href="../#project">Project</a>
+      </nav>
+      <form action="https://incan.io/dev/" class="header-search" role="search">
+        <label class="sr-only" for="docs-query">Search Incan documentation</label>
+        <input autocomplete="off" id="docs-query" name="q" placeholder="Search docs…" type="search">
+        <button type="submit">Search</button>
+      </form>
+      <a class="release-status" href="https://incan.io/dev/roadmap/">Preview · 0.6</a>
+    </div>
+  </header><div class="docs-layout wrap"><aside class="docs-sidebar" id="docs-navigation"><a class="docs-overview" href="index.html">Documentation</a><details class="docs-browse" open><summary>Browse by topic</summary><nav aria-label="Documentation sections"><ul><li><a href="nav-learn.html">Learn</a></li><li><a href="nav-language.html">Language</a></li><li><a href="nav-library.html">Standard library</a></li><li><a href="nav-oven.html">Oven &amp; tools</a><ul class="docs-topic-links"><li><a href="nav-oven.html#project-configuration">Project configuration</a></li><li><a href="nav-oven.html#dependencies-and-packages">Dependencies and packages</a></li><li><a href="nav-oven.html#build-and-release">Build and release</a></li><li><a href="nav-oven.html#testing">Testing</a></li><li><a href="nav-oven.html#diagnostics">Diagnostics</a></li><li><a href="nav-oven.html#editor-and-formatting">Editor and formatting</a></li><li><a href="nav-oven.html#cli-and-inspection">CLI and inspection</a></li><li><a href="nav-oven.html#performance">Performance</a></li><li><a href="nav-oven.html#historical-build-system">Historical build system</a></li><li><a aria-current="page" href="build-troubleshooting.html">Build inspection and troubleshooting</a></li></ul></li><li><a href="nav-interop.html">Interoperability</a></li><li><a href="nav-contribute.html">Contribute</a></li><li><a href="nav-project.html">Project</a></li></ul></nav></details><a href="explore.html">Choose a learning route →</a></aside><main class="doc-article" id="main" tabindex="-1"><div class="doc-breadcrumb"><a href="index.html">Docs</a><a href="nav-oven.html"> / Oven &amp; tools</a></div><details class="docs-mobile-toc"><summary>On this page</summary><nav aria-label="On this page, compact"><a class="toc-h2" href="#inspect-the-selected-build">Inspect the selected build</a><a class="toc-h2" href="#explain-a-rebuild">Explain a rebuild</a><a class="toc-h2" href="#a-dependency-is-missing">A dependency is missing</a><a class="toc-h2" href="#a-feature-is-missing-or-rejected">A feature is missing or rejected</a><a class="toc-h2" href="#artifacts-are-incompatible">Artifacts are incompatible</a><a class="toc-h2" href="#a-test-still-runs-after-an-unchanged-build">A test still runs after an unchanged build</a></nav></details><p class="doc-type-line"><span class="doc-type" data-doc-type="How-to">How-to</span></p><h1 id="build-inspection-and-troubleshooting">Build inspection and troubleshooting</h1>
+<p>Use <code>incan describe-unit</code> to inspect the selected project configuration. Use <code>OVEN_TRACE</code> to see whether Oven reused or rebuilt a result. Run these commands against the same source path and with the same options as the build you are investigating.</p>
+<h2 id="inspect-the-selected-build">Inspect the selected build</h2>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">incan describe-unit src/main.incn
+</code></pre>
+<p>The command prints JSON. Start with these fields:</p>
+<div aria-label="Scrollable reference table" class="doc-table-wrap" tabindex="0"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What to check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code>, <code>project_root</code></td>
+<td>Are you building the intended file and project?</td>
+</tr>
+<tr>
+<td><code>kind</code>, <code>profile</code></td>
+<td>Is this a program or library, and is the profile correct?</td>
+</tr>
+<tr>
+<td><code>active_features</code></td>
+<td>Are the features you need enabled?</td>
+</tr>
+<tr>
+<td><code>loaves</code>, <code>rust_crates</code></td>
+<td>Are the expected dependencies selected?</td>
+</tr>
+</tbody>
+</table></div>
+<p>If your build uses options, pass them to inspection too:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">incan describe-unit src/main.incn --features search --profile debug
+</code></pre>
+<p>Here, <code>search</code> must be a feature declared by your project. Inspecting the default configuration will not explain a build that selected different features.</p>
+<h2 id="explain-a-rebuild">Explain a rebuild</h2>
+<p>On macOS or Linux:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-bash">OVEN_TRACE=- incan run src/main.incn
+</code></pre>
+<p>In PowerShell:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-powershell">$env:OVEN_TRACE = <span class="doc-token-string">&quot;-&quot;</span>
+incan run src/main.incn
+Remove-Item Env:OVEN_TRACE
+</code></pre>
+<p>The trace goes to standard error; the program’s output stays on standard output. A repeated run of the <a href="library-project.html">library exercise</a> includes these lines:</p>
+<pre aria-label="Code example" tabindex="0"><code class="language-text">oven: unit pricing library: reused
+oven: unit shop program: reused
+</code></pre>
+<p>These are excerpts from a run, not the complete trace. Other lines describe preparation and input checks; their wording can change.</p>
+<p>If a result is rebuilt unexpectedly, compare the source, manifest, dependency selection, features and profile with the previous invocation. A library implementation change can require a new consumer executable even when the library’s public interface is unchanged. See <a href="loaves.html#when-a-build-is-reused">Loaves and build reuse</a>.</p>
+<p>To keep the trace, set <code>OVEN_TRACE</code> to a filename instead of <code>-</code>. Turn it off after diagnosis so later commands do not continue writing to that file.</p>
+<h2 id="a-dependency-is-missing">A dependency is missing</h2>
+<p>Check the dependency declaration in <code>loaf.toml</code>, then inspect the selected unit:</p>
+<ul>
+<li>For a path library, resolve the path relative to the <strong>consumer’s manifest</strong>. Check that the library has its own <code>loaf.toml</code> and <code>src/lib.incn</code>.</li>
+<li>For an import such as <code>from pub::pricing import total</code>, check the dependency key <code>pricing</code> and that <code>total</code> is public.</li>
+<li>For a Rust crate, check the requested version and features against the available package artifacts.</li>
+</ul>
+<p>An optional dependency also needs its enabling feature. The <a href="dependencies.html">dependency guide</a> shows declarations and imports together.</p>
+<h2 id="a-feature-is-missing-or-rejected">A feature is missing or rejected</h2>
+<p>Compare <code>declared_features</code> and <code>active_features</code> in the unit description. A feature must be declared before you can select it with <code>--features</code>.</p>
+<p><code>--no-default-features</code> changes the root package’s feature selection. A dependency’s <code>default-features = false</code> changes that dependency’s defaults. They apply at different places; check both when a dependency has unexpected functionality.</p>
+<p>See the <a href="project-reference.html#projectfeatures">feature configuration reference</a> for optional dependencies and feature forwarding.</p>
+<h2 id="artifacts-are-incompatible">Artifacts are incompatible</h2>
+<p>Read the diagnostic for the package or profile that failed selection. Check that the selected toolchain and package artifacts belong together, and that artifacts exist for the requested profile. Renaming or copying an unrelated artifact into the expected directory does not make it compatible.</p>
+<p>For a local path dependency, build the consumer normally so Oven can prepare the library for it. If the error concerns installed packages, check your toolchain installation and selected profile. See <a href="install.html">Install Incan</a> and the <a href="cli-reference.html">CLI reference</a>.</p>
+<h2 id="a-test-still-runs-after-an-unchanged-build">A test still runs after an unchanged build</h2>
+<p>That is expected. Oven can reuse compilation results, but <code>incan test</code> executes the collected tests each time. See <a href="run-tests.html">Run tests</a> for the testing workflow.</p>
+<div class="doc-source"><a href="sources/experiment/build-troubleshooting.md">Page source ↓</a></div><nav aria-label="More documentation" class="doc-next"><a href="index.html">← Documentation overview</a><a href="nav-library.html">Standard library →</a></nav></main><aside class="docs-toc"><nav aria-label="On this page"><p class="docs-eyebrow">On this page</p><a class="toc-h2" href="#inspect-the-selected-build">Inspect the selected build</a><a class="toc-h2" href="#explain-a-rebuild">Explain a rebuild</a><a class="toc-h2" href="#a-dependency-is-missing">A dependency is missing</a><a class="toc-h2" href="#a-feature-is-missing-or-rejected">A feature is missing or rejected</a><a class="toc-h2" href="#artifacts-are-incompatible">Artifacts are incompatible</a><a class="toc-h2" href="#a-test-still-runs-after-an-unchanged-build">A test still runs after an unchanged build</a><a class="docs-top" href="#main">Back to top ↑</a></nav></aside></div><footer class="site-footer"><div class="wrap"><section aria-labelledby="footer-community-heading" class="community-section community-compact ruled" id="footer-community">
+      <div class="incus-portrait"><img alt="Incus, Incan’s armored alpaca–llama, wearing a cyan visor" height="1357" loading="lazy" src="../assets/incus.webp" width="1159"><a class="meet-incus" href="https://incan.io/dev/project/incus/">Meet Incus <span aria-hidden="true" class="icon arrow"></span></a></div>
+      <div class="community-copy"><h2 id="footer-community-heading">Help shape Incan.</h2><p class="section-lead">Open source. Actively evolving.</p><div class="community-action"><a class="button button-community" href="https://www.linkedin.com/groups/42515004/">Join our community <span aria-hidden="true" class="icon arrow"></span></a><span class="linkedin-label"><span aria-hidden="true" class="icon linkedin"></span>on LinkedIn</span></div></div>
+    </section></div><div class="footer wrap ruled">
+    <div class="footer-identity">
+      <a aria-label="Built with Incan — back to home" class="brand footer-brand" href="../#welcome"><img alt="Built with Incan" class="built-with-stamp" height="724" src="../assets/built-with-incan-mono.png" width="2172"></a>
+      <a class="encero-credit" href="https://encero.systems">
+        <span aria-hidden="true" class="encero-credit-divider">|</span>
+        <em>by</em>
+        <span class="encero-credit-name">ENCERO</span>
+      </a>
+    </div>
+    <nav aria-label="Footer navigation"><a href="../media.html">Media kit</a><a href="https://incan.io/dev/release_notes/">Releases</a><a href="https://incan.io/dev/roadmap/">Roadmap</a><a href="https://incan.io/dev/contributing/">Contribute</a><a href="https://github.com/encero-systems/incan">GitHub <span aria-hidden="true" class="icon github"></span></a></nav>
+    <small class="copyright">© 2026 Encero Systems</small>
+  </div></footer></div></body></html>
