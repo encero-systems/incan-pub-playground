@@ -6,7 +6,7 @@ The approved website stays untouched. A new task-owned staging directory contain
 
 ## Evidence and current limits
 
-Source and manifest checks pass, and the new consumer parses/formats with the installed Incan0.5.1 formatter. **The consumer has not been typechecked, compiled or executed against the matched0.6 toolchain.** The shared `tmp` build footprint currently blocks substantial new builds. A successful static check is not completed migration or release readiness.
+Source and manifest checks pass, and the new consumer parses/formats with the installed Incan0.5.1 formatter. **The consumer has not been typechecked, compiled or executed against the matched0.6 toolchain.** The integration coordinator’s shared-Pallay0.6 probe currently reports a missing compiled registry dependency, `crates-io/markdown=1.0.0`; a matched dependency closure is still required. A successful static check is not completed migration or release readiness.
 
 The content map is a frozen October24 snapshot, not the moving compiler checkout. Preflight lists every missing/changed file. Do not regenerate hashes to hide drift: review/capture an updated complete source inventory first. Code includes outside the Markdown inventory still need explicit source identities. The engine supports only directory URLs, so existing `.html` pilots are retained independently. Full Material compatibility, diagram rendering, style mapping for newly parsed callouts/tabs, version aliases/redirects and static browser query search remain acceptance work. The engine's generated search page is currently its standard presentation; `search-index.json` alone is not a working website search feature.
 
@@ -27,7 +27,7 @@ Preflight only reads inputs and prints JSON. The tests use tiny disposable files
 
 ## Native staging gate
 
-Only run after the storage gate is cleared and a matched task-owned toolchain home is ready. Set `INCAN_DOCS_ROOT` to the captured corpus, `INCAN_DOCS_PALLAY` to the exact clean pinned checkout, `INCAN_DOCS_INCAN` to the matched executable, and `INCAN_HOME` to the prepared matching compiler home under this worker's cache root. `INCAN_DOCS_CACHE` must name a **new direct child** of workspace `tmp/.ralph-cache/encero-v1-publishing/docs-integration/`.
+Only run within the coordinator’s assigned build budget, after the matching task-owned toolchain home and compiled dependency closure are ready. Set `INCAN_DOCS_ROOT` to the captured corpus, `INCAN_DOCS_PALLAY` to the exact clean pinned checkout, `INCAN_DOCS_INCAN` to the matched executable, and `INCAN_HOME` to the prepared matching compiler home under this worker's cache root. `INCAN_DOCS_CACHE` must name a **new direct child** of workspace `tmp/.ralph-cache/encero-v1-publishing/docs-integration/`.
 
 ```sh
 tools/welcome/publication/run --build
