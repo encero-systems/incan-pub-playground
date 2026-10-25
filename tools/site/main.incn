@@ -8,7 +8,7 @@ from host import read, json, mkdir, run
 from values import field, text, array, entries, count
 from features import feature_paths, activated_dependencies
 from highlighting import highlight_blocks
-from registry import snapshot as registry_snapshot, build as registry_build
+from registry import snapshot as registry_snapshot, build as registry_build, validate as registry_validate
 
 
 def value(item: JsonValue, key: str) -> Result[str, str]:
@@ -556,17 +556,17 @@ def build(input: str, output: str, templates: str) -> Result[None, str]:
 
 
 def main() -> None:
-    match run("python3", ["-m", "pygments", "-V"]):
-        Ok(version) =>
-            if not version.startswith("Pygments version 2.19.2,"):
-                println("Site build requires Pygments 2.19.2; install tools/site/requirements.txt")
-                exit(1)
-        Err(error) =>
-            println("Site build requires Pygments 2.19.2: " + error)
-            exit(1)
     mut arguments: list[str] = []
     for argument in args():
         arguments.append(argument)
+    if len(arguments) == 3 and arguments[1] == "--validate-registry":
+        match registry_validate(arguments[2]):
+            Ok(_) =>
+                println("Registry metadata validated; document bytes are checked during formatting.")
+                return
+            Err(error) =>
+                println("Registry validation failed: " + error)
+                exit(1)
     if len(arguments) == 4 and arguments[1] == "--snapshot":
         match registry_snapshot(arguments[2], arguments[3]):
             Ok(_) => return
@@ -579,6 +579,14 @@ def main() -> None:
             Err(error) =>
                 println("Registry build failed: " + error)
                 exit(1)
+    match run("python3", ["-m", "pygments", "-V"]):
+        Ok(version) =>
+            if not version.startswith("Pygments version 2.19.2,"):
+                println("Site build requires Pygments 2.19.2; install tools/site/requirements.txt")
+                exit(1)
+        Err(error) =>
+            println("Site build requires Pygments 2.19.2: " + error)
+            exit(1)
     if len(arguments) != 4:
         println("Usage: package-site input.json output-directory templates-directory")
         exit(2)
