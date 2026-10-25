@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Source-bound staging only. No network publication and no Python build step.
+set -euo pipefail
+welcome="$(cd "$(dirname "$0")/.." && pwd)"
+repo="$(cd "$welcome/../.." && pwd)"
+mode="${1:---preflight}"
+: "${INCAN_DOCS_ROOT:?Set the exact documentation source root matching content-map.json}"
+node "$welcome/publication/check.mjs" --preflight "$INCAN_DOCS_ROOT"
+if [ "$mode" = --preflight ]; then exit 0; fi
+if [ "$mode" != --build ]; then echo 'Usage: publication/run [--preflight|--build]' >&2; exit 2; fi
+: "${INCAN_DOCS_PALLAY:?Set the preserved shared Pallay checkout}"
+: "${INCAN_DOCS_INCAN:?Set the matched Incan compiler executable}"
+: "${INCAN_DOCS_CACHE:?Set a fresh directory under tmp/.ralph-cache/encero-v1-publishing/docs-integration}"
+: "${INCAN_HOME:?Set a matching task-owned compiler home; this wrapper does not copy or download SDKs}"
+pin="$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).commit' "$welcome/publication/pallay-pin.json")"
+if [ "$(git -C "$INCAN_DOCS_PALLAY" rev-parse HEAD)" != "$pin" ] || [ -n "$(git -C "$INCAN_DOCS_PALLAY" status --porcelain --untracked-files=all)" ]; then
+  echo 'Pallay must be the exact clean source snapshot recorded in pallay-pin.json.' >&2; exit 1
+fi
+cache_parent="$(dirname "$repo")/.ralph-cache/encero-v1-publishing/docs-integration"
+mkdir -p "$cache_parent"
+cache_parent="$(cd "$cache_parent" && pwd -P)"
+# A fresh direct child avoids overwriting source, preview or any other worker cache.
+if [ "$(dirname "$INCAN_DOCS_CACHE")" != "$cache_parent" ] || [ -e "$INCAN_DOCS_CACHE" ]; then
+  echo "INCAN_DOCS_CACHE must be a new direct child of $cache_parent" >&2; exit 1
+fi
+toolchain_home="$(cd "$INCAN_HOME" && pwd -P)"
+case "$toolchain_home" in "$cache_parent"/*) ;; *) echo 'INCAN_HOME must be inside this task-owned cache root.' >&2; exit 1 ;; esac
+case "$INCAN_DOCS_PALLAY" in *'"'*|*$'\n'*) echo 'Unsupported quote/newline in dependency path.' >&2; exit 1 ;; esac
+export INCAN_HOME="$toolchain_home"
+mkdir "$INCAN_DOCS_CACHE"
+project="$INCAN_DOCS_CACHE/consumer"
+stage="$INCAN_DOCS_CACHE/site"
+mkdir -p "$project/src" "$project/publication" "$INCAN_DOCS_CACHE/temp"
+export TMPDIR="$INCAN_DOCS_CACHE/temp"
+export CARGO_TARGET_DIR="$INCAN_DOCS_CACHE/cargo"
+cp "$welcome"/src/*.incn "$project/src/"
+cp "$welcome/content-map.json" "$project/content-map.json"
+cp "$welcome/publication/pallay-pin.json" "$project/publication/pallay-pin.json"
+cat > "$project/loaf.toml" <<MANIFEST
+[project]
+name = "incan_docs_staging"
+version = "0.1.0"
+[project.scripts]
+main = "src/docs_publication.incn"
+[dependencies]
+pallay = { path = "$INCAN_DOCS_PALLAY" }
+[rust-dependencies]
+markdown = "=1.0.0"
+MANIFEST
+export INCAN_DOCS_COMPILER_ID="$("$INCAN_DOCS_INCAN" --version) sha256:$(shasum -a 256 "$INCAN_DOCS_INCAN" | awk '{print $1}')"
+export INCAN_DOCS_OUTPUT="$stage/corpus"
+cd "$project"
+"$INCAN_DOCS_INCAN" lock
+"$INCAN_DOCS_INCAN" oven bake --project .
+"$INCAN_DOCS_INCAN" build src/docs_publication.incn
+# Copy only the existing public website, never the private dependency source.
+# Staging retains approved .html pages while new directory routes live in corpus/.
+mkdir "$stage"
+cp -R "$repo/incan-io-directions/obsidian-incan/." "$stage/"
+"$INCAN_DOCS_INCAN" run src/docs_publication.incn
+printf 'Staging only: %s\n' "$stage"
