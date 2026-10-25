@@ -1,0 +1,357 @@
+"""Oven landing page: structured Incan components and illustrative build data."""
+
+from pub::pallay import (
+    DocumentNode,
+    Experience,
+    StateField,
+    Value,
+    ValueKind,
+    Transition,
+    Mutation,
+    Presentation,
+    PresentationKind,
+    literal,
+    state,
+    choose,
+    negate,
+    experience,
+    group,
+    activate,
+)
+from std.json import JsonValue
+from components import el, txt, icon
+from layout import site_header, site_footer
+from page import binding_nodes
+
+
+model BuildBenchmark:
+    key: str
+    title: str
+    description: str
+    oven_seconds: float
+    cargo_seconds: float
+
+
+pub def benchmarks() -> list[BuildBenchmark]:
+    return [BuildBenchmark(
+        key="clean",
+        title="Clean build",
+        description="No existing build outputs.",
+        oven_seconds=18.4,
+        cargo_seconds=20.1,
+    ), BuildBenchmark(
+        key="incremental",
+        title="Incremental build",
+        description="After a small source change.",
+        oven_seconds=0.82,
+        cargo_seconds=1.1,
+    ), BuildBenchmark(
+        key="unchanged",
+        title="No-change build",
+        description="Nothing changed since the last build.",
+        oven_seconds=0.06,
+        cargo_seconds=0.08,
+    )]
+
+
+def link(label: str, href: str, class_name: str = "") -> DocumentNode:
+    return el("a", {"href": href, "class": class_name}, [txt(label)])
+
+
+def heading(level: str, label: str) -> DocumentNode:
+    return el(level, {}, [txt(label)])
+
+
+def paragraph(label: str, class_name: str = "") -> DocumentNode:
+    return el("p", {"class": class_name}, [txt(label)])
+
+
+def oven_shell(original: DocumentNode) -> DocumentNode:
+    mut node = original
+    if "href" in node.attributes:
+        href = node.attributes["href"]
+        if href == "#welcome":
+            node.attributes["href"] = "index.html#welcome"
+        elif href == "#project":
+            node.attributes["href"] = "#footer-community"
+        elif href == "https://incan.io/dev/start_here/":
+            node.attributes["href"] = "docs/nav-learn.html"
+        elif href == "oven.html":
+            node.attributes["aria-current"] = "page"
+    mut children: list[DocumentNode] = []
+    for child in node.children:
+        children.append(oven_shell(child))
+    node.children = children
+    return node
+
+
+def hero() -> DocumentNode:
+    return el(
+        "section",
+        {"class": "oven-hero oven-rail", "aria-labelledby": "oven-title"},
+        [el(
+            "img",
+            {"class": "oven-hero-art", "src": "assets/oven-hero.png", "alt": "Incus tending a glowing stone oven, holding a freshly baked loaf.", "fetchpriority": "high"},
+            [],
+        ), el(
+            "div",
+            {"class": "wrap oven-hero-inner"},
+            [el(
+                "div",
+                {"class": "oven-hero-copy"},
+                [el("h1", {"id": "oven-title"}, [txt("Oven")]), paragraph("The build system for Incan.", "oven-deck"), paragraph(
+                    "Build, run, and test your projects. Use Incan and Rust together.",
+                    "oven-intro",
+                ), el(
+                    "div",
+                    {"class": "hero-actions"},
+                    [link("Get started", "docs/first-project.html", "button button-primary"), link(
+                        "Read the guide",
+                        "docs/oven.html",
+                        "button button-secondary",
+                    )],
+                )],
+            )],
+        )],
+    )
+
+
+def flow() -> DocumentNode:
+    mut steps: list[DocumentNode] = []
+    titles = ["Your project", "Oven", "Build result"]
+    descriptions = ["Incan and Rust, side by side.", "Build and package your project.", "A reusable Loaf."]
+    for index in range(3):
+        steps.append(
+            el(
+                "li",
+                {},
+                [el(
+                    "div",
+                    {"class": "oven-flow-crop crop-" + str(index), "aria-hidden": "true"},
+                    [el("img", {"src": "assets/oven-flow.png", "alt": "", "loading": "lazy"}, [])],
+                ), heading("h3", titles[index]), paragraph(descriptions[index])],
+            ),
+        )
+    return el(
+        "section",
+        {"class": "oven-flow oven-rail", "aria-labelledby": "flow-title"},
+        [el(
+            "div",
+            {"class": "wrap"},
+            [el("h2", {"id": "flow-title"}, [txt("From source to "), el("span", {}, [txt("Loaf.")])]), paragraph(
+                "Write your code, build it with Oven, and get a reusable Loaf.",
+            )],
+        ), el(
+            "div",
+            {"class": "wrap oven-flow-art"},
+            [el(
+                "img",
+                {"src": "assets/oven-flow.png", "alt": "Incan and Rust source files flow into Oven and produce a Loaf package.", "loading": "lazy"},
+                [],
+            )],
+        ), el("ol", {"class": "wrap oven-flow-steps"}, steps)],
+    )
+
+
+def build_section() -> DocumentNode:
+    mut commands: list[DocumentNode] = []
+    for command in ["check", "run", "build"]:
+        if len(commands) > 0:
+            commands.append(txt("\n"))
+        commands.append(
+            el(
+                "span",
+                {"class": "command"},
+                [el("span", {"class": "oven-executable"}, [txt("incan " + command)]), txt(" src/main.incn")],
+            ),
+        )
+    mut resources: list[DocumentNode] = []
+    names = ["Projects", "Dependencies", "Build results"]
+    descriptions = ["Create and manage projects that include Incan and Rust.", "Declare the packages and features your project needs.", "Produce Loaf packages ready to reuse."]
+    urls = ["docs/projects.html", "docs/dependencies.html", "docs/nav-oven.html"]
+    icons = ["file-code", "cube", "packages"]
+    for index in range(3):
+        resources.append(
+            el(
+                "article",
+                {},
+                [icon(icons[index]), el(
+                    "div",
+                    {},
+                    [heading("h3", names[index]), paragraph(descriptions[index]), link(
+                        "Explore " + names[index].lower() + " →",
+                        urls[index],
+                    )],
+                )],
+            ),
+        )
+    return el(
+        "section",
+        {"class": "wrap oven-build", "id": "build", "aria-labelledby": "build-title"},
+        [el("h2", {"id": "build-title"}, [txt("Build and run")]), paragraph(
+            "Use Oven from the command line to check, run, and build your project.",
+        ), el(
+            "div",
+            {"class": "oven-build-grid"},
+            [el(
+                "div",
+                {"class": "code-panel terminal-panel"},
+                [el(
+                    "div",
+                    {"class": "panel-heading"},
+                    [el("span", {"class": "file-label"}, [icon("terminal"), txt("Terminal")]), el(
+                        "button",
+                        {"class": "copy-button", "type": "button", "id": "oven-copy", "aria-label": "Copy build commands"},
+                        [icon("copy", "oven-copy-icon"), el("span", {"id": "oven-copy-label"}, [txt("Copy")])],
+                    )],
+                ), el(
+                    "pre",
+                    {"class": "terminal-code", "tabindex": "0", "aria-label": "Build commands"},
+                    [el("code", {"id": "oven-commands"}, commands)],
+                )],
+            ), el(
+                "aside",
+                {"class": "oven-rust"},
+                [heading("h3", "Incan and Rust. One project."), paragraph(
+                    "Use both languages in the same Oven-managed project.",
+                ), link("Read the dependency guide →", "docs/dependencies.html")],
+            )],
+        ), el("div", {"class": "oven-resources"}, resources)],
+    )
+
+
+def benchmark_row(name: str, value: float, maximum: float) -> DocumentNode:
+    return el(
+        "div",
+        {"class": "benchmark-row benchmark-" + name.lower()},
+        [el("span", {}, [txt(name)]), el(
+            "meter",
+            {"min": "0", "max": str(maximum), "value": str(value), "aria-label": name + " illustrative elapsed seconds"},
+            [txt(str(value) + " seconds")],
+        ), el("span", {"class": "benchmark-value"}, [txt(str(value) + " s")])],
+    )
+
+
+def performance() -> DocumentNode:
+    mut charts: list[DocumentNode] = []
+    for item in benchmarks():
+        maximum = max([item.oven_seconds, item.cargo_seconds])
+        charts.append(
+            el(
+                "article",
+                {"class": "benchmark-scenario", "aria-labelledby": "benchmark-" + item.key},
+                [el("h3", {"id": "benchmark-" + item.key}, [txt(item.title)]), paragraph(item.description), benchmark_row(
+                    "Oven",
+                    item.oven_seconds,
+                    maximum,
+                ), benchmark_row("Cargo", item.cargo_seconds, maximum), paragraph(
+                    "Scale per scenario · lower is faster",
+                    "benchmark-scale",
+                )],
+            ),
+        )
+    return el(
+        "section",
+        {"class": "oven-benchmarks oven-rail", "id": "benchmarks", "aria-labelledby": "benchmarks-title"},
+        [el(
+            "div",
+            {"class": "wrap"},
+            [el(
+                "div",
+                {"class": "benchmark-heading"},
+                [el("h2", {"id": "benchmarks-title"}, [txt("Build benchmarks")]), el(
+                    "span",
+                    {"class": "benchmark-preview"},
+                    [txt("Illustrative data")],
+                )],
+            ), paragraph("Oven and Cargo, side by side.", "benchmark-deck"), paragraph(
+                "Design preview — example values only. Measurements to follow.",
+                "benchmark-notice",
+            ), el("div", {"class": "benchmark-grid"}, charts), el(
+                "details",
+                {"class": "benchmark-method", "id": "benchmark-methodology"},
+                [el("summary", {}, [txt("Benchmark methodology")]), paragraph(
+                    "Planned comparison: the same Rust project, dependencies, build profile, and machine for both tools.",
+                ), el(
+                    "ul",
+                    {},
+                    [el(
+                        "li",
+                        {},
+                        [txt("Clean builds start without existing build outputs; dependency downloads are excluded.")],
+                    ), el("li", {}, [txt("Incremental builds repeat the same source change after a completed build.")]), el(
+                        "li",
+                        {},
+                        [txt("No-change builds rerun the command without changing any inputs.")],
+                    )],
+                ), paragraph(
+                    "Published results will include project sources, tool versions, machine details, commands, cache conditions, and repeated-run timings. These example values are not performance claims.",
+                )],
+            )],
+        )],
+    )
+
+
+def packages() -> DocumentNode:
+    return el(
+        "section",
+        {"class": "oven-packages oven-rail", "aria-labelledby": "packages-title"},
+        [el(
+            "img",
+            {"class": "oven-package-art", "src": "assets/oven-loaf.png", "loading": "lazy", "alt": "A cord-bound Loaf package with a carved gold seal on a stone workbench."},
+            [],
+        ), el(
+            "div",
+            {"class": "wrap oven-package-inner"},
+            [el(
+                "div",
+                {},
+                [el("h2", {"id": "packages-title"}, [txt("Packages, ready to reuse")]), paragraph(
+                    "A Loaf packages a build result with the information needed to reuse it.",
+                ), link("Browse Incan.pub →", "https://encero-systems.github.io/incan-pub-playground/")],
+            )],
+        )],
+    )
+
+
+pub def oven_document() -> DocumentNode:
+    return el(
+        "div",
+        {"class": "oven-page"},
+        [link("Skip to content", "#main", "skip-link"), oven_shell(site_header()), el(
+            "main",
+            {"id": "main"},
+            [hero(), flow(), build_section(), performance(), packages()],
+        ), oven_shell(site_footer()), el(
+            "p",
+            {"id": "oven-copy-status", "class": "sr-only", "role": "status", "aria-live": "polite"},
+            [],
+        )],
+    )
+
+
+pub def oven_application(document: DocumentNode) -> Experience:
+    return experience(
+        "IncanOven",
+        "Oven · The build system for Incan",
+        group("oven-contract", binding_nodes(document)),
+        [StateField(name="menu_open", kind=ValueKind.Flag, initial=Value.flag(false))],
+        [Transition(name="toggle_menu", mutations=[Mutation(state="menu_open", value=negate(state("menu_open")))]), Transition(
+            name="close_menu",
+            mutations=[Mutation(state="menu_open", value=literal(Value.flag(false)))],
+        )],
+        [Presentation(
+            node="site-nav",
+            kind=PresentationKind.Appearance,
+            value=choose(state("menu_open"), literal(Value.text("is-open")), literal(Value.text(""))),
+        ), Presentation(node="menu-button", kind=PresentationKind.Expanded, value=state("menu_open"))],
+        [activate("menu-button", "toggle_menu")],
+    )
+
+
+pub def oven_policy() -> str:
+    return "{\"schema\":\"incan.browser-mechanisms.v1\",\"attributes\":[],\"activations\":[],\"copies\":[{\"button\":\"oven-copy\",\"source\":\"oven-commands\",\"label\":\"oven-copy-label\",\"icon\":\"oven-copy-icon\",\"message\":\"Build commands copied.\"}],\"clipboard\":{\"status\":\"oven-copy-status\",\"resetMs\":2400,\"ready\":\"Copy\",\"success\":\"Copied\",\"fallback\":\"Selected\",\"fallbackMessage\":\"Clipboard unavailable. Select and copy the commands.\"},\"connectors\":[],\"connectorStyle\":{\"minWidth\":741,\"color\":\"#b69a60\",\"activeColor\":\"#fff0b7\",\"size\":1.2},\"disclosure\":{\"scope\":\".masthead\",\"navigation\":\"site-nav\",\"control\":\"menu-button\",\"openField\":\"menu_open\",\"close\":\"close_menu\"},\"keys\":[]}"
+
+
+pub def oven_stylesheet() -> str:
+    return ".oven-page{background:#080c0a;color:var(--text);font-family:var(--body)}\n.oven-page .wrap{width:calc(100% - 80px);max-width:1280px;margin-inline:auto}\n.oven-page main{display:block}.oven-page h1,.oven-page h2,.oven-page h3{font-family:var(--body);letter-spacing:-.025em;line-height:1.15}\n.oven-page h2{font-size:38px;color:var(--gold);margin:0 0 14px}.oven-page h3{font-size:21px;margin:0 0 10px;color:var(--gold)}\n.oven-page p{font-size:17px;line-height:1.6;color:var(--muted);margin:0 0 20px}\n.oven-page a{transition:color .15s}.oven-page a:focus-visible,.oven-page button:focus-visible,.oven-page summary:focus-visible{outline:2px solid var(--cyan);outline-offset:5px}\n.oven-page .release-status{display:none}.oven-page #site-nav a[aria-current=page]{color:var(--gold);border-bottom:2px solid var(--gold);padding-bottom:8px}\n.oven-page .skip-link{position:fixed;left:12px;top:-100px;z-index:100;background:var(--ink);padding:12px}.oven-page .skip-link:focus{top:12px}\n.oven-rail{position:relative}.oven-rail:after{content:\"\";position:absolute;inset:auto 0 0;height:2px;background:linear-gradient(90deg,transparent,#42e8ef 17%,#e4cb70 50%,#c96d36 78%,#812b43 93%,transparent);pointer-events:none}\n.oven-hero{isolation:isolate;overflow:hidden;min-height:620px}.oven-hero-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2}\n.oven-hero:before{content:\"\";position:absolute;inset:0;background:linear-gradient(90deg,#080c0a80,transparent 65%);z-index:-1}\n.oven-hero-inner{min-height:620px;display:flex;align-items:center}.oven-hero-copy{width:48%;padding-block:60px}.oven-hero h1{font-size:clamp(88px,9vw,136px);font-weight:700;color:var(--gold);margin:0 0 12px;line-height:1}\n.oven-page .oven-deck{font-size:30px;line-height:1.2;font-weight:600;color:var(--text);margin-bottom:22px}.oven-page .oven-intro{max-width:420px;font-size:20px}.oven-page .hero-actions{margin-top:28px;gap:16px}.oven-page .hero-actions .button{padding:14px 24px;font-size:16px}\n.oven-flow{padding:44px 0 34px}.oven-flow h2{color:var(--text)}.oven-flow h2 span{color:var(--gold)}.oven-flow .wrap>p{margin-bottom:10px}\n.oven-flow-art img{display:block;width:100%;height:auto}.oven-flow-steps{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:0;gap:24px;text-align:center}\n.oven-flow-steps h3{font-size:25px;margin:0 0 10px}.oven-flow-steps p{font-size:16px;margin:0}.oven-flow-crop{display:none}\n.oven-build{padding-top:44px}.oven-build-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:44px;align-items:center;margin-top:24px}\n.oven-page .oven-build .terminal-code{font-size:19px;padding:24px;line-height:1.9}.oven-executable{color:var(--cyan)}.oven-rust{border-left:1px solid var(--outline);padding-left:34px}.oven-rust h3{color:var(--text);font-size:24px}.oven-rust a{font-size:15px}.oven-rust p{margin-bottom:15px}\n.oven-resources{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;margin-top:34px;border-top:1px solid var(--outline);padding:30px 0 38px}\n.oven-resources article{display:grid;grid-template-columns:40px minmax(0,1fr);gap:18px}.oven-resources article+article{border-left:1px solid var(--outline);padding-left:28px}.oven-resources .icon{width:36px;height:36px;color:var(--gold)}.oven-resources h3{font-size:20px}.oven-resources p{font-size:15px;line-height:1.5;margin-bottom:10px}.oven-resources a{font-size:14px}\n.oven-benchmarks{padding:42px 0 36px;border-top:1px solid var(--outline)}.benchmark-heading{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;margin-bottom:8px}.benchmark-heading h2{margin:0}.benchmark-preview{border:1px solid var(--gold);padding:6px 12px;color:var(--gold);text-transform:uppercase;font-size:12px;letter-spacing:.09em;border-radius:4px}\n.oven-page .benchmark-deck{font-size:26px;color:var(--text);margin:0 0 4px}.oven-page .benchmark-notice{font-size:15px;margin-bottom:30px}\n.benchmark-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}.benchmark-scenario{min-width:0}.benchmark-scenario+.benchmark-scenario{border-left:1px solid var(--outline);padding-left:28px}\n.benchmark-scenario h3{font-size:23px}.benchmark-scenario p{font-size:15px;min-height:48px;margin-bottom:20px}.benchmark-row{display:grid;grid-template-columns:48px minmax(0,1fr) 62px;align-items:center;gap:12px;margin:10px 0;font-size:16px;color:var(--cyan)}.benchmark-cargo{color:var(--gold)}.benchmark-value{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}\n.benchmark-row meter{width:100%;height:22px;border:0;background:transparent;appearance:none;-webkit-appearance:none}.benchmark-row meter::-webkit-meter-bar{background:#182523;border:none;border-radius:4px;height:18px}.benchmark-row meter::-webkit-meter-optimum-value{background:var(--cyan);border-radius:4px}.benchmark-cargo meter::-webkit-meter-optimum-value{background:var(--gold)}.benchmark-row meter::-moz-meter-bar{background:var(--cyan);border-radius:4px}.benchmark-cargo meter::-moz-meter-bar{background:var(--gold)}\n.oven-page .benchmark-scale{font-size:12px;margin:16px 0 0;min-height:0;color:var(--quiet)}.benchmark-method{border-top:1px solid var(--outline);margin-top:30px;padding-top:18px;font-size:14px}.benchmark-method summary{color:var(--cyan);cursor:pointer;padding:6px 0}.benchmark-method p,.benchmark-method li{font-size:15px;line-height:1.7;color:var(--muted)}.benchmark-method p{max-width:850px;margin:16px 0}.benchmark-method ul{padding-left:22px}\n.oven-packages{isolation:isolate;min-height:300px;overflow:hidden}.oven-package-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-1}.oven-package-inner{min-height:300px;display:flex;align-items:center}.oven-package-inner>div{width:49%;padding-block:40px}.oven-package-inner p{max-width:480px}.oven-package-inner a{font-size:17px}\n.oven-page .site-footer{margin-top:46px}.oven-page .community-section{margin-top:0}.oven-page .community-section h2{color:var(--text);font-size:32px}.oven-page .community-section p{margin-bottom:0}\n@media(min-width:1700px){.oven-hero-art{object-position:center 55%}.oven-hero,.oven-hero-inner{min-height:690px}}\n@media(max-width:1050px){.oven-page .wrap{width:calc(100% - 48px)}.oven-hero,.oven-hero-inner{min-height:540px}.oven-page .oven-deck{font-size:26px}.oven-hero-copy{width:50%}.oven-page .hero-actions .button{padding:12px 17px;font-size:14px}.oven-build-grid{gap:26px}.oven-rust{padding-left:24px}.oven-page .oven-build .terminal-code{font-size:16px}.benchmark-grid{gap:20px}.benchmark-scenario+.benchmark-scenario{padding-left:20px}.benchmark-row{grid-template-columns:40px minmax(0,1fr) 53px;gap:7px;font-size:14px}.oven-resources{gap:20px}.oven-resources article+article{padding-left:20px}.oven-resources article{grid-template-columns:30px minmax(0,1fr);gap:12px}.oven-resources .icon{width:28px;height:28px}.oven-page h2{font-size:32px}}\n@media(max-width:740px){.oven-page .wrap{width:calc(100% - 40px)}.oven-page .masthead{gap:18px}.oven-hero{min-height:650px}.oven-hero-inner{min-height:650px;align-items:flex-start}.oven-hero-copy{width:100%;padding-top:32px;padding-bottom:0}.oven-hero h1{font-size:84px}.oven-page .oven-deck{font-size:24px;max-width:330px}.oven-page .oven-intro{font-size:17px;max-width:300px}.oven-page .hero-actions{margin-top:20px;gap:12px}.oven-hero-art{height:380px;top:auto;bottom:0;object-position:right center}.oven-hero:before{background:linear-gradient(#080c0a 0%,#080c0a 37%,transparent 59%)}.oven-build-grid{grid-template-columns:1fr;gap:24px}.oven-rust{border:0;padding-left:0}.oven-flow{padding-top:32px}.oven-flow-steps{gap:14px}.oven-flow-steps h3{font-size:20px}.oven-flow-steps p{font-size:14px}.oven-resources{grid-template-columns:1fr;gap:0;padding-bottom:12px}.oven-resources article{grid-template-columns:38px minmax(0,1fr);padding:20px 0!important;border-left:0!important}.oven-resources article+article{border-top:1px solid var(--outline)}.oven-resources .icon{width:32px;height:32px}.benchmark-grid{grid-template-columns:1fr;gap:24px}.benchmark-scenario+.benchmark-scenario{padding:24px 0 0;border-left:0;border-top:1px solid var(--outline)}.benchmark-scenario p{min-height:0;margin-bottom:16px}.benchmark-row{grid-template-columns:48px minmax(0,1fr) 64px;font-size:16px;gap:14px}.benchmark-heading{gap:12px}.benchmark-preview{font-size:10px}.oven-page .benchmark-deck{font-size:23px}.oven-packages{min-height:440px}.oven-package-inner{min-height:440px;align-items:flex-start}.oven-package-inner>div{width:100%;padding-block:28px}.oven-package-inner p{max-width:380px}.oven-package-art{height:265px;top:auto;bottom:0;object-position:right center}.oven-packages:before{content:\"\";position:absolute;inset:0;background:linear-gradient(#080c0a 0%,#080c0a 30%,transparent 58%);z-index:0}.oven-package-inner{position:relative;z-index:1}.oven-page .site-footer{margin-top:36px}}\n@media(max-width:480px){.oven-hero,.oven-hero-inner{min-height:630px}.oven-hero-art{height:310px;width:130%;max-width:none;left:-30%;object-position:right center}.oven-hero:before{background:linear-gradient(#080c0a 0%,#080c0a 43%,transparent 64%)}.oven-page .hero-actions .button{font-size:13px;padding:12px 16px}.oven-page h2{font-size:29px}.oven-flow-art{display:none}.oven-flow-steps{grid-template-columns:1fr;gap:25px;margin-top:12px}.oven-flow-crop{display:block;width:220px;height:190px;overflow:hidden;margin:auto}.oven-flow-crop img{display:block;max-width:none;width:660px;height:220px;object-fit:cover}.crop-1 img{transform:translateX(-220px)}.crop-2 img{transform:translateX(-440px)}.oven-flow-steps p{font-size:15px}.oven-flow-steps h3{font-size:23px}.oven-page .oven-build .terminal-code{font-size:14px;padding:18px 14px}.oven-page .community-section h2{font-size:25px}.oven-package-art{height:220px;width:150%;left:-50%;max-width:none}.oven-packages,.oven-package-inner{min-height:410px}.oven-page .oven-package-inner p{font-size:16px}}\n@media(prefers-reduced-motion:reduce){.oven-page a{transition:none}}\n\n.oven-page .benchmark-heading{justify-content:flex-start}.oven-page .oven-rust a,.oven-resources a,.oven-package-inner a{color:var(--cyan)}\n.oven-resources .file-code{mask-size:contain;mask-repeat:no-repeat;mask-position:center;-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;mask-image:url(\"assets/icons/file-code.svg\");-webkit-mask-image:url(\"assets/icons/file-code.svg\")}\n"
