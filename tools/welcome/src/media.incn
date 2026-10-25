@@ -2,7 +2,7 @@
 
 from pub::pallay import DocumentNode, parse_template, render_tree
 from components import el, txt
-from layout import site_header, site_footer, community_section
+from layout import site_header, site_footer
 
 
 def media_shell(original: DocumentNode) -> DocumentNode:
@@ -12,6 +12,8 @@ def media_shell(original: DocumentNode) -> DocumentNode:
     if "href" in node.attributes:
         if node.attributes["href"] == "#welcome":
             node.attributes["href"] = "index.html#welcome"
+        elif node.attributes["href"] == "#project":
+            node.attributes["href"] = "#footer-community"
     mut children: list[DocumentNode] = []
     for child in node.children:
         children.append(media_shell(child))
@@ -33,11 +35,9 @@ pub def media_document() -> str:
     root = el(
         "div",
         {"class": "media-page"},
-        [el("a", {"class": "skip-link", "href": "#main"}, [txt("Skip to content")]), media_shell(site_header()), content, el(
-            "div",
-            {"class": "wrap"},
-            [community_section()],
-        ), media_shell(site_footer())],
+        [el("a", {"class": "skip-link", "href": "#main"}, [txt("Skip to content")]), media_shell(site_header()), content, media_shell(
+            site_footer(),
+        )],
     )
     return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"generator\" content=\"Incan · Pallay\"><meta name=\"theme-color\" content=\"#080c0a\"><meta name=\"description\" content=\"Incan media kit: the language, its ecosystem, creator and brand assets. Prepared for the 0.6 website.\"><title>Media kit · Incan</title><link rel=\"icon\" href=\"assets/incan-logo.png\"><link rel=\"stylesheet\" href=\"assets/fonts/fonts.css\"><link rel=\"stylesheet\" href=\"style.css\"><link rel=\"stylesheet\" href=\"media.css\"></head><body>" + render_tree(
         root,

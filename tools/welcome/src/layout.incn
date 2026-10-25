@@ -557,7 +557,7 @@ pub def community_section() -> DocumentNode:
             {"class": "incus-portrait"},
             [el(
                 "img",
-                {"src": "assets/incus.webp", "width": "1159", "height": "1357", "alt": "Incus, Incan’s armored alpaca–llama, wearing a cyan visor"},
+                {"src": "assets/incus.webp", "width": "1159", "height": "1357", "loading": "lazy", "alt": "Incus, Incan’s armored alpaca–llama, wearing a cyan visor"},
                 [],
             ), el(
                 "a",
@@ -620,9 +620,29 @@ pub def community_section() -> DocumentNode:
     )
 
 
-pub def site_footer() -> DocumentNode:
+pub def site_footer(compact: bool = true) -> DocumentNode:
+    mut community = community_section()
+    if compact:
+        community.attributes["class"] = "community-section community-compact ruled"
+        community.attributes["id"] = "footer-community"
+        community.attributes["aria-labelledby"] = "footer-community-heading"
+        for index in range(len(community.children)):
+            mut child = community.children[index]
+            if "class" in child.attributes and child.attributes["class"] == "community-copy":
+                mut content: list[DocumentNode] = []
+                for item in child.children:
+                    if item.tag == "h2":
+                        content.append(el("h2", {"id": "footer-community-heading"}, item.children))
+                    elif item.tag != "nav" and item.tag != "":
+                        content.append(item)
+                child.children = content
+                community.children[index] = child
+    return el("footer", {"class": "site-footer"}, [el("div", {"class": "wrap"}, [community]), footer_credits()])
+
+
+def footer_credits() -> DocumentNode:
     return el(
-        "footer",
+        "div",
         {"class": "footer wrap ruled"},
         [txt("\n    "), el(
             "div",
