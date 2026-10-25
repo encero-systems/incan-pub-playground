@@ -17,7 +17,7 @@ The dependency pin is a private source snapshot, not a published package. It bin
 From the website root:
 
 ```sh
-node --test tools/welcome/publication/check.mjs tools/welcome/publication/paths.test.mjs tools/welcome/publication/output.test.mjs
+node --test tools/welcome/publication/check.mjs tools/welcome/publication/paths.test.mjs tools/welcome/publication/output.test.mjs tools/welcome/publication/wrapper.test.mjs
 INCAN_DOCS_ROOT=/absolute/path/to/captured/docs tools/welcome/publication/run --preflight
 incan fmt --check tools/welcome/src/docs_publication.incn
 bash -n tools/welcome/publication/run
@@ -33,8 +33,12 @@ Only run within the coordinator’s assigned build budget, after the matching ta
 tools/welcome/publication/run --build
 ```
 
-The wrapper resolves source/dependency/compiler inputs to physical absolute paths before changing directory, locks/bakes/builds the Incan consumer, copies the existing public preview to a fresh staging site, then runs strict publication. Before reporting success, it checks emitted reader pages, staged overview/topic/module links and module-reference destinations with `publication/output.mjs`. It never deploys. A failed run may leave its own partial staging/cache directory; it must not be served as a successful publication. `corpus/receipt.json` is a development input/output receipt, not a signed release. The underlying publisher is not atomic. Review the receipt and full page/anchor coverage, compare approved visual/interaction regressions at phone/tablet/desktop widths, then run without Python installed before considering production replacement.
+The wrapper resolves source/dependency/compiler inputs to physical absolute paths before changing directory, builds the Incan consumer directly using the prepared dependency closure, copies the existing public preview to a fresh staging site, then runs strict publication. Before reporting success, it checks emitted reader pages, staged overview/topic/module links and module-reference destinations with `publication/output.mjs`. It never deploys. A failed run may leave its own partial staging/cache directory; it must not be served as a successful publication. `corpus/receipt.json` is a development input/output receipt, not a signed release. The underlying publisher is not atomic. Review the receipt and full page/anchor coverage, compare approved visual/interaction regressions at phone/tablet/desktop widths, then run without Python installed before considering production replacement.
+
+The matched 0.6 CLI provides `build` and `run`; it does not provide the legacy `lock` or `oven bake` commands. Dependency admission/preparation is a separate prerequisite, including the exact shared Pallay source and its compiled Markdown dependency. The wrapper never tries to prepare that closure through a legacy publisher. A missing dependency must fail the build.
 
 The wrapper deliberately does not copy shared caches or download a toolchain. Existing MkDocs/Mike production deployment and registry Pygments remain elsewhere; this source increment does not claim either has been removed.
 
 The output-checker tests use small HTML fixtures to prove that stale topic navigation and missing references are rejected. They are not proof that the new Incan navigation renderer has executed. Run `node tools/welcome/publication/output.mjs /absolute/staging/site/corpus tools/welcome/content-map.json` against a real native publication when the matched dependency closure is available.
+
+The wrapper sequence test runs this actual shell script against a tiny temporary source/dependency fixture and a controlled CLI stub. It verifies only `--version`, `build` and `run` are invoked; relative paths survive the directory change; and version/build/run/traversal failures prevent a success message. This is host contract evidence, not compiler or rendering proof.
