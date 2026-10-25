@@ -103,3 +103,11 @@ Every inventory entry has an explicit `doc_type`. Rendered documentation pages a
 ## Dev.8 core chapters
 
 `docs/core-topics.html` links five revised topics and a separate downloadable first-project exercise. New CLI and manifest references use the dev.8 integration snapshot at `4d92c3db2`; `core-topics/evidence.json` records exact inputs and macOS execution on the separate `55b26c75f` rehearsal bundle. The old complete-site census is retained rather than relabelled as current. Tests cover navigation, code/source fidelity and the archive. The site builder itself still uses its established 0.5.1 toolchain; that is distinct from the dev.8 tutorial runtime.
+
+## Oven landing page
+
+`src/oven.incn` authors the Oven page as Pallay document components, typed benchmark data, menu transitions, and browser policy. The build emits `oven.html`, `oven.css`, `oven-app.mjs`, and plan/reference JSON alongside the homepage. The existing browser adapter handles DOM events and clipboard access.
+
+Benchmark values are illustrative layout data, not measured performance. Add scenarios to `benchmarks()`; each scenario uses an independent seconds scale shared by its Oven and Cargo meters. Replace values, labels, and methodology together when measured results are available.
+
+Run `node tools/welcome/check-oven.mjs` after building to check links, charts, clipboard source, and menu reducer parity. Generated artwork provenance is recorded in `static/assets/credits.json`.

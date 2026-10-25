@@ -12,6 +12,7 @@ from browser_target import host_runtime
 from theme import stylesheet
 from docs_main import build_docs
 from media import media_document, media_stylesheet, media_description
+from oven import oven_document, oven_application, oven_policy, oven_stylesheet
 
 
 def write(directory: str, name: str, value: str) -> None:
@@ -57,7 +58,26 @@ pub def build(directory: str) -> None:
         transition="select",
         value=Value.number(1),
     )]
-    files = {"media.html": media_document(), "media.css": media_stylesheet(), "media-description.txt": media_description(), "index.html": html, "style.css": stylesheet(), "plan.json": plan, "mechanisms.json": policy, "pallay-runtime.mjs": runtime, "browser-target.mjs": host_runtime(), "app.mjs": bootstrap, "reference.json": reference_trace(
+    oven_body = oven_document()
+    oven_app = oven_application(oven_body)
+    oven_output = lower_web(oven_app, true)
+    assert oven_output.valid, "Invalid Oven experience"
+    mut oven_plan = ""
+    for file in oven_output.files:
+        if file.path == "plan.json":
+            oven_plan = str(file.content)
+    oven_bootstrap = "import {connect} from './browser-target.mjs';\nconst plan=" + oven_plan + ";\nconst policy=" + oven_policy() + ";\nconnect(plan,policy,document);\n"
+    oven_head = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"generator\" content=\"Incan · Pallay\"><meta name=\"theme-color\" content=\"#080c0a\"><meta name=\"description\" content=\"Build, run, and test your projects with Oven. Incan and Rust, side by side.\"><title>Oven · The build system for Incan</title><link rel=\"icon\" href=\"assets/incan-logo.png\"><link rel=\"preload\" as=\"image\" href=\"assets/oven-hero.png\"><link rel=\"stylesheet\" href=\"assets/fonts/fonts.css\"><link rel=\"stylesheet\" href=\"style.css\"><link rel=\"stylesheet\" href=\"oven.css\"><script type=\"module\" src=\"oven-app.mjs\"></script></head><body>"
+    oven_html = oven_head + render_tree(initial_document(oven_body, oven_app)) + "</body></html>"
+    match parse_template(render_tree(oven_body), "oven-document"):
+        Ok(_) => pass
+        Err(error) =>
+            println(error)
+            assert false, "Invalid Oven document"
+    files = {"oven.html": oven_html, "oven.css": oven_stylesheet(), "oven-app.mjs": oven_bootstrap, "oven-plan.json": oven_plan, "oven-reference.json": reference_trace(
+        oven_app,
+        [TraceCommand(transition="toggle_menu", value=Value()), TraceCommand(transition="close_menu", value=Value())],
+    ), "media.html": media_document(), "media.css": media_stylesheet(), "media-description.txt": media_description(), "index.html": html, "style.css": stylesheet(), "plan.json": plan, "mechanisms.json": policy, "pallay-runtime.mjs": runtime, "browser-target.mjs": host_runtime(), "app.mjs": bootstrap, "reference.json": reference_trace(
         app,
         probes,
     )}
@@ -66,7 +86,7 @@ pub def build(directory: str) -> None:
         write(directory, name, files[name])
         hashes[name] = JsonValue.string(digest_text(files[name]))
     mut sources: Dict[str, JsonValue] = {}
-    for name in ["main", "page", "layout", "components", "examples", "interaction", "mechanisms", "browser_target", "theme", "markdown_docs", "docs_layout", "docs_main", "docs_diagrams", "docs_architecture", "docs_catalog", "media"]:
+    for name in ["main", "page", "layout", "components", "examples", "interaction", "mechanisms", "browser_target", "theme", "markdown_docs", "docs_layout", "docs_main", "docs_diagrams", "docs_architecture", "docs_catalog", "media", "oven"]:
         path = "src/" + name + ".incn"
         sources[path] = JsonValue.string(digest_text(Path(path).read_text(encoding="utf-8", errors="strict").unwrap()))
     for path in ["incan.toml", "loaf.toml", "incan.lock", "static/manifest.json", "vendor/pallay-provenance.json", "vendor/overrides.json", "vendor/pallay/src/lib.incn", "vendor/pallay/src/document/tree.incn", "vendor/pallay/src/document/projection.incn", "build"]:

@@ -12,3 +12,10 @@ The existing Archive Hall homepage, Forge package masthead, shared header/footer
 Functional checks cover all 1,311 packages and 1,707 indexed versions, 27 no-JavaScript catalog pages, recorded document integrity and provenance, complete replay, license expressions, exact-name search, missing observations, route/assets/anchors, HTML safety and catalog interactions in jsdom. jsdom does not establish rendered layout, responsive overflow or native touch behavior.
 
 The earlier footer screenshot QA is preserved in design-qa-catalog-footer.md. Current data/build/verification boundaries are documented in docs/registry-site.md. The production registry remains unchanged, the Incan.io mockup remains parked, and no manual CI verification workflow is dispatched.
+
+
+## Oven landing page
+
+Oven implementation QA: [report](tools/welcome/oven-design-qa.md). Desktop, tablet, and phone layouts and browser interactions verified. Final screenshots are stored in `incan-io-directions/obsidian-incan/qa/oven-desktop.png` and `oven-mobile.png`.
+
+final result: passed

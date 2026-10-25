@@ -5,7 +5,7 @@ export async function connect(plan, policy, root=document) {
   const doc=root.ownerDocument||root, node=id=>{const n=doc.getElementById(id);if(!n)throw Error('Missing declared node: '+id);return n;};
   const runtime=mount(plan,root), reduced=matchMedia('(prefers-reduced-motion: reduce)');
   let paths=[], frame, clockTimer, inView=false, hovered=false, focused=false, previousMotion;
-  const clock=policy.clock, clockScope=doc.querySelector(clock.scope);
+  const clock=policy.clock, clockScope=clock ? doc.querySelector(clock.scope) : null;
   const dispatch=(name,payload=null)=>{const result=runtime.dispatch(name,payload);if(!result.applied)throw Error(result.error);sync();return result;};
   function schedulePaths(){cancelAnimationFrame(frame);frame=requestAnimationFrame(drawPaths);}
   function drawPaths(){
@@ -26,6 +26,7 @@ export async function connect(plan, policy, root=document) {
     doc.querySelectorAll('.leader-line,#leader-line-defs').forEach(n=>n.setAttribute('aria-hidden','true'));
   }
   function armClock(){
+    if(!clockScope)return;
     clockScope.dataset.clockGuard=JSON.stringify({inView,hovered,focused,hidden:doc.hidden,paused:runtime.getState()[clock.pausedField]});
     clearInterval(clockTimer);
     if(!runtime.getState()[clock.pausedField]&&inView&&!hovered&&!focused&&!doc.hidden)
@@ -37,8 +38,8 @@ export async function connect(plan, policy, root=document) {
       const value=values[binding.field]===binding.equals?binding.yes:binding.no;
       if(value==='')node(binding.node).removeAttribute(binding.name);else node(binding.node).setAttribute(binding.name,value);
     }
-    const motion=policy.motion, current=values[motion.field];
-    if(previousMotion!==undefined&&current!==previousMotion&&!reduced.matches){
+    const motion=policy.motion, current=motion ? values[motion.field] : undefined;
+    if(motion&&previousMotion!==undefined&&current!==previousMotion&&!reduced.matches){
       const panel=node(motion.scopes[current]);panel.getAnimations().forEach(a=>a.cancel());panel.animate([{opacity:.45},{opacity:1}],{duration:motion.durationMs,easing:'ease-out'});
     }
     previousMotion=current;
@@ -68,13 +69,16 @@ export async function connect(plan, policy, root=document) {
     if(event.target.matches('select,input,textarea'))return;
     for(const binding of policy.keys)if(event.key===binding.key&&event.target.closest(binding.scope)){event.preventDefault();dispatch(binding.transition);}
   });
+  if(clockScope){
   clockScope.addEventListener('pointerenter',()=>{hovered=true;armClock();});clockScope.addEventListener('pointerleave',()=>{hovered=false;armClock();});
   clockScope.addEventListener('focusin',()=>{focused=true;armClock();});clockScope.addEventListener('focusout',event=>{if(!clockScope.contains(event.relatedTarget)){focused=false;armClock();}});
   new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;armClock();},{threshold:clock.threshold}).observe(clockScope);
   doc.addEventListener('visibilitychange',armClock);
   reduced.addEventListener('change',()=>{if(reduced.matches)dispatch(clock.pause);});
   addEventListener('resize',schedulePaths);new ResizeObserver(schedulePaths).observe(clockScope);doc.fonts.ready.then(schedulePaths);
-  if(reduced.matches)dispatch(clock.pause);else sync();
+  if(reduced.matches)dispatch(clock.pause);
+  }
+  sync();
   root.documentElement?.setAttribute('data-incan-ready','true');
   return {dispatch,getState:runtime.getState};
 }
