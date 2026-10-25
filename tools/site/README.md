@@ -83,7 +83,7 @@ The heading is “Building blocks for Oven.” Loaves are introduced in supporti
 
 ## Registry replay validation
 
-Both import and replay validate the supported catalog schemas, scoped package identity, feed and manifest paths, unique versions, selected version and package/version counts before publication. Replay also validates its snapshot schema/checkpoint and binds every declared source document to a formatting job with matching digest, format, content path and byte count. The formatter still verifies the actual content hash and byte length. A checkpoint field is provenance supplied by the snapshot, not a signature or a fresh comparison with GitHub.
+Both import and replay validate the supported catalog schemas, scoped package identity, feed and manifest paths, unique versions, selected version and package/version counts before publication. Shared document digests must have consistent byte counts before snapshot copying starts. Replay also validates its snapshot schema/checkpoint and the entire formatting-job set: each job must reference a declared document with matching digest, format, content path and byte count, including legacy digest-only aliases. The formatter still verifies the actual content hash and byte length. A checkpoint field is provenance supplied by the snapshot, not a signature or a fresh comparison with GitHub.
 
 Check a retained snapshot without starting Markdown/Python formatting:
 

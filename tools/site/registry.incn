@@ -110,6 +110,7 @@ def catalog_packages(directory: str, catalog: JsonValue) -> Result[Dict[str, Jso
         return Err("unsupported catalog schema")
     mut packages: Dict[str, JsonValue] = {}
     mut version_count = 0
+    mut document_sizes: Dict[str, int] = {}
     for summary in items(catalog, "packages")?:
         id = identity(get(summary, "name"))?
         if id in packages:
@@ -132,6 +133,11 @@ def catalog_packages(directory: str, catalog: JsonValue) -> Result[Dict[str, Jso
                 return Err("unexpected manifest path")
             for document in items(version, "documents")?:
                 document_identity(document)?
+                digest = get(document, "digest")
+                size = recorded_count(document, "bytes")?
+                if digest in document_sizes and document_sizes[digest] != size:
+                    return Err("conflicting document byte count")
+                document_sizes[digest] = size
             version_count += 1
         if not versions.contains(get(summary, "latest")):
             return Err("selected version is absent")
@@ -163,21 +169,32 @@ pub def validate(directory: str) -> Result[Dict[str, JsonValue], str]:
         if recorded_count(field(checkpoint, "counts")?, key)? != recorded_count(field(catalog, "counts")?, key)?:
             return Err("snapshot count mismatch")
     jobs = entries(json(read(directory + "/documents.json")?)?)?
+    mut documents: Dict[str, JsonValue] = {}
     for id in packages.keys():
         for version in items(packages[id], "versions")?:
             for document in items(version, "documents")?:
-                mut key = document_identity(document)?
-                # Older snapshots keyed a document by digest alone. Preserve that supported form.
-                if not (key in jobs):
-                    key = get(document, "digest")
-                if not (key in jobs):
+                key = document_identity(document)?
+                documents[key] = document
+                if not (key in jobs) and not (get(document, "digest") in jobs):
                     return Err("missing document formatting record")
-                job = jobs[key]
-                for attribute in ["digest", "content", "format"]:
-                    if get(job, attribute) != get(document, attribute):
-                        return Err("document formatting record mismatch")
-                if recorded_count(job, "bytes")? != recorded_count(document, "bytes")?:
-                    return Err("document formatting record mismatch")
+    # Every job is consumed by the formatter, including legacy aliases and otherwise unreferenced entries.
+    for key in jobs.keys():
+        job = jobs[key]
+        job_key = document_identity(job)?
+        if key != job_key and key != get(job, "digest"):
+            return Err("invalid document formatting key")
+        if not (job_key in documents):
+            return Err("unreferenced document formatting record")
+        document = documents[job_key]
+        if recorded_count(job, "bytes")? != recorded_count(document, "bytes")?:
+            return Err("document formatting record mismatch")
+    # A legacy digest-only entry must match the format of each document that relies on it.
+    for key in documents.keys():
+        document = documents[key]
+        if not (key in jobs):
+            job = jobs[get(document, "digest")]
+            if get(job, "format") != get(document, "format"):
+                return Err("document formatting record mismatch")
     return Ok(packages)
 
 
