@@ -25,6 +25,8 @@ bash -n tools/welcome/publication/run
 
 Preflight only reads inputs and prints JSON. The tests use tiny disposable files in `TMPDIR`; set it to the task-owned cache when running under the integration loop. No source is modified and no compiler build is triggered.
 
+`fixtures/slug-cases.json` records fixed expected anchors for the preview's existing ASCII slug rules. Native regression checks should execute the actual `markdown_docs.slug` helper against these vectors. They cover empty/all-hyphen input, interior repeated separators, underscores, whitespace and filtered characters; they must not substitute another slug implementation with different anchor semantics.
+
 ## Native staging gate
 
 Only run within the coordinator’s assigned build budget, after the matching task-owned toolchain home and compiled dependency closure are ready. Set `INCAN_DOCS_ROOT` to the captured corpus, `INCAN_DOCS_PALLAY` to the exact clean pinned checkout, `INCAN_DOCS_INCAN` to the matched executable, and `INCAN_HOME` to the prepared matching compiler home under this worker's cache root. `INCAN_DOCS_CACHE` must name a **new direct child** of workspace `tmp/.ralph-cache/encero-v1-publishing/docs-integration/`.
