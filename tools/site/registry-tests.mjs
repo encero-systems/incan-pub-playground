@@ -1,3 +1,4 @@
+import './registry-boundary-tests.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile,readdir,access,mkdtemp,mkdir,writeFile,cp} from 'node:fs/promises';
@@ -79,6 +80,7 @@ test('new version routes resolve local assets and internal anchors; latest pages
   const p=await readPackage(name);
   for(const v of p.versions){
    const path=resolve(versionPath(p.name,v.version)),h=await readFile(path,'utf8');const ids=[...h.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(ids).size,ids.length);
+   assert.match(h,/id="api-reference"/);assert.match(h,/API reference is not available in this catalog snapshot/);
    assert.match(h,/class="forge-masthead"/);assert.equal((h.match(/<h1\b/g)||[]).length,1);
    for(const [,url] of h.matchAll(/(?:href|src)="([^"]+)"/g)){
     if(url.startsWith('#')){assert.ok(ids.includes(url.slice(1)),url);continue;}

@@ -72,30 +72,55 @@ def expand(template: str, values: Dict[str, str]) -> Result[str, str]:
     return Ok(out)
 
 
-pub def snapshot(source: str, destination: str) -> Result[None, str]:
-    if len(run("git", ["-C", source, "status", "--porcelain"])?.strip()) > 0:
-        return Err("snapshot requires a clean registry index checkout")
-    pin = run("git", ["-C", source, "rev-parse", "HEAD"])?.strip()
-    catalog = json(read(source + "/catalog/index.json")?)?
+def recorded_count(value: JsonValue, key: str) -> Result[int, str]:
+    """Read a nonnegative integer without treating malformed metadata as zero."""
+    match field(value, key)?.as_int():
+        Some(number) =>
+            if number >= 0:
+                return Ok(number)
+        None => pass
+    return Err("invalid count: " + key)
+
+
+def document_identity(document: JsonValue) -> Result[str, str]:
+    """Validate recorded source-document coordinates before constructing local paths."""
+    digest = get(document, "digest")
+    if not digest.startswith("sha256:") or len(digest) != 71:
+        return Err("invalid document digest")
+    for c in digest[7:]:
+        if not "0123456789abcdef".contains(c):
+            return Err("invalid document digest")
+    if get(document, "content") != "content/sha256/" + digest[7:]:
+        return Err("unexpected content path")
+    format = get(document, "format")
+    if not ["text", "markdown", "restructuredtext"].contains(format):
+        return Err("unsupported document format")
+    if not ["readme", "license", "license-notice", "changelog"].contains(get(document, "role")):
+        return Err("unsupported document role")
+    if not ["package", "registry"].contains(get(document, "origin")):
+        return Err("unsupported document origin")
+    text(field(document, "path")?)?
+    recorded_count(document, "bytes")?
+    return Ok(digest + ":" + format)
+
+
+def catalog_packages(directory: str, catalog: JsonValue) -> Result[Dict[str, JsonValue], str]:
+    """Load the supported catalog model and validate all routing identities before publication."""
     if get(catalog, "schema") != "incan.pub/catalog/1":
         return Err("unsupported catalog schema")
-    mkdir(destination + "/catalog/crates-io")?
-    mkdir(destination + "/content/sha256")?
-    mkdir(destination + "/manifests")?
-    mut copied: Dict[str, bool] = {}
-    mut jobs: Dict[str, JsonValue] = {}
-    mut seen: list[str] = []
+    mut packages: Dict[str, JsonValue] = {}
+    mut version_count = 0
+    mut document_sizes: Dict[str, int] = {}
     for summary in items(catalog, "packages")?:
         id = identity(get(summary, "name"))?
-        if seen.contains(id):
+        if id in packages:
             return Err("duplicate package " + id)
-        seen.append(id)
         if not id.startswith("crates-io/"):
             return Err("unsupported registry facet; a producer contract is required for " + id)
-        mut path = "catalog/" + id + ".json"
+        path = "catalog/" + id + ".json"
         if get(summary, "page") != path:
             return Err("unexpected package feed path")
-        package = json(read(source + "/" + path)?)?
+        package = json(read(directory + "/" + path)?)?
         if get(package, "schema") != "incan.pub/catalog-package/1" or get(package, "name") != id:
             return Err("package schema or identity mismatch")
         mut versions: list[str] = []
@@ -104,22 +129,99 @@ pub def snapshot(source: str, destination: str) -> Result[None, str]:
             if versions.contains(number):
                 return Err("duplicate package version")
             versions.append(number)
-            manifest = id + "/" + number + "/loaf.toml"
-            if get(version, "manifest") != manifest:
+            if get(version, "manifest") != id + "/" + number + "/loaf.toml":
                 return Err("unexpected manifest path")
+            for document in items(version, "documents")?:
+                document_identity(document)?
+                digest = get(document, "digest")
+                size = recorded_count(document, "bytes")?
+                if digest in document_sizes and document_sizes[digest] != size:
+                    return Err("conflicting document byte count")
+                document_sizes[digest] = size
+            version_count += 1
+        if not versions.contains(get(summary, "latest")):
+            return Err("selected version is absent")
+        if recorded_count(summary, "versions")? != len(versions):
+            return Err("package version count mismatch")
+        packages[id] = package
+    counts = field(catalog, "counts")?
+    if recorded_count(counts, "packages")? != len(packages):
+        return Err("catalog package count mismatch")
+    if recorded_count(counts, "versions")? != version_count:
+        return Err("catalog version count mismatch")
+    return Ok(packages)
+
+
+pub def validate(directory: str) -> Result[Dict[str, JsonValue], str]:
+    """Validate a replay's metadata bindings; the formatter separately verifies document bytes."""
+    catalog = json(read(directory + "/catalog/index.json")?)?
+    packages = catalog_packages(directory, catalog)?
+    checkpoint = json(read(directory + "/snapshot.json")?)?
+    if get(checkpoint, "schema") != "incan.pub/site-snapshot/1":
+        return Err("unsupported site snapshot schema")
+    pin = get(checkpoint, "index")
+    if len(pin) != 40:
+        return Err("invalid index checkpoint")
+    for c in pin:
+        if not "0123456789abcdef".contains(c):
+            return Err("invalid index checkpoint")
+    for key in ["packages", "versions"]:
+        if recorded_count(field(checkpoint, "counts")?, key)? != recorded_count(field(catalog, "counts")?, key)?:
+            return Err("snapshot count mismatch")
+    jobs = entries(json(read(directory + "/documents.json")?)?)?
+    mut documents: Dict[str, JsonValue] = {}
+    for id in packages.keys():
+        for version in items(packages[id], "versions")?:
+            for document in items(version, "documents")?:
+                key = document_identity(document)?
+                documents[key] = document
+                if not (key in jobs) and not (get(document, "digest") in jobs):
+                    return Err("missing document formatting record")
+    # Every job is consumed by the formatter, including legacy aliases and otherwise unreferenced entries.
+    for key in jobs.keys():
+        job = jobs[key]
+        job_key = document_identity(job)?
+        if key != job_key and key != get(job, "digest"):
+            return Err("invalid document formatting key")
+        if not (job_key in documents):
+            return Err("unreferenced document formatting record")
+        document = documents[job_key]
+        if recorded_count(job, "bytes")? != recorded_count(document, "bytes")?:
+            return Err("document formatting record mismatch")
+    # A legacy digest-only entry must match the format of each document that relies on it.
+    for key in documents.keys():
+        document = documents[key]
+        if not (key in jobs):
+            job = jobs[get(document, "digest")]
+            if get(job, "format") != get(document, "format"):
+                return Err("document formatting record mismatch")
+    return Ok(packages)
+
+
+pub def snapshot(source: str, destination: str) -> Result[None, str]:
+    """Validate catalog metadata and retain its inputs for content verification and rendering."""
+    if len(run("git", ["-C", source, "status", "--porcelain"])?.strip()) > 0:
+        return Err("snapshot requires a clean registry index checkout")
+    pin = run("git", ["-C", source, "rev-parse", "HEAD"])?.strip()
+    catalog = json(read(source + "/catalog/index.json")?)?
+    packages = catalog_packages(source, catalog)?
+    mkdir(destination + "/catalog/crates-io")?
+    mkdir(destination + "/content/sha256")?
+    mkdir(destination + "/manifests")?
+    mut copied: Dict[str, bool] = {}
+    mut jobs: Dict[str, JsonValue] = {}
+    for summary in items(catalog, "packages")?:
+        id = get(summary, "name")
+        path = "catalog/" + id + ".json"
+        package = packages[id]
+        for version in items(package, "versions")?:
+            number = get(version, "version")
+            manifest = get(version, "manifest")
             mkdir(destination + "/manifests/" + id + "/" + number)?
             write(destination + "/manifests/" + manifest, read(source + "/" + manifest)?)?
             for document in items(version, "documents")?:
                 digest = get(document, "digest")
-                if not digest.startswith("sha256:") or len(digest) != 71:
-                    return Err("invalid document digest")
-                hex = digest[7:]
-                for c in hex:
-                    if not "0123456789abcdef".contains(c):
-                        return Err("invalid digest hex")
-                content = "content/sha256/" + hex
-                if get(document, "content") != content:
-                    return Err("unexpected content path")
+                content = get(document, "content")
                 if not (content in copied):
                     match Path(source + "/" + content).read_bytes():
                         Err(error) => return Err(error.message())
@@ -130,8 +232,6 @@ pub def snapshot(source: str, destination: str) -> Result[None, str]:
                     copied[content] = true
                 # Hash and byte checks are also enforced by the pinned formatting boundary before publication.
                 jobs[digest + ":" + get(document, "format")] = document
-        if not versions.contains(get(summary, "latest")):
-            return Err("selected version is absent")
         write(destination + "/" + path, read(source + "/" + path)?)?
     write(destination + "/catalog/index.json", read(source + "/catalog/index.json")?)?
     write_json(destination + "/documents.json", JsonValue.object(jobs))?
@@ -139,7 +239,7 @@ pub def snapshot(source: str, destination: str) -> Result[None, str]:
         "schema": JsonValue.string("incan.pub/site-snapshot/1"), "index": JsonValue.string(pin),
         "counts": field(catalog, "counts")?, "log": field(catalog, "log")?,
     }))?
-    println("Pinned " + str(len(seen)) + " packages at " + pin)
+    println("Pinned " + str(len(packages)) + " packages at " + pin)
     return Ok(None)
 
 
@@ -339,6 +439,7 @@ def package_page(package: JsonValue, version: JsonValue, latest: str, root: str,
     if len(changelog) == 0:
         changelog = "<p class=\"muted\">No changelog document is recorded for this version.</p>".to_string()
     mut main = section("readme", "README", "Recorded documentation", "<p class=\"section-intro\">Upstream documentation. Cargo examples describe the Rust crate; Add to project provides the Oven dependency.</p>" + readme)
+    main += section("api-reference", "API reference", "Availability", "<p>API reference is not available in this catalog snapshot. Use the README or the upstream documentation link for now. Indexed builds do not establish which APIs can be called from Incan.</p>")
     main += section("features", "Features", "Declared activation", feature_rows(version)?)
     main += section("dependencies", "Dependencies", "Version requirements", dependency_rows(version, root, known)?)
     mut related = "<p>No declared dependents in this checkpoint.</p>"
@@ -355,9 +456,9 @@ def package_page(package: JsonValue, version: JsonValue, latest: str, root: str,
     manifest = read(directory + "/manifests/" + get(version, "manifest"))?
     provenance += "<details><summary>Recorded loaf.toml</summary>" + read(formatted + "/manifests/" + id + "/" + number + ".html")? + "</details>"
     main += section("provenance", "Provenance", "Pinned evidence", provenance)
-    labels: Dict[str, str] = {"readme": "README", "features": "Features", "dependencies": "Dependencies", "dependents": "Dependents", "builds": "Indexed builds", "releases": "Versions &amp; notes", "licenses": "Licenses", "popularity": "Popularity", "security": "Security", "provenance": "Provenance"}
+    labels: Dict[str, str] = {"readme": "README", "api-reference": "API reference", "features": "Features", "dependencies": "Dependencies", "dependents": "Dependents", "builds": "Indexed builds", "releases": "Versions &amp; notes", "licenses": "Licenses", "popularity": "Popularity", "security": "Security", "provenance": "Provenance"}
     mut nav = ""
-    for key in ["readme", "features", "dependencies", "dependents", "builds", "releases", "licenses", "popularity", "security", "provenance"]:
+    for key in ["readme", "api-reference", "features", "dependencies", "dependents", "builds", "releases", "licenses", "popularity", "security", "provenance"]:
         nav += "<a href=\"#" + key + "\">" + labels[key] + "</a>"
     mut authors = joined(field(about, "authors")?)?
     if len(authors) == 0:
@@ -409,6 +510,11 @@ def text_bool(value: JsonValue) -> str:
 
 
 pub def build(directory: str, output: str, templates: str) -> Result[None, str]:
+    """Render a validated registry snapshot using its separately verified formatted documents."""
+    validated = validate(directory)?
+    formatter = run("python3", ["-m", "pygments", "-V"])?
+    if not formatter.startswith("Pygments version 2.19.2,"):
+        return Err("Site build requires Pygments 2.19.2; install tools/site/requirements.txt")
     catalog = json(read(directory + "/catalog/index.json")?)?
     checkpoint = json(read(directory + "/snapshot.json")?)?
     pin = get(checkpoint, "index")
@@ -425,7 +531,7 @@ pub def build(directory: str, output: str, templates: str) -> Result[None, str]:
     for summary in items(catalog, "packages")?:
         id = identity(get(summary, "name"))?
         known[id] = true
-        package = json(read(directory + "/catalog/" + id + ".json")?)?
+        package = validated[id]
         packages.append(package)
         for version in items(package, "versions")?:
             number = checked(get(version, "version"))?
