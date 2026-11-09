@@ -1,0 +1,53 @@
+# Descriptions define the types used below.
+example.Address = Record {
+    street: string
+    city: string
+    country: string
+}
+
+example.Fulfillment = Enum {
+    Shipped(carrier: string, tracking: string)
+    Pending
+}
+
+example.Link = Record { target: ref<example.Target> }
+
+example.Money = Record {
+    amount: decimal<10, 2>
+    currency: string
+}
+
+example.Order = Record {
+    id: i64
+    placed_at [canonical = false]: string
+    address: example.Address
+    fulfillment: example.Fulfillment
+    note: string? = None
+}
+
+example.Target = Record { id: i64 }
+
+# One value: named fields and a nested record.
+example.Order << (
+    id=1003,
+    placed_at="2026-11-04T09:13:00Z",
+    address=(
+        street="42 Halting Lane",
+        city="Amsterdam",
+        country="NL",
+    ),
+    fulfillment=Shipped(carrier="DHL", tracking="JD144155"),
+    note="Ask for \"Ada\". # This stays inside the string.",
+)
+
+# A table: the same declared fields in positional rows.
+example.Order << [
+    (1000, "2026-11-01T09:10:00Z", ("1 Compiler Court", "Zurich", "CH"), Pending),
+    (1001, "2026-11-02T09:11:00Z", ("1 Compiler Court", "Boston", "US"), Pending, "Leave at the door"),
+]
+
+# A typed decimal keeps its scale and its d suffix.
+example.Money << (amount=19.90d, currency="EUR")
+
+# Unquoted paths are references; reading one fetches nothing.
+example.Link << (target=example.remote.point)

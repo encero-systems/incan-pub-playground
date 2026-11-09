@@ -2,6 +2,7 @@
 
 The Incan.pub preview now builds from a pinned registry feed, with the complete catalog and version-specific package pages. [Build and data guide](docs/registry-site.md).
 
+- [.COMIC approved Edition 02](https://encero-systems.github.io/incan-pub-playground/comic/v2/) · [Pinned release style](comic/STYLE-PIN.md)
 - [Hosted catalog](https://encero-systems.github.io/incan-pub-playground/catalog/)
 - [Hosted homepage](https://encero-systems.github.io/incan-pub-playground/)
 - [Incan.io 0.6 website preview, built with Incan](https://encero-systems.github.io/incan-pub-playground/incan-io-directions/obsidian-incan/)

@@ -1,0 +1,55 @@
+"""Build the .COMIC website from Incan-authored content, appearance and bindings."""
+from std.fs import Path
+from std.environ import get_or
+from pub::pallay import DocumentPage, LocalView, lower_document, validate_document
+from pages import home, syntax, benchmarks, paper
+from v2 import home_v2, stylesheet_v2
+from how_it_works import how_it_works_html
+from benchmarks import benchmark_view
+from theme import stylesheet
+from casebook import casebook, casebook_view
+from ticker import example_view
+from highlighting import highlighting_page, highlighting_view, detailed_example
+from syntax_highlight import check_highlighting
+from artwork import amber_halftone_svg, comic_flow_arrows_svg, halftone_svg, flow_arrows_svg, speech_tail_svg, navigation_arrow_svg, bubble_outline_svg, visor_mask_svg, record_bubble_svg
+
+
+def mounted_html(html: str, base_path: str) -> str:
+    if base_path == "":
+        return html
+    return html.replace('href="/', 'href="' + base_path + '/').replace('src="/', 'src="' + base_path + '/').replace("url('/", "url('" + base_path + "/").replace('url("/', 'url("' + base_path + '/')
+
+
+def main() -> None:
+    check_highlighting(detailed_example())
+    output = get_or("COMIC_OUTPUT", "dist")
+    base_path = get_or("COMIC_BASE_PATH", "")
+    mut pages = [DocumentPage(title=".COMIC — Data with its meaning intact", body=home(), stylesheet=stylesheet(), theme_color="#111820", local_views=[benchmark_view(), example_view()]), DocumentPage(title="Syntax — .COMIC", body=syntax(), stylesheet=stylesheet(), theme_color="#111820"), DocumentPage(title="Benchmarks — .COMIC", body=benchmarks(), stylesheet=stylesheet(), theme_color="#111820", local_views=[benchmark_view()]), DocumentPage(title="Design paper — .COMIC", body=paper(), stylesheet=stylesheet(), theme_color="#111820"), DocumentPage(title="The .COMIC casebook — Detective Incus", body=casebook(), stylesheet=stylesheet(), theme_color="#111820", local_views=[casebook_view()]), DocumentPage(title="Syntax highlighting lab — .COMIC", body=highlighting_page(), stylesheet=stylesheet(), theme_color="#111820", local_views=[highlighting_view()]), DocumentPage(title=".COMIC — Edition 02", body=home_v2(), stylesheet=stylesheet_v2(), theme_color="#111820", local_views=[benchmark_view(), example_view()])]
+    paths = ["index.html", "syntax/index.html", "benchmarks/index.html", "paper/index.html", "casebook/index.html", "syntax/highlighting/index.html", "v2/index.html"]
+    for index in range(len(pages)):
+        page = pages[index]
+        errors = validate_document(page)
+        assert len(errors) == 0, "Invalid .COMIC document: " + "\n".join(errors)
+        html = lower_document(page).unwrap()
+        destination = Path(output).joinpath(paths[index])
+        destination.parent().mkdir(parents=true, exist_ok=true).unwrap()
+        destination.write_text(mounted_html(html, base_path), encoding="utf-8", errors="strict", newline=None).unwrap()
+        println("Built " + paths[index])
+
+    artwork = Path(output).joinpath("assets")
+    artwork.mkdir(parents=true, exist_ok=true).unwrap()
+    artwork.joinpath("comic-halftone.svg").write_text(halftone_svg(), encoding="utf-8", errors="strict", newline=None).unwrap()
+    artwork.joinpath("value-flow-arrows.svg").write_text(flow_arrows_svg(), encoding="utf-8", errors="strict", newline=None).unwrap()
+    artwork.joinpath("speech-tail.svg").write_text(speech_tail_svg(), encoding="utf-8", errors="strict", newline=None).unwrap()
+
+    artwork.joinpath("navigation-arrow.svg").write_text(navigation_arrow_svg(), encoding="utf-8", errors="strict", newline=None).unwrap()
+    artwork.joinpath("speech-bubble-outline.svg").write_text(bubble_outline_svg(), encoding="utf-8", errors="strict", newline=None).unwrap()
+    artwork.joinpath("speech-bubble-outline-mobile.svg").write_text(bubble_outline_svg(true), encoding="utf-8", errors="strict", newline=None).unwrap()
+    artwork.joinpath("incus-visor-mask.svg").write_text(visor_mask_svg(), encoding="utf-8", errors="strict", newline=None).unwrap()
+    artwork.joinpath("record-bubble.svg").write_text(record_bubble_svg(), encoding="utf-8", errors="strict", newline=None).unwrap()
+    artwork.joinpath("buyer-bubble.svg").write_text(record_bubble_svg(true), encoding="utf-8", errors="strict", newline=None).unwrap()
+
+    artwork.joinpath("how-it-works.html").write_text(mounted_html(how_it_works_html(), base_path), encoding="utf-8", errors="strict", newline=None).unwrap()
+
+    artwork.joinpath("comic-halftone-amber.svg").write_text(amber_halftone_svg(), encoding="utf-8", errors="strict", newline=None).unwrap()
+    artwork.joinpath("comic-flow-arrows.svg").write_text(comic_flow_arrows_svg(), encoding="utf-8", errors="strict", newline=None).unwrap()

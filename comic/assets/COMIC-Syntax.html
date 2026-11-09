@@ -1,0 +1,1415 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>COMIC Syntax</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brawler:wght@400;700&family=Exo+2:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a reading column beside a section index, with code allowed to run wider than the prose. */
+:root {
+  color-scheme: dark;
+  --bg: #030304; --panel: #0d0f14; --panel-2: #151821; --rule: #272b36;
+  --ink: #e4ebf2; --muted: #93a0b0; --accent: #ffc15a; --accent-2: #48f0ef;
+  --t-path: #ffc15a; --t-kind: #48f0ef; --t-key: #aebccb; --t-str: #9ddf9a; --t-num: #f2a27a;
+  --t-type: #c7b8ff; --t-kw: #ff9ec4; --t-mark: #ff8f8f; --t-com: #6f7b8a;
+  --c-win: #123a2a; --c-lose: #4b2027; --c-mixed: #453816;
+  --font-display: "Brawler", Georgia, serif;
+  --font-body: "Exo 2", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  color-scheme: light;
+  --bg: #f3f5f8; --panel: #ffffff; --panel-2: #e8ecf1; --rule: #d3d9e1;
+  --ink: #12161d; --muted: #566273; --accent: #8a5a00; --accent-2: #00696f;
+  --t-path: #8a5a00; --t-kind: #00696f; --t-key: #3f4c5c; --t-str: #1f7a2e; --t-num: #a84a16;
+  --t-type: #5b3fb5; --t-kw: #b0266e; --t-mark: #b42323; --t-com: #6b7685;
+  --c-win: #d6f1e0; --c-lose: #fadadc; --c-mixed: #f9edc9;
+} }
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f5f8; --panel: #ffffff; --panel-2: #e8ecf1; --rule: #d3d9e1;
+  --ink: #12161d; --muted: #566273; --accent: #8a5a00; --accent-2: #00696f;
+  --t-path: #8a5a00; --t-kind: #00696f; --t-key: #3f4c5c; --t-str: #1f7a2e; --t-num: #a84a16;
+  --t-type: #5b3fb5; --t-kw: #b0266e; --t-mark: #b42323; --t-com: #6b7685;
+  --c-win: #d6f1e0; --c-lose: #fadadc; --c-mixed: #f9edc9;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 1.0625rem/1.65 var(--font-body);
+  padding-block: 2.5rem 5rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.shell { max-width: 72rem; margin-inline: auto; display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 3rem; }
+nav.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1.5rem); align-self: start; display: flex; flex-direction: column; gap: .35rem; font-size: .9rem; }
+nav.index a { color: var(--muted); text-decoration: none; padding-block: .1rem; }
+nav.index a:hover, nav.index a:focus-visible { color: var(--accent); }
+main { min-width: 0; display: flex; flex-direction: column; gap: 3.25rem; }
+section { display: flex; flex-direction: column; gap: 1rem; min-width: 0; scroll-margin-top: 1.5rem; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(2.6rem, 8vw, 4.2rem); color: var(--accent); letter-spacing: .02em; }
+h2 { font-size: 1.65rem; }
+h3 { font-size: 1.15rem; margin-top: .5rem; }
+p { margin: 0; }
+.lede { font-size: 1.2rem; }
+.expansion { font-family: var(--font-mono); font-size: .9rem; color: var(--muted); }
+.status { color: var(--muted); font-size: .95rem; }
+code { font-family: var(--font-mono); font-size: .88em; }
+p code, li code, td code, dd code { color: var(--t-path); }
+ul { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .4rem; }
+pre.code { margin: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: .9rem 1rem; overflow-x: auto; font: 400 .84rem/1.6 var(--font-mono); }
+pre.code code { font-size: inherit; }
+.t-path { color: var(--t-path); } .t-kind { color: var(--t-kind); font-weight: 500; } .t-key { color: var(--t-key); }
+.t-str { color: var(--t-str); } .t-num { color: var(--t-num); } .t-type { color: var(--t-type); }
+.t-kw { color: var(--t-kw); } .t-mark { color: var(--t-mark); } .t-com { color: var(--t-com); font-style: italic; }
+.table { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; padding: .5rem .8rem .5rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: .85rem; }
+td code { white-space: nowrap; }
+.anatomy { display: flex; flex-wrap: wrap; font-family: var(--font-mono); font-size: clamp(.82rem, 2.4vw, 1.05rem); gap: .6rem; align-items: stretch; }
+.anatomy > div { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.anatomy .part { padding: .55rem .8rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
+.anatomy .edge .part { color: var(--t-path); }
+.anatomy .node .part { color: var(--t-kind); }
+.anatomy .eq { align-self: flex-start; padding-block: .6rem; color: var(--muted); }
+.anatomy small { font-family: var(--font-body); font-size: .85rem; color: var(--muted); }
+.triad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.triad div { background: var(--panel); padding: .75rem .9rem; display: flex; flex-direction: column; gap: .15rem; }
+.triad b { font-family: var(--font-mono); font-weight: 500; color: var(--accent); }
+.triad span { font-size: .92rem; color: var(--muted); }
+nav.index a:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; align-items: start; }
+.pair > div { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.cap { font: 500 .78rem var(--font-mono); color: var(--muted); }
+.settled { display: flex; flex-direction: column; gap: 1rem; }
+td.c-win { background: var(--c-win); } td.c-win::after { content: " \2713"; }
+td.c-lose { background: var(--c-lose); } td.c-lose::after { content: " \2715"; }
+td.c-mixed { background: var(--c-mixed); } td.c-mixed::after { content: " ~"; }
+table[data-comic] td, table[data-comic-row] td { padding-left: .5rem; }
+.legend { font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: .3rem 1rem; }
+.legend span { padding: .05rem .4rem; border-radius: 3px; color: var(--ink); }
+.open { border: 1px dashed var(--accent); border-radius: 6px; padding: .9rem 1rem; display: flex; flex-direction: column; gap: .5rem; }
+.tag { font: 500 .72rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  nav.index { position: static; flex-direction: row; flex-wrap: wrap; gap: .3rem .9rem; }
+  .triad { grid-template-columns: minmax(0, 1fr); }
+  .pair { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+
+<div class="shell">
+<nav class="index" aria-label="Sections">
+  <a href="#forms">Two forms</a>
+  <a href="#paths">Paths</a>
+  <a href="#kinds">Kinds</a>
+  <a href="#values">Values</a>
+  <a href="#missing">Missing fields</a>
+  <a href="#markers">Markers</a>
+  <a href="#hashes">Hashes</a>
+  <a href="#crumbling">Crumbling a file</a>
+  <a href="#lock">A lock file</a>
+  <a href="#module">A whole module</a>
+  <a href="#decorators">Decorators and contracts</a>
+  <a href="#changes">What a change does</a>
+  <a href="#toml">Compared with TOML</a>
+  <a href="#yaml">Compared with YAML</a>
+  <a href="#toon">Compared with TOON</a>
+  <a href="#bench">TOON's own benchmark</a>
+  <a href="#deep">Deep data: BRP</a>
+  <a href="#wide">Wide data: Adobe</a>
+  <a href="#clickbench">Parquet's benchmark</a>
+  <a href="#textproto">Compared with Protobuf text</a>
+  <a href="#api">For APIs</a>
+  <a href="#lessons">Parquet and Iceberg</a>
+  <a href="#concise">Why it's concise</a>
+  <a href="#lands">What lands first</a>
+  <a href="#open">Still open</a>
+</nav>
+
+<main>
+<header style="display:flex;flex-direction:column;gap:.7rem">
+  <h1>COMIC</h1>
+  <div class="expansion">Canonical Object Markup for Interoperable Crumbs</div>
+  <p class="lede">The text form of a Crumb. It reports what a program contains and what a value holds, in a form people can read and tools can diff.</p>
+  <p class="status">Design draft from the everything-as-data paper. This is a thought experiment and isn't in any RFC.</p>
+  <div class="triad">
+    <div><b>.incn</b><span>How people write a program</span></div>
+    <div><b>COMIC</b><span>How anyone reads or exchanges the records as text</span></div>
+    <div><b>Crumb</b><span>How the records are stored</span></div>
+  </div>
+</header>
+
+<section id="forms">
+  <h2>Two forms</h2>
+  <p>Almost everything in a file is either a <strong>declaration</strong>, which says what exists at a path, or a <strong>value</strong>, which is an instance of a type.</p>
+  <div class="anatomy" role="img" aria-label="A declaration: the left side is the edge, where it lives; the right side is the node, what it is.">
+    <div class="edge"><div class="part">shop.billing.Cents</div><small>The edge: where it lives</small></div>
+    <div class="eq">=</div>
+    <div class="node"><div class="part">Incan.Newtype { … }</div><small>The node: what it is</small></div>
+  </div>
+  <pre class="code"><code data-lang="comic"># A declaration
+shop.billing.Invoice = Incan.Model {
+    fields { name, type } [
+        ("id", Int),
+        ("total", shop.billing.Cents),
+    ]
+}
+
+# A value has no name of its own, so nothing goes on the left
+shop.billing.Invoice { id = 1, total = 1200 }</code></pre>
+  <p>Hashes only cover the block, so moving <code>Cents</code> changes one path and no canonical hash. However much the first form looks like a declaration, a <code>.comic</code> file defines no code, and reading one creates nothing. To keep its values, you <a href="#crumbling">crumble</a> it.</p>
+  <p>A file is a sequence of these with no imports, and declarations sort by path, so reordering source changes nothing. Two or more records of one model in a row print as one <a href="#values">table</a>.</p>
+</section>
+
+<section id="paths">
+  <h2>Paths</h2>
+  <p>A record has no scope around it, so a path is always absolute: a walk from one of these roots that ends at the real declaration and never at a link. A path reads as one token, because <code>crates-io</code> doesn't lex as an Incan expression.</p>
+  <div class="table"><table>
+    <thead><tr><th>Root</th><th>Means</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><code>pub</code></td><td>A published Loaf, by its registry identity</td><td><code>pub.crates-io.hex.encode</code></td></tr>
+      <tr><td><code>std</code></td><td>The standard library</td><td><code>std.primitives.json.JsonEncoder</code></td></tr>
+      <tr><td><code>rust</code></td><td>Rust's own crates</td><td><code>rust.alloc.vec.Vec</code></td></tr>
+      <tr><td>Anything else</td><td>A local Loaf, meaningful only inside its project</td><td><code>shop.billing.Cents</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>This isn't how source spells an import, because the registry identity, the code namespace and the record are three separate things:</p>
+  <pre class="code"><code data-lang="toml"># loaf.toml: the key is the code namespace, the string is the identity
+spark = { loaf = "apache/spark", version = "3" }</code></pre>
+  <pre class="code"><code data-lang="incan">from pub::spark.sql import SparkSession</code></pre>
+  <pre class="code"><code data-lang="comic">pub.apache.spark.sql.SparkSession = Incan.Class { … }</code></pre>
+  <p>An import is a symlink, so it's recorded as a link on the module it adds a name to:</p>
+  <pre class="code"><code data-lang="comic">shop.billing = Incan.Module { links = [{ name = "encode", target = pub.crates-io.hex.encode }] }</code></pre>
+</section>
+
+<section id="kinds">
+  <h2>Kinds</h2>
+  <p>A block's kind is named by its language, because the same word can mean different things: a C enum is open and a Rust one is closed. Each language's block holds that language's own facts, while builtins like <code>Int</code> and <code>Str</code> have no prefix because they're the same type everywhere.</p>
+  <pre class="code"><code data-lang="comic">shop.billing.Invoice = Incan.Model { fields { … } […] }
+pub.crates-io.serde_json.Token = Rust.Struct { lifetimes = ["a"], fields { … } […] }
+pub.c.zstd.ZSTD_bounds = C.Struct { header = "zstd.h", size = 24, align = 8, fields { … } […] }</code></pre>
+  <p>A path and a kind together make an identity unique, which handles the cases where one name means several things:</p>
+  <pre class="code"><code data-lang="comic"># One name, two kinds
+pub.crates-io.serde.Serialize = Rust.Trait { … }
+pub.crates-io.serde.Serialize = Rust.DeriveMacro { … }
+
+# A repeated trait adoption is a namespace
+shop.Reading.Convert[Int].convert = Incan.Function { … }
+shop.Reading.Convert[Float].convert = Incan.Function { … }
+
+# An overload lists its parameter types
+shop.cast = Incan.Function { overload = [shop.ColumnExpr, Type[Int]], … }</code></pre>
+  <p>A function is one block holding what callers see and what it does. A closure is the same block with <code>captures</code> and no path, so it sits where it's written, and a Rust or C function has no <code>body</code>, because its body is opaque:</p>
+  <pre class="code"><code data-lang="comic">shop.billing.charge = Incan.Function { type = { … }, body = […] }
+Incan.Closure { captures = […], type = { … }, body = […] }
+pub.crates-io.hex.encode = Rust.Function { type = { … } }</code></pre>
+  <p>Every nested block has its own hash, and a reference to a function uses the hash of its <code>type</code>, so callers depend only on what they can see and a body change stops at the function. That's the default. A caller that read more than the <code>type</code>, by instantiating a generic, inlining the body, evaluating it as a constant or generating code from it, records that read as its own dependency, so the change reaches it. A hash says what changed, and the recorded reads say who cares.</p>
+</section>
+
+<section id="values">
+  <h2>Values</h2>
+  <p>Named fields go in <code>{ }</code> and positional values go in <code>( )</code>, and since only a variant's name can appear before <code>(</code>, nothing can be called. A block stays on one line up to 120 characters and otherwise takes one field per line.</p>
+  <div class="table"><table>
+    <thead><tr><th>Value</th><th>COMIC</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td>Integer</td><td><code>1000000</code>, <code>-42</code></td><td>Digits only, with no <code>_</code></td></tr>
+      <tr><td>Float</td><td><code>20.5</code>, <code>100.0</code>, <code>1e16</code></td><td>Shortest digits that round-trip, always with a point or exponent</td></tr>
+      <tr><td>Non-finite</td><td><code>inf</code>, <code>-inf</code>, <code>nan</code></td><td>Only in a float slot</td></tr>
+      <tr><td>Decimal</td><td><code>19.90d</code></td><td>Exactly the type's scale</td></tr>
+      <tr><td>Boolean</td><td><code>true</code>, <code>false</code></td><td></td></tr>
+      <tr><td>String</td><td><code>"text"</code></td><td>Double quotes, no normalization, <code>\u{1}</code> for control characters</td></tr>
+      <tr><td>String with line breaks</td><td><code>"""…"""</code></td><td>Flush left, because indentation would be part of the value</td></tr>
+      <tr><td>Bytes</td><td><code>b"abc\x00"</code></td><td>As in Incan</td></tr>
+      <tr><td>List, tuple</td><td><code>[1, None, 3]</code>, <code>(10, 20)</code></td><td>A list keeps its <code>None</code> elements</td></tr>
+      <tr><td>Dict, set</td><td><code>{"a": 1}</code>, <code>{1, 2}</code></td><td>Sorted, so one value always prints one way</td></tr>
+      <tr><td>Optional</td><td><code>alias = "mail"</code></td><td>Written bare. <code>Some(None)</code> only when nested</td></tr>
+      <tr><td>Enum</td><td><code>Status.Active</code></td><td>A value enum prints its variant, not its value</td></tr>
+      <tr><td>Payload</td><td><code>Shape.Circle(1.0)</code></td><td>Also <code>Ok(2)</code>, <code>Err("bad")</code></td></tr>
+      <tr><td>Open C enum</td><td><code>Mode.Read</code>, <code>Mode(3)</code></td><td><code>Mode(3)</code> when it isn't exactly a variant</td></tr>
+      <tr><td>Newtype</td><td><code>month = 4</code></td><td>Bare in a typed slot, validated on reading</td></tr>
+      <tr><td>Code node</td><td><code>Compare(Gt, a, b)</code></td><td>Code nodes are variants, so they print positionally</td></tr>
+      <tr><td>Generic value</td><td><code>shop.Box[Int] { item = 1 }</code></td><td></td></tr>
+      <tr><td>Block in a one-kind slot</td><td><code>{ name = "id", type = Int }</code></td><td>The name is left out when the slot allows only one kind</td></tr>
+      <tr><td>Table</td><td><code>shop.Item { id, buyer { id, name } } [(1, (7, "ada")), (2, (9, "bob"))]</code></td><td>Two or more records of one model, in a file or in a list, matched to the header by name. The header carries nested shape</td></tr>
+    </tbody>
+  </table></div>
+  <p>Fields on separate lines take no commas, as in Incan's own blocks, while lists and one-line blocks keep them. A list of more than one block or variant takes one per line, and a line past 120 characters breaks at its last open bracket.</p>
+  <p><code>{value:?}</code> prints this same format on one line, with short names, so there's one structure format. Fields follow declaration order, and comments are allowed but are never data.</p>
+</section>
+
+<section id="missing">
+  <h2>Missing fields</h2>
+  <p>The model decides what a missing field means, and reading invents nothing.</p>
+  <pre class="code"><code data-lang="incan">model Field:
+    name: str
+    type: Type
+    required: bool = true
+    alias: Option[str] = None
+    tags: list[str]
+    labels: list[str] = []</code></pre>
+  <div class="table"><table>
+    <thead><tr><th>In the text</th><th>On the model</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><code>alias</code> missing</td><td><code>alias: Option[str]</code></td><td><code>None</code></td></tr>
+      <tr><td><code>labels</code> missing</td><td><code>labels: list[str] = []</code></td><td>Empty: the model declares empty as the default, so an empty one is left out</td></tr>
+      <tr><td><code>tags</code> missing</td><td><code>tags: list[str]</code></td><td>Error: it isn't <code>Option</code> and has no default, so it's required, and an empty one prints as <code>tags = []</code></td></tr>
+      <tr><td><code>name</code> missing</td><td><code>name: str</code></td><td>Error: it's required</td></tr>
+      <tr><td><code>required</code> missing</td><td><code>required: bool = true</code></td><td>Error: the text must not depend on defaults</td></tr>
+      <tr><td><code>nmae = "x"</code></td><td>Not declared</td><td>Error: nothing gets invented</td></tr>
+      <tr><td><code>___nmae = "x"</code></td><td>Not one of the store's names</td><td>Error: the store's names are a closed list</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="markers">
+  <h2>Markers</h2>
+  <p>Some values can be printed but never read back, so a marker appears in their place and reading one is refused.</p>
+  <pre class="code"><code data-lang="comic">Login { user = "ada", password = &lt;secret&gt; }     # Lives only in the running program
+Task { timeout = &lt;Duration: 1.5s&gt; }             # Private state, using its own debug text
+Encoder { ctx = &lt;ZSTD_CCtx&gt; }                   # A C handle or pointer
+Sample { value = &lt;union Value&gt; }                # Only the program knows the active member</code></pre>
+  <h3>Restoring a record that holds a secret</h3>
+  <p>A secret stays in the running program. It's never encoded and enters neither hash. RFC 103 refuses a secret in any ordinary serializer, so a model holding one can't be crumbled or stored, and this marker only ever appears in printed text. Take a login whose password is a <code>SecretStr</code> from RFC 103:</p>
+  <pre class="code"><code data-lang="incan">model Login:
+    user: str
+    password: SecretStr
+
+login = Login(user="ada", password=secret_str("LOGIN_PASSWORD")?)</code></pre>
+  <p>Printed, that record holds no password at all:</p>
+  <pre class="code"><code data-lang="comic">Login { user = "ada", password = &lt;secret&gt; }</code></pre>
+  <p>So reading that text back can't produce a complete <code>Login</code> on its own. The program has to fetch the secret again, from wherever it keeps it, and hand it over by field name:</p>
+  <pre class="code"><code data-lang="incan"># Refused: the text has no password to restore
+restored = Login.from_comic(text)?
+
+# The program supplies the field the marker stands for
+restored = Login.from_comic(text, password=secret_str("LOGIN_PASSWORD")?)?</code></pre>
+  <ul>
+    <li><strong><code>password=</code> names the field holding the marker.</strong> It fills only a marker, so passing <code>user=</code> is refused and a program can't overwrite what the text says.</li>
+    <li><strong>Where the secret comes from is the program's business.</strong> Here it's the environment, through RFC 103's <code>secret_str</code>, but COMIC never knows.</li>
+    <li><strong>There are two <code>?</code>s because two things can fail:</strong> fetching the secret, and reading the text.</li>
+    <li><strong>The record gets today's secret,</strong> which may differ from the one it held when it was printed. That's on purpose, because a secret can't be restored from a previous state.</li>
+    <li><strong>A marker left unfilled is an error,</strong> and is never read as <code>None</code>.</li>
+  </ul>
+</section>
+
+<section id="hashes">
+  <h2>Hashes</h2>
+  <p>A hash covers the value, never the text, so line splits, indentation and key order don't count. A stored record carries three:</p>
+  <div class="table"><table>
+    <thead><tr><th>Hash</th><th>Covers</th><th>Answers</th></tr></thead>
+    <tbody>
+      <tr><td><code>___object_hash</code></td><td>Every stored field</td><td>Is this exactly what was stored?</td></tr>
+      <tr><td><code>___canonical_hash</code></td><td>The fields that define the record</td><td>Is this the same thing?</td></tr>
+      <tr><td><code>___model_hash</code></td><td>The model's own canonical hash</td><td>Was this written against the same model? Nobody has to assign a version number, but reading a record written against a different model still takes a migration or a compatible descriptor, as RFC 165 requires.</td></tr>
+    </tbody>
+  </table></div>
+  <pre class="code"><code data-lang="incan">model Reading:
+    sensor: str
+    value: float
+    received_at [canonical=false]: DateTime</code></pre>
+  <p>They go in the record's own block, after its fields, so a stored record is one block named by its type:</p>
+  <pre class="code"><code data-lang="comic">sensors.readings.Reading {
+    sensor = "a1"
+    value = 20.5
+    received_at = "2026-11-06T09:00:00Z"
+    ___id = "rec_01JC8X…"
+    ___revision = "rev_7f3a…"
+    ___model_hash = "crumb1:sha256:4be1…"
+    ___canonical_hash = "crumb1:sha256:9a2f…"
+    ___object_hash = "crumb1:sha256:7c1d…"
+}</code></pre>
+  <p>Three underscores mean the key belongs to the store and not the model, the way two mark a language hook such as <code>__eq__</code>. A model can't declare a <code>___</code> name, and RFC 165 stores only Incan models, so a key can't collide with a field; a Rust or C field spelled that way is just a field. No hash covers a <code>___</code> key, so a hash never covers itself. <code>___id</code> and <code>___revision</code> are the record's RFC 165 identity and revision, and RFC 165 doesn't define their text form, so those two values are placeholders. Two records with equal contents have the same hashes and different identities, and a value that was never stored has no <code>___</code> keys.</p>
+  <p>Fields count unless the model opts them out. A matching hash only finds a candidate, and a typed comparison confirms it, so a collision can't merge two records. A digest beside the data shows that a record no longer matches, but evidence of tampering also needs a signature, or the digest kept somewhere else.</p>
+  <h3>References</h3>
+  <p>A canonical hash never covers a path. Where a block references something, it uses the target's canonical hash, so moving a target moves nothing. The object hash covers the target's path within its Loaf instead, so a move shows there, while publishing doesn't, because the path within the Loaf stays the same.</p>
+  <p>A hash isn't identity, which is the path, the kind and, for an overload, its parameter types, as RFC 106 requires. Two identical newtypes, <code>shop.a.Id</code> and <code>shop.b.Id</code>, share a canonical hash and remain different types. Repointing a field from one to the other moves no canonical hash, but it moves the object hash and changes an edge, so a tool deciding what to reuse reads those as well.</p>
+  <h3>What counts as the same value</h3>
+  <p>Every hash names its profile as well as its algorithm, as in <code>crumb1:sha256:…</code>, so a hash computed under one set of rules is never compared with one computed under another. A family's codec can lay out its bytes however it wants, because a hash is computed over the profile and not over the stored bytes. These rules are <code>crumb1</code>:</p>
+  <ul>
+    <li><code>-0.0</code> and <code>0.0</code> are different values and hash differently.</li>
+    <li>Every NaN is the one value <code>nan</code>. This profile keeps no NaN sign or payload, so hashing, comparing and reading back all treat them as one value, and a float holding a particular NaN payload doesn't round-trip.</li>
+    <li>Dicts and sets hash in their sorted order.</li>
+    <li><code>None</code> and <code>Some(None)</code> are different values, while a bare <code>x</code> in an <code>Option</code> slot is the same value as <code>Some(x)</code>.</li>
+    <li>Strings aren't normalized, so two spellings of one character hash differently.</li>
+  </ul>
+</section>
+
+<section id="crumbling">
+  <h2>Crumbling a file</h2>
+  <p>A <code>.comic</code> file is what you crumble: load into CrumbDB as crumbs, with each value stored under its namespace and queryable there. The namespace is decided at that point, so publishing <code>shop</code> as <code>acme/shop</code> doesn't rewrite the file.</p>
+  <pre class="code"><code data-lang="comic"># acme.comic
+shop.billing.Invoice { id = 1, customer = "ada", total = 1200 }
+
+# Crumbled into the namespace acme, that record is found under
+acme.shop.billing.Invoice</code></pre>
+  <p>CrumbDB stores records in families and connects them with relationships, so a namespace has to land on those. A path can't simply be a family's name, because moving a type or publishing a Loaf must not rename a family. Crumbling therefore needs a declared, stable mapping from a type to its family, and a declaration's left side becomes a relationship. The CrumbDB paper lists this mapping as an open contract.</p>
+  <p>Loading follows RFC 165's admission rules and CrumbDB's import checks, which gives the <code>___</code> keys a job:</p>
+  <ul>
+    <li>A file loads as one transaction, so all of it is published or none of it.</li>
+    <li>An <code>___object_hash</code> that doesn't match its value is refused.</li>
+    <li>A <code>___model_hash</code> that differs from the family's model needs a migration or a compatible descriptor, or the record is refused.</li>
+    <li>A reference resolves against the store and the rest of the file, so forward references work. One that finds nothing in either is refused.</li>
+    <li><code>___id</code> and <code>___revision</code> are kept or remapped explicitly.</li>
+    <li>Crumbling the same file twice has to change nothing, and one transaction doesn't give that: a fresh identity on each load would duplicate every record without them. Proposed: such a value takes its identity from the load's import key, its model, its canonical hash and which occurrence it is.</li>
+    <li>A file can't write outside the namespace it's crumbled into, so it can't claim <code>std</code> or someone else's Loaf.</li>
+    <li>A marker such as <code>&lt;secret&gt;</code> is refused, because a stored model can't hold a secret.</li>
+  </ul>
+  <p>A declaration in a file is stored as a description you can query. A program can't import it as a type, which still takes a declaration in source. Writing a file out is an export, so it follows CrumbDB's declared privacy and retention profiles.</p>
+  <h3>What lands in the store</h3>
+  <p>This is where COMIC pays off most, because a query can only be as accurate as what was loaded:</p>
+  <div class="table"><table>
+    <thead><tr><th>In the file</th><th>COMIC</th><th>YAML</th><th>TOML</th></tr></thead>
+    <tbody>
+      <tr><td>A reference to <code>Cents</code></td><td>A reference, which becomes an edge</td><td>Text</td><td>Text</td></tr>
+      <tr><td>Text that equals that path</td><td>Text, with no edge</td><td>The same as the reference</td><td>The same as the reference</td></tr>
+      <tr><td><code>NO</code> without quotes</td><td>A path that has to resolve, or it's refused</td><td><code>false</code></td><td>Refused</td></tr>
+      <tr><td><code>1.20</code> in a text field</td><td>Refused by the field's type</td><td><code>1.2</code></td><td><code>1.2</code></td></tr>
+      <tr><td>The decimal <code>19.90</code></td><td>Exactly <code>19.90d</code></td><td><code>19.9</code>, a float</td><td><code>19.9</code>, a float</td></tr>
+      <tr><td>One name with two kinds</td><td>Both</td><td>The last one, with no error</td><td>Refused</td></tr>
+    </tbody>
+  </table></div>
+  <p>So "who uses <code>Cents</code>?" follows edges in COMIC, while over TOML or YAML it can only match text. The YAML and TOML columns are what their parsers return, and the COMIC column follows from its rules, because the prototype reader doesn't check values against a model yet. A careful loader holding the model could fix most of those rows, but by then it's a COMIC reader with YAML's syntax.</p>
+</section>
+
+<section id="lock">
+  <h2>A lock file</h2>
+  <p><code>oven.lock</code> is a good fit because Oven writes it and it reports what was resolved, which is COMIC's job. It keeps its name, and only its contents are COMIC. This is the <code>regex</code> closure, built from real registry lines:</p>
+  <pre class="code"><code data-lang="comic">pub.crates-io.aho-corasick[1.1.4] = Oven.Locked {
+    digest = "sha256:558ce67508564870256e326b6b08126e4c04f1787c1f39980df12dd58c1ba3ad"
+    trust = Verified("…")
+    satisfied_by = Source
+    target_features = ["perf-literal", "std"]
+    dependencies = [pub.crates-io.memchr]
+}
+
+pub.crates-io.memchr[2.8.0] = Oven.Locked {
+    digest = "sha256:a734fee195ec40202911942863e3212bf0cf21529ee1372dafdc98ded71eb2c3"
+    trust = Verified("…")
+    satisfied_by = Source
+    target_features = ["alloc", "std"]
+}
+
+# …regex, regex-automata and regex-syntax…
+
+regex_tutorial = Oven.Lock {
+    manifest = "crumb1:sha256:…"
+    mode = Lowest
+    registry = { endpoint = "https://incan.pub", protocol = "sparse/1" }
+    toolchain = "rustc 1.98.0 (88d9e12ae 2026-08-18)"
+    target = "aarch64-apple-darwin"
+    dependencies = [pub.crates-io.regex]
+}</code></pre>
+  <ul>
+    <li><strong>A lock's paths need versions.</strong> One closure can hold two versions of a Loaf, as <code>wasmtime</code>'s does with <code>hashbrown</code>. An entry always spells its version, and a reference spells it only when the lock holds two, the same rule that makes a slot use a full path when a short name could mean two types. Outside a lock, a path has no version, because the lock is what says which one. So a file exported from a program has to name the resolved graph its references mean, or a reference to a Loaf held at two versions is ambiguous.</li>
+    <li><strong>The graph's identity needs its own fold.</strong> Canonical hashes leave paths out, so two Loaves with the same contents under different names or versions would contribute the same hash, and the root's canonical hash can't serve as the resolved graph identity that RFC 117 asks for. That identity has to bind each entry's exact origin, name, version and dependency edges. RFC 106's closure digest has the right shape: a digest folded over dependencies in identity order.</li>
+    <li><strong>The two hashes still earn their keep.</strong> <code>satisfied_by</code> and <code>trust</code> are <code>canonical=false</code>, so when the registry later bakes an asset, the object hash moves and the graph's identity doesn't. An unchanged graph identity doesn't authorize reuse, though: picking a baked asset still checks that asset's own identity, compatibility and trust.</li>
+    <li><strong>A comment can't make a lock stale.</strong> <code>manifest</code> is the canonical hash of the record <code>loaf.toml</code> reads into, so reformatting the manifest changes nothing.</li>
+  </ul>
+  <p>With whitespace left out, it's a little smaller than a TOML lock holding the same facts:</p>
+  <div class="table"><table data-comic="3" data-rivals="2">
+    <thead><tr><th>Closure</th><th>Loaves</th><th>TOML</th><th>COMIC</th></tr></thead>
+    <tbody>
+      <tr><td><code>regex</code></td><td>5</td><td>2,382 bytes</td><td>2,296 bytes</td></tr>
+      <tr><td><code>wasmtime</code></td><td>114</td><td>41,520 bytes</td><td>39,647 bytes</td></tr>
+      <tr><td><code>datafusion</code></td><td>240</td><td>92,487 bytes</td><td>89,131 bytes</td></tr>
+    </tbody>
+  </table></div>
+  <p>Bumping one Loaf of the <code>regex</code> closure changes 6 lines in either form, and two branches bumping different Loaves merge cleanly. Spelling a version on every reference instead took that to 10 lines and a merge conflict. Only the text was measured: the prototype reader hasn't read a lock, so none of this has been parsed or hashed.</p>
+</section>
+
+<section id="module">
+  <h2>A whole module</h2>
+  <pre class="code"><code data-lang="incan">from std import web
+from rust::hex import encode
+
+type Cents = newtype int[ge=0, storage=u32]
+
+pub model Invoice:
+    id: int
+    customer: str
+    total: Cents
+
+@web.post("/invoices/charge")
+@shop.audit.logged("billing")
+pub def charge(invoice: Invoice, amount: Cents) -> Result[Cents, str] {
+    requires:
+        amount > Cents(0)
+    ensures:
+        Ok(left):
+            left <= invoice.total
+}:
+    return Ok(Cents(invoice.total.0 - amount.0))
+
+pub def reference(invoice: Invoice) -> str:
+    return encode(invoice.customer)</code></pre>
+  <p>Those 19 lines of code produce these records:</p>
+  <pre class="code"><code data-lang="comic">shop.billing = Incan.Module {
+    links { name, target } [
+        ("web", std.web),
+        ("encode", pub.crates-io.hex.encode),
+    ]
+}
+
+shop.billing.Cents = Incan.Newtype { underlying = Int { ge = 0, storage = u32 } }
+
+shop.billing.Invoice = Incan.Model {
+    visibility = Public
+    fields { name, type } [
+        ("id", Int),
+        ("customer", Str),
+        ("total", shop.billing.Cents),
+    ]
+}
+
+shop.billing.charge = Incan.Function {
+    visibility = Public
+    decorators = [
+        Decorator(std.web.post, ["/invoices/charge"]),
+        Decorator(shop.audit.logged, ["billing"]),
+    ]
+    type = {
+        parameters { name, type } [
+            ("invoice", shop.billing.Invoice),
+            ("amount", shop.billing.Cents),
+        ]
+        returns = Result { ok = shop.billing.Cents, err = Str }
+        requires = [Compare(Gt, Parameter(1, "amount"), Construct(shop.billing.Cents, [0]))]
+        ensures = [Arm(Ok(Bind(2, "left")), [Compare(Le, Local(2, "left"), Field(Parameter(0, "invoice"), "total"))])]
+    }
+    body = [
+        Return(Ok(Construct(shop.billing.Cents, [
+            Binary(Sub, Project(Field(Parameter(0, "invoice"), "total"), 0), Project(Parameter(1, "amount"), 0)),
+        ]))),
+    ]
+}
+
+shop.billing.reference = Incan.Function {
+    visibility = Public
+    type = { parameters = [{ name = "invoice", type = shop.billing.Invoice }], returns = Str }
+    body = [Return(Call(pub.crates-io.hex.encode, [Field(Parameter(0, "invoice"), "customer")]))]
+}</code></pre>
+  <p>Code prints as structure like everything else, because COMIC isn't Incan. A reader needs no Incan parser, and every name is a slot or an absolute path, so a record has no scope. People read a contract in source, which the <code>source</code> field points to, or through a tool that renders the tree as Incan, and that's a view of the record and not a second format.</p>
+  <p>The edges are the references in those records, so each fact is written once and the graph is an index built from them: the left-side paths, each field's <code>type</code>, and every call and construction.</p>
+</section>
+
+<section id="decorators">
+  <h2>Decorators and contracts</h2>
+  <p>This round's test found where each of these belongs.</p>
+  <h3>Decorators are part of the implementation</h3>
+  <p>They sit on the function, in order, outside its <code>type</code>. Changing <code>@shop.audit.logged("billing")</code> changes behavior but not what callers compile against, so it recompiles <code>charge</code> and stops there, where putting it in <code>type</code> would recheck every caller for no reason.</p>
+  <ul>
+    <li>A decorator that changes the callable's type does reach callers, because <code>type</code> reports what callers actually call. A <code>declared</code> field then holds the written type, and it only appears when the two differ.</li>
+    <li>Capabilities are different because callers rely on them, so RFC 104's <code>caps=</code> shows up as <code>capabilities</code> in <code>type</code>, wherever it was written.</li>
+    <li>Routes can be read without running anything, because they're a query for <code>std.web.post</code> and its literal arguments.</li>
+  </ul>
+  <h3>Contracts are part of the type</h3>
+  <p>A contract is a promise to callers, as RFC 111 says, so changing one moves the hash of <code>type</code> and callers are rechecked. A docstring doesn't count toward the hash.</p>
+  <h3>Proofs attach to a hash</h3>
+  <p>RFC 111 stores proof results as facts, and owns what they record. A function can have many proofs, one per obligation, so a proof is a value and not a declaration, and it anchors to the canonical hash of the function it was proved against:</p>
+  <pre class="code"><code data-lang="comic">Incan.Proof {
+    of = shop.billing.charge
+    function = "crumb1:sha256:2c7e…"
+    obligation = …
+    assumptions = […]
+    outcome = Proved
+    verifier = …
+}</code></pre>
+  <p>Changing the body, a decorator or the contract moves that hash, so the proof goes stale automatically. Adding a comment doesn't, so the proof can be reused with no solver run, as long as its obligation, assumptions and verifier setup still match. The function's hash already covers the contracts it references, because a reference uses the target's <code>type</code>.</p>
+</section>
+
+<section id="changes">
+  <h2>What a change does</h2>
+  <p>The compiler does some work on every change, and the hashes tell it how far to go.</p>
+  <div class="table"><table>
+    <thead><tr><th>Change</th><th>Canonical hash moves on</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Add a comment</td><td>Nothing</td><td>No code changed, and proofs can be reused</td></tr>
+      <tr><td>Rename a local variable</td><td>Nothing</td><td>No code changed</td></tr>
+      <tr><td>Move <code>Cents</code> to another module</td><td>Nothing</td><td>Moved. Source importing it fails unless a re-export stays behind</td></tr>
+      <tr><td>Move <code>Invoice</code> to another module</td><td>Nothing</td><td>Moved, as above. A model's identity comes from its earliest path, so its stored records read only if it names its old path in <code>renamed_from</code></td></tr>
+      <tr><td>Change <code>charge</code>'s body</td><td><code>charge</code>, but not its <code>type</code></td><td>Recompile <code>charge</code>, re-prove it, and callers that read only its <code>type</code> are unaffected</td></tr>
+      <tr><td>Change a decorator's argument</td><td><code>charge</code>, but not its <code>type</code></td><td>Recompile <code>charge</code>, re-prove it, and callers that read only its <code>type</code> are unaffected</td></tr>
+      <tr><td>Change <code>charge</code>'s contract</td><td>Its <code>type</code>, then each caller</td><td>Callers rechecked</td></tr>
+      <tr><td>Tighten <code>Cents</code></td><td><code>Cents</code>, <code>Invoice</code>, and everything referencing them</td><td>Lists them, plus stored records that would now refuse</td></tr>
+      <tr><td>Upgrade <code>hex</code>, same <code>type</code></td><td>Nothing of the module's</td><td>Relink only, since a Rust body is opaque</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="toml">
+  <h2>Compared with TOML</h2>
+  <p>The two tie on flat data, COMIC is smaller on anything with structure, and TOML can't hold everything a declaration needs. Bytes here leave out whitespace outside strings, because indentation and line breaks only make text readable and would never be stored. A TOML newline counts where it's the only thing separating two keys. Each TOML form is written the way TOML is normally written and was checked with Python's TOML parser.</p>
+
+  <h3>A stored record</h3>
+  <p>The same size. TOML reads a little cleaner, because flat data is what it's for, and it has a real date literal.</p>
+  <div class="pair">
+    <div><span class="cap">TOML: 9 lines, 251 bytes</span>
+    <pre class="code"><code data-lang="toml">[[sensors.readings.Reading]]
+sensor = "a1"
+value = 20.5
+received_at = 2026-11-06T09:00:00Z
+___id = "rec_01JC8X…"
+___revision = "rev_7f3a…"
+___model_hash = "crumb1:sha256:4be1…"
+___canonical_hash = "crumb1:sha256:9a2f…"
+___object_hash = "crumb1:sha256:7c1d…"</code></pre></div>
+    <div><span class="cap">COMIC: 10 lines, 250 bytes</span>
+    <pre class="code"><code data-lang="comic">sensors.readings.Reading {
+    sensor = "a1"
+    value = 20.5
+    received_at = "2026-11-06T09:00:00Z"
+    ___id = "rec_01JC8X…"
+    ___revision = "rev_7f3a…"
+    ___model_hash = "crumb1:sha256:4be1…"
+    ___canonical_hash = "crumb1:sha256:9a2f…"
+    ___object_hash = "crumb1:sha256:7c1d…"
+}</code></pre></div>
+  </div>
+
+  <h3>A newtype</h3>
+  <p>COMIC is shorter, because the kind and the constrained type are part of the syntax, where TOML has to spell them as keys.</p>
+  <div class="pair">
+    <div><span class="cap">TOML: 3 lines, 84 bytes</span>
+    <pre class="code"><code data-lang="toml">[shop.billing.Cents]
+kind = "Incan.Newtype"
+underlying = { type = "Int", ge = 0, storage = "u32" }</code></pre></div>
+    <div><span class="cap">COMIC: 1 line, 66 bytes</span>
+    <pre class="code"><code data-lang="comic">shop.billing.Cents = Incan.Newtype { underlying = Int { ge = 0, storage = u32 } }</code></pre></div>
+  </div>
+
+  <h3>A model</h3>
+  <p>COMIC is smaller, because its table states <code>name</code> and <code>type</code> once, and TOML spends bytes on <code>kind</code> and on quotes. <code>"shop.billing.Cents"</code> is also a string and not a reference, so only the model can tell it from ordinary text.</p>
+  <div class="pair">
+    <div><span class="cap">TOML: 8 lines, 163 bytes</span>
+    <pre class="code"><code data-lang="toml">[shop.billing.Invoice]
+kind = "Incan.Model"
+visibility = "Public"
+fields = [
+    { name = "id", type = "Int" },
+    { name = "customer", type = "Str" },
+    { name = "total", type = "shop.billing.Cents" },
+]</code></pre></div>
+    <div><span class="cap">COMIC: 8 lines, 127 bytes</span>
+    <pre class="code"><code data-lang="comic">shop.billing.Invoice = Incan.Model {
+    visibility = Public
+    fields { name, type } [
+        ("id", Int),
+        ("customer", Str),
+        ("total", shop.billing.Cents),
+    ]
+}</code></pre></div>
+  </div>
+
+  <h3>A function</h3>
+  <p>COMIC is smaller, because TOML spells out <code>kind</code> on every node and each sub-table header restates the path. TOML 1.0's inline tables can't span lines either, so a deep value goes on one line, 364 characters here. Scroll the last line of the TOML to see it.</p>
+  <div class="pair">
+    <div><span class="cap">TOML: 34 lines, 1,160 bytes, longest line 364</span>
+    <pre class="code"><code data-lang="toml">[shop.billing.charge]
+kind = "Incan.Function"
+visibility = "Public"
+decorators = [
+    { of = "std.web.post", arguments = ["/invoices/charge"] },
+    { of = "shop.audit.logged", arguments = ["billing"] },
+]
+
+[shop.billing.charge.type]
+parameters = [
+    { name = "invoice", type = "shop.billing.Invoice" },
+    { name = "amount", type = "shop.billing.Cents" },
+]
+returns = { kind = "Result", ok = "shop.billing.Cents", err = "Str" }
+
+[[shop.billing.charge.type.requires]]
+kind = "Compare"
+op = "Gt"
+left = { kind = "Parameter", slot = 1, name = "amount" }
+right = { kind = "Construct", of = "shop.billing.Cents", arguments = [0] }
+
+[[shop.billing.charge.type.ensures]]
+kind = "Arm"
+pattern = { kind = "Ok", value = { kind = "Bind", slot = 2, name = "left" } }
+
+[[shop.billing.charge.type.ensures.conditions]]
+kind = "Compare"
+op = "Le"
+left = { kind = "Local", slot = 2, name = "left" }
+right = { kind = "Field", of = { kind = "Parameter", slot = 0, name = "invoice" }, name = "total" }
+
+[[shop.billing.charge.body.statements]]
+kind = "Return"
+value = { kind = "Ok", value = { kind = "Construct", of = "shop.billing.Cents", arguments = [{ kind = "Binary", op = "Sub", left = { kind = "Project", of = { kind = "Field", of = { kind = "Parameter", slot = 0, name = "invoice" }, name = "total" }, index = 0 }, right = { kind = "Project", of = { kind = "Parameter", slot = 1, name = "amount" }, index = 0 } }] } }</code></pre></div>
+    <div><span class="cap">COMIC: 21 lines, 617 bytes, longest line 118</span>
+    <pre class="code"><code data-lang="comic">shop.billing.charge = Incan.Function {
+    visibility = Public
+    decorators = [
+        Decorator(std.web.post, ["/invoices/charge"]),
+        Decorator(shop.audit.logged, ["billing"]),
+    ]
+    type = {
+        parameters { name, type } [
+            ("invoice", shop.billing.Invoice),
+            ("amount", shop.billing.Cents),
+        ]
+        returns = Result { ok = shop.billing.Cents, err = Str }
+        requires = [Compare(Gt, Parameter(1, "amount"), Construct(shop.billing.Cents, [0]))]
+        ensures = [Arm(Ok(Bind(2, "left")), [Compare(Le, Local(2, "left"), Field(Parameter(0, "invoice"), "total"))])]
+    }
+    body = [
+        Return(Ok(Construct(shop.billing.Cents, [
+            Binary(Sub, Project(Field(Parameter(0, "invoice"), "total"), 0), Project(Parameter(1, "amount"), 0)),
+        ]))),
+    ]
+}</code></pre></div>
+  </div>
+
+  <h3>One name, two meanings</h3>
+  <p>COMIC keeps a declaration's path apart from the fields in its block. TOML has one key space for both, so a method called <code>fields</code> collides with the model's <code>fields</code>. This is the namespace problem again, and the parser refuses it:</p>
+  <div class="pair">
+    <div><span class="cap">TOML: refused</span>
+    <pre class="code"><code data-lang="toml">[shop.billing.Invoice]
+kind = "Incan.Model"
+fields = [{ name = "id", type = "Int" }]
+
+[shop.billing.Invoice.fields]
+kind = "Incan.Function"
+
+# Cannot declare ('shop', 'billing', 'Invoice', 'fields') twice</code></pre></div>
+    <div><span class="cap">COMIC: fine</span>
+    <pre class="code"><code data-lang="comic">shop.billing.Invoice = Incan.Model { fields = [{ name = "id", type = Int }] }
+
+shop.billing.Invoice.fields = Incan.Function { … }</code></pre></div>
+  </div>
+  <p>One name with two kinds, like <code>serde::Serialize</code>, gets the same error. Quoting the whole path, as in <code>["shop.billing.Invoice.fields"]</code>, avoids the first collision, but the path is then a string, and two kinds at one path still collide.</p>
+
+  <h3>Values</h3>
+  <div class="table"><table>
+    <thead><tr><th>Value</th><th>COMIC</th><th>TOML</th></tr></thead>
+    <tbody>
+      <tr><td>Date and time</td><td><code>"2026-11-06T09:00:00Z"</code></td><td><code>2026-11-06T09:00:00Z</code>, a real literal, so TOML is better here</td></tr>
+      <tr><td>Enum</td><td><code>Status.Active</code></td><td><code>"Active"</code>, a string only the model can read</td></tr>
+      <tr><td>Payload</td><td><code>Shape.Circle(1.0)</code></td><td><code>{ variant = "Circle", value = 1.0 }</code>, a convention we'd have to invent</td></tr>
+      <tr><td><code>None</code> in a list</td><td><code>[1, None, 3]</code></td><td>No spelling, and the parser refuses it</td></tr>
+      <tr><td>Nested optional</td><td><code>Some(None)</code></td><td>No spelling</td></tr>
+      <tr><td>Decimal</td><td><code>19.90d</code></td><td><code>"19.90"</code>, because a float would lose the scale</td></tr>
+      <tr><td>Bytes</td><td><code>b"abc\x00"</code></td><td>A string in an encoding we'd have to agree on</td></tr>
+      <tr><td>Dict with integer keys</td><td><code>{1: "a"}</code></td><td>Keys are always strings</td></tr>
+      <tr><td>Large integer</td><td><code>18446744073709551615</code></td><td>Parsers only have to handle 64-bit signed integers</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Weighing them</h3>
+  <div class="table"><table>
+    <thead><tr><th></th><th>TOML</th><th>COMIC</th></tr></thead>
+    <tbody>
+      <tr><td>Flat data</td><td>The same size, and reads a little cleaner</td><td>The same size</td></tr>
+      <tr><td>Deep structure</td><td>Larger, with deep values on one line and headers repeating the path</td><td>Wins: smaller, and the shape is visible</td></tr>
+      <tr><td>Kinds and references</td><td>Strings in a <code>kind</code> key and in values</td><td>Wins: part of the syntax</td></tr>
+      <tr><td>Paths and fields</td><td>One key space, so they collide</td><td>Wins: left side and block are separate</td></tr>
+      <tr><td>Incan's values</td><td>Needs conventions on top, which amounts to a second format</td><td>Wins: holds them all</td></tr>
+      <tr><td>Tools</td><td>Wins: parsers everywhere, and people know it</td><td>Needs its own reader</td></tr>
+    </tbody>
+  </table></div>
+
+</section>
+
+<section id="yaml">
+  <h2>Compared with YAML</h2>
+  <p>YAML is the closer rival. Its tags give real kinds, flat dotted keys don't collide, and it doesn't quote strings, so sizes land within a few percent of COMIC either way. What it can't offer is one value with one text. YAML's indentation is syntax rather than decoration, so its counts use its smallest valid form, block style or flow style. Each form was checked with PyYAML, and each flow form reloads to the same value.</p>
+  <div class="table"><table data-comic="3" data-rivals="1,2">
+    <thead><tr><th>Bytes, without optional whitespace</th><th>TOML</th><th>YAML</th><th>COMIC</th></tr></thead>
+    <tbody>
+      <tr><td>Stored record</td><td>251</td><td><strong>246</strong></td><td>250</td></tr>
+      <tr><td>Newtype</td><td>84</td><td>74</td><td><strong>66</strong></td></tr>
+      <tr><td>Model</td><td>163</td><td>154</td><td><strong>127</strong></td></tr>
+      <tr><td>Function</td><td>1,160</td><td>666</td><td><strong>617</strong></td></tr>
+      <tr><td>Whole module</td><td>1,895</td><td>1,242</td><td><strong>1,128</strong></td></tr>
+      <tr><td><code>regex</code> lock</td><td>2,382</td><td><strong>2,223</strong></td><td>2,296</td></tr>
+      <tr><td><code>wasmtime</code> lock</td><td>41,520</td><td>40,168</td><td><strong>39,647</strong></td></tr>
+      <tr><td><code>datafusion</code> lock</td><td>92,487</td><td>90,273</td><td><strong>89,131</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p>YAML wins where a value is mostly strings, because it leaves off the quotes. In COMIC those quotes are what tell text from a reference: <code>type: Int</code> in YAML is the text "Int", and <code>type = Int</code> in COMIC is the type.</p>
+
+  <h3>A model</h3>
+  <div class="pair">
+    <div><span class="cap">YAML: 6 lines, 154 bytes in flow style</span>
+    <pre class="code"><code data-lang="yaml">shop.billing.Invoice: !Incan.Model
+  visibility: Public
+  fields:
+    - {name: id, type: Int}
+    - {name: customer, type: Str}
+    - {name: total, type: shop.billing.Cents}</code></pre></div>
+    <div><span class="cap">COMIC: 8 lines, 127 bytes</span>
+    <pre class="code"><code data-lang="comic">shop.billing.Invoice = Incan.Model {
+    visibility = Public
+    fields { name, type } [
+        ("id", Int),
+        ("customer", Str),
+        ("total", shop.billing.Cents),
+    ]
+}</code></pre></div>
+  </div>
+
+  <h3>A function</h3>
+  <div class="pair">
+    <div><span class="cap">YAML: 16 lines, 666 bytes in flow style</span>
+    <pre class="code"><code data-lang="yaml">shop.billing.charge: !Incan.Function
+  visibility: Public
+  decorators:
+    - !Decorator [std.web.post, [/invoices/charge]]
+    - !Decorator [shop.audit.logged, [billing]]
+  type:
+    parameters:
+      - {name: invoice, type: shop.billing.Invoice}
+      - {name: amount, type: shop.billing.Cents}
+    returns: !Result {ok: shop.billing.Cents, err: Str}
+    requires:
+      - !Compare [Gt, !Parameter [1, amount], !Construct [shop.billing.Cents, [0]]]
+    ensures:
+      - !Arm [!Ok [!Bind [2, left]], [!Compare [Le, !Local [2, left], !Field [!Parameter [0, invoice], total]]]]
+  body:
+    - !Return [!Ok [!Construct [shop.billing.Cents, [!Binary [Sub, !Project [!Field [!Parameter [0, invoice], total], 0], !Project [!Parameter [1, amount], 0]]]]]]</code></pre></div>
+    <div><span class="cap">COMIC: 21 lines, 617 bytes</span>
+    <pre class="code"><code data-lang="comic">shop.billing.charge = Incan.Function {
+    visibility = Public
+    decorators = [
+        Decorator(std.web.post, ["/invoices/charge"]),
+        Decorator(shop.audit.logged, ["billing"]),
+    ]
+    type = {
+        parameters { name, type } [
+            ("invoice", shop.billing.Invoice),
+            ("amount", shop.billing.Cents),
+        ]
+        returns = Result { ok = shop.billing.Cents, err = Str }
+        requires = [Compare(Gt, Parameter(1, "amount"), Construct(shop.billing.Cents, [0]))]
+        ensures = [Arm(Ok(Bind(2, "left")), [Compare(Le, Local(2, "left"), Field(Parameter(0, "invoice"), "total"))])]
+    }
+    body = [
+        Return(Ok(Construct(shop.billing.Cents, [
+            Binary(Sub, Project(Field(Parameter(0, "invoice"), "total"), 0), Project(Parameter(1, "amount"), 0)),
+        ]))),
+    ]
+}</code></pre></div>
+  </div>
+
+  <h3>One value, one text</h3>
+  <p>This is where YAML falls short. A format can only be canonical if a value has exactly one text and a text has exactly one value, and YAML has neither:</p>
+  <div class="table"><table>
+    <thead><tr><th>YAML text</th><th>Reads as</th></tr></thead>
+    <tbody>
+      <tr><td><code>country: NO</code></td><td><code>false</code></td></tr>
+      <tr><td><code>version: 1.20</code></td><td><code>1.2</code></td></tr>
+      <tr><td><code>feature: on</code></td><td><code>true</code></td></tr>
+      <tr><td><code>timeout: 12:30:00</code></td><td><code>45000</code></td></tr>
+      <tr><td><code>code: 0123</code></td><td><code>83</code></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>Those readings depend on the parser's YAML version.</strong> PyYAML and Ruby's parser agree on all of them because both follow YAML 1.1, and YAML 1.2 reads most of them as text. None of the registry's 7,133 feature names or its versions hit this, but stored records hold arbitrary text.</li>
+    <li><strong>No printer gives one value one text.</strong> <code>x: 1</code>, <code>{x: 1}</code>, <code>"x": 1</code>, <code>x: !!int 1</code>, <code>x: 0x1</code> and <code>? x</code> followed by <code>: 1</code> all load as the same value. Accepting several spellings isn't the problem, since a COMIC reader also accepts comments, any whitespace and a lone record beside a table. The difference is that COMIC specifies one printer, so each value has one canonical output. A canonical YAML would be a subset and a printer we'd have to define, which is a format of our own anyway.</li>
+    <li><strong>Two kinds at one key are lost silently.</strong> With <code>serde.Serialize</code> as both a trait and a derive macro, both parsers kept only the last one and reported nothing. TOML at least refuses it.</li>
+    <li><strong>Tags need a custom loader.</strong> The safe loader refuses them, with <code>could not determine a constructor for the tag '!Incan.Model'</code>, and a loader that builds objects from tags brings the same risk as <code>pickle</code>. COMIC's reader only ever checks values against a model.</li>
+  </ul>
+
+  <h3>Weighing them</h3>
+  <div class="table"><table>
+    <thead><tr><th></th><th>YAML</th><th>COMIC</th></tr></thead>
+    <tbody>
+      <tr><td>Size</td><td>Within a few percent, and smaller when mostly strings</td><td>Within a few percent, and smaller when structured</td></tr>
+      <tr><td>Kinds</td><td>Tags work well, though they need a custom loader</td><td>Part of the syntax</td></tr>
+      <tr><td>References</td><td>Strings</td><td>Wins: bare paths</td></tr>
+      <tr><td>Paths and fields</td><td>Fine with flat dotted keys, but two kinds at one key are lost</td><td>Wins: path and kind together</td></tr>
+      <tr><td>Values</td><td>Most fit with tags, and <code>null</code> and integer keys work natively, but <code>Some(None)</code> has no spelling</td><td>Holds them all</td></tr>
+      <tr><td>Canonical</td><td>No</td><td>Wins: one value, one text</td></tr>
+      <tr><td>Whitespace</td><td>Syntax in block style</td><td>Wins: only ever for reading</td></tr>
+      <tr><td>Tools</td><td>Wins: parsers everywhere</td><td>Needs its own reader</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="toon">
+  <h2>Compared with TOON</h2>
+  <p>TOON is built to save tokens when data is fed to a model, so this comparison counts tokens. It was designed for uniform rows, and its table is the one idea from any of these formats that COMIC took. It loses on everything else. Each format gets its smallest valid form, so COMIC, JSON and TOML drop their whitespace, while TOON and block YAML keep the indentation their syntax needs. JSON, YAML and TOON all get the same positional shape COMIC uses wherever that made them smaller.</p>
+  <div class="table"><table data-comic="1" data-rivals="2,3,4,5">
+    <thead><tr><th>Tokens (Qwen / Gemma)</th><th>COMIC</th><th>TOON</th><th>JSON</th><th>YAML</th><th>TOML</th></tr></thead>
+    <tbody>
+      <tr><td>Stored record</td><td>122 / 123</td><td>128 / 130</td><td>125 / 126</td><td><strong>120 / 122</strong></td><td>124 / 125</td></tr>
+      <tr><td>Model</td><td><strong>38 / 42</strong></td><td>46 / 49</td><td>49 / 51</td><td>45 / 50</td><td>54 / 56</td></tr>
+      <tr><td>Function</td><td><strong>176 / 196</strong></td><td>409 / 422</td><td>218 / 226</td><td>209 / 218</td><td>365 / 385</td></tr>
+      <tr><td>Whole module</td><td><strong>323 / 367</strong></td><td>640 / 672</td><td>399 / 423</td><td>379 / 407</td><td>600 / 639</td></tr>
+      <tr><td><code>regex</code> lock</td><td><strong>872 / 945</strong></td><td>967 / 1,049</td><td>901 / 971</td><td>885 / 972</td><td>961 / 990</td></tr>
+      <tr><td><code>datafusion</code> lock</td><td><strong>36,373 / 39,926</strong></td><td>40,158 / 43,946</td><td>37,583 / 41,029</td><td>37,201 / 41,094</td><td>39,411 / 40,787</td></tr>
+      <tr><td>100 invoices</td><td><strong>1,059 / 1,030</strong></td><td>1,214 / 1,134</td><td>1,656 / 1,625</td><td>1,737 / 1,826</td><td>2,547 / 2,517</td></tr>
+    </tbody>
+  </table></div>
+  <p>TOON's README says compact JSON beats it on deep or non-uniform data, and these numbers agree: on a function, TOON takes about twice the tokens of compact JSON and more than twice those of COMIC. On 100 uniform invoices, COMIC only beats it because of the table below; record by record, COMIC would take 2,148 / 2,218 tokens, about twice TOON's.</p>
+  <p>The counts come from the local Qwen 3.5 and Gemma 4 tokenizers. TOON's own benchmarks use OpenAI's <code>o200k_base</code>, and absolute numbers differ by tokenizer. The TOON forms come from an encoder written from v4.4 of its spec, which reproduces the spec's examples but hasn't been checked against the reference implementation. Only token counts were measured, not how accurately a model reads each format. These results also favor COMIC by construction: these are its own kinds of data, and its table form and concise rules were added after seeing these same cases, so <a href="#bench">TOON's own benchmark datasets</a> are the fairer test.</p>
+
+  <h3>What TOON can't carry</h3>
+  <p>TOON carries the JSON data model, so it can't be what you crumble. Its spec turns <code>1.0</code> into <code>1</code>, <code>-0.0</code> into <code>0</code>, and <code>nan</code> and <code>inf</code> into <code>null</code>. Kinds and references are strings, and so are decimals and bytes. In its favor, its encoding rules are close to deterministic, which puts it nearer to canonical than YAML, and its declared lengths let a reader notice a truncated table.</p>
+
+  <h3>The table COMIC took from it</h3>
+  <p>Uniform rows were COMIC's one real weakness, because every record repeated its path and field names. TOON's table fixes that, so two or more records of one model in a row now print as one:</p>
+  <div class="pair">
+    <div><span class="cap">TOON: 1,214 / 1,134 tokens, 1,633 bytes</span>
+    <pre class="code"><code data-lang="toon">shop.billing.Invoice[100]{id,customer,total}:
+  1,grace,137
+  2,linus,174
+  3,margaret,211
+  …</code></pre></div>
+    <div><span class="cap">COMIC: 1,059 / 1,030 tokens, 1,828 bytes</span>
+    <pre class="code"><code data-lang="comic">shop.billing.Invoice { id, customer, total } [
+    (1, "grace", 137),
+    (2, "linus", 174),
+    (3, "margaret", 211),
+    …
+]</code></pre></div>
+  </div>
+  <p>That's half of what it took record by record, and 13% and 9% below TOON. The count is for its form without whitespace, as you'd hand it to a model; printed as above, it takes 1,564 / 1,534 tokens, more than TOON. TOON stays smaller in bytes, because COMIC quotes its strings.</p>
+  <ul>
+    <li><strong>A row is matched by name.</strong> The header costs only 5 or 6 tokens, and it means reordering a model's fields can't silently change what old text means.</li>
+    <li><strong>The header carries nested shape.</strong> One header describes everything inside a row, so nested records and lists print positionally, and they're still matched by name. A list of two or more records inside a single record is a table too, and so is a dict of records.</li>
+    <li><strong>A cell is never skipped.</strong> A row writes <code>None</code> for a missing optional and <code>[]</code> for an empty list, and a column is left out of the header when every row could leave that field out: an optional that's <code>None</code> in every row, or a collection that's empty by default in every row.</li>
+    <li><strong>Each row is still one record.</strong> It has its own hashes, and stored records fit with <code>___id</code> and the hashes as columns. A table is only layout, so no hash covers it, and it loads naturally into one family when crumbled.</li>
+    <li><strong>A writer can still append.</strong> A reader accepts a lone record or a second table at the end of a file, and the formatter merges them, which keeps one value, one text.</li>
+  </ul>
+</section>
+
+<section id="bench">
+  <h2>TOON's own benchmark</h2>
+  <p>COMIC wasn't tuned on these datasets. They come from TOON's repo at commit <code>9622df2</code>, sized for its token-efficiency track, and the TOON forms come from its own reference encoder. Tokens are counted its way, with <code>gpt-tokenizer</code> and <code>o200k_base</code>. COMIC's model is inferred from each dataset's shape, so enums and dates stay as quoted text. A small reader read each COMIC form back to the same values, treating <code>None</code> and a missing field as equal.</p>
+  <div class="table"><table data-comic="3,4" data-rivals="1,2,5">
+    <thead><tr><th>o200k tokens</th><th>TOON, best delimiter</th><th>JSON compact</th><th>COMIC</th><th>COMIC with only a flat header</th><th>CSV</th></tr></thead>
+    <tbody>
+      <tr><td>2,000 employees</td><td>49,921</td><td>79,349</td><td>47,360</td><td>47,360</td><td><strong>46,219</strong></td></tr>
+      <tr><td>500 orders, nested</td><td>73,550</td><td>69,990</td><td><strong>47,738</strong></td><td>60,004</td><td></td></tr>
+      <tr><td>365 days of analytics</td><td>9,116</td><td>14,213</td><td>8,752</td><td>8,752</td><td><strong>8,382</strong></td></tr>
+      <tr><td>100 GitHub repos</td><td>8,937</td><td>11,640</td><td>8,865</td><td>8,865</td><td><strong>8,708</strong></td></tr>
+      <tr><td>2,000 event logs, semi-uniform</td><td>154,090</td><td>128,530</td><td><strong>93,651</strong></td><td>98,093</td><td></td></tr>
+      <tr><td>1 deeply nested config</td><td>584</td><td>551</td><td><strong>518</strong></td><td>535</td><td></td></tr>
+      <tr><td>500 feature flags, keyed</td><td><strong>10,536</strong></td><td>15,687</td><td>11,197</td><td>14,701</td><td></td></tr>
+      <tr><td>1,000 contacts, nested groups</td><td><strong>26,367</strong></td><td>47,018</td><td>30,041</td><td>37,008</td><td></td></tr>
+      <tr><td>Total</td><td>333,101</td><td>366,978</td><td><strong>248,122</strong></td><td>275,318</td><td></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>COMIC beats TOON on 6 of the 8,</strong> and uses about 26% fewer tokens overall. It beats compact JSON on all 8. The flat-header column is the table form as it stood before this test: it also beats TOON on 6 of 8, by about 17% overall. The nested header was written before these numbers were run, but only adopted after seeing them.</li>
+    <li><strong>The biggest wins are where TOON's table gives out.</strong> One optional field drops TOON's event logs out of its table, so every record repeats its keys. A COMIC table just writes <code>None</code> in that cell.</li>
+    <li><strong>TOON wins keyed and nested-group data,</strong> because it has forms for exactly those shapes and doesn't quote its strings. CSV wins all three flat datasets it can represent.</li>
+    <li><strong>The other tokenizers agree overall.</strong> COMIC totals 321,684 / 330,409 on Qwen and Gemma, against TOON's 407,269 / 417,186 and compact JSON's 431,346 / 441,890.</li>
+  </ul>
+  <h3>How far this goes</h3>
+  <ul>
+    <li><strong>These counts are for COMIC without whitespace,</strong> as one long line handed to a model. Printed with a row per line and spaces, the total is 294,577: still below TOON overall because of the nested data, but above it on the flat datasets, such as 63,363 against 49,921 for employees.</li>
+    <li><strong>Bytes tell a different story on flat data.</strong> TOON takes 138,324 bytes for the employees against COMIC's 150,323, because COMIC quotes its strings. On nested data COMIC is far smaller: 111,826 against 190,220 for orders.</li>
+    <li><strong>Reading accuracy isn't measured,</strong> and that's the other half of TOON's benchmark. Positional rows might be harder for a model to read, so these counts don't show COMIC would score higher on TOON's own measure. That matters only where a model has to read a whole file, and <a href="#ask">it shouldn't have to</a>.</li>
+    <li><strong>TOON needs no model and has real tooling.</strong> It's a drop-in for any JSON, while COMIC here had its model inferred, and only a small prototype reader exists.</li>
+  </ul>
+  <h3 id="ask">A model asks, it doesn't read</h3>
+  <p>TOON's benchmark hands a model the data and asks it a question. COMIC has a better route: the file is crumbled into CrumbDB, and the model reads the model declaration, writes a query and reads the answer. So the counts above describe a compact text, not how a model should meet a COMIC file.</p>
+  <p>TOON's published results show why reading is the weak route. These are its 244 questions across 4 models:</p>
+  <div class="table"><table>
+    <thead><tr><th>Question type</th><th>Questions</th><th>TOON</th><th>JSON</th><th>YAML</th><th>XML</th></tr></thead>
+    <tbody>
+      <tr><td>Field retrieval</td><td>92</td><td>97.8%</td><td>99.2%</td><td>99.7%</td><td>99.2%</td></tr>
+      <tr><td>Aggregation</td><td>63</td><td>48.4%</td><td>48.4%</td><td>46.0%</td><td>46.0%</td></tr>
+      <tr><td>Filtering</td><td>48</td><td>38.0%</td><td>41.1%</td><td>40.1%</td><td>37.5%</td></tr>
+      <tr><td>Structure awareness</td><td>36</td><td>90.3%</td><td>84.0%</td><td>79.2%</td><td>84.0%</td></tr>
+      <tr><td>Structural validation</td><td>5</td><td>100%</td><td>50%</td><td>50%</td><td>80%</td></tr>
+    </tbody>
+  </table></div>
+  <p>Counting and filtering fail in every format. Models get them right 38% to 48% of the time, whichever one they read, and those two types account for about 92% of TOON's wrong answers. A better format can't fix arithmetic over rows, and a query simply computes it.</p>
+  <p>The cost changes too, because it stops growing with the rows:</p>
+  <div class="table"><table data-comic="3" data-rivals="1,2">
+    <thead><tr><th>o200k tokens for one question</th><th>Read it: TOON</th><th>Read it: COMIC</th><th>Ask</th></tr></thead>
+    <tbody>
+      <tr><td>2,000 employees: how many match?</td><td>49,921</td><td>47,360</td><td><strong>64</strong></td></tr>
+      <tr><td>2,000 employees: list the 212 that match</td><td>49,921</td><td>47,360</td><td><strong>2,103</strong></td></tr>
+      <tr><td>500 nested orders: how many match?</td><td>73,550</td><td>47,738</td><td><strong>136</strong></td></tr>
+      <tr><td>1,182 BRP persons: how many match?</td><td>702,515</td><td>386,085</td><td><strong>3,835</strong></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>How this was counted.</strong> Asking counts a typed declaration inferred from the data, the query and the answer. Reading counts the whole file, and both leave out the question and any instructions. The queries are SQL stand-ins, because IncQL over CrumbDB is still a proposal, so only their size is measured. Nothing here was run through a model.</li>
+    <li><strong>The risk moves to writing the query.</strong> A model has to get the query right from the declaration, and a wrong query returns a clean wrong answer that's hard to spot. That's the accuracy test COMIC needs: the same 244 questions, answered by query, once one can be run.</li>
+    <li><strong>A model still reads COMIC twice:</strong> the declaration and the result. Both are small, and field retrieval at about 98% or better in those formats suggests small reads aren't the problem, though no model has read COMIC yet.</li>
+    <li><strong>Without a store, reading is the only route,</strong> as when a payload goes straight into a prompt, and COMIC's accuracy there is unknown.</li>
+    <li><strong>TOON's perfect structural validation is worth learning from.</strong> Its table declares how many rows it has, so a dropped or added row shows. A COMIC table doesn't, and no hash covers a table, so a row removed cleanly would crumble without complaint. A narrower row or a cut-off file can't parse. This is <a href="#open">still open</a>.</li>
+  </ul>
+  <h3>The nested header</h3>
+  <p>One header describes everything inside a row, and nested records and lists print positionally:</p>
+  <pre class="code"><code data-lang="comic">bench.Order { orderId, customer { id, name }, items { sku, quantity }, total } [
+    ("ORD-0001", (1, "Burdette"), [("SKU-CCJSNI", 3), ("SKU-7LSNYD", 1)], 1035.03),
+    …
+]</code></pre>
+  <p>Rows are still matched by name, since the header names every nested field. It saved 20% on the nested orders, 24% on keyed flags and 19% on contacts, for one more rule to read.</p>
+</section>
+
+<section id="deep">
+  <h2>Deep data: BRP</h2>
+  <p>Does the nested header hold up on deep data? Yes, on all five tests here. The first three use the official BRP test persons from the Haal Centraal project, which are fictitious, 1,182 of them nested up to 7 levels deep. The last two are real StUF-BG XML response fixtures from the Open Forms project. Each COMIC form read back to the same values.</p>
+  <div class="table"><table data-comic="5" data-rivals="1,2,3,4">
+    <thead><tr><th>Bytes, o200k tokens</th><th>XML</th><th>YAML</th><th>JSON compact</th><th>TOON</th><th>COMIC</th></tr></thead>
+    <tbody>
+      <tr><td>All 1,182 persons</td><td>3,431,332, 1,014,286</td><td>2,980,309, 788,247</td><td>2,369,434, 687,918</td><td>2,412,591, 702,515</td><td><strong>1,129,429, 386,085</strong></td></tr>
+      <tr><td>The first 50 persons</td><td>73,263, 22,525</td><td>61,695, 18,322</td><td>53,124, 16,095</td><td>57,898, 17,424</td><td><strong>23,702, 8,924</strong></td></tr>
+      <tr><td>The largest person, alone</td><td>12,196, 3,747</td><td>10,593, 2,736</td><td>8,289, 2,442</td><td>6,095, 1,869</td><td><strong>4,634, 1,535</strong></td></tr>
+      <tr><td>StUF family response</td><td>7,381, 1,661</td><td>2,621, 630</td><td>1,874, 582</td><td>1,614, 458</td><td><strong>1,406, 456</strong></td></tr>
+      <tr><td>StUF person response</td><td>4,515, 1,244</td><td>2,077, 529</td><td>1,592, 489</td><td>2,076, 528</td><td><strong>1,470, 469</strong></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>On the 1,182 persons, COMIC takes 45% fewer tokens than TOON and less than half the bytes.</strong> On this data TOON is above compact JSON, as its README warns for deep data. Qwen and Gemma agree: 530,435 / 564,238 tokens against TOON's 949,125 / 940,531.</li>
+    <li><strong>Only the last two rows use real XML.</strong> For the persons, the XML is generated from their JSON, element for element. The real fixtures are small, so read those two rows as a sign and not a result.</li>
+    <li><strong>Gzip narrows the gap,</strong> as it did for APIs. On all the persons, COMIC takes 142,073 bytes after gzip, against 166,666 for JSON and 183,193 for TOON. On one person alone, JSON's 1,143 edges out COMIC's 1,168.</li>
+    <li><strong>A model shouldn't read this table whole.</strong> A person's row is one long positional tuple holding 47,965 <code>None</code> cells across the set, and a model could easily lose count in it. <a href="#ask">Asking</a> takes 3,835 tokens instead of 386,085.</li>
+  </ul>
+  <p>A cell always says <code>None</code>. Leaving it empty, as in <code>(1,,"x")</code>, would take the persons from 386,085 tokens to 334,643, but a reader would have to count commas to know which field is which. A shorter symbol saves almost nothing: <code>—</code> saves bytes but adds 25 tokens, and <code>-</code> saves under 3% of tokens.</p>
+</section>
+
+<section id="wide">
+  <h2>Wide data: Adobe</h2>
+  <p>Adobe Analytics data feeds, formerly Omniture, are about as wide as tables get. The column names here are real, from Adobe's public column reference: 987 current columns and 199 retired ones, 1,186 distinct names in all. The rows are generated, because no real feed is public, so the fill rates are assumptions, and gzip results depend on the generated values.</p>
+  <h3>Field identities pass</h3>
+  <p>None of the 1,186 names collide at <a href="#lessons">6 bytes</a>, or even at 4, and the chance that any two would is about 1 in 400 million. At 2 bytes, 13 of them do, which rules that length out on one real model. Listing all 987 current columns takes 5,922 bytes as identities against 10,986 as names, once per frame, which is under half a percent of the 500 rows below. Older feeds are remembered at 1,358 columns, and at that width the chance is still about 1 in 300 million.</p>
+  <p>The identity list could also fix a known weakness of Parquet and ORC on wide tables. A <a href="https://arxiv.org/abs/2304.05028">2023 evaluation of both formats</a> found that metadata parsing grows almost linearly with the number of columns, even when a query reads only 10 of them, because their footers can only be decoded in sequence, and it says future formats must allow random access to per-column schema. Proposed: keep the list sorted, so a reader finds one column among 1,358 by binary search, in about 11 steps over fixed 6-byte entries, with nothing to parse. A micro-benchmark puts one lookup at about 40 ns over the packed list, or 32 ns once a reader has widened it to 64-bit words, which it does once per shape in about half a microsecond. Nothing was compared against Parquet's footers.</p>
+  <h3>COMIC's text loses here</h3>
+  <div class="table"><table data-comic="4" data-rivals="1,2,3">
+    <thead><tr><th>500 rows: bytes, o200k tokens</th><th>TSV, used columns</th><th>JSON compact</th><th>TOON, table</th><th>COMIC</th></tr></thead>
+    <tbody>
+      <tr><td>339 columns used, about 60 filled per row</td><td><strong>524,698, 206,483</strong></td><td>848,086, 329,374</td><td>1,086,738, 332,949</td><td>1,128,190, 356,641</td></tr>
+      <tr><td>720 columns used, about 180 filled per row</td><td><strong>1,131,094, 527,744</strong></td><td>2,255,898, 943,256</td><td>2,215,162, 762,787</td><td>2,371,794, 852,685</td></tr>
+      <tr><td>987 columns used, about 180 filled per row</td><td><strong>1,271,142, 538,086</strong></td><td>2,261,580, 940,760</td><td>2,889,262, 899,258</td><td>3,046,878, 991,995</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong><code>None</code> is what costs it.</strong> Up to 403,277 cells say <code>None</code>, which is 57% to 66% of COMIC's bytes. This is the one test where COMIC loses to TOON's table, and it's the largest form in bytes on all three.</li>
+    <li><strong>Empty cells would change that, but not the verdict.</strong> Writing <code>(1,,"x")</code> takes 253,302, 656,502 and 695,938 tokens, which beats TOON and JSON on all three, and it saves more here than the 13% on BRP. TSV still wins, because COMIC quotes its strings. A cell keeps saying <code>None</code>, because a dump this wide belongs in a store: it's a file to crumble, and an agent asking questions reads small results, where the difference barely registers.</li>
+    <li><strong>Leaving out unused columns matters most.</strong> A site that uses 339 of the 987 columns keeps its header and rows to those, which saves far more than any cell spelling.</li>
+  </ul>
+  <h3>In binary, columns matter on this shape</h3>
+  <div class="table"><table data-comic="2,3" data-rivals="1">
+    <thead><tr><th>500 rows: bytes, gzip</th><th>Protobuf wire</th><th>Crumb-shaped rows</th><th>Crumb-shaped columns</th></tr></thead>
+    <tbody>
+      <tr><td>339 columns used</td><td>392,602, 110,335</td><td>534,206, 134,525</td><td>534,063, 98,726</td></tr>
+      <tr><td>720 columns used</td><td>977,541, 303,508</td><td>1,443,282, 382,804</td><td>1,443,642, 268,010</td></tr>
+      <tr><td>987 columns used</td><td>981,465, 302,903</td><td>1,465,294, 392,232</td><td>1,465,475, 272,152</td></tr>
+    </tbody>
+  </table></div>
+  <p>Protobuf is 26% to 33% smaller raw, because it writes only the fields present. After gzip, the column layout is 10% to 12% smaller than Protobuf, and the row layout is larger than both. TSV still beats them all after gzip, at 84,994, 185,366 and 197,141. Neither Crumb layout is a real format: each uses a present bit per column, an 8-byte slot per value and no dictionary or delta encoding, so it supports <a href="#lessons">a table being columns in Crumb</a> and isn't a measured Crumb result.</p>
+</section>
+
+<section id="clickbench">
+  <h2>Parquet's benchmark: ClickBench</h2>
+  <p><a href="https://github.com/ClickHouse/ClickBench">ClickBench</a> is the standard public benchmark for analytics databases and file formats: real web analytics traffic, anonymized, in one flat table of about 100 million rows. This test takes the first row group of its first partition: 450,560 rows and 105 columns, 193 MB of it strings, with no nulls. Only size is measured, because there's no Crumb implementation to time.</p>
+  <h3>Text: level with TOON, half of JSON</h3>
+  <div class="table"><table data-comic-row="COMIC">
+    <thead><tr><th>Format</th><th>Bytes</th><th>gzip</th><th>zstd</th><th>o200k tokens, first 2,000 rows</th></tr></thead>
+    <tbody>
+      <tr><td>TSV</td><td>362,819,118</td><td>46,131,232</td><td>39,813,681</td><td>716,384</td></tr>
+      <tr><td>COMIC</td><td>392,409,410</td><td>46,729,278</td><td>40,233,885</td><td>732,739</td></tr>
+      <tr><td>TOON</td><td>393,816,943</td><td>46,885,915</td><td>40,412,280</td><td>733,524</td></tr>
+      <tr><td>JSON compact</td><td>1,061,489,269</td><td>58,311,554</td><td>47,490,726</td><td>1,449,632</td></tr>
+    </tbody>
+  </table></div>
+  <p>COMIC and TOON are within 0.5% of each other, and TSV is about 1% to 8% ahead of both. With no nulls there are no <code>None</code> cells, which is the difference from <a href="#wide">the Adobe test</a>: this data stores an empty value as <code>""</code>. The first 2,000 rows read back from COMIC with no cell different.</p>
+  <h3>Binary: level with tuned Parquet once compressed, behind it raw</h3>
+  <p>The same rows, rewritten with pyarrow 26.0.0, and every rewrite read back equal. "Encoded columns" keeps every value reachable by position: an integer is stored as its distance from the column's minimum in the fewest whole bytes, and a column uses a dictionary with fixed-width codes where that's smaller. All 47,308,800 of its cells decoded back with none wrong. It's compressed the way these Parquet files are: the dictionary as one block, then blocks of 20,000 rows, which a page index confirmed as pyarrow's page size here.</p>
+  <div class="table"><table>
+    <thead><tr><th>Format</th><th>Raw</th><th>Snappy</th><th>gzip</th><th>zstd</th></tr></thead>
+    <tbody>
+      <tr><td>Parquet, default settings</td><td>188,601,351</td><td>51,907,829</td><td></td><td>32,112,005</td></tr>
+      <tr><td>Parquet, large dictionaries</td><td>48,204,010</td><td>32,226,204</td><td>24,866,612</td><td>24,782,172</td></tr>
+      <tr><td>Parquet, best encoding per column</td><td><strong>45,370,314</strong></td><td>32,544,131</td><td>21,268,475</td><td><strong>20,479,184</strong></td></tr>
+      <tr><td>Encoded columns</td><td>83,154,917</td><td><strong>31,427,601</strong></td><td><strong>20,597,653</strong></td><td>20,718,510</td></tr>
+      <tr><td>Crumb-shaped columns, unencoded</td><td>577,739,948</td><td>86,695,115</td><td>41,085,098</td><td>36,032,693</td></tr>
+      <tr><td>Protobuf wire</td><td>299,725,566</td><td></td><td>45,941,950</td><td>38,087,241</td></tr>
+      <tr><td>Crumb-shaped rows</td><td>578,134,188</td><td></td><td>61,476,577</td><td>47,006,697</td></tr>
+    </tbody>
+  </table></div>
+  <p>Parquet's raw column for default settings is its size before compression, the zstd there is level 3, and "best encoding per column" was chosen by trying each encoding against zstd, which is why its Snappy figure is slightly above the row above it. The last three rows compress differently: the unencoded columns one whole column at a time except for Snappy, and the row and Protobuf forms as one stream.</p>
+  <ul>
+    <li><strong>Compressed, it's a tie.</strong> Against the best Parquet result for each compressor, encoded columns are 2.5% smaller with Snappy, 3.2% smaller with gzip and 1.2% larger with zstd. Parquet's statistics barely affect this: leaving them out saves 83,269 bytes.</li>
+    <li><strong>Raw, Parquet wins clearly,</strong> 45% smaller, because bit-packing and run-length encoding are tighter than whole bytes.</li>
+    <li><strong>What the larger raw form buys is position.</strong> Reaching one value in Parquet means decompressing and decoding a page of up to 20,000 rows, while here its position can be computed and read directly from uncompressed bytes. That's a property of the layout, and nothing was timed.</li>
+    <li><strong>Parquet's defaults leave a lot on the table here.</strong> Dictionaries stop at 1 MB and fall back to plain values, so lifting the limit takes the same Snappy file from 51.9 MB to 32.2 MB, and the published file behaves the same at 52.1 MB. So a dictionary shouldn't have a small fixed cap, and an encoding is better chosen per column.</li>
+    <li><strong>It's still a big step from Protobuf:</strong> 72% smaller raw and 55% smaller after gzip, in the same comparison of blocks against one stream that favors Protobuf.</li>
+    <li><strong>The limits:</strong> this is one row group of one dataset, with no nulls, so null levels are untested. Parquet also has skippable pages, a page index and statistics that this layout doesn't, and it's a real format where this is not. Iceberg stores its data in Parquet, ORC or Avro, so it has no file-size test of its own.</li>
+    <li><strong>Field identities:</strong> 105 names, no collisions even at 4 bytes, and a list of 630 bytes.</li>
+  </ul>
+</section>
+
+<section id="textproto">
+  <h2>Compared with Protobuf's text format</h2>
+  <p>This is COMIC's nearest relative: it reads against a schema and pairs a text form with a binary one, as COMIC does with Crumb. Every form below is without whitespace, and <code>protoc</code> accepted each one and encoded it to binary.</p>
+  <div class="table"><table data-comic="2" data-rivals="1">
+    <thead><tr><th></th><th>Protobuf text: bytes, tokens (Qwen / Gemma)</th><th>COMIC: bytes, tokens (Qwen / Gemma)</th></tr></thead>
+    <tbody>
+      <tr><td>Stored record</td><td><strong>224, 109 / 110</strong></td><td>250, 122 / 123</td></tr>
+      <tr><td>Model</td><td>156, 42 / 46</td><td><strong>127, 38 / 42</strong></td></tr>
+      <tr><td>Function</td><td>821, 241 / 250</td><td><strong>617, 176 / 196</strong></td></tr>
+      <tr><td>Whole module</td><td>1,503, 423 / 448</td><td><strong>1,128, 323 / 367</strong></td></tr>
+      <tr><td>100 invoices</td><td>4,287, 1,648 / 1,718</td><td><strong>1,828, 1,059 / 1,030</strong></td></tr>
+      <tr><td><code>datafusion</code> lock</td><td>102,568, 37,610 / 41,448</td><td><strong>89,131, 36,373 / 39,926</strong></td></tr>
+      <tr><td>1 order</td><td><strong>452, 207 / 213</strong></td><td>467, 219 / 228</td></tr>
+      <tr><td>100 orders</td><td>40,812, 18,104 / 18,862</td><td><strong>25,686, 14,655 / 14,853</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p>It wins on a single flat value because its text doesn't say what it is: the schema and message type are handed over separately, where COMIC spells out the path. It loses once values nest or repeat, because a slot that can hold several kinds needs a wrapper, as in <code>left{parameter{slot:1 name:"amount"}}</code>, and every record repeats its field names.</p>
+  <h3>Not canonical</h3>
+  <p>Its spec says implementations emit no consistent or canonical text, and its best-practices guide reserves it for human editing and debugging. A format can accept many spellings, as COMIC does, if one specified printer gives each value one output, and here none does. <code>protoc</code> encodes all of these to the same bytes:</p>
+  <pre class="code"><code data-lang="text">id:1 customer:"a"
+id: 1, customer: "a"
+id: 1; customer: "a"
+customer: "a" id: 1
+id: 0x1 customer: "a"
+id:1 customer:'a'
+id:1 customer:"" "a"</code></pre>
+  <h3>Weighing them</h3>
+  <div class="table"><table>
+    <thead><tr><th></th><th>Protobuf text</th><th>COMIC</th></tr></thead>
+    <tbody>
+      <tr><td>Checking</td><td>Good: the schema refuses <code>nmae</code>, and enums go by name</td><td>The same, against the model</td></tr>
+      <tr><td>Exact values</td><td>Good for 64-bit integers, but decimals are strings</td><td>Wins: decimals and larger integers are themselves</td></tr>
+      <tr><td>References and declarations</td><td>Paths are strings, and there's no form for "this is declared at this path"</td><td>Wins: part of the syntax</td></tr>
+      <tr><td>Canonical</td><td>No</td><td>Wins: one value, one text</td></tr>
+      <tr><td>Evolving a schema</td><td>Field numbers let old readers skip what they don't know, and authors assign them</td><td>Crumb's <a href="#lessons">field identities</a> do the same with nothing to assign, once per frame</td></tr>
+      <tr><td>Tools</td><td>Wins: mature, with a compiler for many languages</td><td>Needs its own reader</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="api">
+  <h2>For APIs</h2>
+  <p>COMIC won't win an API on size, because gzip erases most of the difference between text formats. What it offers is accuracy: a response says what its values are, and it has one text. This test uses one generated order payload, with a nested customer, line items, money, an enum and optional fields, written without whitespace and compressed with gzip at level 6.</p>
+  <div class="table"><table data-comic-row="COMIC">
+    <thead><tr><th>Bytes</th><th colspan="2">1 order</th><th colspan="2">100 orders</th></tr>
+    <tr><th></th><th>Raw</th><th>Gzip</th><th>Raw</th><th>Gzip</th></tr></thead>
+    <tbody>
+      <tr><td>JSON</td><td>517</td><td>326</td><td>46,117</td><td>3,350</td></tr>
+      <tr><td>COMIC</td><td>467</td><td>319</td><td>25,686</td><td>2,983</td></tr>
+      <tr><td>XML</td><td>701</td><td>360</td><td>62,325</td><td>3,557</td></tr>
+      <tr><td>MessagePack</td><td>419</td><td>325</td><td>37,163</td><td>3,280</td></tr>
+      <tr><td>Protobuf</td><td><strong>195</strong></td><td><strong>201</strong></td><td><strong>17,914</strong></td><td><strong>2,721</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p>Binary Protobuf wins clearly, at its best here with integers for ids, money, enums and times, but it's binary, so it's Crumb that competes with it and not COMIC. In tokens, for an agent reading a response, COMIC is level with JSON on one order, at 219 / 228 against 216 / 222 on Qwen and Gemma, and below it on 100, at 14,655 / 14,853 against 18,757 / 19,415.</p>
+  <h3>A crumb against Protobuf</h3>
+  <p>Crumb has no implementation yet, but its shape is clear: a crumb is the binary form of a value as it sits in memory. So its size can be estimated from a Rust program using RFC 121's types, with money and times as <code>i64</code>:</p>
+  <div class="table"><table>
+    <thead><tr><th>Bytes</th><th colspan="2">1 order</th><th colspan="2">100 orders</th></tr>
+    <tr><th></th><th>Raw</th><th>Gzip</th><th>Raw</th><th>Gzip</th></tr></thead>
+    <tbody>
+      <tr><td>In memory, as Rust lays it out</td><td>513</td><td></td><td>47,043</td><td></td></tr>
+      <tr><td>Dump with relative offsets</td><td>336</td><td>230</td><td>30,664</td><td>5,392</td></tr>
+      <tr><td>Protobuf</td><td><strong>195</strong></td><td><strong>201</strong></td><td><strong>17,914</strong></td><td><strong>2,721</strong></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>A literal dump can't work.</strong> Memory holds addresses, so two equal values matched in only 17,793 of their 20,000 inline bytes. They couldn't share a hash or be loaded back, and RFC 165 rules out depending on addresses, padding or byte order.</li>
+    <li><strong>Relative offsets fix that.</strong> A fixed little-endian layout, with an offset and a length in place of each pointer, produced identical bytes for equal values, so it can be hashed.</li>
+    <li><strong>It's larger, and much faster to read.</strong> It's about 1.7 times Protobuf raw and twice after gzip. But reading every order's total took 0.03 µs, against 27 µs for decoding a compact row format into values first, because nothing has to be decoded. That compact format is a stand-in for Protobuf's decoding, not Protobuf itself, so this supports investigating a direct-access layout and isn't a measured Crumb advantage.</li>
+  </ul>
+  <p>This is the trade Cap'n Proto and FlatBuffers make, and it suits a store very well, where a reader can map the file and go straight to a field. It suits a wire less well, because gzip brings the decoding step back, so APIs may want something more compact.</p>
+
+  <h3>Exact values</h3>
+  <p>The same order, starting with the values JSON can't hold as themselves:</p>
+  <div class="pair">
+    <div><span class="cap">JSON: everything exact has to be a string</span>
+    <pre class="code"><code data-lang="json">{"id":"9007199254741005",
+ "status":"shipped",
+ "lines":[{"sku":"KB-104","quantity":1,"unit_price":"89.00"}],
+ "total":"1125.98"}</code></pre></div>
+    <div><span class="cap">COMIC: each value is what it says</span>
+    <pre class="code"><code data-lang="comic">shop.Order {
+    id = 9007199254741005
+    status = Shipped
+    lines = [{ sku = "KB-104", quantity = 1, unit_price = 89.00d }]
+    total = 1125.98d
+}</code></pre></div>
+  </div>
+  <h3>Why JSON APIs send those strings</h3>
+  <p>This is what Node's <code>JSON.parse</code> does to the same values written as numbers:</p>
+  <div class="table"><table>
+    <thead><tr><th>In the response</th><th>After parsing</th></tr></thead>
+    <tbody>
+      <tr><td><code>{"id":9007199254740993}</code></td><td><code>9007199254740992</code>, a different id</td></tr>
+      <tr><td><code>{"big":12345678901234567890}</code></td><td><code>12345678901234567000</code></td></tr>
+      <tr><td><code>{"price":19.90}</code></td><td><code>19.9</code>, with the scale gone</td></tr>
+      <tr><td><code>{"x":1.0}</code></td><td><code>1</code></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Weighing them</h3>
+  <div class="table"><table>
+    <thead><tr><th></th><th>JSON</th><th>COMIC</th></tr></thead>
+    <tbody>
+      <tr><td>Reach</td><td>Wins by a mile: built into every browser and language, and everything around it, from <code>jq</code> to gateways</td><td>Needs its own reader everywhere</td></tr>
+      <tr><td>Speed</td><td>Parsers are heavily optimized</td><td>Unknown: only a small prototype reader exists</td></tr>
+      <tr><td>Reading with no model</td><td>Wins: field names and structure are all there</td><td>Structure and names, as long as code isn't positional, but no checking</td></tr>
+      <tr><td>Exact values</td><td>Strings by convention</td><td>Wins: <code>89.00d</code>, big integers and enums are themselves</td></tr>
+      <tr><td>Signing and caching</td><td>Equal objects can differ in bytes, so signing needs a separate canonical form, such as the IETF's JSON Canonicalization Scheme (its RFC 8785, not one of Incan's)</td><td>Wins: one specified printer, so a signature or strong ETag can cover the exact bytes with no separate canonical form. The canonical hash can't stand in for either, because it leaves out <code>canonical=false</code> fields, and the object hash leaves out trunders, so each covers only that narrower projection</td></tr>
+      <tr><td>Schema drift</td><td>Nothing in the response says which schema it follows</td><td>Wins: <code>___model_hash</code> says exactly which model wrote it</td></tr>
+      <tr><td>Saving the response</td><td>Needs a mapping back to types first</td><td>Wins: crumble it as it is</td></tr>
+    </tbody>
+  </table></div>
+  <p>So COMIC can't replace JSON on the public web, and it shouldn't try. Its place is beside JSON: Incan services talking to each other, agents reading data, and exports, with JSON staying the default for everyone else. One model could serve both, chosen by the request's <code>Accept</code> header.</p>
+</section>
+
+<section id="lessons">
+  <h2>What Parquet and Iceberg teach</h2>
+  <p>Neither is a text format, so they say little about COMIC's notation. They have a lot to say about the two layers beneath it: Parquet about Crumb, and Iceberg about how records change over time.</p>
+  <h3>From Iceberg</h3>
+  <ul>
+    <li><strong>Match fields by ID, not by name or position.</strong> Iceberg's data files are read by field ID, so renaming and reordering can't misread old data. This is the biggest lesson here. Protobuf gets schema evolution by writing a tag on every value; a Crumb frame lists its fields' identities once, and old readers can still skip what they don't know. The details are below.</li>
+    <li><strong>Write down which changes are allowed.</strong> Iceberg permits adding, deleting, renaming and reordering fields, and widening <code>int</code> to <code>long</code>, <code>float</code> to <code>double</code> or a decimal's precision, and it forbids the rest. RFC 165's "compatible descriptor" needs the same list.</li>
+    <li><strong>Separate two kinds of default.</strong> An initial default fills old rows written before a field existed, and is fixed once set. A write default fills new rows, and can change. Both belong to the descriptor, which keeps COMIC's text free of defaults.</li>
+    <li><strong>Keep the name out of the data.</strong> A catalog maps a name to a table's metadata, so renaming rewrites nothing. That's the shape of the mapping crumbling needs from a namespace to a family.</li>
+    <li><strong>Trunders have good company.</strong> Iceberg reserves metadata columns such as <code>_file</code> and <code>_row_id</code>, along with a range of field IDs, and its row IDs survive a row moving between files, as <code>___id</code> should.</li>
+    <li><strong>Deletes are a solved shape.</strong> Its deletion vectors are a bitmap per data file, which is worth reading before deciding how COMIC spells a tombstone.</li>
+  </ul>
+  <h3>From Parquet</h3>
+  <p>Columns compress far better than rows, and a table has the shape to use them. This is the same 100 orders, in encodings written for this test. None of them is Crumb, and the payload flatters them, because it repeats a few product names and customers:</p>
+  <div class="table"><table>
+    <thead><tr><th>100 orders</th><th>Raw bytes</th><th>After gzip</th></tr></thead>
+    <tbody>
+      <tr><td>Protobuf, rows</td><td>17,914</td><td>2,721</td></tr>
+      <tr><td>Model-driven, rows</td><td>15,222</td><td>2,354</td></tr>
+      <tr><td>Model-driven, columns</td><td>15,222</td><td>1,853</td></tr>
+      <tr><td>Columns, with dictionaries and deltas</td><td><strong>4,666</strong></td><td><strong>994</strong></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>A table in text could be columns in Crumb.</strong> The text stays in rows, because that's what people and models read. If a crumb is what's in memory, a table's crumb would look more like Apache Arrow, the in-memory columnar layout that's built to be shared without decoding, with Parquet as its compressed cousin on disk. A lone record has no columns to exploit, so Crumb would need both layouts.</li>
+    <li><strong>Definition and repetition levels</strong> are how Parquet flattens nested lists and optionals into columns, and they keep <code>None</code> apart from a missing parent. A columnar Crumb has to answer the same question.</li>
+    <li><strong>Statistics let a reader skip.</strong> A footer holding the schema and each chunk's location is written last, so a writer needs only one pass, and a reader goes straight to the columns it wants.</li>
+    <li><strong>Logical types over physical ones.</strong> A decimal is an integer with its scale in the schema, the same idea as <code>Int { storage = u32 }</code>.</li>
+  </ul>
+  <h3>Crumb matches fields by identity</h3>
+  <div class="settled">
+    <p>The question is how a reader finds a field in bytes written by an older or newer version of the model. There are four answers, and Crumb takes the last:</p>
+    <div class="table"><table>
+      <thead><tr><th>A reader finds a field by</th><th>Reordered fields</th><th>A renamed field</th><th>A new field, old reader</th><th>Cost</th></tr></thead>
+      <tbody>
+        <tr><td>Position</td><td>Misread, silently if the types match</td><td>Fine</td><td>Breaks</td><td>None</td></tr>
+        <tr><td>Name on each value, like JSON</td><td>Fine</td><td>Breaks</td><td>Skips it</td><td>Every value repeats its name</td></tr>
+        <tr><td>Tag on each value, like Protobuf</td><td>Fine</td><td>Fine</td><td>Skips it</td><td>A byte or two per value, and authors assign the numbers</td></tr>
+        <tr><td>Identity listed once, like Iceberg</td><td>Fine</td><td>Fine</td><td>Skips it</td><td>A short list per frame</td></tr>
+      </tbody>
+    </table></div>
+    <p>Iceberg assigns its IDs in table metadata, but Crumb can't copy that, because RFC 168 requires it to work outside any store, in files and messages. Incan already has the concept, though: RFC 085, as amended in the open RFC batch and not yet on <code>main</code>, says a field keeps its identity through <code>renamed_from</code>, and that a rename without it is a new identity. So the identity is a short hash of the field's earliest name, computed by the compiler, with nothing new in source.</p>
+    <p>It's the first 6 bytes of the SHA-256 of that name, as RFC 165 now says in a change not yet on <code>main</code>. It only has to differ from every field its own model has ever had, because a frame already names its model, by a hash of the model's earliest path such as <code>shop.billing.Invoice</code>, so it needs far fewer bits than a UUID, which has to be unique everywhere. Two names that collide in one version of a model are a compile error, and the fix is to name the new field differently. A dropped field that collides with a later one is invisible to the compiler and would misread old values silently, so the width has to make that negligible on its own: a model that has ever had 1,000 field names has about a 1 in 560 million chance at 6 bytes, against 1 in 8,600 at 4. Stored, an identity is 6 raw bytes, and printed, it fits in 9 characters:</p>
+    <div class="table"><table>
+      <thead><tr><th>Field in source</th><th>Earliest name</th><th>Identity</th></tr></thead>
+      <tbody>
+        <tr><td><code>email: str</code></td><td><code>email</code></td><td><code>edDcYN2E</code></td></tr>
+        <tr><td><code>email_address [renamed_from="email"]: str</code></td><td><code>email</code></td><td><code>edDcYN2E</code></td></tr>
+        <tr><td><code>email_address: str</code></td><td><code>email_address</code></td><td><code>18quSqd7H</code></td></tr>
+      </tbody>
+    </table></div>
+    <p>A scan of the Incan and IncQL repos found 1,612 models with 3,613 fields, at most 20 in one model, and nothing collides even at 4 bytes, inside a model or among all 809 distinct names. By arithmetic, a model that has ever had 100 fields has about a 1 in 57 billion chance of a collision.</p>
+    <pre class="code"><code data-lang="incan"># Version 1
+model Invoice:
+    id: int
+    customer: str
+    total: int
+
+# Version 2: reordered, one rename, one new field
+model Invoice:
+    total: int
+    id: int
+    buyer [renamed_from="customer"]: str
+    note: Option[str]</code></pre>
+    <p>A frame written by version 1 lists the identities of <code>id</code>, <code>customer</code> and <code>total</code>, then its rows. A version 2 reader matches them to <code>id</code>, <code>buyer</code> and <code>total</code>, and reads <code>note</code> as <code>None</code>, with no migration and nothing misread. A version 1 reader of a version 2 frame does the same in reverse and skips <code>note</code>, which a reader going by names can't do across a rename.</p>
+    <ul>
+      <li><strong>The model hash becomes part of a fast path.</strong> Reading straight from the bytes takes more than a matching model hash, because one model can have different codecs, row or column layouts, compression and format versions. The frame's codec profile has to match too, its framing has to validate, and alignment and lifetime have to hold. If the model differs, the identities decide what it can use and it copies those values across, and a required field that's missing is refused.</li>
+      <li><strong>A record's canonical hash is keyed by identity,</strong> so renaming or reordering fields moves no record's hash, though the model's own hash still moves.</li>
+      <li><strong>COMIC's text keeps using names.</strong> Identities only exist in Crumb, and the text's tables already match rows by name.</li>
+    </ul>
+    <p>The list costs 108 bytes for the order payload, 18 fields at 6 bytes each, once per frame. These are the costs:</p>
+    <ul>
+      <li><strong>Small messages pay.</strong> 108 bytes is little against 100 orders and a lot against one, which already takes 336 bytes as a dump against Protobuf's 195. Leaving the list out where the reader can look a model up by its hash avoids that, but it needs somewhere to look.</li>
+      <li><strong>A name that returns is the same field.</strong> Dropping a field doesn't erase its values from existing data, so they read again when the name returns and their type still fits, and additive changes are preferred anyway. A field with a new meaning needs a new name. Parquet files read by column name behave the same way. Iceberg goes the other way, giving a re-added column a new ID from its table metadata, and it calls reusing a name by accident "un-deleting" a column. That takes a table to hold the IDs, which a crumb doesn't have, so if accidental reuse needs preventing, that's CrumbDB's job at the family level and not Crumb's.</li>
+      <li><strong>A forgotten <code>renamed_from</code> looks like a drop and an add.</strong> A required field then fails loudly, but an optional one quietly reads as <code>None</code>. A lint comparing against the previous model could catch it.</li>
+      <li><strong>The earliest name has to stay in source.</strong> After <code>retire_in</code>, RFC 085's lint now suggests removing only the lifecycle facts and keeps the earlier name, because removing it would change the identity. Actually removing it counts as dropping one field and adding another. This is what lets a frame decode on its own after its model has moved on.</li>
+      <li><strong>Rename chains keep one identity,</strong> because a list in <code>renamed_from</code> is in the order the names were used, earliest first.</li>
+      <li><strong>Type changes fail loudly.</strong> The identity covers only the name, and the frame says what type each field was written as, so a field changed from <code>address: str</code> to <code>address: Address</code> keeps its identity, and an old value is refused by name instead of skipped. Only the listed safe widenings, such as <code>i32</code> to <code>i64</code> or <code>str</code> to <code>Option[str]</code>, read without a migration.</li>
+    </ul>
+    <p>The positional code nodes in COMIC's text aren't helped by this, since they have no header.</p>
+  </div>
+</section>
+
+<section id="concise">
+  <h2>Why it's concise</h2>
+  <p>Six rules keep the text small. The first five make it smaller, and the last only changes how it reads. A hash covers the value and not the text, so the notation moves no hash.</p>
+  <ul>
+    <li><strong>Code nodes print positionally.</strong> They're enum variants, and <code>( )</code> is already how a variant prints. It stays structure: there's no Incan parser involved, and names are still slots or absolute paths.</li>
+    <li><strong>A wrapper with one field goes.</strong> <code>body = Block { statements = […] }</code> becomes <code>body = […]</code>.</li>
+    <li><strong>Empty lists, sets and dicts are left out</strong> where the model declares empty as their default.</li>
+    <li><strong>A block's name is left out when its slot allows only one kind.</strong> <code>Registry</code> says nothing inside <code>registry</code>. Root declarations and slots with several kinds keep their names.</li>
+    <li><strong>Two or more records of one model print as a <a href="#toon">table</a>,</strong> whose header carries nested shape.</li>
+    <li><strong>No commas between fields on separate lines.</strong> Incan's own blocks in RFC 096 separate entries by newline. Commas stay in lists and on one line.</li>
+  </ul>
+  <p>A contract shows the biggest difference:</p>
+  <div class="pair">
+    <div><span class="cap">With named fields</span>
+    <pre class="code"><code data-lang="comic">requires = [
+    Compare {
+        op = Gt,
+        left = Parameter { slot = 1, name = "amount" },
+        right = Construct { of = shop.billing.Cents, arguments = [0] },
+    },
+]</code></pre></div>
+    <div><span class="cap">Now</span>
+    <pre class="code"><code data-lang="comic">requires = [Compare(Gt, Parameter(1, "amount"), Construct(shop.billing.Cents, [0]))]</code></pre></div>
+  </div>
+  <p>Together they took a function from 54 lines and 876 bytes to 21 lines and 617, and the whole module from 92 lines and 1,510 bytes to 45 lines and 1,128.</p>
+  <h3>What they cost</h3>
+  <ul>
+    <li>Positional values depend on order. Reordering a variant's payload silently changes what old text means, where named fields don't. A stored record's <code>___model_hash</code> catches that, but a loose file has nothing to catch it.</li>
+    <li>A fragment no longer says what it is: <code>Project(x, 0)</code> needs the model to name <code>0</code>, and so does a bare <code>{</code>. Reading already needs the model, but a person skimming a file doesn't have it open.</li>
+  </ul>
+</section>
+
+<section id="lands">
+  <h2>What lands before COMIC</h2>
+  <p>COMIC is a 1.0 target, but much of what it rests on lands earlier and would harden without it. None of this changes the direction. It narrows what COMIC itself has to own. The proposals here aren't adopted yet.</p>
+  <div class="table"><table>
+    <thead><tr><th>Release</th><th>What lands</th><th>What it means for COMIC</th></tr></thead>
+    <tbody>
+      <tr><td>0.6</td><td>RFC 106: declaration identity and semantic digests</td><td>Declarations already have a normative digest, so COMIC shouldn't define a second one. See below.</td></tr>
+      <tr><td>0.6</td><td>RFC 165: <code>std.db</code> and Crumb</td><td>Its primitive storage layer targets this release, and Crumb has no code yet. Field identity is now written into this RFC, in the open batch, so it's in the frame's first version. So is the rule that every frame names its codec profile, which now covers the arrangement of the bytes.</td></tr>
+      <tr><td>0.7</td><td>RFC 085 renames, RFC 168 <code>std.primitives</code></td><td>Crumb's contract lives in RFC 168, and field identity rests on RFC 085, whose <code>retire_in</code> lint now keeps the earlier name.</td></tr>
+      <tr><td>0.7</td><td>RFC 160 <code>std.vocab</code>, RFC 162 source surfaces</td><td>These decide which tree a body prints. See below. Surfaces also confirm the hash claim: every surface enters one model, so a translated file isn't a code change.</td></tr>
+      <tr><td>0.7</td><td>RFC 137 named enum payloads</td><td>A new choice for one text. Proposed: a named payload prints by name, so reordering it can't misread a loose file, and an unnamed payload stays positional.</td></tr>
+      <tr><td>0.7</td><td>RFC 156 <code>std.mcp</code>, RFC 166 graphs</td><td>The route for <a href="#ask">asking</a>. A tool's catalog and arguments are JSON Schema, so only a result's text could be COMIC, and the counts in that section leave the catalog out.</td></tr>
+      <tr><td>0.8</td><td>RFC 086 schema descriptors</td><td><code>Incan.Model</code> should be this descriptor printed, not a second description of a model.</td></tr>
+      <tr><td>0.8</td><td>RFC 126 investigations, RFC 167 debugging</td><td>Their records live in <code>std.db</code> and their answers fit a declared size, which makes them the first real user of asking. RFC 167 also owns the question of spans.</td></tr>
+      <tr><td>0.8</td><td>RFC 111 proofs</td><td>A proof needs a declaration's identity and digest, so a proof value should anchor to RFC 106's.</td></tr>
+      <tr><td>0.8</td><td>Freestanding layers and layout controls</td><td>Reading a crumb should need no allocator, so it can sit at the lowest layer, and text can sit above it.</td></tr>
+      <tr><td>0.9</td><td>Kernel proof</td><td>Nothing.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Which hash does what</h3>
+  <p>RFC 106 is already the normative source for declaration identity and digests, and RFC 124 builds on them. Two questions need two answers:</p>
+  <ul>
+    <li><strong>Has this declaration changed?</strong> RFC 106 answers that with a semantic digest over checked meaning, including resolved targets and ownership facts, a closure digest over dependencies, and a separate documentation digest. COMIC should print those. The rules on this page about a function's <code>type</code> hash and what callers read should defer to them and to the compiler's own dependency edges.</li>
+    <li><strong>Is this stored record the same value, and can I read it?</strong> That stays with the canonical, object and model hashes, because RFC 106 doesn't cover values. A model hash has to leave paths out, or moving a type would force a migration, and RFC 106's digest includes resolved targets, so it can't do that job.</li>
+    <li><strong>One rule to borrow.</strong> RFC 106 keeps the previous digest projection readable, so an improved normalization doesn't look like a change to every declaration. A hash profile such as <code>crumb1</code> needs the same.</li>
+  </ul>
+  <h3>Which tree a body prints</h3>
+  <p>The function bodies on this page print a resolved tree, such as <code>Parameter(1, "amount")</code>, and they were written without looking at RFC 160 or RFC 161. Incan plans three trees:</p>
+  <div class="table"><table>
+    <thead><tr><th>Tree</th><th>What it is</th><th>For COMIC</th></tr></thead>
+    <tbody>
+      <tr><td><code>std.vocab</code> surface</td><td>Published models and enums that vocabularies read and write</td><td>Stable, but syntax-shaped, so names aren't resolved and "who calls this?" has no edge to follow</td></tr>
+      <tr><td>Checked body</td><td>The compiler's own representation</td><td>Resolved, but private and unversioned</td></tr>
+      <tr><td>SCIR inspection view</td><td>Every surface normalized, versioned and read-only</td><td>Resolved and versioned, and where all surfaces meet</td></tr>
+    </tbody>
+  </table></div>
+  <p>Proposed: SCIR's inspection view. RFC 161 rules out a writable core and commits to inspectable facts, which is what COMIC already is. Since every surface meets there, "same tree, same hash" holds by construction, and much of 0.7's new syntax, such as chained comparisons, normalizes away instead of adding COMIC nodes.</p>
+  <p>The costs are real. A SCIR body also spells copies, moves and loans, so it will be larger than the sizes measured on this page, by an amount nobody has measured. An improved ownership planner moves digests unless a schema version accounts for it. And RFC 161 has no release assigned yet, so COMIC at 1.0 would depend on one.</p>
+  <h3>The native boundary is data</h3>
+  <p>Decided: the contract for handing a program to the native compiler, the proposed <code>std.compiler.native</code>, is a versioned data schema shaped like COMIC and not a builder API, so it grows additively. Builds pass it in memory or as crumbs, and text is for reading, tests and diffs. A file earns no trust, so it goes through the same checks as anything else. COMIC can be compiled in the way LLVM IR can, and Incan stays the one language people write.</p>
+</section>
+
+<section id="open">
+  <h2>Still open</h2>
+  <ul>
+    <li>Which tree a body prints, and how the hashes divide with RFC 106, as <a href="#lands">proposed above</a>.</li>
+    <li>An import key: how a value without <code>___id</code> keeps one identity across loads, and how two identical rows stay two records.</li>
+    <li>How a program supplies secrets for a nested field or for a table of records, where one <code>password=</code> can't say which marker it fills.</li>
+    <li>CrumbDB has families and relationships but no namespaces, so <a href="#crumbling">crumbling</a> needs a declared, stable mapping from a type to its family. The CrumbDB paper lists this among its open COMIC contracts.</li>
+    <li>CrumbDB's model needs three spellings COMIC doesn't have yet: a deleted record, since RFC 165's revision can be a tombstone; a reference to another record, by its logical subject or an exact revision; and the snapshot a file was written from.</li>
+    <li>A table can lose or gain a whole row unnoticed, as <a href="#ask">TOON's validation test</a> shows. A file's snapshot is the natural place to catch it: a hash over the file's values notices a changed or missing row, where a row count only notices the count. The same snapshot should name the resolved graph the file's references mean.</li>
+    <li>RFC 165 and CrumbDB bind a family to a schema version that a project writes by hand, as <code>schema_version=1</code>. A model hash could replace that label, which would change the API but not the migration rule.</li>
+    <li>A decorator that changes a callable's type depends on the unsettled question of runtime versus compile-time decorators (#2479).</li>
+    <li>Hashing across references relies on hashing a cycle as one group, which hasn't been designed in detail.</li>
+    <li>Debug information: a comment shifts line numbers that panic locations report, so spans have to refresh without counting as a code change.</li>
+    <li>Crumb needs a real layout before its numbers mean more than an estimate, including whether APIs get a more compact form than a store.</li>
+    <li>Size at scale hasn't been measured. The small module above takes about 2.4 lines for each line of source.</li>
+  </ul>
+</section>
+</main>
+</div>
+
+<script>
+(function () {
+  var ROOTS = '(?:pub|std|rust|shop|sensors)';
+  var TOKEN = new RegExp([
+    '("""[\\s\\S]*?"""|b?"(?:[^"\\\\\\n]|\\\\.)*")',
+    '(#[^\\n]*)',
+    '(<[a-zA-Z][^<>\\n]*>)',
+    '(\\b(?:Incan|Rust|C|Python|Oven)\\.[A-Z][A-Za-z]*\\b)',
+    '(\\b' + ROOTS + '(?:\\.[A-Za-z0-9_-]+(?:\\[[A-Za-z0-9.]+\\])?)+)',
+    '(@[a-z_.]+)',
+    '(\\b[a-z_][a-z0-9_]*(?=\\s=\\s))',
+    '(\\b(?:from|import|pub|def|model|type|newtype|return|async|await|requires|ensures|with|mut|class|if|else)\\b)',
+    '(\\b(?:true|false|None|inf|nan)\\b)',
+    '(\\b[A-Z][A-Za-z0-9_]*\\b)',
+    '(\\b\\d{4}-\\d\\d-\\d\\dT[\\d:.]+Z?|\\b\\d[\\d_.]*(?:e[+-]?\\d+)?d?\\b)',
+    '(^\\[\\[?[^\\n]*\\]\\]?$)',
+    '(![A-Za-z][A-Za-z.]*)',
+    '(\\b[A-Za-z_][A-Za-z0-9_-]*(?=:\\s))'
+  ].join('|'), 'gm');
+  var CLS = [null, 't-str', 't-com', 't-mark', 't-kind', 't-path', 't-kw', 't-key', 't-kw', 't-num', 't-type', 't-num', 't-path', 't-kind', 't-key'];
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function paint(src, lang) {
+    var out = '', last = 0, m;
+    TOKEN.lastIndex = 0;
+    while ((m = TOKEN.exec(src))) {
+      out += esc(src.slice(last, m.index));
+      var cls = null;
+      for (var i = 1; i < CLS.length; i++) { if (m[i] !== undefined) { cls = CLS[i]; break; } }
+      if (i === 14 && lang !== 'yaml') { cls = null; }
+      if (i === 8 && lang === 'comic' && /^(type|from|import|model|with|class|def|mut|async|await|pub|newtype|requires|ensures)$/.test(m[0])) { cls = null; }
+      out += cls ? '<span class="' + cls + '">' + esc(m[0]) + '</span>' : esc(m[0]);
+      last = TOKEN.lastIndex;
+    }
+    return out + esc(src.slice(last));
+  }
+  document.querySelectorAll('pre.code code').forEach(function (el) {
+    el.innerHTML = paint(el.textContent, el.getAttribute('data-lang'));
+  });
+  // Color each comparison from its numbers: lower is better, and a cell can hold several counts.
+  function nums(td) { return (td.textContent.match(/\d{1,3}(?:,\d{3})+|\d+/g) || []).map(function (s) { return +s.replace(/,/g, ''); }); }
+  function against(rival, comic) {
+    if (!rival.length || rival.length !== comic.length) { return null; }
+    var lower = rival.some(function (x, i) { return x < comic[i]; }), higher = rival.some(function (x, i) { return x > comic[i]; });
+    return lower && higher ? 'mixed' : lower ? 'beats' : 'not';
+  }
+  function verdict(comicCell, rivalCells) {
+    var c = nums(comicCell), results = rivalCells.map(function (r) { var v = against(nums(r), c); return { cell: r, v: v }; }).filter(function (r) { return r.v; });
+    if (!c.length || !results.length) { return results; }
+    var cls = results.some(function (r) { return r.v === 'beats'; }) ? 'c-lose' : results.some(function (r) { return r.v === 'mixed'; }) ? 'c-mixed' : 'c-win';
+    comicCell.classList.add(cls);
+    return results;
+  }
+  function markRivals(results) { results.forEach(function (r) { if (r.v === 'beats') { r.cell.classList.add('c-lose'); } if (r.v === 'mixed') { r.cell.classList.add('c-mixed'); } }); }
+  document.querySelectorAll('table[data-comic]').forEach(function (t) {
+    var comic = t.getAttribute('data-comic').split(',').map(Number), rivals = t.getAttribute('data-rivals').split(',').map(Number);
+    t.querySelectorAll('tbody tr').forEach(function (tr) {
+      var rivalCells = rivals.map(function (i) { return tr.children[i]; });
+      comic.forEach(function (c, n) { var r = verdict(tr.children[c], rivalCells); if (n === 0) { markRivals(r); } });
+    });
+  });
+  document.querySelectorAll('table[data-comic-row]').forEach(function (t) {
+    var name = t.getAttribute('data-comic-row'), rows = Array.prototype.slice.call(t.querySelectorAll('tbody tr'));
+    var own = rows.filter(function (tr) { return tr.children[0].textContent.trim() === name; })[0];
+    for (var col = 1; col < own.children.length; col++) {
+      markRivals(verdict(own.children[col], rows.filter(function (tr) { return tr !== own; }).map(function (tr) { return tr.children[col]; })));
+    }
+  });
+  document.querySelectorAll('table[data-comic], table[data-comic-row]').forEach(function (t) {
+    var p = document.createElement('p'); p.className = 'legend';
+    p.innerHTML = '<span style="background:var(--c-win)">✓ COMIC is smallest or tied</span><span style="background:var(--c-mixed)">~ Mixed: better on one count, worse on another</span><span style="background:var(--c-lose)">✕ COMIC is beaten, and by this cell</span>';
+    t.parentNode.parentNode.insertBefore(p, t.parentNode.nextSibling);
+  });
+})();
+</script>
+
+</body></html>

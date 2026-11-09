@@ -1,0 +1,108 @@
+"""Reusable .COMIC components built from Pallay's validated document tree."""
+from pub::pallay import DocumentNode, element, content
+from syntax_highlight import highlight
+
+
+pub def el(tag: str, attributes: Dict[str, str], children: list[DocumentNode]) -> DocumentNode:
+    return element(tag, attributes, children)
+
+
+pub def txt(value: str) -> DocumentNode:
+    return content(value)
+
+
+pub def node(tag: str, value: str, class_name: str = "") -> DocumentNode:
+    return el(tag, {"class": class_name}, [txt(value)])
+
+
+pub def link(label: str, href: str, class_name: str = "text-link") -> DocumentNode:
+    return el("a", {"href": href, "class": class_name}, [txt(label)])
+
+
+pub def paragraph(value: str, class_name: str = "") -> DocumentNode:
+    return node("p", value, class_name)
+
+
+pub def code_block(source: str, label: str = ".COMIC", class_name: str = "") -> DocumentNode:
+    mut parts: list[DocumentNode] = []
+    mut mobile_break = false
+    for part in highlight(source):
+        parts.append(part)
+        if class_name == "value-example" and "\n" not in source and not mobile_break and len(part.children) > 0 and part.children[0].text == "(":
+            parts.append(el("br", {"class": "mobile-code-break"}, []))
+            mobile_break = true
+    return el("figure", {"class": "code-panel " + class_name}, [node("figcaption", label, "code-label"), el("pre", {"tabindex": "0", "aria-label": label}, [el("code", {}, parts)])])
+
+
+pub def header(active: str) -> DocumentNode:
+    mut navigation: list[DocumentNode] = []
+    for entry in [("Syntax", "/syntax/"), ("Benchmarks", "/benchmarks/"), ("Specification", "/paper/"), ("GitHub", "https://github.com/encero-systems/comic")]:
+        mut attributes = {"href": entry.1}
+        if active == entry.1:
+            attributes["aria-current"] = "page"
+        navigation.append(el("a", attributes, [txt(entry.0)]))
+    brand = el("a", {"href": "/", "class": "brand", "aria-label": ".COMIC home"}, [el("img", {"src": "/assets/dot-comic-logo-amber.png", "alt": ".COMIC", "width": "140", "height": "70"}, [])])
+    return el("header", {"class": "site-header wrap"}, [link("Skip to content", "#main", "skip-link"), brand, el("div", {"class": "brand-description"}, [paragraph("Canonical Object Markup\nfor Interoperable Crumbs"), maker_signature()]), el("nav", {"class": "desktop-nav", "aria-label": "Main navigation"}, navigation), el("details", {"class": "mobile-menu"}, [node("summary", "Menu"), el("nav", {"aria-label": "Mobile navigation"}, navigation)])])
+
+
+pub def footer() -> DocumentNode:
+    logo = el("a", {"href": "/", "class": "footer-logo", "aria-label": ".COMIC home"}, [el("img", {"src": "/assets/dot-comic-logo-amber.png", "alt": ".COMIC", "width": "140", "height": "70"}, [])])
+    built = el("a", {"href": "https://incan.io", "class": "built-with-incan", "aria-label": "Built with Incan"}, [el("img", {"src": "/assets/built-with-incan-mono.png", "alt": "Built with INCAN", "width": "2172", "height": "724"}, [])])
+    return el("footer", {"class": "site-footer wrap"}, [el("div", {"class": "footer-brand"}, [el("div", {"class": "footer-brand-line"}, [logo, maker_signature()]), paragraph("A format in the making.", "muted")]), el("nav", {"aria-label": "Footer navigation"}, [link("Comic guide", "/casebook/"), link("Specification", "/paper/"), link("Open questions", "/paper/#open-questions"), link("GitHub", "https://github.com/encero-systems/comic")]), el("div", {"class": "footer-foundation"}, [built, paragraph("Authored in Incan · Powered by Pallay · Apache 2.0", "fine-print")])])
+
+
+pub def shell(active: str, children: list[DocumentNode], class_name: str = "") -> DocumentNode:
+    return el("div", {"class": "site"}, [header(active), el("main", {"id": "main", "class": class_name}, children), footer()])
+
+
+pub def section_heading(number: str, title: str, topic: str = "Section") -> DocumentNode:
+    if title == "Name the structure once.":
+        return el("div", {"class": "section-heading"}, [node("span", number + " / " + topic, "issue-number"), el("h2", {}, [txt("Name the "), node("mark", "structure", "word-highlight"), txt(" once.")])])
+    if title == "Measure the trade-offs.":
+        return el("div", {"class": "section-heading"}, [node("span", number + " / " + topic, "issue-number"), el("h2", {}, [txt("Measure the "), node("mark", "trade-offs", "word-highlight"), txt(".")])])
+    if title == "A lock file with connections.":
+        return el("div", {"class": "section-heading"}, [node("span", number + " / " + topic, "issue-number"), el("h2", {}, [txt("A lock file with "), node("em", "connections.")])])
+    return el("div", {"class": "section-heading"}, [node("span", number + " / " + topic, "issue-number"), node("h2", title)])
+
+
+pub def value_diagram() -> DocumentNode:
+    row = el("div", {"class": "row-map-source"}, [node("span", "First row", "row-map-label"), el("code", {}, [txt("("), node("span", "1", "cell-item"), txt(", ("), node("span", "7", "cell-buyer"), txt(", "), node("span", "\"ada\"", "cell-buyer"), txt("))")])])
+    item_id = el("dl", {"class": "bubble-field item-field"}, [node("dt", "id"), node("dd", "= 1")])
+    buyer = el("div", {"class": "record-bubble buyer-bubble"}, [el("div", {"class": "record-bubble-title"}, [node("strong", "Buyer"), node("span", "shop.Buyer value", "bubble-type")]), el("dl", {"class": "bubble-field"}, [node("dt", "id"), node("dd", "= 7")]), el("dl", {"class": "bubble-field"}, [node("dt", "name"), node("dd", "= \"ada\"")])])
+    buyer_field = el("div", {"class": "nested-buyer-field"}, [node("span", "buyer", "nested-field-label"), buyer])
+    item = el("div", {"class": "record-bubble item-bubble"}, [el("div", {"class": "record-bubble-title"}, [node("strong", "Item"), node("span", "shop.Item value", "bubble-type")]), el("div", {"class": "record-bubble-fields"}, [item_id, buyer_field])])
+    namespace = el("div", {"class": "namespace-map"}, [el("div", {"class": "namespace-label"}, [node("span", "namespace"), node("strong", "shop")]), item])
+    return el("figure", {"class": "value-diagram", "aria-label": "Namespace shop. First row expanded: Item value has id 1 and buyer, a nested Buyer value with id 7 and name ada."}, [node("figcaption", "One row, expanded", "diagram-caption"), row, namespace])
+
+
+def representation_flow(forward: str, backward: str, comic: bool = false) -> DocumentNode:
+    mut arrows = "/assets/value-flow-arrows.svg"
+    if comic:
+        arrows = str("/assets/comic-flow-arrows.svg")
+    return el("div", {"class": "representation-flow"}, [node("span", forward, "flow-forward"), el("img", {"src": arrows, "alt": "", "aria-hidden": "true", "width": "100", "height": "70"}, []), node("span", backward, "flow-backward")])
+
+
+pub def representations_diagram(comic: bool = false) -> DocumentNode:
+    text = el("div", {"class": "representation-card text-representation"}, [node("h3", ".COMIC"), paragraph("Readable text", "representation-subtitle"), el("pre", {"tabindex": "0", "aria-label": ".COMIC value excerpt; supporting descriptions omitted"}, [node("code", "shop.billing.Invoice\n<< (id=1, total=(value=1200))")]), paragraph("Value excerpt", "representation-note")])
+    value = el("div", {"class": "representation-card typed-representation"}, [node("h3", "Typed value"), node("strong", "shop.billing.Invoice", "represented-type"), el("dl", {"class": "represented-fields"}, [node("dt", "id"), node("dd", "1"), node("dt", "total"), node("dd", "(value=1200)")])])
+    binary = el("div", {"class": "representation-card binary-representation"}, [node("h3", "Crumb"), paragraph("Binary representation", "representation-subtitle"), paragraph("The same type, fields and values.", "binary-meaning"), paragraph("Row or column codec", "representation-note")])
+    return el("figure", {"class": "representations-diagram", "aria-label": ".COMIC parses into typed values and prints from them. Crumb encodes and decodes the same typed values."}, [el("div", {"class": "representations-flow"}, [text, representation_flow("Parse", "Print", comic), value, representation_flow("Encode", "Decode", comic), binary]), node("figcaption", "Schematic · The codec contracts are experimental.", "representation-footnote")])
+
+
+pub def dependency_diagram() -> DocumentNode:
+    return el("figure", {"class": "dependency-diagram", "aria-label": "aho-corasick version 1.1.4 depends on memchr version 2.8.0"}, [el("div", {"class": "dependency-node"}, [node("strong", "aho-corasick"), node("span", "1.1.4", "mono")]), node("figcaption", "depends on", "dependency-label"), el("div", {"class": "dependency-node"}, [node("strong", "memchr"), node("span", "2.8.0", "mono")])])
+
+
+pub def navigation_arrow(direction: str) -> DocumentNode:
+    return el("img", {"src": "/assets/navigation-arrow.svg", "class": "navigation-arrow arrow-" + direction, "alt": "", "aria-hidden": "true", "width": "20", "height": "16"}, [])
+
+
+pub def maker_signature() -> DocumentNode:
+    return el("span", {"class": "maker-signature", "aria-label": "by Encero"}, [node("em", "by", "maker-by"), el("span", {"class": "encero-mark"}, [node("span", "ENCERO", "encero-letters")])])
+
+
+pub def community_banner() -> DocumentNode:
+    portrait = el("figure", {"class": "community-incus"}, [el("img", {"src": "/assets/incus-community-notebook.png", "alt": "Detective Incus at his desk with an open notebook, extending a welcoming hand", "width": "1536", "height": "1024", "loading": "lazy"}, [])])
+    join = el("a", {"href": "https://www.linkedin.com/groups/42515004/", "class": "button button-primary"}, [txt("Join the community"), navigation_arrow("next")])
+    copy = el("div", {"class": "community-copy"}, [node("span", "GET INVOLVED", "community-kicker"), node("h2", "Help shape .COMIC."), paragraph("Share examples, ask questions, and follow the work on .COMIC and Incan."), el("div", {"class": "community-actions"}, [join, node("span", "on LinkedIn", "community-destination")]), link("Follow .COMIC on GitHub", "https://github.com/encero-systems/comic")])
+    return el("section", {"class": "community-banner wrap", "aria-label": "Join the Incan community"}, [el("div", {"class": "community-panel"}, [portrait, copy])])

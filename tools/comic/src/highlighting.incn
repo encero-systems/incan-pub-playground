@@ -1,0 +1,40 @@
+"""An isolated, Incan-authored syntax highlighting study, not a format validator."""
+from pub::pallay import DocumentNode, LocalView, LocalField, LocalGesture, LocalEdit, LocalAttribute, LocalSelection
+from components import el, node, txt, paragraph, link, shell
+from content import spec_url
+from syntax_highlight import highlight
+
+
+pub def detailed_example() -> str:
+    return "# Descriptions define the types used below.\nexample.Address = Record {\n    street: string\n    city: string\n    country: string\n}\n\nexample.Fulfillment = Enum {\n    Shipped(carrier: string, tracking: string)\n    Pending\n}\n\nexample.Link = Record { target: ref<example.Target> }\n\nexample.Money = Record {\n    amount: decimal<10, 2>\n    currency: string\n}\n\nexample.Order = Record {\n    id: i64\n    placed_at [canonical = false]: string\n    address: example.Address\n    fulfillment: example.Fulfillment\n    note: string? = None\n}\n\nexample.Target = Record { id: i64 }\n\n# One value: named fields and a nested record.\nexample.Order << (\n    id=1003,\n    placed_at=\"2026-11-04T09:13:00Z\",\n    address=(\n        street=\"42 Halting Lane\",\n        city=\"Amsterdam\",\n        country=\"NL\",\n    ),\n    fulfillment=Shipped(carrier=\"DHL\", tracking=\"JD144155\"),\n    note=\"Ask for \\\"Ada\\\". # This stays inside the string.\",\n)\n\n# A table: the same declared fields in positional rows.\nexample.Order << [\n    (1000, \"2026-11-01T09:10:00Z\", (\"1 Compiler Court\", \"Zurich\", \"CH\"), Pending),\n    (1001, \"2026-11-02T09:11:00Z\", (\"1 Compiler Court\", \"Boston\", \"US\"), Pending, \"Leave at the door\"),\n]\n\n# A typed decimal keeps its scale and its d suffix.\nexample.Money << (amount=19.90d, currency=\"EUR\")\n\n# Unquoted paths are references; reading one fetches nothing.\nexample.Link << (target=example.remote.point)\n"
+
+
+pub def highlighting_page() -> DocumentNode:
+    source = detailed_example()
+    mut palette_buttons: list[DocumentNode] = []
+    for entry in [("classic", "1 / Classic"), ("clear", "2 / Clear"), ("punchy", "3 / Punchy")]:
+        palette_buttons.append(el("button", {"id": "palette-" + entry.0, "type": "button", "aria-pressed": "false"}, [txt(entry.1)]))
+    modes = el("div", {"class": "lab-button-group", "role": "group", "aria-label": "Code background"}, [el("button", {"id": "mode-paper", "type": "button", "aria-pressed": "false"}, [txt("Paper")]), el("button", {"id": "mode-night", "type": "button", "aria-pressed": "false"}, [txt("Night")])])
+    wrapping = el("div", {"class": "lab-button-group", "role": "group", "aria-label": "Line layout"}, [el("button", {"id": "wrap-scroll", "type": "button", "aria-pressed": "false"}, [txt("Scroll lines")]), el("button", {"id": "wrap-wrap", "type": "button", "aria-pressed": "false"}, [txt("Wrap lines")])])
+    controls = el("div", {"class": "lab-controls"}, [el("div", {"class": "lab-palette-control"}, [node("span", "Color treatment", "lab-control-label"), el("div", {"class": "lab-button-group", "role": "group", "aria-label": "Highlighting palette"}, palette_buttons)]), modes, wrapping])
+    mut legend: list[DocumentNode] = []
+    for entry in [("declaration", "Declarations"), ("kind", "Record / Enum"), ("type", "Built-in types"), ("path", "Paths"), ("variant", "Enum variants"), ("field", "Field names"), ("metadata", "Metadata"), ("string", "Strings"), ("number", "Numbers"), ("literal", "Booleans / None"), ("comment", "Comments"), ("operator", "Operators")]:
+        legend.append(el("li", {}, [node("span", "", "token-swatch tok-" + entry.0), node("span", entry.1, "tok-" + entry.0)]))
+    notes = el("aside", {"class": "lab-legend"}, [node("h2", "What gets emphasis?"), el("ul", {"class": "token-legend"}, legend), paragraph("Compare a path with a quoted string. Quotes change the value, even when the spelling is the same.", "lab-note"), paragraph("Comments recede. Field names stay legible. Color adds a reading cue; punctuation still carries the syntax.", "lab-note"), link("Download the example", "/assets/highlighting-example.comic"), link("Read the text specification", spec_url("spec/text.md"))])
+    viewer = el("figure", {"class": "code-panel lab-code-panel"}, [node("figcaption", "orders.comic / " + str(len(source.split("\n")) - 1) + " lines", "code-label"), el("pre", {"tabindex": "0", "aria-label": "Detailed .COMIC syntax example"}, [el("code", {}, highlight(source))])])
+    lab = el("section", {"id": "highlight-lab", "class": "highlight-lab wrap", "data-palette": "punchy", "data-mode": "paper", "data-wrap": "scroll"}, [controls, el("div", {"class": "lab-layout"}, [viewer, notes])])
+    heading = el("div", {"class": "article-heading wrap"}, [link("Syntax guide /", "/syntax/", "breadcrumb"), node("p", "DESIGN STUDY / SYNTAX", "eyebrow"), node("h1", "Syntax highlighting lab."), paragraph("One detailed .COMIC document. Three color treatments. Try them on paper and at night.", "article-lead"), paragraph("Human-formatted example based on the pinned draft text specification. This is a visual study, not a parser or validator.", "fine-print muted")])
+    return shell("/syntax/", [heading, lab], "syntax-lab")
+
+
+pub def highlighting_view() -> LocalView:
+    mut gestures: list[LocalGesture] = []
+    mut selections: list[LocalSelection] = []
+    mut fields: list[LocalField] = []
+    for entry in [("palette", "punchy", ["classic", "clear", "punchy"]), ("mode", "paper", ["paper", "night"]), ("wrap", "scroll", ["scroll", "wrap"])]:
+        fields.append(LocalField(name=entry.0, initial=entry.1, values=entry.2))
+        for value in entry.2:
+            target = entry.0 + "-" + value
+            gestures.append(LocalGesture(target=target, edits=[LocalEdit(field=entry.0, value=value)]))
+            selections.append(LocalSelection(target=target, field=entry.0, value=value))
+    return LocalView(id="highlighting", root="highlight-lab", fields=fields, gestures=gestures, selections=selections, attributes=[LocalAttribute(target="highlight-lab", field="palette", attribute="data-palette"), LocalAttribute(target="highlight-lab", field="mode", attribute="data-mode"), LocalAttribute(target="highlight-lab", field="wrap", attribute="data-wrap")])

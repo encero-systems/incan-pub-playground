@@ -1,0 +1,120 @@
+"""Presentation-only .COMIC token colors. This does not parse or validate values."""
+from pub::pallay import DocumentNode, element, content
+
+
+def word_character(character: str) -> bool:
+    return character in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-."
+
+
+def token_class(token: str, following: str, depth: int) -> str:
+    if token in ["Record", "Enum"] or (following == "{" and depth == 0):
+        return "kind"
+    if token in ["true", "false", "None", "Some"]:
+        return "literal"
+    if token in ["canonical", "renamed_from"]:
+        return "metadata"
+    if token in ["string", "boolean", "i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64", "fp32", "fp64", "decimal", "list", "map", "set", "option", "ref", "binary", "Int", "Str", "Bool", "String"]:
+        return "type"
+    if following == "=" and depth == 0:
+        return "declaration"
+    if following in [":", "=", "["]:
+        return "field"
+    if "." in token:
+        return "path"
+    if token[0] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+        return "variant"
+    return "name"
+
+
+pub def highlight(source: str) -> list[DocumentNode]:
+    mut parts: list[DocumentNode] = []
+    mut index = 0
+    mut depth = 0
+    while index < len(source):
+        start = index
+        character = source[index]
+        mut kind = "punctuation"
+        if character in " \n\t\r":
+            parts.append(content(character))
+            index += 1
+            continue
+        if character == "#":
+            kind = str("comment")
+            while index < len(source) and source[index] != "\n":
+                index += 1
+        elif character == "\"":
+            kind = str("string")
+            index += 1
+            while index < len(source):
+                if source[index] == "\\":
+                    index += 1
+                    if index < len(source):
+                        index += 1
+                elif source[index] == "\"":
+                    index += 1
+                    break
+                else:
+                    index += 1
+        elif character in "0123456789" or (character == "-" and index + 1 < len(source) and source[index + 1] in "0123456789"):
+            kind = str("number")
+            index += 1
+            while index < len(source) and source[index] in "0123456789.eE+-d":
+                index += 1
+        elif word_character(character):
+            index += 1
+            while index < len(source) and word_character(source[index]):
+                index += 1
+            mut next_index = index
+            while next_index < len(source) and source[next_index] in " \t\n\r":
+                next_index += 1
+            mut following = ""
+            if next_index < len(source):
+                following = source[next_index]
+            kind = token_class(source[start:index], following, depth)
+        elif character == "<" and index + 1 < len(source) and source[index + 1] == "<":
+            kind = str("operator")
+            index += 2
+        else:
+            if character in "{[(":
+                depth += 1
+            elif character in "}])":
+                depth -= 1
+            if character in "=:?|":
+                kind = str("operator")
+            index += 1
+        parts.append(element("span", {"class": "tok-" + kind}, [content(source[start:index])]))
+    return parts
+
+
+def rendered_text(parts: list[DocumentNode]) -> str:
+    mut result = ""
+    for part in parts:
+        result += part.text
+        for child in part.children:
+            result += child.text
+    return result
+
+
+pub def check_highlighting(source: str) -> None:
+    assert rendered_text(highlight(source)) == source, "Highlighting must preserve every source character"
+    probe = "note=\"a \\\"quote\\\" # still a string\" # actual comment\n"
+    mut strings = 0
+    mut comments = 0
+    for part in highlight(probe):
+        if part.attributes.get("class", "") == "tok-string":
+            strings += 1
+        if part.attributes.get("class", "") == "tok-comment":
+            comments += 1
+    assert strings == 1 and comments == 1, "Escaped quotes and hash characters must not split strings"
+    assert rendered_text(highlight(probe)) == probe, "Highlighting must preserve escapes"
+
+
+
+    mut declarations = 0
+    mut fields = 0
+    for part in highlight("example.Row << (id=1)"):
+        if part.attributes.get("class", "") == "tok-declaration":
+            declarations += 1
+        if part.attributes.get("class", "") == "tok-field":
+            fields += 1
+    assert declarations == 0 and fields == 1, "Stored fields are not root declarations"

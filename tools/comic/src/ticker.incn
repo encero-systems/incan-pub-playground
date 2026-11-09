@@ -1,0 +1,50 @@
+"""Incan-authored teaching examples, rotation policy and reader controls."""
+from pub::pallay import DocumentNode, LocalView, LocalField, LocalGesture, LocalEdit, LocalRegion, LocalVariant, LocalInput, LocalTimer
+from components import el, node, txt, paragraph, link, code_block, navigation_arrow
+from content import model_example, value_example
+
+
+pub def example_titles() -> list[str]:
+    return ["Descriptions and values", "References and strings", "Nested records and tables", "Field identity and renames"]
+
+
+def example(index: int, blocks: list[DocumentNode], explanation: str) -> DocumentNode:
+    return el("section", {"id": "hero-example-" + str(index), "class": "ticker-example", "aria-label": example_titles()[index]}, blocks + [paragraph(explanation, "example-explanation")])
+
+
+pub def example_ticker() -> DocumentNode:
+    descriptions = example(0, [code_block(model_example(), "The model is data, too.", "model-example"), code_block(value_example(), "A value of that model.", "value-example")], "Describe a model. Inspect its values. Follow its references.")
+    references = example(1, [code_block("shop.billing.Cents", "A reference to a declaration."), code_block("\"shop.billing.Cents\"", "A string with the same spelling.")], "Quotes change the value. Reading a reference does not follow it or fetch code.")
+    tables = example(2, [code_block("shop.Buyer = Record { id: i64, name: string }\nshop.Item = Record { id: i64, buyer: shop.Buyer }", "Declare the nested record types."), code_block("shop.Item << [\n    (1, (7, \"ada\")),\n    (2, (9, \"bob\")),\n]", "Each row supplies the declared fields.")], "Nested records are rows too. Each row remains its own value.")
+    renames = example(3, [code_block("price: decimal<10, 2>", "Before: the stored field name."), code_block("unit_price [renamed_from = [\"price\"]]: decimal<10, 2>", "After: a rename retains its identity.")], "A stored member’s identity comes from its earliest name. These are field excerpts.")
+    mut options: list[DocumentNode] = []
+    mut controls: list[DocumentNode] = []
+    for index in range(4):
+        options.append(el("option", {"value": str(index)}, [txt(example_titles()[index])]))
+        controls.append(el("span", {"id": "hero-controls-" + str(index), "class": "ticker-step"}, [el("button", {"id": "hero-previous-" + str(index), "type": "button", "aria-label": "Previous example"}, [navigation_arrow("previous"), txt("Previous")]), node("span", str(index + 1) + " / 4", "ticker-counter"), el("button", {"id": "hero-next-" + str(index), "type": "button", "aria-label": "Next example"}, [txt("Next"), navigation_arrow("next")])]))
+    controls.append(el("button", {"id": "hero-pause", "type": "button"}, [txt("Pause rotation")]))
+    controls.append(el("button", {"id": "hero-play", "type": "button"}, [txt("Play rotation")]))
+    bubble = el("div", {"class": "hero-bubble"}, [el("div", {"class": "ticker-heading"}, [node("span", "Specification examples", "bubble-profile"), el("div", {"class": "ticker-toolbar"}, [el("div", {"class": "ticker-topic"}, [el("label", {"for": "hero-topic"}, [txt("Example")]), el("select", {"id": "hero-topic"}, options)]), el("nav", {"class": "ticker-controls", "aria-label": "Example rotation"}, controls)])]), el("div", {"class": "ticker-examples", "aria-live": "off"}, [descriptions, references, tables, renames])])
+    portrait = el("img", {"src": "/assets/incus-detective-closeup.png", "alt": "Detective Incus, close up in his fedora and cyan visor, speaking toward the examples", "class": "incus-speaker-image", "width": "1200", "height": "1290"}, [])
+    speaker = el("div", {"class": "incus-ticker-portrait"}, [portrait, el("span", {"class": "visor-glint", "aria-hidden": "true"}, [])])
+    guide = el("div", {"class": "incus-guide"}, [el("h2", {}, [txt("Read "), el("img", {"src": "/assets/dot-comic-logo-amber.png", "alt": ".COMIC", "width": "140", "height": "70", "class": "inline-comic-logo"}, []), txt(", one panel at a time.")]), paragraph("Descriptions, values, references and Crumb."), link("Read with Incus", "/casebook/", "button button-primary")])
+    return el("div", {"id": "hero-showcase", "class": "hero-showcase"}, [el("div", {"class": "speech-stage"}, [bubble, el("img", {"class": "speech-tail", "src": "/assets/speech-tail.svg", "alt": "", "aria-hidden": "true", "width": "140", "height": "100"}, []), speaker]), guide])
+
+
+pub def example_view() -> LocalView:
+    mut variants: list[LocalVariant] = []
+    mut control_variants: list[LocalVariant] = []
+    mut gestures = [LocalGesture(target="hero-topic", event="change", edits=[LocalEdit(field="example", source="value"), LocalEdit(field="rotation", value="paused")]), LocalGesture(target="hero-pause", edits=[LocalEdit(field="rotation", value="paused")], focus="hero-play"), LocalGesture(target="hero-play", edits=[LocalEdit(field="rotation", value="playing")], focus="hero-pause")]
+    mut targets: list[str] = []
+    for index in range(4):
+        targets.append("hero-example-" + str(index))
+        gestures.append(LocalGesture(target="hero-example-" + str(index), event="tick", edits=[LocalEdit(field="example", value=str((index + 1) % 4))]))
+        for direction in ["previous", "next"]:
+            mut destination = (index + 1) % 4
+            if direction == "previous":
+                destination = (index + 3) % 4
+            gestures.append(LocalGesture(target="hero-" + direction + "-" + str(index), edits=[LocalEdit(field="example", value=str(destination)), LocalEdit(field="rotation", value="paused")], focus="hero-topic"))
+        if index != 0:
+            variants.append(LocalVariant(target="hero-example-" + str(index), when={"example": str(index)}))
+            control_variants.append(LocalVariant(target="hero-controls-" + str(index), when={"example": str(index)}))
+    return LocalView(id="hero-examples", root="hero-showcase", fields=[LocalField(name="example", initial="0", values=["0", "1", "2", "3"]), LocalField(name="rotation", initial="playing", values=["playing", "paused"])], gestures=gestures, regions=[LocalRegion(fallback="hero-example-0", variants=variants), LocalRegion(fallback="hero-controls-0", variants=control_variants), LocalRegion(fallback="hero-pause", variants=[LocalVariant(target="hero-play", when={"rotation": "paused"})])], inputs=[LocalInput(target="hero-topic", field="example")], timers=[LocalTimer(targets=targets, interval_ms=16000, when={"rotation": "playing"}, pause_target="hero-pause", resume_target="hero-play")])

@@ -1,0 +1,81 @@
+"""Paper-backed benchmark data and bounded, Incan-authored chart selection."""
+from std.fs import Path
+from std.json import JsonValue
+from pub::pallay import DocumentNode, LocalView, LocalField, LocalGesture, LocalEdit, LocalRegion, LocalVariant, LocalInput
+from components import el, node, txt, paragraph, link, navigation_arrow
+
+
+pub model Dataset:
+    pub name: str
+    pub toon: int
+    pub json: int
+    pub comic: int
+    pub csv: int = 0
+    pub formatted: int = 0
+
+
+pub def datasets() -> list[Dataset]:
+    source = Path("content/benchmarks.json").read_text(encoding="utf-8", errors="strict").unwrap()
+    document = JsonValue.parse(source).unwrap()
+    mut result: list[Dataset] = []
+    for entry in document.get("datasets").unwrap().as_array().unwrap():
+        result.append(Dataset(name=entry.get("dataset").unwrap().as_str().unwrap(), toon=entry.get("toon_best_delimiter").unwrap().as_int().unwrap(), json=entry.get("json_compact").unwrap().as_int().unwrap(), comic=entry.get("comic_minified").unwrap().as_int().unwrap(), csv=entry.get("csv").unwrap_or(JsonValue.null()).as_int().unwrap_or(0), formatted=entry.get("comic_formatted").unwrap_or(JsonValue.null()).as_int().unwrap_or(0)))
+    return result
+
+
+pub def count(value: int) -> str:
+    source = str(value)
+    mut result = ""
+    for index in range(len(source)):
+        if index > 0 and (len(source) - index) % 3 == 0:
+            result += ","
+        result += source[index]
+    return result
+
+
+def bar(label: str, value: int, maximum: int, class_name: str) -> DocumentNode:
+    return el("div", {"class": "bar-row " + class_name}, [node("span", label, "bar-label"), el("div", {"class": "bar-track"}, [el("meter", {"min": "0", "max": str(maximum), "value": str(value), "aria-label": label + ": " + count(value) + " tokens"}, [txt(str(value))])]), node("span", count(value), "bar-value")])
+
+
+pub def chart(dataset: Dataset, identity: str) -> DocumentNode:
+    mut maximum = max([dataset.toon, dataset.json, dataset.comic])
+    maximum = max([maximum, dataset.csv, dataset.formatted])
+    mut rows = [bar(".COMIC minified", dataset.comic, maximum, "comic-bar"), bar("TOON", dataset.toon, maximum, "toon-bar"), bar("JSON compact", dataset.json, maximum, "json-bar")]
+    if dataset.formatted > 0:
+        rows.append(bar(".COMIC formatted", dataset.formatted, maximum, "formatted-bar"))
+    if dataset.csv > 0:
+        rows.append(bar("CSV", dataset.csv, maximum, "csv-bar"))
+    mut result = ".COMIC uses fewer tokens than TOON in this workload."
+    if dataset.comic > dataset.toon:
+        result = str("TOON uses fewer tokens than .COMIC in this workload.")
+    return el("section", {"id": identity, "class": "dataset-chart", "aria-label": dataset.name}, [node("h3", dataset.name), paragraph("Tokens · o200k_base · lower is smaller", "chart-unit"), el("div", {"class": "bars"}, rows), paragraph(result, "chart-result"), el("div", {"class": "workload-buttons"}, [el("button", {"id": identity + "-previous", "type": "button"}, [navigation_arrow("previous"), txt("Previous workload")]), el("button", {"id": identity + "-next", "type": "button"}, [txt("Next workload"), navigation_arrow("next")])])])
+
+
+pub def benchmark_widget() -> DocumentNode:
+    data = datasets()
+    mut options: list[DocumentNode] = []
+    mut charts: list[DocumentNode] = []
+    for index in range(len(data)):
+        options.append(el("option", {"value": str(index)}, [txt(data[index].name)]))
+        charts.append(chart(data[index], "dataset-" + str(index)))
+    return el("div", {"id": "benchmarks", "class": "benchmark-widget"}, [el("div", {"class": "chart-controls"}, [el("label", {"for": "dataset-select"}, [txt("Choose a workload")]), el("select", {"id": "dataset-select"}, options)]), el("div", {"aria-live": "polite", "aria-atomic": "true"}, charts), paragraph("Historical prototype syntax, before the current grammar. The model was inferred and schema cost excluded. Model-reading accuracy was not measured.", "method-note"), link("Explore all workloads and methodology", "/benchmarks/#methodology")])
+
+
+pub def benchmark_view() -> LocalView:
+    mut values: list[str] = []
+    mut variants: list[LocalVariant] = []
+    mut gestures = [LocalGesture(target="dataset-select", event="change", edits=[LocalEdit(field="dataset", source="value")])]
+    for index in range(len(datasets())):
+        values.append(str(index))
+        gestures.append(LocalGesture(target="dataset-" + str(index) + "-previous", edits=[LocalEdit(field="dataset", value=str((index + 7) % 8))], focus="dataset-select"))
+        gestures.append(LocalGesture(target="dataset-" + str(index) + "-next", edits=[LocalEdit(field="dataset", value=str((index + 1) % 8))], focus="dataset-select"))
+        if index != 1:
+            variants.append(LocalVariant(target="dataset-" + str(index), when={"dataset": str(index)}))
+    return LocalView(id="benchmark-selection", root="benchmarks", fields=[LocalField(name="dataset", initial="1", values=values)], gestures=gestures, regions=[LocalRegion(fallback="dataset-1", variants=variants)], inputs=[LocalInput(target="dataset-select", field="dataset")])
+
+
+pub def results_table() -> DocumentNode:
+    mut rows: list[DocumentNode] = []
+    for dataset in datasets():
+        rows.append(el("tr", {}, [el("th", {"scope": "row"}, [txt(dataset.name)]), node("td", count(dataset.comic)), node("td", count(dataset.toon)), node("td", count(dataset.json))]))
+    return el("div", {"class": "table-scroll", "tabindex": "0", "aria-label": "All eight benchmark workloads"}, [el("table", {}, [node("caption", "Reported text token counts · schema excluded · scroll for all columns"), el("thead", {}, [el("tr", {}, [node("th", "Workload"), node("th", ".COMIC minified"), node("th", "TOON"), node("th", "JSON compact")])]), el("tbody", {}, rows)])])

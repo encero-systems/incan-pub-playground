@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""Stage source and call the native compiler. Application behavior lives in Incan."""
+import hashlib, json, os, pathlib, shutil, subprocess
+root = pathlib.Path(__file__).resolve().parent
+build_root = pathlib.Path(os.environ['COMIC_BUILD_ROOT'])
+pallay = pathlib.Path(os.environ['PALLAY_SOURCE']).resolve()
+incan_home = pathlib.Path(os.environ['COMIC_INCAN_HOME']).resolve()
+compiler = incan_home / 'bin/incan'
+project = build_root / 'project'
+project.mkdir(parents=True, exist_ok=True)
+shutil.copytree(root / 'src', project / 'src', dirs_exist_ok=True)
+shutil.copytree(root / 'content', project / 'content', dirs_exist_ok=True)
+manifest = (root / 'loaf.toml').read_text().replace('path = "../../pallay"', 'path = ' + json.dumps(str(pallay)))
+(project / 'loaf.toml').write_text(manifest)
+env = os.environ.copy()
+for key in ['INCAN_STDLIB', 'INCAN_SOURCE_ROOT', 'RUSTC_BOOTSTRAP', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'INCAN_ENGINE']:
+    env.pop(key, None)
+env.update(INCAN_HOME=str(incan_home), INCAN_SYSROOT=os.environ['COMIC_RUST_SYSROOT'], INCAN_BAKERY=str(build_root / 'bakery'), CARGO_TARGET_DIR=str(build_root / 'cargo-target'), OVEN_OWNER='off', INCAN_RUST_INCREMENTAL='0')
+subprocess.run([str(compiler), 'build', 'src/main.incn', '--profile', 'debug'], cwd=project, env=env, check=True)
+print('Native compiler build completed', flush=True)
+output = pathlib.Path(os.environ.get('COMIC_OUTPUT', root / 'dist')).resolve()
+env['COMIC_OUTPUT'] = str(output)
+binary = project / 'target/incan/debug/bin/comic_site'
+subprocess.run([str(binary)], cwd=project, env=env, check=True)
+shutil.copytree(root / 'static', output / 'assets', dirs_exist_ok=True)
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+source_files = [root / 'loaf.toml', root / 'build', *sorted((root / 'src').glob('*.incn')), *sorted((root / 'content').glob('*')), *sorted(p for p in (root / 'static').rglob('*') if p.is_file())]
+pallay_files = [p for p in pallay.rglob('*.incn') if '/src/' in str(p)]
+receipt = {
+    'schema': 'comic.site-build.v1',
+    'ownership': 'Incan-authored pages, appearance, data loading and interaction declarations. Pallay-generated HTML and browser runtime. Python performs build orchestration only. No authored Rust or consumer application JavaScript.',
+    'compiler': {'path': str(compiler), 'sha256': digest(compiler), 'version': subprocess.check_output([str(compiler), '--version'], text=True).strip()},
+    'pallay': {'source': str(pallay), 'manifest_sha256': digest(pallay / 'loaf.toml'), 'source_sha256': hashlib.sha256(''.join(str(p.relative_to(pallay)) + ':' + digest(p) + '\n' for p in sorted(pallay_files)).encode()).hexdigest(), 'note': 'Preserved development source paired with the selected installed toolchain; upstream crate path dependencies in its manifest are retained. Not a registry-release claim.'},
+    'sources': {str(p.relative_to(root)): digest(p) for p in source_files},
+    'outputs': {str(p.relative_to(output)): digest(p) for p in sorted(output.rglob('*')) if p.is_file()},
+    'benchmark_evidence': 'Paper-reported; not rerun',
+}
+(root / 'build-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+print('Built all COMIC pages in ' + str(output), flush=True)

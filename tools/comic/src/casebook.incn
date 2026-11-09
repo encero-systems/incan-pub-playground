@@ -1,0 +1,65 @@
+"""Detective Incus's optional, keyboard-operable presentation of the spec."""
+from pub::pallay import DocumentNode, LocalView, LocalField, LocalGesture, LocalEdit, LocalRegion, LocalVariant, LocalInput
+from components import navigation_arrow, el, node, txt, paragraph, link, code_block, shell, value_diagram
+from content import model_example, value_example, table_example, spec_url
+
+
+pub def titles() -> list[str]:
+    return ["Introduction", "Descriptions and values", "References and strings", "Records and tables", "Field identity and renames", ".COMIC and Crumb", "Historical benchmarks", "Specification and next steps"]
+
+
+pub def portrait(class_name: str = "") -> DocumentNode:
+    return el("img", {"src": "/assets/incus-detective-noir.png", "alt": "Detective Incus: a llama in a fedora and trench coat, with his cyan visor, gold armor, magnifying glass and case file", "class": "incus-portrait " + class_name, "width": "1024", "height": "1536"}, [])
+
+
+pub def says(quote: str) -> DocumentNode:
+    return el("aside", {"class": "incus-says"}, [node("span", "INCUS / FIELD NOTES", "case-kicker"), paragraph(quote)])
+
+
+def controls(index: int) -> DocumentNode:
+    mut next_label = "Next panel"
+    if index == 7:
+        next_label = str("Back to the cover")
+    return el("nav", {"class": "case-controls", "aria-label": "Panel navigation"}, [el("button", {"id": "case-previous-" + str(index), "type": "button"}, [navigation_arrow("previous"), txt("Previous panel")]), node("span", str(index + 1) + " / 8", "case-counter"), el("button", {"id": "case-next-" + str(index), "type": "button"}, [txt(next_label), navigation_arrow("next")])])
+
+
+def panel(index: int, title: str, children: list[DocumentNode], class_name: str = "") -> DocumentNode:
+    return el("section", {"id": "case-" + str(index), "class": "case-panel " + class_name, "tabindex": "-1", "aria-label": "Panel " + str(index + 1) + ": " + title}, [el("div", {"class": "case-scene"}, [node("span", "0" + str(index + 1) + " / " + titles()[index], "case-kicker panel-tab"), node("h2", title), el("div", {"class": "case-content"}, children)]), controls(index)])
+
+
+def scenes() -> list[DocumentNode]:
+    cover = panel(0, ".COMIC: data, types and references.", [el("div", {"class": "case-cover-grid"}, [el("div", {"class": "case-cover-copy"}, [node("p", ".COMIC WITH DETECTIVE INCUS", "case-kicker"), paragraph("Readable data with its types and references intact.", "case-deck"), paragraph("Learn how descriptions define fields, values fill them, and references identify declarations. Then see how .COMIC relates to Crumb."), says("Start with a description and a value. Each panel explains one part of the format."), el("button", {"id": "inspect-clue", "class": "clue-button", "type": "button"}, [txt("How values are restored")]), el("div", {"id": "clue-closed"}, []), el("div", {"id": "clue-open", "class": "clue-note"}, [paragraph("Restoring stored state"), paragraph(".COMIC restores stored fields without replaying constructors or defaults. Final-state validation still applies."), el("button", {"id": "close-clue", "type": "button"}, [txt("Close the note")])])]), el("figure", {"class": "incus-cover"}, [portrait(), node("figcaption", "DETECTIVE INCUS", "incus-nameplate")])])], "case-cover")
+    description_scene = panel(1, "Descriptions define fields. Values supply them.", [says("The description names each field and its type. The value supplies the stored data."), el("div", {"class": "case-two-up"}, [code_block(model_example(), "Descriptions · Incan profile + neutral core"), code_block(value_example(), "One value · Named stored fields")]), paragraph("A description declares fields with a colon. A value names its type with << and carries its cells in parentheses. The profile description is data; reading it does not execute a model declaration."), link("Read the text rules", spec_url("spec/text.md"))])
+    reference = panel(2, "A reference is different from a string.", [says("Without quotes, this path is a reference. With quotes, it is a string."), el("div", {"class": "case-two-up"}, [code_block("shop.billing.Cents", "An identity · Reference literal excerpt"), code_block("\"shop.billing.Cents\"", "A string · Text that happens to look like a path")]), paragraph("The slot’s declared type determines which value belongs there. An unquoted declaration path is a reference; its quoted spelling is text. Reading the reference does not follow it or fetch code."), link("Read typed references", spec_url("spec/values.md"))])
+    rows = panel(3, "Tables share a description across rows.", [says("Each row fills the declared fields in order, including the fields of nested records."), el("div", {"class": "case-two-up"}, [code_block(table_example().replace("Record { id: i64, name: string }", "Record {\n    id: i64\n    name: string\n}").replace("Record { id: i64, buyer: shop.Buyer }", "Record {\n    id: i64\n    buyer: shop.Buyer\n}"), "Complete neutral-core document · Reflowed for display"), value_diagram()]), paragraph("The document supplies the descriptions. A table uses Type << [ … ]; each row fills the declared fields in order. Nested records are rows too. The table is layout: each row remains its own value."), link("Read tables and canonical printing", spec_url("spec/text.md"))])
+    identity = panel(4, "Renaming a field preserves its identity.", [says("renamed_from records the earlier name so a rename can retain the stored field’s identity."), el("div", {"class": "case-two-up"}, [code_block("price: decimal<10, 2>", "Before · Field excerpt"), code_block("unit_price [renamed_from = [\"price\"]]: decimal<10, 2>", "After · Field excerpt")]), paragraph("A stored member’s identity comes from its earliest name. A rename retains that identity. The hash rules distinguish all stored fields, canonical fields and model shape; a matching hash is not proof of who wrote a value."), link("Read identity and the three projections", spec_url("spec/hashes.md"))])
+    forms = panel(5, ".COMIC can be crumbled.", [says(".COMIC is readable text. Crumb is binary. Both represent the same logical typed values."), el("div", {"class": "forms-diagram case-forms"}, [node("span", ".COMIC", "form-node"), node("span", "Typed values", "model-node"), node("span", "Crumb", "form-node")]), el("div", {"class": "case-two-up case-facts"}, [el("div", {}, [node("h3", "Readable text"), paragraph("Descriptions, diffs, tests and local files. .COMIC text is never sealed; a cut at an entry boundary can read as a shorter document.")]), el("div", {}, [node("h3", "Binary transport"), paragraph("A sealed Crumb set carries a count and a logical-value hash. A reader verifies both before exposing values. A seal detects damage; it does not prove authorship.")])]), paragraph("The PR stack specifies experimental row and column codecs. Different valid physical encodings can represent the same logical values. That is a format contract, not a universal performance claim."), link("Read binary representation", spec_url("spec/binary.md"))])
+    evidence = panel(6, "What the historical benchmarks measured.", [says("These counts measure text tokens, not reading accuracy or codec performance."), el("div", {"class": "case-evidence"}, [node("strong", "47,738", "case-stat"), paragraph(".COMIC tokens in an earlier 500-order prototype experiment.")]), paragraph("Those historical measurements use the earlier syntax, an inferred schema and an excluded schema cost. They are not benchmarks of the current PR grammar. TOON won two of the eight reported workloads."), paragraph("No .COMIC language-model reading accuracy was measured. A text-size result also cannot establish binary decoding speed or a production codec."), link("Inspect the historical measurements", "/benchmarks/"), link("Read the current conformance contract", spec_url("spec/conformance.md"))])
+    ending = panel(7, "Read the specification. Try the examples.", [el("div", {"class": "case-ending-grid"}, [el("div", {}, [says("Use the syntax guide for examples and the specification for the exact rules."), paragraph("These explanations follow the current specification PR stack. The source still labels its contracts experimental and its text rules draft; merging and implementation conformance are separate milestones."), paragraph("A reader should leave knowing the three forms, the difference between a reference and a string, and why layout, identity and evidence are separate concerns."), el("div", {"class": "case-exits"}, [link("Read the syntax", "/syntax/", "button button-primary"), link("Inspect the specification", "/paper/"), link("Back to the homepage", "/")])]), portrait("incus-ending")])])
+    return [cover, description_scene, reference, rows, identity, forms, evidence, ending]
+
+
+pub def casebook() -> DocumentNode:
+    mut options: list[DocumentNode] = []
+    names = titles()
+    for index in range(len(names)):
+        options.append(el("option", {"value": str(index)}, [txt(str(index + 1) + ". " + names[index])]))
+    body = el("div", {"id": "casebook", "class": "casebook wrap"}, [el("header", {"class": "case-masthead"}, [link(".COMIC /", "/", "breadcrumb"), node("h1", "The .COMIC casebook"), paragraph("A visual guide with Incus · Issue 001 · Read at your own pace", "case-subtitle")]), el("div", {"class": "case-jump"}, [el("label", {"for": "case-select"}, [txt("Choose a topic")]), el("select", {"id": "case-select"}, options), paragraph("Use the buttons or the left and right arrow keys inside a panel.", "fine-print")]), el("div", {"class": "case-stage"}, scenes()), paragraph("Examples pinned to the open specification stack at PR #2791. Excerpts are labeled; this guide does not execute or validate supplied .COMIC.", "case-source"), link("View specification source and status", "/paper/", "text-link cyan")])
+    return shell("/casebook/", [body], "casebook-page")
+
+
+pub def casebook_view() -> LocalView:
+    mut values: list[str] = []
+    mut variants: list[LocalVariant] = []
+    mut gestures = [LocalGesture(target="case-select", event="change", edits=[LocalEdit(field="panel", source="value")]), LocalGesture(target="inspect-clue", edits=[LocalEdit(field="clue", value="open")]), LocalGesture(target="close-clue", edits=[LocalEdit(field="clue", value="closed")], focus="inspect-clue")]
+    for index in range(8):
+        values.append(str(index))
+        next_index = (index + 1) % 8
+        previous_index = (index + 7) % 8
+        gestures.append(LocalGesture(target="case-next-" + str(index), edits=[LocalEdit(field="panel", value=str(next_index)), LocalEdit(field="clue", value="closed")], focus="case-" + str(next_index)))
+        gestures.append(LocalGesture(target="case-previous-" + str(index), edits=[LocalEdit(field="panel", value=str(previous_index)), LocalEdit(field="clue", value="closed")], focus="case-" + str(previous_index)))
+        gestures.append(LocalGesture(target="case-" + str(index), event="keydown", key="ArrowRight", edits=[LocalEdit(field="panel", value=str(next_index)), LocalEdit(field="clue", value="closed")], focus="case-" + str(next_index)))
+        gestures.append(LocalGesture(target="case-" + str(index), event="keydown", key="ArrowLeft", edits=[LocalEdit(field="panel", value=str(previous_index)), LocalEdit(field="clue", value="closed")], focus="case-" + str(previous_index)))
+        if index != 0:
+            variants.append(LocalVariant(target="case-" + str(index), when={"panel": str(index)}))
+    return LocalView(id="incus-casebook", root="casebook", fields=[LocalField(name="panel", initial="0", values=values), LocalField(name="clue", initial="closed", values=["closed", "open"])], gestures=gestures, regions=[LocalRegion(fallback="case-0", variants=variants), LocalRegion(fallback="clue-closed", variants=[LocalVariant(target="clue-open", when={"clue": "open"})])], inputs=[LocalInput(target="case-select", field="panel")])
