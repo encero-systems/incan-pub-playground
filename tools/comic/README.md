@@ -16,7 +16,7 @@ This snapshot used Incan `0.6.0-dev.8` and a matching Pallay development source 
 
 ## Pins and verification
 
-The approved source snapshot ID is `6d105d53a585132fe1da13fdc739b3f53aaf421c`. The only authored-source difference for publication is optional path-prefix handling in `src/main.incn`; the hosting-neutral build script gets local paths through environment variables. The zero-prefix build is compared against all 50 approved outputs before mounting. The mounted HTML is then checked to differ solely by that prefix. Binary assets retain their exact bytes.
+The approved source snapshot ID is `6d105d53a585132fe1da13fdc739b3f53aaf421c`. Publication adds optional path-prefix handling in `src/main.incn`; the hosting-neutral build script gets local paths through environment variables. Content follows the specification stack after approval, and the receipt lists each output that differs from the approved snapshot. The zero-prefix build is compared against the approved outputs before mounting. The mounted HTML is then checked to differ solely by that prefix. Binary assets retain their exact bytes.
 
 `../../comic/publication-receipt.json` includes hashes of every source/static input and published site output. The artifact is published from `main` through the repository's existing Pages setup; no new scheduled CI job is introduced.
 
