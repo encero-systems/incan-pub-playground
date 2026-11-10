@@ -9,3 +9,5 @@ Edit the sources in [`tools/comic`](../tools/comic/README.md), then regenerate; 
 The [Crumb companion identity](CRUMB-IDENTITY.md) and [dedicated chapter](v2/#v2-crumb) are an addition to the pinned Edition 02 baseline. The original style tag is preserved.
 
 [Edition 03](EDITION-03.md) introduces Incus between the .COMIC and Crumb forms while preserving Edition 02.
+
+The [Field test](v3/#field-test) combines Overview, Compactness and Speed with a shared workload ticker and Incus. [Comparison source and data](../tools/comic/COMPARISON.md).

@@ -1,0 +1,216 @@
+"""One workload, three comparison lenses, authored entirely in Incan."""
+from std.fs import Path
+from std.json import JsonValue
+from pub::pallay import DocumentNode, LocalView, LocalField, LocalEdit, LocalGesture, LocalRegion, LocalVariant, LocalAttribute, LocalSelection, LocalTimer
+from components import el, node, txt, paragraph, link, navigation_arrow
+from benchmarks import count
+
+
+pub model FormatResult:
+    pub name: str
+    pub compact: int
+    pub encode: int
+    pub decode: int
+
+
+pub model ComparisonCase:
+    pub label: str
+    pub context: str
+    pub text: list[FormatResult]
+    pub binary: list[FormatResult]
+
+
+def results(entry: JsonValue, group: str) -> list[FormatResult]:
+    mut output: list[FormatResult] = []
+    mut compact_key = "tokens"
+    if group == "binary":
+        compact_key = "bytes"
+    for record in entry.get(group).unwrap().as_array().unwrap():
+        item = FormatResult(name=record.get("name").unwrap().as_str().unwrap(), compact=record.get(compact_key).unwrap().as_int().unwrap(), encode=record.get("encode_us").unwrap().as_int().unwrap(), decode=record.get("decode_us").unwrap().as_int().unwrap())
+        assert item.compact > 0 and item.encode > 0 and item.decode > 0, "Comparison metrics must be positive"
+        output.append(item)
+    assert len(output) == 4, "A comparison reel requires four formats"
+    return output
+
+
+pub def comparison_cases() -> list[ComparisonCase]:
+    source = Path("content/comparison.json").read_text(encoding="utf-8", errors="strict").unwrap()
+    document = JsonValue.parse(source).unwrap()
+    mut output: list[ComparisonCase] = []
+    for entry in document.get("cases").unwrap().as_array().unwrap():
+        output.append(ComparisonCase(label=entry.get("label").unwrap().as_str().unwrap(), context=entry.get("context").unwrap().as_str().unwrap(), text=results(entry, "text"), binary=results(entry, "binary")))
+    assert len(output) == 4, "The workload ticker requires four cases"
+    return output
+
+
+def decimal(value: int) -> str:
+    return str(value // 1000) + "." + str((value % 1000) // 100)
+
+
+def display(value: int, metric: str) -> str:
+    if metric == "tokens":
+        return count(value)
+    if metric == "bytes":
+        return decimal(value) + " kB"
+    return decimal(value) + " ms"
+
+
+def number(item: FormatResult, metric: str) -> int:
+    if metric == "encode":
+        return item.encode
+    if metric == "decode":
+        return item.decode
+    return item.compact
+
+
+def format_heading(name: str) -> DocumentNode:
+    if name == ".COMIC":
+        return el("h4", {"class": "ft-format-heading"}, [el("img", {"src": "/assets/dot-comic-logo-amber.png", "alt": ".COMIC", "width": "1774", "height": "887", "class": "ft-comic-mark"}, [])])
+    if name == "Crumb":
+        return el("h4", {"class": "ft-format-heading"}, [el("img", {"src": "/assets/crumb-logo.svg", "alt": "Crumb", "width": "400", "height": "128"}, [])])
+    return el("h4", {"class": "ft-format-heading"}, [node("span", name, "ft-wordmark")])
+
+
+def result_caption(primary: FormatResult, rival: FormatResult, metric: str) -> str:
+    left = number(primary, metric)
+    right = number(rival, metric)
+    mut unit = " fewer tokens than "
+    if metric == "bytes":
+        unit = " smaller than "
+    if metric == "encode" or metric == "decode":
+        unit = " less " + metric + " time than "
+    if left > right:
+        return rival.name + " · " + str(((left - right) * 100 + left // 2) // left) + "%" + unit + primary.name
+    return str(((right - left) * 100 + right // 2) // right) + "%" + unit + rival.name
+
+
+def verdict(items: list[FormatResult], group: str, metric: str) -> DocumentNode:
+    mut first = items[2]
+    mut second = items[3]
+    if group == "binary":
+        first = items[1]
+        second = items[2]
+    return el("p", {"class": "ft-verdict"}, [node("span", result_caption(items[0], first, metric), "ft-" + group + "-page-0"), node("span", result_caption(items[0], second, metric), "ft-" + group + "-page-1")])
+
+
+def metric_row(label: str, value: str) -> DocumentNode:
+    return el("div", {"class": "ft-metric"}, [node("dt", label), node("dd", value)])
+
+
+def overview(items: list[FormatResult], group: str) -> DocumentNode:
+    mut cards: list[DocumentNode] = []
+    mut metric = "tokens"
+    mut label = "Tokens"
+    if group == "binary":
+        metric = "bytes"
+        label = "Size"
+    for index in range(len(items)):
+        item = items[index]
+        mut class_name = "ft-format ft-" + group + "-rival ft-rival-" + str(index)
+        if index == 0:
+            class_name = "ft-format ft-primary ft-primary-" + group
+        cards.append(el("article", {"class": class_name}, [format_heading(item.name), el("dl", {"class": "ft-metrics"}, [metric_row(label, display(item.compact, metric)), metric_row("Encode", display(item.encode, "encode")), metric_row("Decode", display(item.decode, "decode"))])]))
+    return el("div", {"class": "ft-overview"}, [el("div", {"class": "ft-cards"}, cards), verdict(items, group, metric)])
+
+
+def compactness(items: list[FormatResult], group: str) -> DocumentNode:
+    mut metric = "tokens"
+    if group == "binary":
+        metric = "bytes"
+    maximum = max([item.compact for item in items])
+    mut rows: list[DocumentNode] = []
+    for index in range(len(items)):
+        item = items[index]
+        mut class_name = "ft-bar-row"
+        if index == 0:
+            class_name += " ft-bar-primary"
+        rows.append(el("div", {"class": class_name}, [node("span", item.name, "ft-bar-label"), el("meter", {"min": "0", "max": str(maximum), "value": str(item.compact), "aria-label": item.name + ": " + display(item.compact, metric)}, [txt(str(item.compact))]), node("strong", display(item.compact, metric))]))
+    return el("div", {"class": "ft-compactness"}, [el("div", {"class": "ft-bars"}, rows), verdict(items, group, metric)])
+
+
+def speed(items: list[FormatResult], group: str) -> DocumentNode:
+    mut phases: list[DocumentNode] = []
+    for phase in ["encode", "decode"]:
+        mut pairs: list[DocumentNode] = []
+        for page in range(2):
+            mut rival = items[page + 2]
+            if group == "binary":
+                rival = items[page + 1]
+            primary = items[0]
+            maximum = max([number(primary, phase), number(rival, phase)])
+            mut entries: list[DocumentNode] = []
+            for item in [primary, rival]:
+                entries.append(el("div", {"class": "ft-duel-entry"}, [format_heading(item.name), node("strong", display(number(item, phase), phase), "ft-speed-value"), el("meter", {"min": "0", "max": str(maximum), "value": str(number(item, phase)), "aria-label": item.name + " " + phase + " time: " + display(number(item, phase), phase)}, [txt(str(number(item, phase)))])]))
+            pairs.append(el("div", {"class": "ft-duel-page ft-" + group + "-page-" + str(page)}, [el("div", {"class": "ft-duel"}, entries), node("p", result_caption(primary, rival, phase), "ft-verdict")]))
+        phases.append(el("div", {"class": "ft-speed-phase ft-speed-" + phase}, pairs))
+    return el("div", {"class": "ft-speed"}, phases)
+
+
+def league(items: list[FormatResult], group: str) -> DocumentNode:
+    mut title = "Readable text"
+    if group == "binary":
+        title = "Binary"
+    return el("section", {"class": "ft-league ft-league-" + group, "aria-label": title + " format comparison"}, [node("h3", title, "ft-league-title"), el("div", {"class": "ft-league-paper"}, [overview(items, group), compactness(items, group), speed(items, group)])])
+
+
+pub def comparison_section() -> DocumentNode:
+    data = comparison_cases()
+    mut lenses: list[DocumentNode] = []
+    for name in ["overview", "compactness", "speed"]:
+        lenses.append(el("button", {"id": "ft-view-" + name, "type": "button", "aria-pressed": "false"}, [txt(name)]))
+    mut choices: list[DocumentNode] = []
+    mut cases: list[DocumentNode] = []
+    mut controls: list[DocumentNode] = []
+    for index in range(len(data)):
+        identity = str(index)
+        choices.append(el("button", {"id": "ft-choice-" + identity, "type": "button", "aria-pressed": "false"}, [txt(data[index].label)]))
+        cases.append(el("div", {"id": "ft-case-" + identity, "class": "ft-case", "aria-label": data[index].context}, [paragraph(data[index].context + " · one workload across every view", "ft-context"), el("div", {"class": "ft-results"}, [league(data[index].text, "text"), league(data[index].binary, "binary")])]))
+        controls.append(el("span", {"id": "ft-step-" + identity, "class": "ft-step"}, [el("button", {"id": "ft-previous-" + identity, "type": "button", "aria-label": "Previous workload"}, [navigation_arrow("previous")]), el("button", {"id": "ft-next-" + identity, "type": "button", "aria-label": "Next workload"}, [navigation_arrow("next")])]))
+    mut pagers: list[DocumentNode] = []
+    for group in ["text", "binary"]:
+        for page in range(2):
+            pagers.append(el("button", {"id": "ft-page-" + group + "-" + str(page), "class": "ft-page-button ft-page-" + group, "type": "button", "aria-label": "More " + group + " formats"}, [navigation_arrow("next")]))
+    narrator = el("aside", {"class": "ft-narrator", "aria-label": "Detective Incus follows the evidence"}, [paragraph("Follow the evidence.", "ft-speech"), el("img", {"src": "/assets/incus-field-test.png", "alt": "Incus checks a stopwatch over his open evidence notebook", "width": "1024", "height": "1536", "loading": "lazy", "decoding": "async"}, [])])
+    return el("section", {"id": "field-test", "class": "v2-chapter field-test wrap", "data-view": "overview", "data-speed": "decode", "data-text-page": "0", "data-binary-page": "0"}, [node("span", "04 / Field test", "issue-number"), el("h2", {}, [txt("The same job. Three ways to "), node("em", "compare." )]), el("nav", {"class": "ft-lenses", "aria-label": "Comparison view"}, lenses), el("nav", {"class": "ft-ticker", "aria-label": "Comparison workload ticker"}, [el("div", {"class": "ft-choices"}, choices), el("div", {"class": "ft-transport"}, controls + [el("button", {"id": "ft-pause", "type": "button"}, [txt("Pause")]), el("button", {"id": "ft-play", "type": "button"}, [txt("Play")])])]), el("div", {"class": "ft-speed-toggle", "aria-label": "Speed measurement"}, [el("button", {"id": "ft-speed-encode", "type": "button", "aria-pressed": "false"}, [txt("Encode")]), el("button", {"id": "ft-speed-decode", "type": "button", "aria-pressed": "false"}, [txt("Decode")]), node("span", "Time per workload · lower is faster")]), el("div", {"class": "ft-stage"}, [narrator, el("div", {"class": "ft-cases", "aria-live": "off"}, cases), el("div", {"class": "ft-pagers"}, pagers)]), el("div", {"class": "ft-footer"}, [paragraph("Lower counts, sizes and times are better."), link("Explore the workloads", "/benchmarks/", "text-link cyan")])])
+
+
+pub def comparison_view() -> LocalView:
+    mut gestures: list[LocalGesture] = []
+    mut selections: list[LocalSelection] = []
+    mut variants: list[LocalVariant] = []
+    mut step_variants: list[LocalVariant] = []
+    mut targets: list[str] = []
+    for index in range(4):
+        identity = str(index)
+        targets.append("ft-case-" + identity)
+        gestures.append(LocalGesture(target="ft-choice-" + identity, edits=[LocalEdit(field="case", value=identity), LocalEdit(field="rotation", value="paused")]))
+        gestures.append(LocalGesture(target="ft-case-" + identity, event="tick", edits=[LocalEdit(field="case", value=str((index + 1) % 4))]))
+        for direction in ["previous", "next"]:
+            mut destination = (index + 1) % 4
+            if direction == "previous":
+                destination = (index + 3) % 4
+            gestures.append(LocalGesture(target="ft-" + direction + "-" + identity, edits=[LocalEdit(field="case", value=str(destination)), LocalEdit(field="rotation", value="paused")], focus="ft-choice-" + str(destination)))
+        selections.append(LocalSelection(target="ft-choice-" + identity, field="case", value=identity, selected_class="is-selected"))
+        if index > 0:
+            variants.append(LocalVariant(target="ft-case-" + identity, when={"case": identity}))
+            step_variants.append(LocalVariant(target="ft-step-" + identity, when={"case": identity}))
+    for name in ["overview", "compactness", "speed"]:
+        gestures.append(LocalGesture(target="ft-view-" + name, edits=[LocalEdit(field="view", value=name), LocalEdit(field="rotation", value="paused")]))
+        selections.append(LocalSelection(target="ft-view-" + name, field="view", value=name, selected_class="is-selected"))
+    for name in ["encode", "decode"]:
+        gestures.append(LocalGesture(target="ft-speed-" + name, edits=[LocalEdit(field="speed", value=name)]))
+        selections.append(LocalSelection(target="ft-speed-" + name, field="speed", value=name, selected_class="is-selected"))
+    mut regions = [LocalRegion(fallback="ft-case-0", variants=variants), LocalRegion(fallback="ft-step-0", variants=step_variants), LocalRegion(fallback="ft-pause", variants=[LocalVariant(target="ft-play", when={"rotation": "paused"})])]
+    mut attributes = [LocalAttribute(target="field-test", field="view", attribute="data-view"), LocalAttribute(target="field-test", field="speed", attribute="data-speed")]
+    for group in ["text", "binary"]:
+        attributes.append(LocalAttribute(target="field-test", field=group + "page", attribute="data-" + group + "-page"))
+        regions.append(LocalRegion(fallback="ft-page-" + group + "-0", variants=[LocalVariant(target="ft-page-" + group + "-1", when={group + "page": "1"})]))
+        for page in range(2):
+            gestures.append(LocalGesture(target="ft-page-" + group + "-" + str(page), edits=[LocalEdit(field=group + "page", value=str(1 - page)), LocalEdit(field="rotation", value="paused")], focus="ft-page-" + group + "-" + str(1 - page)))
+    gestures.append(LocalGesture(target="ft-pause", edits=[LocalEdit(field="rotation", value="paused")], focus="ft-play"))
+    gestures.append(LocalGesture(target="ft-play", edits=[LocalEdit(field="rotation", value="playing")], focus="ft-pause"))
+    return LocalView(id="format-comparison", root="field-test", fields=[LocalField(name="case", initial="0", values=["0", "1", "2", "3"]), LocalField(name="view", initial="overview", values=["overview", "compactness", "speed"]), LocalField(name="speed", initial="decode", values=["encode", "decode"]), LocalField(name="textpage", initial="0", values=["0", "1"]), LocalField(name="binarypage", initial="0", values=["0", "1"]), LocalField(name="rotation", initial="playing", values=["playing", "paused"])], gestures=gestures, regions=regions, attributes=attributes, selections=selections, timers=[LocalTimer(targets=targets, interval_ms=12000, when={"rotation": "playing"}, pause_target="ft-pause", resume_target="ft-play")])
+
+
+pub def comparison_stylesheet() -> str:
+    return "/* Shared comparison state; figures are read from the authored data file. */\n.home-v3 .field-test{background:#111b22;overflow:hidden;padding:30px 30px 26px;color:var(--cream)}\n.home-v3 .field-test>.issue-number{display:table;background:var(--amber);color:var(--ink);font:500 11px/1.4 'Martian Mono',monospace;transform:skew(-6deg);border:1.5px solid #000;padding:5px 10px;box-shadow:3px 3px 0 #0005;margin-bottom:18px}\n.field-test:before{content:'';position:absolute;z-index:-1;width:390px;height:292px;right:-120px;top:-140px;background:url('/assets/comic-halftone.svg') center/contain no-repeat;opacity:.3}\n.home-v3 .field-test h2{font:400 49px/1.05 Bangers,sans-serif;margin:0 0 22px;max-width:none}\n.home-v3 .field-test h2 em{color:var(--amber);font-style:normal}\n.field-test [hidden]{display:none!important}\n.field-test button{cursor:pointer;color:var(--ink)}\n.field-test button:focus-visible{outline:3px solid var(--cyan);outline-offset:4px}\n.field-test button:hover{filter:brightness(.94)}\n.field-test .ft-lenses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:2px solid #000;background:var(--cream);transform:skew(-6deg);box-shadow:4px 4px 0 #0005;margin-bottom:20px}\n.field-test .ft-lenses button{font:400 28px/1.2 Bangers,sans-serif;text-transform:uppercase;background:transparent;border:0;border-right:1.5px solid var(--ink);padding:10px 12px}\n.field-test .ft-lenses button:last-child{border-right:0}\n.field-test .ft-lenses .is-selected{background:var(--teal);color:var(--cream)}\n.field-test .ft-ticker{display:flex;gap:12px;align-items:center;padding:8px 10px;background:var(--amber);border:2px solid #000;box-shadow:4px 4px 0 #0005;transform:skew(-3deg);margin-bottom:16px}\n.field-test .ft-choices{display:flex;flex:1;align-items:center;gap:5px;min-width:0}\n.field-test .ft-choices button{flex:1;font:400 21px/1.2 Bangers,sans-serif;text-transform:uppercase;background:transparent;border:1.5px solid transparent;padding:5px 7px;white-space:nowrap}\n.field-test .ft-choices .is-selected{background:var(--cream);border-color:#000;box-shadow:2px 2px 0 #0004}\n.field-test .ft-transport{display:flex;align-items:center;gap:7px}\n.field-test .ft-step{display:inline-flex;gap:5px}\n.field-test .ft-step button,.field-test #ft-play,.field-test #ft-pause{padding:5px 8px;min-height:31px;background:var(--cream);border:1.5px solid #000}\n.field-test .ft-step .navigation-arrow{width:22px;height:17px}\n.field-test #ft-play,.field-test #ft-pause{font:600 13px/1.2 Barlow,sans-serif;min-width:48px}\n.field-test .ft-speed-toggle{display:flex;align-items:center;gap:8px;margin:18px 0;color:#d4dfdf;font-size:13px}\n.field-test .ft-speed-toggle button{font:400 20px/1.1 Bangers,sans-serif;border:1.5px solid #000;background:var(--cream);padding:6px 13px;transform:skew(-5deg)}\n.field-test .ft-speed-toggle .is-selected{background:var(--teal);color:var(--cream)}\n.field-test .ft-stage{display:grid;grid-template-columns:185px minmax(0,1fr);gap:20px;position:relative;padding-top:34px;align-items:end;isolation:isolate}\n.field-test .ft-context{position:absolute;top:0;left:0;font-size:14px;color:#d4dfdf;margin:0;line-height:1.4}\n.field-test .ft-narrator{position:relative;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;z-index:1;min-width:0;margin-left:-28px}\n.field-test .ft-narrator:before{content:'';position:absolute;inset:30px -40px 0 -60px;z-index:-1;background:url('/assets/comic-halftone.svg') center/contain no-repeat;opacity:.3}\n.field-test .ft-speech{background:url('/assets/speech-bubble-outline.svg') center/contain no-repeat;width:210px;max-width:100%;height:110px;padding:19px 29px 26px;margin:0 0 6px;color:var(--ink);font:400 26px/1 Bangers,sans-serif;text-transform:uppercase;display:flex;align-items:center;justify-content:center;text-align:center;align-self:center}\n.field-test .ft-narrator>img{width:235px;max-width:none;height:auto;display:block;margin-left:-8px;margin-top:auto}\n.field-test .ft-cases{min-width:0;z-index:2}\n.field-test .ft-league{position:relative;margin:0 0 28px;color:var(--ink)}\n.field-test .ft-league:last-child{margin-bottom:0}\n.field-test .ft-league-title{position:relative;z-index:2;display:table;max-width:90%;font:400 31px/1.05 Bangers,sans-serif;text-transform:uppercase;background:var(--amber);color:var(--ink);border:2px solid #000;transform:skew(-7deg);box-shadow:3px 3px 0 #0004;padding:5px 16px;margin:0 0 -8px 5px}\n.field-test .ft-league-paper{position:relative;min-width:0;padding:19px 23px 0 7px;background:var(--cream);border:2px solid #000;box-shadow:5px 5px 0 #0007}\n.field-test .ft-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));min-width:0}\n.field-test .ft-format{padding:2px 12px 12px;min-width:0;border-left:1px solid #11182077}\n.field-test .ft-format:first-child{border-left:0}\n.field-test .ft-primary-text{background:#ffc35a3b}\n.field-test .ft-primary-binary{background:#ccebed}\n.field-test .ft-format-heading{font:400 26px/1.05 Bangers,sans-serif;text-transform:uppercase;display:flex;align-items:center;height:54px;margin:0 0 6px;min-width:0}\n.field-test .ft-format-heading img{width:145px;max-width:100%;height:49px;object-fit:contain;object-position:left center}\n.field-test .ft-format-heading img.ft-comic-mark{height:65px;width:130px}\n.field-test .ft-wordmark{overflow-wrap:anywhere}\n.field-test .ft-metrics{margin:0;font-variant-numeric:tabular-nums}\n.field-test .ft-metric{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #11182035;font-size:15px;line-height:1.35}\n.field-test .ft-metric:last-child{border-bottom:0}\n.field-test .ft-metric dt{font-weight:500}\n.field-test .ft-metric dd{margin:0;font-weight:700;font-size:17px;white-space:nowrap}\n.field-test .ft-verdict{display:table;position:relative;z-index:2;max-width:calc(100% - 14px);background:var(--teal);color:var(--cream);font:600 17px/1.2 Barlow,sans-serif;transform:skew(-6deg);box-shadow:3px 3px 0 #0005;border:1.5px solid #000;padding:7px 14px;margin:4px auto -9px;text-align:center}\n.field-test .ft-pagers{position:absolute;inset:0;pointer-events:none;z-index:4}\n.field-test .ft-page-button{position:absolute;right:0;pointer-events:auto;width:32px;height:40px;background:var(--amber);border:1.5px solid #000;box-shadow:2px 2px 0 #0005;padding:7px 3px;transform:translateX(10px)}\n.field-test .ft-page-button .navigation-arrow{width:25px;height:20px;display:block;margin:auto}\n.field-test .ft-page-text{top:26%}\n.field-test .ft-page-binary{top:75%}\n.field-test .ft-footer{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-top:27px;font-size:14px}\n.field-test .ft-footer p{margin:0;color:#d4dfdf}\n.field-test .ft-footer a{white-space:nowrap}\n.field-test[data-view=overview] .ft-compactness,.field-test[data-view=overview] .ft-speed,.field-test[data-view=compactness] .ft-overview,.field-test[data-view=compactness] .ft-speed,.field-test[data-view=speed] .ft-overview,.field-test[data-view=speed] .ft-compactness{display:none}\n.field-test:not([data-view=speed]) .ft-speed-toggle{display:none}\n.field-test[data-view=compactness] .ft-pagers{display:none}\n.field-test[data-text-page='0'] .ft-text-rival.ft-rival-3,.field-test[data-text-page='1'] .ft-text-rival.ft-rival-1,.field-test[data-binary-page='0'] .ft-binary-rival.ft-rival-3,.field-test[data-binary-page='1'] .ft-binary-rival.ft-rival-1{display:none}\n.field-test[data-text-page='0'] .ft-text-page-1,.field-test[data-text-page='1'] .ft-text-page-0,.field-test[data-binary-page='0'] .ft-binary-page-1,.field-test[data-binary-page='1'] .ft-binary-page-0{display:none}\n.field-test[data-speed=decode] .ft-speed-encode,.field-test[data-speed=encode] .ft-speed-decode{display:none}\n.field-test .ft-bars{padding:3px 4px 4px 8px}\n.field-test .ft-bar-row{display:grid;grid-template-columns:95px minmax(0,1fr) 85px;gap:12px;align-items:center;padding:8px 7px;font-size:15px}\n.field-test .ft-bar-row strong{text-align:right;font-variant-numeric:tabular-nums}\n.field-test .ft-bar-primary{background:#ffc35a55}\n.field-test .ft-league-binary .ft-bar-primary{background:#ccebed}\n.field-test meter{width:100%;height:15px;appearance:none;border:0;background:none}\n.field-test meter::-webkit-meter-bar{height:15px;background:#11182016;border:0;border-radius:0;box-shadow:none}\n.field-test meter::-webkit-meter-optimum-value{background:#8b9698;border-radius:0;box-shadow:none}\n.field-test .ft-bar-primary meter::-webkit-meter-optimum-value{background:var(--teal)}\n.field-test .ft-speed-value{font:400 36px/1.1 Bangers,sans-serif;white-space:nowrap;display:block;margin:6px 0 14px}\n.field-test .ft-duel{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:8px 9px 14px}\n.field-test .ft-duel-entry:first-child .ft-speed-value{color:#a76400}\n.field-test .ft-league-binary .ft-duel-entry:first-child .ft-speed-value{color:var(--teal)}\n.field-test .ft-duel-entry:first-child meter::-webkit-meter-optimum-value{background:var(--teal)}\n.field-test[data-view=speed] .ft-results{display:grid;grid-template-columns:1fr 1fr;gap:20px}\n.field-test[data-view=speed] .ft-league{margin-bottom:0}\n.field-test[data-view=speed] .ft-league-title{font-size:26px;padding:6px 12px}\n.field-test[data-view=speed] .ft-league-paper{padding-right:9px}\n.field-test[data-view=speed] .ft-format-heading{font-size:22px}\n.field-test[data-view=speed] .ft-verdict{font-size:14px;min-height:49px;display:flex;align-items:center;justify-content:center}\n.field-test[data-view=speed] .ft-stage{grid-template-columns:155px minmax(0,1fr)}\n.field-test[data-view=speed] .ft-narrator>img{width:200px}\n.field-test[data-view=speed] .ft-speech{width:180px;font-size:23px;height:95px}\n.field-test[data-view=speed] .ft-page-text{top:48%;right:calc(50% - 65px)}\n.field-test[data-view=speed] .ft-page-binary{top:48%}\n@media(max-width:1100px){.home-v3 .field-test{padding:27px 22px}.home-v3 .field-test h2{font-size:43px}.field-test .ft-stage{grid-template-columns:150px minmax(0,1fr);gap:16px}.field-test .ft-narrator>img{width:195px}.field-test .ft-speech{width:175px;height:95px;font-size:23px;padding:18px 23px}.field-test .ft-metric{font-size:14px;gap:5px}.field-test .ft-metric dd{font-size:15px}.field-test .ft-format{padding-left:9px;padding-right:9px}.field-test .ft-format-heading{font-size:24px}.field-test .ft-choices button{font-size:18px;padding-left:5px;padding-right:5px}.field-test .ft-ticker{gap:6px}.field-test .ft-verdict{font-size:15px}.field-test .ft-bar-row{grid-template-columns:85px minmax(0,1fr) 76px;gap:9px;font-size:14px}.field-test[data-view=speed] .ft-stage{grid-template-columns:minmax(0,1fr)}.field-test[data-view=speed] .ft-narrator{display:none}.field-test[data-view=speed] .ft-page-text{right:calc(50% + 1px)}}\n@media(max-width:800px){.field-test .ft-stage{grid-template-columns:minmax(0,1fr);gap:0}.field-test .ft-narrator{display:none}.field-test .ft-lenses button{font-size:25px}.field-test .ft-choices button{font-size:18px}.field-test .ft-ticker{flex-wrap:wrap}.field-test .ft-choices{flex-basis:100%}.field-test .ft-transport{margin-left:auto}.field-test .ft-footer{flex-direction:column;align-items:flex-start;gap:12px}.field-test .ft-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.field-test .ft-format-heading{font-size:25px}.field-test .ft-metric{font-size:15px}.field-test .ft-metric dd{font-size:17px}}\n@media(max-width:600px){.home-v3 .field-test{padding:21px 16px}.home-v3 .field-test h2{font-size:35px;line-height:1.05;margin-bottom:18px}.field-test .ft-lenses{margin-bottom:18px}.field-test .ft-lenses button{font-size:23px;padding:9px 5px}.field-test .ft-ticker{padding:7px;gap:8px}.field-test .ft-choices{display:grid;grid-template-columns:1fr 1fr;gap:6px}.field-test .ft-choices button{font-size:20px;padding:5px}.field-test .ft-transport{width:100%;justify-content:space-between}.field-test .ft-stage{padding-top:44px;display:flex;flex-direction:column;align-items:stretch}.field-test .ft-context{font-size:13px;max-width:95%}.field-test .ft-cases{order:0}.field-test .ft-narrator{order:1;display:flex;flex-direction:row;align-items:center;justify-content:center;margin:20px 0 -14px;align-self:center;max-width:100%}.field-test .ft-narrator>img{width:155px;margin:0}.field-test .ft-speech{width:145px;font-size:20px;padding:15px 19px;height:78px;margin:0 0 55px}.field-test .ft-narrator:before{inset:0 -60px;background-size:contain}.field-test .ft-league{margin-bottom:27px}.field-test .ft-league-title{font-size:26px;padding:5px 13px;margin-left:3px}.field-test .ft-league-paper{padding:18px 17px 0 3px}.field-test .ft-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.field-test .ft-format{padding:0 9px 10px}.field-test .ft-format-heading{font-size:23px;height:50px}.field-test .ft-format-heading img{height:40px}.field-test .ft-format-heading img.ft-comic-mark{height:58px}.field-test .ft-metric{font-size:14px;gap:6px;padding:7px 0}.field-test .ft-metric dd{font-size:15px}.field-test .ft-verdict{font-size:14px;line-height:1.2;padding:7px 9px;max-width:calc(100% - 4px)}.field-test .ft-text-rival.ft-rival-1{display:none!important}.field-test[data-text-page='1'] .ft-text-rival.ft-rival-2{display:none}.field-test[data-text-page='0'] .ft-text-rival.ft-rival-2{display:block}.field-test[data-binary-page='0'] .ft-binary-rival.ft-rival-2,.field-test[data-binary-page='1'] .ft-binary-rival.ft-rival-3{display:none}.field-test[data-binary-page='1'] .ft-binary-rival.ft-rival-2{display:block}.field-test .ft-page-button{width:28px;height:35px;right:0;transform:translateX(8px)}.field-test .ft-page-button .navigation-arrow{width:22px}.field-test .ft-page-text{top:160px}.field-test .ft-page-binary{top:425px}.field-test .ft-footer{font-size:13px;margin-top:22px;gap:10px}.field-test .ft-footer a{font-size:15px}.field-test .ft-bar-row{grid-template-columns:72px minmax(0,1fr) 70px;gap:7px;padding:8px 3px;font-size:13px}.field-test .ft-bars{padding-left:4px;padding-right:0}.field-test .ft-speed-toggle{flex-wrap:wrap;gap:7px}.field-test .ft-speed-toggle span{width:100%;font-size:13px;margin-top:2px}.field-test[data-view=speed] .ft-results{grid-template-columns:minmax(0,1fr);gap:28px}.field-test[data-view=speed] .ft-stage{display:block}.field-test[data-view=speed] .ft-narrator{display:none}.field-test[data-view=speed] .ft-page-text{right:0;top:160px}.field-test[data-view=speed] .ft-page-binary{top:415px}.field-test[data-view=speed] .ft-verdict{min-height:0;font-size:14px}.field-test .ft-speed-value{font-size:34px}.field-test .ft-duel{padding-left:7px;padding-right:7px;gap:16px}}\n@media(prefers-reduced-motion:reduce){.field-test *{scroll-behavior:auto!important}}\n\n/* Give the evidence spread its intended wide frame and readable figures. */\n.home-v3 .field-test{max-width:1280px}\n.field-test .ft-stage{grid-template-columns:235px minmax(0,1fr)}\n.field-test .ft-narrator>img{width:300px;margin-left:-20px}\n.field-test .ft-metric{font-size:18px;padding:8px 0}\n.field-test .ft-metric dd{font-size:21px}\n.field-test .ft-verdict{font-size:18px}\n.field-test .ft-wordmark{font-size:30px}\n.field-test .ft-format-heading img{width:165px;height:54px}\n.field-test .ft-format-heading img.ft-comic-mark{width:150px;height:75px}\n@media(max-width:1100px){.field-test .ft-stage{grid-template-columns:170px minmax(0,1fr)}.field-test .ft-narrator>img{width:220px;margin-left:-8px}.field-test .ft-metric{font-size:15px;padding:7px 0}.field-test .ft-metric dd{font-size:18px}.field-test .ft-wordmark{font-size:26px}.field-test .ft-verdict{font-size:16px}.field-test .ft-format-heading img{width:140px;height:49px}.field-test .ft-format-heading img.ft-comic-mark{width:130px;height:65px}.field-test[data-view=speed] .ft-stage{grid-template-columns:minmax(0,1fr)}}\n@media(max-width:800px){.field-test .ft-stage{grid-template-columns:minmax(0,1fr)}}\n@media(max-width:600px){.home-v3 .field-test{width:calc(100% - 32px)}.field-test .ft-metric{font-size:14px;padding:7px 0}.field-test .ft-metric dd{font-size:16px}.field-test .ft-verdict{font-size:14px}.field-test .ft-wordmark{font-size:23px}.field-test .ft-narrator>img{width:155px;margin:0}.field-test .ft-format-heading img{height:40px}.field-test .ft-format-heading img.ft-comic-mark{height:58px}}\n\n/* Final optical scale from the selected visual. */\n@media(min-width:1101px){.home-v3 .field-test h2{font-size:68px;margin-bottom:22px}.field-test .ft-lenses button{font-size:34px}.field-test .ft-choices button{font-size:25px}.field-test .ft-metric{font-size:21px;padding:7px 0}.field-test .ft-metric dd{font-size:24px}.field-test .ft-format-heading{height:70px}.field-test .ft-format-heading img{width:200px;height:64px}.field-test .ft-format-heading img.ft-comic-mark{width:180px;height:90px}.field-test .ft-league-title{font-size:39px;min-width:48%;padding:7px 20px}.field-test .ft-wordmark{font-size:34px}.field-test .ft-verdict{font-size:21px;padding:8px 18px}.field-test .ft-context,.field-test .ft-footer{font-size:16px}.field-test .ft-narrator>img{width:320px;margin-left:-30px}}\n.field-test .ft-wordmark{display:inline-block;border:1.5px solid #000;background:var(--cream);padding:3px 10px;box-shadow:2px 2px 0 #11182026;transform:skew(-6deg);line-height:1.05;max-width:100%;overflow-wrap:anywhere}\n.field-test .ft-league-paper{background:var(--cream) url('/assets/comic-halftone-amber.svg') right top/175px 135px no-repeat}\n.field-test .ft-speech{background-image:url('/assets/field-test-speech.png');width:220px;height:165px;padding:25px 28px 47px;font-size:29px}\n@media(max-width:1100px){.field-test .ft-speech{width:170px;height:128px;font-size:23px;padding:20px 25px 37px}.field-test .ft-wordmark{font-size:24px;padding:3px 7px}}\n@media(max-width:600px){.field-test .ft-wordmark{font-size:21px;padding:2px 6px}.field-test .ft-speech{width:140px;height:106px;font-size:21px;padding:18px 19px 32px}.field-test .ft-metric dd{font-size:16px}}\n\n/* Keep print texture at the edge, and keep narrow view labels within their buttons. */\n.field-test .ft-league-paper{background-position:calc(100% + 95px) -30px}\n@media(max-width:600px){.field-test .ft-lenses button{font-size:21px;padding:9px 3px}}\n\n.field-test[data-view=speed] .ft-stage{align-items:start}\n"

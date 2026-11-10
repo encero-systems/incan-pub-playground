@@ -25,3 +25,5 @@ Validate the pinned publication from the repository root with `python3 tools/com
 Crumb now has a dedicated Incan-authored chapter and a vector companion mark. See [identity notes](../../comic/CRUMB-IDENTITY.md) and [logo generation](brand/README.md). The original style tag remains an immutable baseline; the current receipt records subsequent additions separately.
 
 Edition 03 is authored in `src/v3.incn`, reusing Edition 02 appearance and the shared chapters. Its comparison uses a new [Incus illustration](brand/incus-edition03.md); Edition 02 generated HTML remains unchanged.
+
+The Edition 03 [comparison chapter](COMPARISON.md) uses one editable data file and shared local state for its three lenses. [Artwork and generation prompts](brand/field-test-artwork.md).
