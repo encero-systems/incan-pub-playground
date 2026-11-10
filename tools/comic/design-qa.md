@@ -59,3 +59,11 @@ Required surfaces: original local fonts/colors retained; table-left/portrait-rig
 All scoped findings are resolved. Speed's existing artwork/mobile behavior is outside this restoration.
 
 final result: passed
+
+## Responsive comparison callout logos
+
+The existing approved .COMIC and Crumb marks precede the Readable text and Binary headings when their individual panel is at least 460 CSS pixels wide. This uses a panel container query, so the two-column Speed lens can hide the marks independently of the viewport. Text labels remain available at every width.
+
+Checked Compactness at 320, 390, 700 and 1487 pixels; Overview and Speed at 700 and 1487 pixels. No horizontal page overflow or heading overflow. Logos show in roomy panels and hide in narrow panels. The case-file balloon is mirrored toward Incus, with the live lettering counter-mirrored. Phone and desktop captures confirm its tail direction. No console errors. Native source and publication builds passed. Evidence: `approval/callout-logos-desktop.png`, `approval/callout-logos-phone.png`.
+
+final result: passed
