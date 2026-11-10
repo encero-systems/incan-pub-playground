@@ -47,3 +47,15 @@ P3: the existing chapter frame, accessible text Play/Pause controls, chapter num
 - [x] Existing editions and unrelated page outputs preserved.
 
 final result: passed
+
+## Compactness case-file restoration
+
+Source visual: the original scoreboard mockup, `comic/approval/original-1-scoreboard.png`. The pose and table-left/character-right composition are restored within the selected shared three-view shell. New transparent artwork is `assets/incus-case-file.png`; it is distinct from the stopwatch/notebook asset.
+
+Evidence: case-file-desktop.png, case-file-phone.png and case-file-comparison.png under comic/approval. Desktop capture uses 1487 x 1058 CSS pixels, 1x density; component crop is 1280 x 1034. Original mock is 1487 x 1058; the side-by-side board contains the component without distortion. Phone capture uses 390 x 844, component 358 x 1308. Additional 320 and 700 CSS-pixel widths have no horizontal overflow, and the case-file artwork remains displayed.
+
+Required surfaces: original local fonts/colors retained; table-left/portrait-right layout restored; figure is a generated PNG with transparency verified in the browser; no metrics or data-status copy changed. The caption is moved clear of the table edge. Switching to Overview hides the case-file image and restores the stopwatch image. New alt text describes the folder pose. Console errors: none. Native public and local-mirror builds passed.
+
+All scoped findings are resolved. Speed's existing artwork/mobile behavior is outside this restoration.
+
+final result: passed
