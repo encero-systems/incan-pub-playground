@@ -21,3 +21,5 @@ The approved source snapshot ID is `6d105d53a585132fe1da13fdc739b3f53aaf421c`. T
 `../../comic/publication-receipt.json` includes hashes of every source/static input and published site output. The artifact is published from `main` through the repository's existing Pages setup; no new scheduled CI job is introduced.
 
 Validate the pinned publication from the repository root with `python3 tools/comic/check-publication.py`. It checks the frozen source/output hashes and local link targets; intentional later changes need a new receipt and baseline.
+
+Crumb now has a dedicated Incan-authored chapter and a vector companion mark. See [identity notes](../../comic/CRUMB-IDENTITY.md) and [logo generation](brand/README.md). The original style tag remains an immutable baseline; the current receipt records subsequent additions separately.
