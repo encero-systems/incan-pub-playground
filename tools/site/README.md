@@ -80,3 +80,26 @@ The heading is “Building blocks for Oven.” Loaves are introduced in supporti
 ## Shared global masthead
 
 `templates/header.html` is rendered once per route prefix by the authored Incan renderer, and `assets/site/header.css` loads last on homepage, catalog and package documents. The shared stylesheet owns header geometry, responsive wordmark sizing, navigation and the decorative background crop. Put subsequent global-header changes here rather than adding page-specific header overrides. The native search disclosure opens an overlay form, preserving header height; standard GET navigation works without JavaScript. Existing catalog filtering remains local when JavaScript is present. The small shared script adds focus, Escape and outside-click behavior. `design-qa.md` records the alignment correction; prior homepage fidelity evidence is retained in `design-qa-archive-hall.md`.
+
+## Registry replay validation
+
+Both import and replay validate the supported catalog schemas, scoped package identity, feed and manifest paths, unique versions, selected version and package/version counts before publication. Shared document digests must have consistent byte counts before snapshot copying starts. Replay also validates its snapshot schema/checkpoint and the entire formatting-job set: each job must reference a declared document with matching digest, format, content path and byte count, including legacy digest-only aliases. The formatter still verifies the actual content hash and byte length. A checkpoint field is provenance supplied by the snapshot, not a signature or a fresh comparison with GitHub.
+
+Check a retained snapshot without starting Markdown/Python formatting:
+
+```sh
+tools/site/target/incan/main/oven/release/main --validate-registry assets/registry
+```
+
+The catalog currently has no published API-reference field. Package pages say that explicitly; build attestation references and upstream documentation links are not treated as Incan calling evidence. Adding a future reference model requires its producer contract first.
+
+Focused checks use one exact regex package feed, retaining both versions, features and source-document metadata. `fixtures/catalog-boundary/provenance.json` identifies its **unmerged Oxc review snapshot**, not the authoritative published index. This fixture never refreshes the site's published data. It contains metadata only; the fixture test verifies those exact retained feed bytes, not the referenced document content.
+
+```sh
+node --test tools/site/registry-boundary-fixture-tests.mjs
+SITE_RENDERER=/absolute/path/to/newly-built/main \
+  REGISTRY_TEST_OUTPUT=/absolute/path/to/owned/scratch \
+  node --test tools/site/registry-boundary-tests.mjs
+```
+
+The second command runs the actual Incan binary against success and mutated-input refusal cases. It requires a fresh binary; a fixture-only pass does not prove the Incan implementation. The full `npm run check` suite remains the publication gate with complete site assets and regenerated pages.

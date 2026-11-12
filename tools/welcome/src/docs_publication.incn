@@ -1,0 +1,251 @@
+"""
+Stage the declared documentation corpus through shared Pallay, retaining the approved shell.
+
+This consumer never writes the public preview. It requires exact source hashes from the
+content map and a fresh output directory; unsupported Markdown remains a build error.
+"""
+
+from rust::std::process import exit
+from std.fs import Path
+from std.environ import get_or
+from std.json import JsonValue
+from pub::pallay import (
+    BuildIdentity,
+    BuildInput,
+    DocsConfig,
+    DocsPage,
+    DocsSite,
+    DocsSource,
+    DocumentNode,
+    GeneratedFile,
+    digest_text,
+    docs_files,
+    load_docs,
+    publish_docs,
+    render_tree,
+)
+from components import el, txt
+from docs_catalog import ContentCatalog, load_catalog, section_content, section_headings, module_content
+from docs_layout import shell, overview
+from markdown_docs import DocPage
+
+
+def text_field(value: JsonValue, key: str) -> Result[str, str]:
+    """Read a required textual manifest field without accepting null or coercion."""
+    if let Some(item) = value.get(key):
+        if let Some(text) = item.as_str():
+            return Ok(text)
+    return Err("Missing text field in documentation manifest: " + key)
+
+
+def rows(value: JsonValue, key: str) -> Result[list[JsonValue], str]:
+    """Read a required manifest collection before any publication writes."""
+    if let Some(item) = value.get(key):
+        if let Some(items) = item.as_array():
+            return Ok(items)
+    return Err("Missing array in documentation manifest: " + key)
+
+
+def safe_relative(value: str) -> Result[str, str]:
+    """Reject ambiguous or escaping paths in the externally supplied corpus."""
+    if value == "" or value.startswith("/") or value.contains("\\") or value.contains(":") or value.contains("?") or value.contains(
+        "#",
+    ):
+        return Err("Unsafe documentation path: " + value)
+    for part in value.split("/"):
+        if part in ["", ".", ".."]:
+            return Err("Unsafe documentation path: " + value)
+    return Ok(value)
+
+
+def route_for(url: str) -> Result[str, str]:
+    """Preserve the existing docsite directory route, never its proposed editorial destination."""
+    prefix = "https://incan.io/dev/"
+    if not url.startswith(prefix):
+        return Err("Expected an existing Incan documentation URL: " + url)
+    route = url[len(prefix):]
+    if route != "":
+        if not route.endswith("/"):
+            return Err("Pallay currently requires directory routes: " + route)
+        safe_relative(route[0:-1])?
+    return Ok(route)
+
+
+def read_source(root: str, relative: str) -> Result[str, str]:
+    """Read declared UTF-8 input while rejecting symlink traversal."""
+    safe_relative(relative)?
+    mut path = root
+    for part in relative.split("/"):
+        path += "/" + part
+        if Path(path).is_symlink():
+            return Err("Symlink documentation input is not enabled: " + relative)
+    return Path(path).read_text("utf-8", "strict").map_err((error) => relative + ": " + error.message())
+
+
+def corpus(
+    manifest: JsonValue,
+    supplements: JsonValue,
+    root: str,
+) -> Result[Tuple[DocsConfig, Dict[str, str], list[BuildInput]], str]:
+    """Bind every declared page/support input to exact bytes before shared parsing."""
+    if text_field(manifest, "schema")? != "incan.docs-content-map.v1":
+        return Err("Unsupported documentation manifest schema")
+    if text_field(supplements, "schema")? != "incan.docs-include-inputs.v1":
+        return Err("Unsupported include-input manifest schema")
+    mut sources: list[DocsSource] = []
+    mut snippets: Dict[str, str] = {}
+    mut inputs: list[BuildInput] = []
+    for row in rows(manifest, "pages")?:
+        path = text_field(row, "source")?
+        if path in snippets:
+            return Err("Duplicate documentation input: " + path)
+        text = read_source(root, path)?
+        if digest_text(text) != "sha256:" + text_field(row, "sha256")?:
+            return Err("Documentation bytes differ from declared snapshot: " + path)
+        snippets[path] = text
+        inputs.append(BuildInput(name="corpus/" + path, path=root + "/" + path))
+        if text_field(row, "role")? != "support":
+            sources.append(
+                DocsSource(
+                    path=path,
+                    route=route_for(text_field(row, "current_url")?)?,
+                    section=text_field(row, "section")?,
+                    profile="incan-book",
+                ),
+            )
+    for row in rows(supplements, "inputs")?:
+        path = text_field(row, "source")?
+        if path in snippets:
+            return Err("Duplicate documentation input: " + path)
+        text = read_source(root, path)?
+        if digest_text(text) != "sha256:" + text_field(row, "sha256")?:
+            return Err("Include bytes differ from declared snapshot: " + path)
+        snippets[path] = text
+        inputs.append(BuildInput(name="corpus/" + path, path=root + "/" + path))
+    if len(sources) == 0:
+        return Err("Manifest contains no reader pages")
+    return Ok((DocsConfig(name="Incan", root=root, sources=sources, base="/corpus/", strict=true), snippets, inputs))
+
+
+def corpus_catalog(original: ContentCatalog) -> Result[ContentCatalog, str]:
+    """Reuse approved topic/module navigation while pointing complete pages at staging routes."""
+    mut catalog = original
+    for index in range(len(catalog.entries)):
+        mut entry = catalog.entries[index]
+        if entry.role != "support":
+            entry.preview = "corpus/" + route_for(entry.current_url)? + "index.html"
+        catalog.entries[index] = entry
+    return Ok(catalog)
+
+
+def absolute_shell(original: DocumentNode) -> DocumentNode:
+    """Rebase the approved flat-page shell for nested corpus routes without changing appearance."""
+    mut node = original
+    for key in ["href", "src"]:
+        if key in node.attributes:
+            value = node.attributes[key]
+            if value.startswith("corpus/"):
+                node.attributes[key] = "/" + value
+            elif value.startswith("../"):
+                node.attributes[key] = "/" + value[3:]
+            elif value.startswith("sources/"):
+                node.attributes[key] = "/corpus/" + value
+            elif value.split("#")[0] == "index.html" or value.startswith("nav-") or value.startswith("module-"):
+                node.attributes[key] = "/corpus/navigation/" + value
+            elif value != "" and not value.startswith("/") and not value.startswith("#") and not value.contains(":"):
+                node.attributes[key] = "/docs/" + value
+    node.children = [absolute_shell(child) for child in node.children]
+    return node
+
+
+def branded_page(page: DocsPage, catalog: ContentCatalog) -> str:
+    """Place the shared parsed tree in the existing website shell, preserving heading IDs."""
+    key = "corpus/" + page.source.route + "index"
+    descriptor = DocPage(
+        key=key,
+        title=page.document.metadata.title,
+        group=page.source.section,
+        source=page.source.path,
+        description=page.document.metadata.description,
+    )
+    headings = [el("a", {"href": "#" + heading.id, "class": "toc-h" + str(heading.level)}, [txt(heading.title)]) for heading in page.document.headings]
+    return branded_shell(page.document.metadata.title, shell(descriptor, page.document.root.children, headings, catalog))
+
+
+def branded_shell(title: str, root: DocumentNode) -> str:
+    """Use the same approved presentation for content and staging navigation pages."""
+    escaped_title = render_tree(txt(title))
+    return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"theme-color\" content=\"#080c0a\"><title>" + escaped_title + " · Incan documentation</title><link rel=\"icon\" href=\"/assets/incan-logo.png\"><link rel=\"stylesheet\" href=\"/assets/fonts/fonts.css\"><link rel=\"stylesheet\" href=\"/style.css\"><link rel=\"stylesheet\" href=\"/docs/docs.css\"></head><body>" + render_tree(
+        absolute_shell(root),
+    ) + "</body></html>"
+
+
+def navigation_files(catalog: ContentCatalog) -> list[GeneratedFile]:
+    """Regenerate approved overview, topic and module indexes using staged corpus destinations."""
+    mut files = [GeneratedFile(path="navigation/index.html", content=branded_shell("Documentation", overview(catalog)))]
+    for section in catalog.sections:
+        key = "nav-" + section.key
+        page = DocPage(key=key, title=section.title, group=section.title, source="", description=section.description)
+        body = shell(page, section_content(section, catalog), section_headings(section, catalog), catalog)
+        files.append(GeneratedFile(path="navigation/" + key + ".html", content=branded_shell(section.title, body)))
+    for module in catalog.modules:
+        key = "module-" + module.key
+        page = DocPage(key=key, title=module.name, group="Standard library", source="", description=module.description)
+        body = shell(page, module_content(module, catalog), [], catalog)
+        files.append(GeneratedFile(path="navigation/" + key + ".html", content=branded_shell(module.name, body)))
+    return files
+
+
+def website_files(site: DocsSite, catalog: ContentCatalog, snippets: Dict[str, str]) -> list[GeneratedFile]:
+    """Retain Pallay search/diagnostics outputs and replace only its page presentation."""
+    mut files = docs_files(site)
+    mut branded: Dict[str, str] = {}
+    for page in site.pages:
+        branded[page.source.route + "index.html"] = branded_page(page, catalog)
+    for index in range(len(files)):
+        path = files[index].path
+        if path in branded:
+            files[index] = GeneratedFile(path=path, content=branded[path])
+    for path in sorted([str(key) for key in snippets.keys()]):
+        files.append(GeneratedFile(path="sources/" + path, content=snippets[path]))
+    files.extend(navigation_files(catalog))
+    return files
+
+
+def publish_staging() -> Result[str, str]:
+    """Publish to a fresh caller-owned corpus directory after exact source and strict-parser validation."""
+    root = get_or("INCAN_DOCS_ROOT", "")
+    output = get_or("INCAN_DOCS_OUTPUT", "")
+    compiler = get_or("INCAN_DOCS_COMPILER_ID", "")
+    if root == "" or output == "" or compiler == "":
+        return Err("Set INCAN_DOCS_ROOT, INCAN_DOCS_OUTPUT and INCAN_DOCS_COMPILER_ID explicitly")
+    if Path(output).exists():
+        return Err("Staging corpus output must be a new directory: " + output)
+    manifest_text = read_source(".", "content-map.json")?
+    manifest = JsonValue.parse(manifest_text).map_err((error) => error.message())?
+    supplements = JsonValue
+        .parse(read_source(".", "publication/include-inputs.json")?)
+        .map_err((error) => error.message())?
+    config, snippets, declared_inputs = corpus(manifest, supplements, root)?
+    mut inputs = declared_inputs
+    site = load_docs(config, snippets)?
+    catalog = corpus_catalog(load_catalog())?
+    files = website_files(site, catalog, snippets)
+    # The shared publisher validates page bytes again. Support files must also
+    # retain the declared identity between include expansion and publication.
+    for path in snippets.keys():
+        if read_source(root, path)? != snippets[path]:
+            return Err("Documentation input changed during assembly: " + path)
+    for path in ["content-map.json", "publication/pallay-pin.json", "publication/include-inputs.json", "src/docs_publication.incn", "src/docs_layout.incn", "src/docs_catalog.incn", "src/layout.incn", "src/components.incn", "src/markdown_docs.incn"]:
+        inputs.append(BuildInput(name="website/" + path, path=path))
+    identity = BuildIdentity(compiler=compiler, builder="incan-website/pallay-staging-v1", inputs=inputs)
+    return publish_docs(site, output, identity, files)
+
+
+def main() -> None:
+    """Exit unsuccessfully on missing corpus, compatibility diagnostics or publication failure."""
+    match publish_staging():
+        Ok(identity) => println("Staged documentation publication: " + identity)
+        Err(error) =>
+            println(error)
+            exit(1)
